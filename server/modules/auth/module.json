@@ -1,0 +1,20 @@
+{
+  "name": "auth",
+  "displayName": "Autenticacion",
+  "version": "1.0.0",
+  "description": "Login, registro, JWT sessions, roles, middleware de autenticacion",
+  "icon": "Shield",
+  "navOrder": 0,
+  "showInNav": false,
+  "basePath": "/auth",
+  "apiPrefix": "/api/auth",
+  "dependencies": [],
+  "requiredEnvVars": ["JWT_SECRET"],
+  "hasNovaTools": false,
+  "source": "orsega",
+  "files": {
+    "client": "client/features/auth/",
+    "server": "server/modules/auth/",
+    "schema": "shared/schema/auth.ts"
+  }
+}

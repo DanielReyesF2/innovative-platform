@@ -1,0 +1,20 @@
+{
+  "name": "operaciones",
+  "displayName": "Operaciones",
+  "version": "1.0.0",
+  "description": "Levantamientos de campo, SLAs, documentos operativos, equipo comercial KPIs",
+  "icon": "ClipboardList",
+  "navOrder": 3,
+  "showInNav": true,
+  "basePath": "/operaciones",
+  "apiPrefix": "/api/operaciones",
+  "dependencies": ["auth"],
+  "requiredEnvVars": [],
+  "hasNovaTools": true,
+  "source": "innovative",
+  "files": {
+    "client": "client/features/operaciones/",
+    "server": "server/modules/operaciones/",
+    "schema": "shared/schema/operaciones.ts"
+  }
+}

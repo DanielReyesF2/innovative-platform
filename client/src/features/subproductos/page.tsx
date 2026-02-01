@@ -1,0 +1,311 @@
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import {
+  Recycle,
+  Users,
+  FileText,
+  DollarSign,
+  Leaf,
+  ChevronRight,
+  AlertCircle,
+  Send,
+  CheckCircle,
+  Clock,
+} from "lucide-react";
+import {
+  useServiceClients,
+  useSubproductosSummary,
+  usePendingReports,
+  useClientTraceabilitySummary,
+} from "./api";
+
+const REPORT_STATUS_LABELS: Record<string, string> = {
+  pendiente: "Pendiente",
+  en_proceso: "En Proceso",
+  enviado: "Enviado",
+  confirmado: "Confirmado",
+};
+
+const REPORT_STATUS_COLORS: Record<string, string> = {
+  pendiente: "bg-yellow-100 text-yellow-800",
+  en_proceso: "bg-blue-100 text-blue-800",
+  enviado: "bg-green-100 text-green-800",
+  confirmado: "bg-emerald-100 text-emerald-800",
+};
+
+export default function SubproductosPage() {
+  const { data: clients = [] } = useServiceClients();
+  const { data: summary } = useSubproductosSummary();
+  const { data: pendingReports = [] } = usePendingReports();
+  const [selectedClient, setSelectedClient] = useState<any>(null);
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">Subproductos</h1>
+        <p className="text-muted-foreground">
+          Trazabilidad, reportes a clientes, modelos económicos y conciliación
+        </p>
+      </div>
+
+      {/* KPI Cards */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <MetricCard
+          title="Clientes Activos"
+          value={String(summary?.activeClients || clients.length)}
+          description="Con servicio activo"
+          icon={<Users className="h-4 w-4 text-muted-foreground" />}
+        />
+        <MetricCard
+          title="Reportes Pendientes"
+          value={String(summary?.pendingReports || pendingReports.length)}
+          description="Requieren envío"
+          icon={<FileText className="h-4 w-4 text-muted-foreground" />}
+        />
+        <MetricCard
+          title="Ingresos Acum."
+          value={`$${(Number(summary?.totalRevenue || 0) / 1_000_000).toFixed(1)}M`}
+          description="Total trazabilidad"
+          icon={<DollarSign className="h-4 w-4 text-muted-foreground" />}
+        />
+        <MetricCard
+          title="Impacto Ambiental"
+          value={String(clients.length)}
+          description="Clientes con trazabilidad"
+          icon={<Leaf className="h-4 w-4 text-muted-foreground" />}
+        />
+      </div>
+
+      {/* Pending reports alert */}
+      {pendingReports.length > 0 && (
+        <Card className="border-yellow-200 bg-yellow-50">
+          <CardContent className="flex items-center gap-3 p-4">
+            <Clock className="h-5 w-5 text-yellow-600" />
+            <div className="flex-1">
+              <p className="text-sm font-medium text-yellow-800">
+                {pendingReports.length} reportes pendientes de envío
+              </p>
+              <p className="text-xs text-yellow-700">
+                Revisa y envía los reportes mensuales a tus clientes
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Clients list */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">
+            Clientes con Servicio ({clients.length})
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {clients.length === 0 ? (
+            <div className="py-8 text-center text-muted-foreground">
+              <AlertCircle className="mx-auto mb-2 h-8 w-8 opacity-50" />
+              <p>No hay clientes con servicio activo</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {clients.map((client: any) => (
+                <button
+                  key={client.id}
+                  onClick={() => setSelectedClient(client)}
+                  className="flex w-full items-center justify-between rounded-lg border p-4 text-left transition-colors hover:bg-accent"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-lg">
+                      {client.logo || "🏢"}
+                    </div>
+                    <div>
+                      <div className="font-semibold">{client.name}</div>
+                      <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                        <span>{client.branchCount} sucursales</span>
+                        {client.monthlyAverage && (
+                          <span>{Number(client.monthlyAverage).toFixed(1)} ton/mes</span>
+                        )}
+                        {client.valorizationRate && (
+                          <span className="text-green-600">
+                            {Number(client.valorizationRate).toFixed(0)}% valorización
+                          </span>
+                        )}
+                      </div>
+                      {client.servicesContracted && (
+                        <div className="mt-1 flex gap-1">
+                          {(client.servicesContracted as string[]).slice(0, 3).map((s: string) => (
+                            <span
+                              key={s}
+                              className="inline-flex rounded-full bg-muted px-2 py-0.5 text-xs"
+                            >
+                              {s}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                </button>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Client detail modal */}
+      {selectedClient && (
+        <ClientDetailModal
+          client={selectedClient}
+          onClose={() => setSelectedClient(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+function MetricCard({
+  title,
+  value,
+  description,
+  icon,
+}: {
+  title: string;
+  value: string;
+  description: string;
+  icon: React.ReactNode;
+}) {
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-sm font-medium">{title}</CardTitle>
+        {icon}
+      </CardHeader>
+      <CardContent>
+        <div className="text-2xl font-bold">{value}</div>
+        <p className="text-xs text-muted-foreground">{description}</p>
+      </CardContent>
+    </Card>
+  );
+}
+
+function ClientDetailModal({
+  client,
+  onClose,
+}: {
+  client: any;
+  onClose: () => void;
+}) {
+  const { data: traceSummary } = useClientTraceabilitySummary(client.id);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <div className="max-h-[80vh] w-full max-w-3xl overflow-auto rounded-lg bg-background p-6 shadow-lg">
+        <div className="mb-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-lg">
+              {client.logo || "🏢"}
+            </div>
+            <div>
+              <h2 className="text-xl font-bold">{client.name}</h2>
+              <p className="text-sm text-muted-foreground">
+                {client.branchCount} sucursales · {client.collectionFrequency}
+              </p>
+            </div>
+          </div>
+          <Button variant="ghost" size="sm" onClick={onClose}>
+            ✕
+          </Button>
+        </div>
+
+        {/* Summary metrics */}
+        {traceSummary && (
+          <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <div className="rounded-lg border p-3 text-center">
+              <div className="text-lg font-bold text-green-600">
+                {traceSummary.diversionRate.toFixed(1)}%
+              </div>
+              <div className="text-xs text-muted-foreground">Desviación</div>
+            </div>
+            <div className="rounded-lg border p-3 text-center">
+              <div className="text-lg font-bold">
+                {(traceSummary.totalManaged / 1000).toFixed(1)}t
+              </div>
+              <div className="text-xs text-muted-foreground">Total Gestionado</div>
+            </div>
+            <div className="rounded-lg border p-3 text-center">
+              <div className="text-lg font-bold text-green-600">
+                {traceSummary.treesSaved.toLocaleString()}
+              </div>
+              <div className="text-xs text-muted-foreground">Árboles Salvados</div>
+            </div>
+            <div className="rounded-lg border p-3 text-center">
+              <div className="text-lg font-bold">
+                {traceSummary.co2Avoided.toFixed(1)}t
+              </div>
+              <div className="text-xs text-muted-foreground">CO₂ Evitado</div>
+            </div>
+          </div>
+        )}
+
+        {/* Client details */}
+        <div className="grid gap-4 sm:grid-cols-2">
+          <InfoRow label="Contacto" value={client.contactName} />
+          <InfoRow label="Email" value={client.contactEmail} />
+          <InfoRow
+            label="Inicio Operación"
+            value={
+              client.operationStartDate
+                ? new Date(client.operationStartDate).toLocaleDateString("es-MX")
+                : undefined
+            }
+          />
+          <InfoRow
+            label="Promedio Mensual"
+            value={
+              client.monthlyAverage
+                ? `${Number(client.monthlyAverage).toFixed(1)} ton/mes`
+                : undefined
+            }
+          />
+        </div>
+
+        {/* Destinations */}
+        {client.recyclingDestination && (
+          <div className="mt-4 rounded-lg border p-3">
+            <h3 className="mb-2 text-sm font-semibold">Destinos Finales</h3>
+            <div className="grid gap-2 text-sm sm:grid-cols-2">
+              <DestRow label="Reciclaje" value={client.recyclingDestination} registry={client.recyclingRegistry} />
+              <DestRow label="Composta" value={client.compostDestination} registry={client.compostRegistry} />
+              <DestRow label="Reuso" value={client.reuseDestination} registry={client.reuseRegistry} />
+              <DestRow label="Relleno" value={client.landfillDestination} registry={client.landfillRegistry} />
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function InfoRow({ label, value }: { label: string; value?: string | null }) {
+  if (!value) return null;
+  return (
+    <div>
+      <div className="text-xs text-muted-foreground">{label}</div>
+      <div className="text-sm font-medium">{value}</div>
+    </div>
+  );
+}
+
+function DestRow({ label, value, registry }: { label: string; value?: string | null; registry?: string | null }) {
+  if (!value) return null;
+  return (
+    <div>
+      <div className="text-xs font-medium text-muted-foreground">{label}</div>
+      <div className="text-sm">{value}</div>
+      {registry && <div className="text-xs text-muted-foreground">{registry}</div>}
+    </div>
+  );
+}

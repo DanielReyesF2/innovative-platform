@@ -1,0 +1,20 @@
+{
+  "name": "nova-connector",
+  "displayName": "Nova AI",
+  "version": "1.0.0",
+  "description": "Conexion a Nova AI centralizado: proxy, chat component con SSE streaming",
+  "icon": "Bot",
+  "navOrder": 99,
+  "showInNav": true,
+  "basePath": "/nova",
+  "apiPrefix": "/api/nova",
+  "dependencies": ["auth"],
+  "requiredEnvVars": ["NOVA_API_URL", "NOVA_API_KEY", "NOVA_TENANT_ID"],
+  "hasNovaTools": true,
+  "source": "orsega",
+  "files": {
+    "client": "client/features/nova/",
+    "server": "server/modules/nova/",
+    "schema": "shared/schema/nova.ts"
+  }
+}

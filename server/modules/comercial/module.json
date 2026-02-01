@@ -1,0 +1,20 @@
+{
+  "name": "comercial",
+  "displayName": "Pipeline Comercial",
+  "version": "1.0.0",
+  "description": "CRM pipeline: prospectos, leads, seguimiento, alertas, propuestas, motivos de rechazo",
+  "icon": "TrendingUp",
+  "navOrder": 2,
+  "showInNav": true,
+  "basePath": "/comercial",
+  "apiPrefix": "/api/comercial",
+  "dependencies": ["auth"],
+  "requiredEnvVars": [],
+  "hasNovaTools": true,
+  "source": "innovative",
+  "files": {
+    "client": "client/features/comercial/",
+    "server": "server/modules/comercial/",
+    "schema": "shared/schema/comercial.ts"
+  }
+}

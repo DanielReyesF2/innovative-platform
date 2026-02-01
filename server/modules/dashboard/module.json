@@ -1,0 +1,20 @@
+{
+  "name": "dashboard",
+  "displayName": "Dashboard",
+  "version": "1.0.0",
+  "description": "Dashboard ejecutivo con KPI cards, metricas y filtros por periodo",
+  "icon": "LayoutDashboard",
+  "navOrder": 1,
+  "showInNav": true,
+  "basePath": "/",
+  "apiPrefix": "/api/dashboard",
+  "dependencies": ["auth"],
+  "requiredEnvVars": [],
+  "hasNovaTools": false,
+  "source": "orsega",
+  "files": {
+    "client": "client/features/dashboard/",
+    "server": "server/modules/dashboard/",
+    "schema": "shared/schema/dashboard.ts"
+  }
+}

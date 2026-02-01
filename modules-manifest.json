@@ -1,0 +1,12 @@
+{
+  "generatedFrom": "econova-module-catalog",
+  "generatedAt": "2026-02-01T20:20:45Z",
+  "modules": {
+    "auth": { "version": "1.0.0", "catalogHash": "3fbf952d" },
+    "dashboard": { "version": "1.0.0", "catalogHash": "73916995" },
+    "comercial": { "version": "1.0.0", "catalogHash": "6bde343e" },
+    "operaciones": { "version": "1.0.0", "catalogHash": "add6dc68" },
+    "subproductos": { "version": "1.0.0", "catalogHash": "08333f93" },
+    "nova-connector": { "version": "1.0.0", "catalogHash": "1f8f9228" }
+  }
+}

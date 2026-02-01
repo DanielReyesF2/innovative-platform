@@ -1,0 +1,20 @@
+{
+  "name": "subproductos",
+  "displayName": "Subproductos",
+  "version": "1.0.0",
+  "description": "Trazabilidad RME, reportes a clientes, modelos economicos, conciliacion de servicios",
+  "icon": "Recycle",
+  "navOrder": 4,
+  "showInNav": true,
+  "basePath": "/subproductos",
+  "apiPrefix": "/api/subproductos",
+  "dependencies": ["auth"],
+  "requiredEnvVars": [],
+  "hasNovaTools": true,
+  "source": "innovative",
+  "files": {
+    "client": "client/features/subproductos/",
+    "server": "server/modules/subproductos/",
+    "schema": "shared/schema/subproductos.ts"
+  }
+}
