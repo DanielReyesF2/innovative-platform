@@ -199,17 +199,21 @@ export async function checkGateCompleteness(surveyId: number, gateName: string) 
   };
 }
 
+const JSONB_SECTIONS = new Set([
+  "installations", "personnelPolicies", "transportPolicies",
+  "allowedEquipment", "legalRequirements", "operationArea",
+]);
+
 function resolveFieldValue(survey: any, section: string, fieldPath: string): any {
   if (section === "generales") {
     return survey[fieldPath];
   }
 
-  // For JSONB sections, the fieldPath is like "installations.lighting"
-  const parts = fieldPath.split(".");
-  if (parts.length === 2) {
-    const jsonbData = survey[parts[0]];
+  // For JSONB sections, look up section object then field within it
+  if (JSONB_SECTIONS.has(section)) {
+    const jsonbData = survey[section];
     if (!jsonbData) return undefined;
-    return jsonbData[parts[1]];
+    return jsonbData[fieldPath];
   }
 
   // For relational tables (subproducts, services)

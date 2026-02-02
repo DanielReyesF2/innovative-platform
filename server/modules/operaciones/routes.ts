@@ -131,7 +131,10 @@ router.post("/surveys", async (req, res) => {
       return res.status(201).json(survey);
     }
 
-    const parsed = insertSurveySchema.parse(req.body);
+    const body = { ...req.body };
+    if (body.scheduledDate && typeof body.scheduledDate === "string") body.scheduledDate = new Date(body.scheduledDate);
+    if (body.completedDate && typeof body.completedDate === "string") body.completedDate = new Date(body.completedDate);
+    const parsed = insertSurveySchema.parse(body);
     const survey = await createSurvey(parsed);
     res.status(201).json(survey);
   } catch (error: any) {
@@ -594,7 +597,10 @@ router.get("/documents/:id", async (req, res) => {
 
 router.post("/documents", async (req, res) => {
   try {
-    const parsed = insertDocumentSchema.parse(req.body);
+    const body = { ...req.body };
+    if (body.issueDate && typeof body.issueDate === "string") body.issueDate = new Date(body.issueDate);
+    if (body.expirationDate && typeof body.expirationDate === "string") body.expirationDate = new Date(body.expirationDate);
+    const parsed = insertDocumentSchema.parse(body);
     const doc = await createDocument(parsed);
     res.status(201).json(doc);
   } catch (error) {
