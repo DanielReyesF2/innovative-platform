@@ -1,189 +1,350 @@
 {
-  "documents": [
+  "surveys": [
     {
-      "name": "Licencia Ambiental Única (LAU)",
-      "type": "Licencia Ambiental",
-      "category": "Licencias",
-      "issueDate": "2024-03-15",
-      "expirationDate": "2027-03-15"
+      "clientName": "Grupo Bimbo - CEDIS Azcapotzalco",
+      "prospectId": null,
+      "siteType": "CEDIS",
+      "address": "Av. Azcapotzalco La Villa 300, Col. San Marcos, 02020 CDMX",
+      "status": "completado",
+      "type": "Levantamiento",
+      "estimatedVolume": "45 ton/mes",
+      "estimatedValue": "180000.00",
+      "scheduledDate": "2025-11-15T09:00:00Z",
+      "completedDate": "2025-11-15T16:00:00Z",
+      "observations": "Cliente muy receptivo. Interés en programa de separación en fuente. Disponibilidad de espacio amplia. Infraestructura eléctrica adecuada para equipo de compactación.",
+      "installations": {
+        "lighting": true,
+        "lightingObs": "Iluminación LED en área de almacén",
+        "electricalOutlets": true,
+        "electricalObs": "Tablero principal con capacidad disponible",
+        "voltages": ["110V", "220V"],
+        "ventilation": true,
+        "ventilationObs": "Ventilación natural + extractores",
+        "drainage": true,
+        "drainageObs": "Drenaje pluvial y sanitario separado",
+        "waterSupply": true,
+        "waterSupplyObs": "Toma de agua potable disponible",
+        "loadingDock": true,
+        "loadingDockObs": "3 andenes de carga/descarga",
+        "wifi": true,
+        "wifiObs": "Red corporativa disponible",
+        "officeSpace": true,
+        "officeSpaceObs": "Oficina disponible en planta baja"
+      },
+      "personnelPolicies": {
+        "shifts": ["1er turno", "2do turno"],
+        "shiftsObs": "06:00-14:00 y 14:00-22:00",
+        "credentialRequired": true,
+        "credentialObs": "Gafete con foto obligatorio",
+        "ppeRequired": ["Casco", "Chaleco", "Botas", "Guantes"],
+        "ppeObs": "EPP proporcionado por Bimbo",
+        "diningArea": true,
+        "diningObs": "Comedor con capacidad para 50 personas",
+        "restroomsAvailable": true,
+        "restroomsObs": "Sanitarios en planta baja",
+        "hydrationProvided": true,
+        "hydrationObs": "Dispensadores de agua",
+        "transportProvided": false,
+        "transportObs": "Personal llega por sus medios",
+        "uniformRequired": true,
+        "uniformObs": "Uniforme con logo Bimbo"
+      },
+      "transportPolicies": {
+        "loadingSchedule": "Lunes a Viernes 07:00-18:00",
+        "loadingScheduleObs": "Sábados medio día",
+        "entryDocuments": "Factura, carta porte, identificación",
+        "entryDocumentsObs": "Registro en caseta de vigilancia",
+        "weighingTypes": ["Báscula camionera"],
+        "weighingObs": "Báscula de 60 toneladas",
+        "maxStayTime": "2 horas",
+        "maxStayTimeObs": "Máximo 2 horas en área de carga"
+      },
+      "allowedEquipment": {
+        "scale": true,
+        "scaleObs": "Báscula de piso de 500kg",
+        "press": true,
+        "pressObs": "Prensa vertical para cartón",
+        "forklift": true,
+        "forkliftObs": "Montacargas eléctrico 2.5 ton",
+        "palletJack": true,
+        "palletJackObs": "Patín hidráulico"
+      },
+      "legalRequirements": {
+        "manifests": true,
+        "manifestFrequency": "Mensual",
+        "manifestObs": "Manifiesto de residuos de manejo especial",
+        "traceabilityLetter": true,
+        "traceabilityObs": "Carta de trazabilidad requerida cada embarque"
+      },
+      "operationArea": {
+        "length": 25,
+        "width": 15,
+        "height": 6,
+        "covered": true,
+        "coveredObs": "Área techada con piso de concreto"
+      },
+      "phase1CompletedAt": "2025-11-10T14:00:00Z",
+      "phase2CompletedAt": "2025-11-15T16:00:00Z"
     },
     {
-      "name": "Autorización SEMARNAT Transporte de RP",
-      "type": "Permiso de Transporte",
-      "category": "Permisos",
-      "issueDate": "2025-01-10",
-      "expirationDate": "2026-01-10"
+      "clientName": "Liverpool - Centro de Distribución Cuautitlán",
+      "prospectId": null,
+      "siteType": "CEDIS",
+      "address": "Blvd. Adolfo López Mateos 120, Cuautitlán Izcalli, Edo. Méx.",
+      "status": "pendiente_operaciones",
+      "type": "Levantamiento",
+      "estimatedVolume": "30 ton/mes",
+      "estimatedValue": "120000.00",
+      "scheduledDate": "2025-12-05T10:00:00Z",
+      "observations": null,
+      "installations": {
+        "lighting": true,
+        "lightingObs": "Iluminación industrial",
+        "electricalOutlets": true,
+        "electricalObs": "Capacidad eléctrica amplia",
+        "voltages": ["110V", "220V", "440V"],
+        "ventilation": true,
+        "ventilationObs": "Sistema HVAC centralizado",
+        "drainage": true,
+        "drainageObs": "Sistema de drenaje industrial",
+        "waterSupply": true,
+        "waterSupplyObs": "Agua potable e industrial",
+        "loadingDock": true,
+        "loadingDockObs": "5 andenes de carga",
+        "wifi": true,
+        "wifiObs": "WiFi corporativo con acceso para visitantes",
+        "officeSpace": false,
+        "officeSpaceObs": "Posible uso de sala de juntas"
+      },
+      "personnelPolicies": {
+        "shifts": ["1er turno", "2do turno", "3er turno"],
+        "shiftsObs": "Operación 24/7",
+        "credentialRequired": true,
+        "credentialObs": "Credencial con chip de acceso",
+        "ppeRequired": ["Chaleco", "Botas", "Guantes", "Lentes"],
+        "ppeObs": "EPP obligatorio en zona de operación",
+        "diningArea": true,
+        "diningObs": "Cafetería corporativa",
+        "restroomsAvailable": true,
+        "restroomsObs": "Sanitarios en cada nivel",
+        "hydrationProvided": true,
+        "hydrationObs": "Estaciones de hidratación",
+        "transportProvided": true,
+        "transportObs": "Transporte corporativo desde metro",
+        "uniformRequired": true,
+        "uniformObs": "Uniforme Liverpool requerido para contratistas"
+      },
+      "transportPolicies": {
+        "loadingSchedule": "Lunes a Sábado 06:00-20:00",
+        "loadingScheduleObs": "Domingos solo emergencias",
+        "entryDocuments": "Factura, orden de compra, identificación",
+        "entryDocumentsObs": "Pre-registro obligatorio 24h antes",
+        "weighingTypes": ["Báscula camionera", "Báscula de piso"],
+        "weighingObs": "Doble pesaje entrada/salida",
+        "maxStayTime": "3 horas",
+        "maxStayTimeObs": "Extensible con autorización"
+      },
+      "allowedEquipment": {
+        "scale": true,
+        "scaleObs": "Báscula digital de 1000kg",
+        "press": false,
+        "pressObs": "No se permite equipo de compactación propio",
+        "forklift": true,
+        "forkliftObs": "Solo montacargas eléctricos",
+        "palletJack": true,
+        "palletJackObs": "Patín hidráulico propio permitido"
+      },
+      "legalRequirements": {
+        "manifests": true,
+        "manifestFrequency": "Quincenal",
+        "manifestObs": "Manifiesto digital vía plataforma corporativa",
+        "traceabilityLetter": true,
+        "traceabilityObs": "Carta de trazabilidad digital"
+      },
+      "operationArea": {
+        "length": 30,
+        "width": 20,
+        "height": 8,
+        "covered": true,
+        "coveredObs": "Nave industrial techada"
+      },
+      "phase1CompletedAt": "2025-11-28T14:00:00Z"
+    },
+    {
+      "clientName": "AIFA — Aeropuerto Felipe Ángeles",
+      "prospectId": null,
+      "siteType": "Otros",
+      "siteTypeOther": "Aeropuerto Internacional",
+      "address": "Carr. Base Aérea Militar, Zumpango, Edo. Méx.",
+      "status": "borrador_comercial",
+      "type": "Levantamiento",
+      "estimatedVolume": "80 ton/mes",
+      "estimatedValue": "450000.00",
+      "observations": null,
+      "installations": {
+        "lighting": true,
+        "lightingObs": "Iluminación completa en zonas operativas"
+      },
+      "personnelPolicies": {
+        "credentialRequired": true,
+        "credentialObs": "Credencial aeroportuaria obligatoria — trámite con AIFA"
+      },
+      "transportPolicies": null,
+      "allowedEquipment": null,
+      "legalRequirements": null,
+      "operationArea": null
+    }
+  ],
+  "subproducts": [
+    {
+      "surveyIndex": 0,
+      "items": [
+        { "itemNumber": 1, "name": "Cartón corrugado", "um": "kg", "monthlyQty": "18000", "characteristics": "Cajas de empaque primario y secundario", "collectionFrequency": "Semanal", "transportRequired": true, "storage": "Compactado en pacas" },
+        { "itemNumber": 2, "name": "Plástico HDPE", "um": "kg", "monthlyQty": "5000", "characteristics": "Film stretch, charolas", "collectionFrequency": "Quincenal", "transportRequired": true, "storage": "En supersacos" },
+        { "itemNumber": 3, "name": "Plástico PET", "um": "kg", "monthlyQty": "3000", "characteristics": "Botellas y envases", "collectionFrequency": "Quincenal", "transportRequired": true, "storage": "Compactado" },
+        { "itemNumber": 4, "name": "Orgánicos", "um": "kg", "monthlyQty": "15000", "characteristics": "Pan devuelto, merma de producción", "collectionFrequency": "Diaria", "transportRequired": true, "storage": "Contenedores herméticos" },
+        { "itemNumber": 5, "name": "Metal ferroso", "um": "kg", "monthlyQty": "2000", "characteristics": "Latas, fleje", "collectionFrequency": "Mensual", "transportRequired": true, "storage": "A granel en contenedor" }
+      ]
+    },
+    {
+      "surveyIndex": 1,
+      "items": [
+        { "itemNumber": 1, "name": "Cartón corrugado", "um": "kg", "monthlyQty": "12000", "characteristics": "Cajas de empaque", "collectionFrequency": "Semanal", "transportRequired": true, "storage": "Compactado" },
+        { "itemNumber": 2, "name": "Plástico mixto", "um": "kg", "monthlyQty": "8000", "characteristics": "Film, bolsas, envases", "collectionFrequency": "Semanal", "transportRequired": true, "storage": "En supersacos" },
+        { "itemNumber": 3, "name": "Papel blanco", "um": "kg", "monthlyQty": "2000", "characteristics": "Documentos, etiquetas", "collectionFrequency": "Quincenal", "transportRequired": false, "storage": "Contenedor dedicado" }
+      ]
+    }
+  ],
+  "services": [
+    {
+      "surveyIndex": 0,
+      "items": [
+        { "itemNumber": 1, "serviceName": "Recolección de residuos orgánicos", "characteristic": "Residuos alimenticios y merma", "um": "viaje", "monthlyQty": "20", "collectionFrequency": "Diaria", "equipmentRequired": "Camión tipo Torton", "suggestedTreatment": "Compostaje industrial" },
+        { "itemNumber": 2, "serviceName": "Recolección de reciclables", "characteristic": "Cartón, plástico, metal", "um": "viaje", "monthlyQty": "8", "collectionFrequency": "Semanal", "equipmentRequired": "Camión de 5 ton con plataforma", "suggestedTreatment": "Reciclaje" },
+        { "itemNumber": 3, "serviceName": "Destrucción de producto", "characteristic": "Pan fuera de especificación", "um": "servicio", "monthlyQty": "2", "collectionFrequency": "Quincenal", "equipmentRequired": "Camión cerrado con sello", "suggestedTreatment": "Destrucción certificada" }
+      ]
+    }
+  ],
+  "proposalPersonnel": [
+    {
+      "surveyIndex": 0,
+      "items": [
+        { "role": "Operador de reciclaje", "quantity": 3, "schedule": "L-V 07:00-15:00", "observations": "1 por turno" },
+        { "role": "Supervisor de planta", "quantity": 1, "schedule": "L-V 08:00-17:00", "observations": "Coordinación con cliente" },
+        { "role": "Operador de montacargas", "quantity": 1, "schedule": "L-V 07:00-15:00", "observations": "Licencia vigente requerida" }
+      ]
+    }
+  ],
+  "proposalEquipment": [
+    {
+      "surveyIndex": 0,
+      "items": [
+        { "item": "Prensa vertical para cartón", "quantity": 1, "observations": "Capacidad 100 ton, eléctrica 220V" },
+        { "item": "Báscula de piso 1000kg", "quantity": 1, "observations": "Plataforma 1.2m x 1.5m" },
+        { "item": "Montacargas eléctrico 2.5 ton", "quantity": 1, "observations": "Con cargador nocturno" }
+      ]
+    }
+  ],
+  "proposalSupplies": [
+    {
+      "surveyIndex": 0,
+      "items": [
+        { "item": "Supersacos 1 ton", "quantity": 50, "observations": "Para almacenamiento de plástico" },
+        { "item": "Guantes industriales", "quantity": 24, "observations": "Pares mensuales" },
+        { "item": "Contenedores 240L", "quantity": 10, "observations": "Separación por tipo de residuo" }
+      ]
+    }
+  ],
+  "proposalRentals": [
+    {
+      "surveyIndex": 0,
+      "items": [
+        { "item": "Contenedor roll-off 30 yd3", "quantity": 2, "observations": "Para orgánicos — rotación diaria" },
+        { "item": "Compactador estacionario 20 yd3", "quantity": 1, "observations": "Para cartón y plástico" }
+      ]
+    }
+  ],
+  "gateConfigs": [
+    { "gate": "phase1", "section": "generales", "fieldPath": "clientName", "label": "Nombre del cliente", "fieldType": "text" },
+    { "gate": "phase1", "section": "generales", "fieldPath": "siteType", "label": "Tipo de sitio", "fieldType": "text" },
+    { "gate": "phase1", "section": "generales", "fieldPath": "address", "label": "Dirección", "fieldType": "text" },
+    { "gate": "phase1", "section": "installations", "fieldPath": "installations.lighting", "label": "Iluminación", "fieldType": "boolean" },
+    { "gate": "phase1", "section": "installations", "fieldPath": "installations.electricalOutlets", "label": "Contactos eléctricos", "fieldType": "boolean" },
+    { "gate": "phase1", "section": "installations", "fieldPath": "installations.ventilation", "label": "Ventilación", "fieldType": "boolean" },
+    { "gate": "phase1", "section": "installations", "fieldPath": "installations.drainage", "label": "Drenaje", "fieldType": "boolean" },
+    { "gate": "phase1", "section": "installations", "fieldPath": "installations.waterSupply", "label": "Suministro de agua", "fieldType": "boolean" },
+    { "gate": "phase1", "section": "installations", "fieldPath": "installations.loadingDock", "label": "Andén de carga", "fieldType": "boolean" },
+    { "gate": "phase1", "section": "installations", "fieldPath": "installations.wifi", "label": "WiFi disponible", "fieldType": "boolean" },
+    { "gate": "phase1", "section": "installations", "fieldPath": "installations.officeSpace", "label": "Espacio de oficina", "fieldType": "boolean" },
+    { "gate": "phase1", "section": "personnelPolicies", "fieldPath": "personnelPolicies.shifts", "label": "Turnos de trabajo", "fieldType": "jsonb_field" },
+    { "gate": "phase1", "section": "personnelPolicies", "fieldPath": "personnelPolicies.credentialRequired", "label": "Credencial requerida", "fieldType": "boolean" },
+    { "gate": "phase1", "section": "personnelPolicies", "fieldPath": "personnelPolicies.ppeRequired", "label": "EPP requerido", "fieldType": "jsonb_field" },
+    { "gate": "phase1", "section": "personnelPolicies", "fieldPath": "personnelPolicies.diningArea", "label": "Comedor disponible", "fieldType": "boolean" },
+    { "gate": "phase1", "section": "personnelPolicies", "fieldPath": "personnelPolicies.restroomsAvailable", "label": "Sanitarios disponibles", "fieldType": "boolean" },
+    { "gate": "phase1", "section": "personnelPolicies", "fieldPath": "personnelPolicies.hydrationProvided", "label": "Hidratación proporcionada", "fieldType": "boolean" },
+    { "gate": "phase1", "section": "personnelPolicies", "fieldPath": "personnelPolicies.transportProvided", "label": "Transporte proporcionado", "fieldType": "boolean" },
+    { "gate": "phase1", "section": "personnelPolicies", "fieldPath": "personnelPolicies.uniformRequired", "label": "Uniforme requerido", "fieldType": "boolean" },
+    { "gate": "phase1", "section": "transportPolicies", "fieldPath": "transportPolicies.loadingSchedule", "label": "Horario de carga", "fieldType": "text" },
+    { "gate": "phase1", "section": "transportPolicies", "fieldPath": "transportPolicies.entryDocuments", "label": "Documentos de entrada", "fieldType": "text" },
+    { "gate": "phase1", "section": "transportPolicies", "fieldPath": "transportPolicies.maxStayTime", "label": "Tiempo máximo de estadía", "fieldType": "text" },
+    { "gate": "phase1", "section": "allowedEquipment", "fieldPath": "allowedEquipment.scale", "label": "Báscula permitida", "fieldType": "boolean" },
+    { "gate": "phase1", "section": "allowedEquipment", "fieldPath": "allowedEquipment.press", "label": "Prensa permitida", "fieldType": "boolean" },
+    { "gate": "phase1", "section": "allowedEquipment", "fieldPath": "allowedEquipment.forklift", "label": "Montacargas permitido", "fieldType": "boolean" },
+    { "gate": "phase1", "section": "allowedEquipment", "fieldPath": "allowedEquipment.palletJack", "label": "Patín hidráulico permitido", "fieldType": "boolean" },
+    { "gate": "phase1", "section": "legalRequirements", "fieldPath": "legalRequirements.manifests", "label": "Manifiestos requeridos", "fieldType": "boolean" },
+    { "gate": "phase1", "section": "legalRequirements", "fieldPath": "legalRequirements.traceabilityLetter", "label": "Carta de trazabilidad", "fieldType": "boolean" },
+    { "gate": "phase1", "section": "operationArea", "fieldPath": "operationArea.length", "label": "Largo del área", "fieldType": "number" },
+    { "gate": "phase1", "section": "operationArea", "fieldPath": "operationArea.width", "label": "Ancho del área", "fieldType": "number" },
+    { "gate": "phase1", "section": "operationArea", "fieldPath": "operationArea.covered", "label": "Área cubierta", "fieldType": "boolean" },
+    { "gate": "phase2", "section": "observaciones", "fieldPath": "observations", "label": "Observaciones generales", "fieldType": "text" },
+    { "gate": "phase2", "section": "validacion", "fieldPath": "elaboratedById", "label": "Elaborado por", "fieldType": "number" },
+    { "gate": "phase2", "section": "validacion", "fieldPath": "approvedById", "label": "Aprobado por", "fieldType": "number" }
+  ],
+  "documents": [
+    {
+      "name": "Licencia Ambiental de Funcionamiento",
+      "type": "Licencia Ambiental",
+      "category": "Licencias",
+      "issueDate": "2024-03-15T00:00:00Z",
+      "expirationDate": "2026-03-15T00:00:00Z",
+      "status": "vigente",
+      "notes": "Licencia estatal para manejo de residuos"
     },
     {
       "name": "Certificado ISO 14001:2015",
-      "type": "Certificación ISO",
+      "type": "Certificado ISO",
       "category": "Certificaciones",
-      "issueDate": "2024-06-01",
-      "expirationDate": "2027-06-01"
+      "issueDate": "2024-06-01T00:00:00Z",
+      "expirationDate": "2025-06-01T00:00:00Z",
+      "status": "por_vencer",
+      "notes": "Recertificación programada"
     },
     {
-      "name": "Registro como Empresa Generadora de Residuos",
+      "name": "Póliza de Responsabilidad Civil",
+      "type": "Seguro",
+      "category": "Seguros",
+      "issueDate": "2024-01-01T00:00:00Z",
+      "expirationDate": "2025-01-01T00:00:00Z",
+      "status": "vencido",
+      "notes": "Pendiente de renovación"
+    },
+    {
+      "name": "Permiso de Transporte de Residuos SCT",
+      "type": "Permiso de Transporte",
+      "category": "Permisos",
+      "issueDate": "2025-01-15T00:00:00Z",
+      "expirationDate": "2027-01-15T00:00:00Z",
+      "status": "vigente",
+      "notes": "Permiso federal para transporte interestatal"
+    },
+    {
+      "name": "Registro como Prestador de Servicios SEMARNAT",
       "type": "Registro Ambiental",
       "category": "Permisos",
-      "issueDate": "2023-09-20",
-      "expirationDate": "2026-09-20"
-    },
-    {
-      "name": "Póliza RC Daños a Terceros",
-      "type": "Seguro",
-      "category": "Seguros",
-      "issueDate": "2025-07-01",
-      "expirationDate": "2026-07-01"
-    },
-    {
-      "name": "Póliza RC Ambiental",
-      "type": "Seguro",
-      "category": "Seguros",
-      "issueDate": "2025-07-01",
-      "expirationDate": "2026-07-01"
-    },
-    {
-      "name": "Certificado Empresa Socialmente Responsable (ESR)",
-      "type": "Certificación ESR",
-      "category": "Certificaciones",
-      "issueDate": "2025-04-01",
-      "expirationDate": "2026-04-01"
-    },
-    {
-      "name": "Permiso Estatal de Operación - Planta Ecatepec",
-      "type": "Permiso de Operación",
-      "category": "Permisos",
-      "issueDate": "2024-11-15",
-      "expirationDate": "2026-11-15"
-    },
-    {
-      "name": "Licencia de Funcionamiento Municipal",
-      "type": "Licencia Municipal",
-      "category": "Licencias",
-      "issueDate": "2025-02-01",
-      "expirationDate": "2026-02-01"
-    },
-    {
-      "name": "Verificación Vehicular Flotilla (12 unidades)",
-      "type": "Verificación Vehicular",
-      "category": "Permisos",
-      "issueDate": "2025-09-01",
-      "expirationDate": "2026-03-01"
-    }
-  ],
-  "surveys": [
-    {
-      "clientName": "Grupo Bimbo - Planta Azcapotzalco",
-      "scheduledDate": "2026-01-10",
-      "completedDate": "2026-01-10",
-      "status": "completado",
-      "type": "Levantamiento",
-      "assignedTo": "roberto@innovative-la.com",
-      "estimatedVolume": "200 ton/mes",
-      "estimatedValue": 480000,
-      "hasReport": true,
-      "observations": "Planta con alto potencial de valorización. Infraestructura existente es buena. Requieren mejora en separación en fuente.",
-      "generalInfo": {
-        "razonSocial": "Grupo Bimbo S.A.B. de C.V.",
-        "rfc": "GBI941215AA5",
-        "direccion": "Av. Rio Churubusco 300, Col. Del Carmen, Azcapotzalco, CDMX",
-        "giro": "Alimentos - Panificación",
-        "numEmpleados": 1200,
-        "horarioOperacion": "24 hrs (3 turnos)",
-        "contactoOperativo": "Ing. Manuel Soto",
-        "telefonoOperativo": "+52 55 5001 2345"
-      },
-      "wasteTypes": [
-        { "wasteType": "Orgánicos (merma de producción)", "quantity": "80 ton/mes", "percentage": 40, "currentDestination": "Relleno sanitario", "monthlyCost": 48000 },
-        { "wasteType": "Cartón y papel", "quantity": "50 ton/mes", "percentage": 25, "currentDestination": "Reciclador local", "monthlyCost": 0 },
-        { "wasteType": "Plástico (film, PET, HDPE)", "quantity": "30 ton/mes", "percentage": 15, "currentDestination": "Relleno sanitario", "monthlyCost": 18000 },
-        { "wasteType": "Tarimas de madera", "quantity": "20 ton/mes", "percentage": 10, "currentDestination": "Reúso parcial", "monthlyCost": 5000 },
-        { "wasteType": "Metales (chatarra)", "quantity": "10 ton/mes", "percentage": 5, "currentDestination": "Chatarrería", "monthlyCost": 0 },
-        { "wasteType": "Residuos generales", "quantity": "10 ton/mes", "percentage": 5, "currentDestination": "Relleno sanitario", "monthlyCost": 6000 }
-      ],
-      "currentServices": {
-        "providerName": "Recolectora del Centro S.A.",
-        "contractActive": true,
-        "contractEnd": "2026-06-30",
-        "monthlyCost": 77000,
-        "collectionFrequency": "Diaria",
-        "serviceType": "Recolección y disposición",
-        "includesSeparation": false,
-        "includesValorization": false,
-        "includesReporting": false,
-        "satisfactionLevel": 5,
-        "reasonForChange": "No ofrecen separación ni valorización, sin reportes ambientales"
-      },
-      "infrastructure": {
-        "hasStorageArea": true,
-        "storageAreaSize": "120 m²",
-        "storageType": "Techado con piso de concreto",
-        "containerCount": 8,
-        "hasCompactor": true,
-        "hasWarehouse": true,
-        "vehicleAccess": "Acceso para tráiler, andén de descarga",
-        "scheduleRestrictions": "Recolección nocturna preferida (22:00-06:00)",
-        "availableSpace": "Espacio adicional de 50 m² para contenedores de separación"
-      },
-      "needs": {
-        "needsSeparation": true,
-        "needsValorization": true,
-        "needsTraceability": true,
-        "needsMonthlyReporting": true,
-        "certifications": ["ISO 14001", "Zero Waste (GBCI)"],
-        "environmentalGoals": "Alcanzar 90% de desvío de relleno sanitario para 2027",
-        "availableBudget": 500000,
-        "urgency": "Alta",
-        "decisionMaker": "Dir. de Sustentabilidad Corporativa"
-      }
-    },
-    {
-      "clientName": "Liverpool - Corporativo Santa Fe",
-      "scheduledDate": "2026-01-25",
-      "completedDate": null,
-      "status": "en_proceso",
-      "type": "Levantamiento",
-      "assignedTo": "roberto@innovative-la.com",
-      "estimatedVolume": "90 ton/mes",
-      "estimatedValue": 195000,
-      "hasReport": false,
-      "observations": "Levantamiento parcial - falta visitar cedis y 2 tiendas.",
-      "generalInfo": {
-        "razonSocial": "El Puerto de Liverpool S.A.B. de C.V.",
-        "rfc": "PLC810211LU7",
-        "direccion": "Av. Vasco de Quiroga 3800, Santa Fe, CDMX",
-        "giro": "Retail - Tiendas departamentales",
-        "numEmpleados": 850,
-        "horarioOperacion": "10:00-21:00",
-        "contactoOperativo": "Mariana Solís",
-        "telefonoOperativo": "+52 55 5268 7200"
-      },
-      "wasteTypes": [
-        { "wasteType": "Cartón de embalaje", "quantity": "40 ton/mes", "percentage": 44, "currentDestination": "Reciclador", "monthlyCost": 0 },
-        { "wasteType": "Plástico (film stretch, bolsas)", "quantity": "15 ton/mes", "percentage": 17, "currentDestination": "Relleno sanitario", "monthlyCost": 9000 },
-        { "wasteType": "Orgánicos (food court)", "quantity": "20 ton/mes", "percentage": 22, "currentDestination": "Relleno sanitario", "monthlyCost": 12000 },
-        { "wasteType": "Residuos generales", "quantity": "15 ton/mes", "percentage": 17, "currentDestination": "Relleno sanitario", "monthlyCost": 9000 }
-      ],
-      "currentServices": null,
-      "infrastructure": null,
-      "needs": null
-    },
-    {
-      "clientName": "Aeropuerto AIFA - Zona Operativa",
-      "scheduledDate": "2026-02-10",
-      "completedDate": null,
-      "status": "agendado",
-      "type": "Levantamiento",
-      "assignedTo": "roberto@innovative-la.com",
-      "estimatedVolume": "180 ton/mes",
-      "estimatedValue": 390000,
-      "hasReport": false,
-      "observations": null,
-      "generalInfo": null,
-      "wasteTypes": [],
-      "currentServices": null,
-      "infrastructure": null,
-      "needs": null
+      "issueDate": "2024-09-01T00:00:00Z",
+      "expirationDate": "2026-09-01T00:00:00Z",
+      "status": "vigente",
+      "notes": "Registro federal"
     }
   ]
 }

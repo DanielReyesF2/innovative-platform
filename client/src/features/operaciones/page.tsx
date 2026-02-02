@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,20 +13,24 @@ import {
   Search,
   ChevronRight,
   AlertCircle,
-  MapPin,
+  Plus,
 } from "lucide-react";
 import { useSurveys, useSurveySummary, useDocuments, useExpiredDocuments } from "./api";
 
 const STATUS_LABELS: Record<string, string> = {
+  borrador_comercial: "Borrador Comercial",
+  pendiente_operaciones: "Pendiente Operaciones",
   agendado: "Agendado",
-  en_proceso: "En Proceso",
+  en_sitio: "En Sitio",
   completado: "Completado",
   cancelado: "Cancelado",
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  agendado: "bg-blue-100 text-blue-800",
-  en_proceso: "bg-yellow-100 text-yellow-800",
+  borrador_comercial: "bg-blue-100 text-blue-800",
+  pendiente_operaciones: "bg-purple-100 text-purple-800",
+  agendado: "bg-yellow-100 text-yellow-800",
+  en_sitio: "bg-orange-100 text-orange-800",
   completado: "bg-green-100 text-green-800",
   cancelado: "bg-gray-100 text-gray-800",
 };
@@ -37,6 +42,7 @@ const DOC_STATUS_COLORS: Record<string, string> = {
 };
 
 export default function OperacionesPage() {
+  const [, navigate] = useLocation();
   const { data: surveys = [] } = useSurveys();
   const { data: summary } = useSurveySummary();
   const { data: documents = [] } = useDocuments();
@@ -45,7 +51,6 @@ export default function OperacionesPage() {
   const [activeTab, setActiveTab] = useState<"surveys" | "documents">("surveys");
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [selectedSurvey, setSelectedSurvey] = useState<any>(null);
 
   // Filter surveys
   const filteredSurveys = surveys.filter((s: any) => {
@@ -68,7 +73,11 @@ export default function OperacionesPage() {
   // Stats
   const completedSurveys = surveys.filter((s: any) => s.status === "completado").length;
   const pendingSurveys = surveys.filter(
-    (s: any) => s.status === "agendado" || s.status === "en_proceso"
+    (s: any) =>
+      s.status === "borrador_comercial" ||
+      s.status === "pendiente_operaciones" ||
+      s.status === "agendado" ||
+      s.status === "en_sitio"
   ).length;
   const withoutReport = surveys.filter(
     (s: any) => s.status === "completado" && !s.hasReport
@@ -77,11 +86,13 @@ export default function OperacionesPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Operaciones</h1>
-        <p className="text-muted-foreground">
-          Levantamientos de campo, documentos operativos y seguimiento
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Operaciones</h1>
+          <p className="text-muted-foreground">
+            Levantamientos de campo, documentos operativos y seguimiento
+          </p>
+        </div>
       </div>
 
       {/* KPI Cards */}
@@ -89,7 +100,7 @@ export default function OperacionesPage() {
         <MetricCard
           title="Levantamientos Pendientes"
           value={String(pendingSurveys)}
-          description="Agendados + en proceso"
+          description="Borrador + En proceso"
           icon={<Clock className="h-4 w-4 text-muted-foreground" />}
         />
         <MetricCard
@@ -107,7 +118,7 @@ export default function OperacionesPage() {
         <MetricCard
           title="Docs Vencidos"
           value={String(expiredDocs.length)}
-          description="Requieren renovación"
+          description="Requieren renovacion"
           icon={<AlertCircle className="h-4 w-4 text-muted-foreground" />}
         />
       </div>
@@ -123,7 +134,7 @@ export default function OperacionesPage() {
           }`}
         >
           <ClipboardList className="h-4 w-4" />
-          Levantamientos
+          Levantamientos ({surveys.length})
         </button>
         <button
           onClick={() => setActiveTab("documents")}
@@ -181,7 +192,7 @@ export default function OperacionesPage() {
                 {filteredSurveys.map((survey: any) => (
                   <button
                     key={survey.id}
-                    onClick={() => setSelectedSurvey(survey)}
+                    onClick={() => navigate(`/operaciones/levantamiento/${survey.id}`)}
                     className="flex w-full items-center justify-between rounded-lg border p-4 text-left transition-colors hover:bg-accent"
                   >
                     <div className="flex-1">
@@ -197,18 +208,20 @@ export default function OperacionesPage() {
                         <span className="text-xs text-muted-foreground">{survey.type}</span>
                       </div>
                       <div className="mt-1 flex items-center gap-4 text-sm text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          <Calendar className="h-3 w-3" />
-                          {new Date(survey.scheduledDate).toLocaleDateString("es-MX")}
-                        </span>
+                        {survey.scheduledDate && (
+                          <span className="flex items-center gap-1">
+                            <Calendar className="h-3 w-3" />
+                            {new Date(survey.scheduledDate).toLocaleDateString("es-MX")}
+                          </span>
+                        )}
                         {survey.estimatedVolume && <span>{survey.estimatedVolume}</span>}
                         {survey.estimatedValue && (
                           <span>${Number(survey.estimatedValue).toLocaleString("es-MX")}</span>
                         )}
                       </div>
-                      {survey.nextStep && (
-                        <div className="mt-1 text-xs text-muted-foreground">
-                          Siguiente: {survey.nextStep}
+                      {survey.address && (
+                        <div className="mt-1 text-xs text-muted-foreground truncate max-w-md">
+                          {survey.address}
                         </div>
                       )}
                     </div>
@@ -268,14 +281,6 @@ export default function OperacionesPage() {
           </CardContent>
         </Card>
       )}
-
-      {/* Survey detail modal */}
-      {selectedSurvey && (
-        <SurveyDetailModal
-          survey={selectedSurvey}
-          onClose={() => setSelectedSurvey(null)}
-        />
-      )}
     </div>
   );
 }
@@ -310,70 +315,6 @@ function EmptyState({ message }: { message: string }) {
     <div className="py-8 text-center text-muted-foreground">
       <AlertCircle className="mx-auto mb-2 h-8 w-8 opacity-50" />
       <p>{message}</p>
-    </div>
-  );
-}
-
-function SurveyDetailModal({
-  survey,
-  onClose,
-}: {
-  survey: any;
-  onClose: () => void;
-}) {
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="max-h-[80vh] w-full max-w-2xl overflow-auto rounded-lg bg-background p-6 shadow-lg">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-xl font-bold">{survey.clientName}</h2>
-          <Button variant="ghost" size="sm" onClick={onClose}>
-            ✕
-          </Button>
-        </div>
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          <InfoRow label="Tipo" value={survey.type} />
-          <InfoRow label="Estado" value={STATUS_LABELS[survey.status] || survey.status} />
-          <InfoRow
-            label="Fecha Programada"
-            value={new Date(survey.scheduledDate).toLocaleDateString("es-MX")}
-          />
-          {survey.completedDate && (
-            <InfoRow
-              label="Fecha Completado"
-              value={new Date(survey.completedDate).toLocaleDateString("es-MX")}
-            />
-          )}
-          <InfoRow label="Volumen Estimado" value={survey.estimatedVolume} />
-          <InfoRow
-            label="Valor Estimado"
-            value={
-              survey.estimatedValue
-                ? `$${Number(survey.estimatedValue).toLocaleString("es-MX")}`
-                : undefined
-            }
-          />
-          <InfoRow label="Siguiente Paso" value={survey.nextStep} />
-          <InfoRow label="Tiene Reporte" value={survey.hasReport ? "Sí" : "No"} />
-        </div>
-
-        {survey.observations && (
-          <div className="mt-4 rounded-lg border p-3">
-            <h3 className="mb-2 text-sm font-semibold">Observaciones</h3>
-            <p className="text-sm text-muted-foreground">{survey.observations}</p>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function InfoRow({ label, value }: { label: string; value?: string | null }) {
-  if (!value) return null;
-  return (
-    <div>
-      <div className="text-xs text-muted-foreground">{label}</div>
-      <div className="text-sm font-medium">{value}</div>
     </div>
   );
 }

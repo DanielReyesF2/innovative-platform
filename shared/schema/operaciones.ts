@@ -2,11 +2,15 @@ import { pgTable, serial, text, integer, timestamp, boolean, numeric, jsonb, pgE
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { users } from "./common";
+import { prospects } from "./comercial";
 
-// Enums
+// ─── Enums ───────────────────────────────────────────────
+
 export const surveyStatusEnum = pgEnum("survey_status", [
+  "borrador_comercial",
+  "pendiente_operaciones",
   "agendado",
-  "en_proceso",
+  "en_sitio",
   "completado",
   "cancelado",
 ]);
@@ -17,38 +21,140 @@ export const documentStatusEnum = pgEnum("document_status", [
   "vencido",
 ]);
 
-// Surveys (Levantamientos)
+// ─── Zod schemas for JSONB columns ──────────────────────
+
+export const installationsSchema = z.object({
+  lighting: z.boolean().nullable().optional(),
+  lightingObs: z.string().nullable().optional(),
+  electricalOutlets: z.boolean().nullable().optional(),
+  electricalObs: z.string().nullable().optional(),
+  voltages: z.array(z.string()).nullable().optional(), // ["110V", "220V", "440V"]
+  ventilation: z.boolean().nullable().optional(),
+  ventilationObs: z.string().nullable().optional(),
+  drainage: z.boolean().nullable().optional(),
+  drainageObs: z.string().nullable().optional(),
+  waterSupply: z.boolean().nullable().optional(),
+  waterSupplyObs: z.string().nullable().optional(),
+  loadingDock: z.boolean().nullable().optional(),
+  loadingDockObs: z.string().nullable().optional(),
+  wifi: z.boolean().nullable().optional(),
+  wifiObs: z.string().nullable().optional(),
+  officeSpace: z.boolean().nullable().optional(),
+  officeSpaceObs: z.string().nullable().optional(),
+});
+
+export const personnelPoliciesSchema = z.object({
+  shifts: z.array(z.string()).nullable().optional(), // ["1er turno", "2do turno", "3er turno"]
+  shiftsObs: z.string().nullable().optional(),
+  credentialRequired: z.boolean().nullable().optional(),
+  credentialObs: z.string().nullable().optional(),
+  ppeRequired: z.array(z.string()).nullable().optional(), // ["Casco", "Chaleco", "Botas", "Guantes", "Lentes"]
+  ppeObs: z.string().nullable().optional(),
+  diningArea: z.boolean().nullable().optional(),
+  diningObs: z.string().nullable().optional(),
+  restroomsAvailable: z.boolean().nullable().optional(),
+  restroomsObs: z.string().nullable().optional(),
+  hydrationProvided: z.boolean().nullable().optional(),
+  hydrationObs: z.string().nullable().optional(),
+  transportProvided: z.boolean().nullable().optional(),
+  transportObs: z.string().nullable().optional(),
+  uniformRequired: z.boolean().nullable().optional(),
+  uniformObs: z.string().nullable().optional(),
+});
+
+export const transportPoliciesSchema = z.object({
+  loadingSchedule: z.string().nullable().optional(),
+  loadingScheduleObs: z.string().nullable().optional(),
+  entryDocuments: z.string().nullable().optional(),
+  entryDocumentsObs: z.string().nullable().optional(),
+  weighingTypes: z.array(z.string()).nullable().optional(), // ["Báscula camionera", "Báscula de piso", "Otra"]
+  weighingObs: z.string().nullable().optional(),
+  maxStayTime: z.string().nullable().optional(),
+  maxStayTimeObs: z.string().nullable().optional(),
+});
+
+export const allowedEquipmentSchema = z.object({
+  scale: z.boolean().nullable().optional(),
+  scaleObs: z.string().nullable().optional(),
+  press: z.boolean().nullable().optional(),
+  pressObs: z.string().nullable().optional(),
+  forklift: z.boolean().nullable().optional(),
+  forkliftObs: z.string().nullable().optional(),
+  palletJack: z.boolean().nullable().optional(),
+  palletJackObs: z.string().nullable().optional(),
+});
+
+export const legalRequirementsSchema = z.object({
+  manifests: z.boolean().nullable().optional(),
+  manifestFrequency: z.string().nullable().optional(),
+  manifestObs: z.string().nullable().optional(),
+  traceabilityLetter: z.boolean().nullable().optional(),
+  traceabilityObs: z.string().nullable().optional(),
+});
+
+export const operationAreaSchema = z.object({
+  length: z.number().nullable().optional(),
+  width: z.number().nullable().optional(),
+  height: z.number().nullable().optional(),
+  covered: z.boolean().nullable().optional(),
+  coveredObs: z.string().nullable().optional(),
+});
+
+// ─── Main surveys table ─────────────────────────────────
+
 export const surveys = pgTable("surveys", {
   id: serial("id").primaryKey(),
+  // Link to prospect
+  prospectId: integer("prospect_id").references(() => prospects.id),
+  // Section 1: Generales
   clientName: text("client_name").notNull(),
-  scheduledDate: timestamp("scheduled_date").notNull(),
+  siteType: text("site_type"), // CEDIS | Planta | Otros
+  siteTypeOther: text("site_type_other"),
+  address: text("address"),
+  scheduledDate: timestamp("scheduled_date"),
   completedDate: timestamp("completed_date"),
-  assignedToId: integer("assigned_to_id").references(() => users.id),
-  status: surveyStatusEnum("status").notNull().default("agendado"),
-  type: text("type").notNull().default("Levantamiento"), // Levantamiento or Propuesta
+  status: surveyStatusEnum("status").notNull().default("borrador_comercial"),
+  type: text("type").notNull().default("Levantamiento"),
   estimatedVolume: text("estimated_volume"),
   estimatedValue: numeric("estimated_value", { precision: 12, scale: 2 }),
   nextStep: text("next_step"),
   hasReport: boolean("has_report").default(false),
-  // General info stored as JSON for flexibility
-  generalInfo: jsonb("general_info"), // razonSocial, rfc, direccion, contacto, etc.
+  // JSONB sections (Sections 2-7)
+  installations: jsonb("installations"), // Section 2
+  personnelPolicies: jsonb("personnel_policies"), // Section 3
+  transportPolicies: jsonb("transport_policies"), // Section 4
+  allowedEquipment: jsonb("allowed_equipment"), // Section 5
+  legalRequirements: jsonb("legal_requirements"), // Section 6
+  operationArea: jsonb("operation_area"), // Section 7
+  // Section 15: Observations
   observations: text("observations"),
+  // Assigned users
+  assignedCommercialId: integer("assigned_commercial_id").references(() => users.id),
+  assignedOperationsId: integer("assigned_operations_id").references(() => users.id),
+  // Section 16: Validation
+  elaboratedById: integer("elaborated_by_id").references(() => users.id),
+  approvedById: integer("approved_by_id").references(() => users.id),
+  // Phase gates
+  phase1CompletedAt: timestamp("phase1_completed_at"),
+  phase2CompletedAt: timestamp("phase2_completed_at"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Survey waste types (detailed waste analysis per survey)
+// ─── Legacy table (kept temporarily) ────────────────────
+
 export const surveyWasteTypes = pgTable("survey_waste_types", {
   id: serial("id").primaryKey(),
   surveyId: integer("survey_id").references(() => surveys.id).notNull(),
-  wasteType: text("waste_type").notNull(), // Orgánicos, Cartón, Plástico, etc.
-  quantity: text("quantity"), // e.g. "18 ton/mes"
+  wasteType: text("waste_type").notNull(),
+  quantity: text("quantity"),
   percentage: integer("percentage"),
   currentDestination: text("current_destination"),
   monthlyCost: numeric("monthly_cost", { precision: 10, scale: 2 }),
 });
 
-// Survey current services (existing provider info)
+// ─── Kept table: competitor info ────────────────────────
+
 export const surveyCurrentServices = pgTable("survey_current_services", {
   id: serial("id").primaryKey(),
   surveyId: integer("survey_id").references(() => surveys.id).notNull(),
@@ -62,46 +168,115 @@ export const surveyCurrentServices = pgTable("survey_current_services", {
   includesSeparation: boolean("includes_separation").default(false),
   includesValorization: boolean("includes_valorization").default(false),
   includesReporting: boolean("includes_reporting").default(false),
-  satisfactionLevel: integer("satisfaction_level"), // 1-10
+  satisfactionLevel: integer("satisfaction_level"),
   reasonForChange: text("reason_for_change"),
 });
 
-// Survey infrastructure
-export const surveyInfrastructure = pgTable("survey_infrastructure", {
+// ─── Section 8: Photos ──────────────────────────────────
+
+export const surveyPhotos = pgTable("survey_photos", {
   id: serial("id").primaryKey(),
   surveyId: integer("survey_id").references(() => surveys.id).notNull(),
-  hasStorageArea: boolean("has_storage_area").default(false),
-  storageAreaSize: text("storage_area_size"),
-  storageType: text("storage_type"),
-  containerCount: integer("container_count"),
-  hasCompactor: boolean("has_compactor").default(false),
-  hasWarehouse: boolean("has_warehouse").default(false),
-  vehicleAccess: text("vehicle_access"),
-  scheduleRestrictions: text("schedule_restrictions"),
-  availableSpace: text("available_space"),
+  url: text("url").notNull(),
+  caption: text("caption"),
+  section: text("section"), // which area of the site
+  sortOrder: integer("sort_order").default(0),
+  uploadedById: integer("uploaded_by_id").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
-// Survey needs/requirements
-export const surveyNeeds = pgTable("survey_needs", {
+// ─── Section 9: Proposal Personnel ──────────────────────
+
+export const surveyProposalPersonnel = pgTable("survey_proposal_personnel", {
   id: serial("id").primaryKey(),
   surveyId: integer("survey_id").references(() => surveys.id).notNull(),
-  needsSeparation: boolean("needs_separation").default(false),
-  needsValorization: boolean("needs_valorization").default(false),
-  needsTraceability: boolean("needs_traceability").default(false),
-  needsMonthlyReporting: boolean("needs_monthly_reporting").default(false),
-  certifications: jsonb("certifications"), // string[]
-  environmentalGoals: text("environmental_goals"),
-  availableBudget: numeric("available_budget", { precision: 10, scale: 2 }),
-  urgency: text("urgency"), // Baja, Media, Alta
-  decisionMaker: text("decision_maker"),
+  role: text("role").notNull(),
+  quantity: integer("quantity").default(1),
+  schedule: text("schedule"),
+  observations: text("observations"),
 });
 
-// Operational documents (permisos, licencias, certificados)
+// ─── Section 10: Proposal Equipment ─────────────────────
+
+export const surveyProposalEquipment = pgTable("survey_proposal_equipment", {
+  id: serial("id").primaryKey(),
+  surveyId: integer("survey_id").references(() => surveys.id).notNull(),
+  item: text("item").notNull(),
+  quantity: integer("quantity").default(1),
+  observations: text("observations"),
+});
+
+// ─── Section 11: Proposal Supplies ──────────────────────
+
+export const surveyProposalSupplies = pgTable("survey_proposal_supplies", {
+  id: serial("id").primaryKey(),
+  surveyId: integer("survey_id").references(() => surveys.id).notNull(),
+  item: text("item").notNull(),
+  quantity: integer("quantity").default(1),
+  observations: text("observations"),
+});
+
+// ─── Section 12: Proposal Rentals ───────────────────────
+
+export const surveyProposalRentals = pgTable("survey_proposal_rentals", {
+  id: serial("id").primaryKey(),
+  surveyId: integer("survey_id").references(() => surveys.id).notNull(),
+  item: text("item").notNull(),
+  quantity: integer("quantity").default(1),
+  observations: text("observations"),
+});
+
+// ─── Section 13: Subproducts Catalog ────────────────────
+
+export const surveySubproducts = pgTable("survey_subproducts", {
+  id: serial("id").primaryKey(),
+  surveyId: integer("survey_id").references(() => surveys.id).notNull(),
+  itemNumber: integer("item_number"),
+  name: text("name").notNull(),
+  um: text("um"), // unit of measure
+  monthlyQty: numeric("monthly_qty", { precision: 12, scale: 2 }),
+  characteristics: text("characteristics"),
+  imageUrl: text("image_url"),
+  collectionFrequency: text("collection_frequency"),
+  transportRequired: boolean("transport_required").default(false),
+  storage: text("storage"),
+});
+
+// ─── Section 14: Services Catalog ───────────────────────
+
+export const surveyServices = pgTable("survey_services", {
+  id: serial("id").primaryKey(),
+  surveyId: integer("survey_id").references(() => surveys.id).notNull(),
+  itemNumber: integer("item_number"),
+  serviceName: text("service_name").notNull(),
+  characteristic: text("characteristic"),
+  um: text("um"),
+  monthlyQty: numeric("monthly_qty", { precision: 12, scale: 2 }),
+  imageUrl: text("image_url"),
+  collectionFrequency: text("collection_frequency"),
+  equipmentRequired: text("equipment_required"),
+  suggestedTreatment: text("suggested_treatment"),
+});
+
+// ─── Gate Configuration (admin-configurable required fields) ─
+
+export const surveyGateConfigs = pgTable("survey_gate_configs", {
+  id: serial("id").primaryKey(),
+  gate: text("gate").notNull(), // "phase1" | "phase2"
+  section: text("section").notNull(), // "generales" | "installations" | ...
+  fieldPath: text("field_path").notNull(), // "clientName" | "installations.lighting" | ...
+  label: text("label").notNull(), // Human-readable label in Spanish
+  fieldType: text("field_type").notNull().default("boolean"), // boolean | text | number | jsonb_field
+  isRequired: boolean("is_required").default(true),
+});
+
+// ─── Operational documents ──────────────────────────────
+
 export const operationalDocuments = pgTable("operational_documents", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
-  type: text("type").notNull(), // Permiso Ambiental, Licencia, Certificado ISO, etc.
-  category: text("category").notNull(), // Licencias, Permisos, Certificaciones, Seguros
+  type: text("type").notNull(),
+  category: text("category").notNull(),
   issueDate: timestamp("issue_date"),
   expirationDate: timestamp("expiration_date"),
   fileName: text("file_name"),
@@ -111,14 +286,52 @@ export const operationalDocuments = pgTable("operational_documents", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Validators
+// ─── Insert schemas ─────────────────────────────────────
+
 export const insertSurveySchema = createInsertSchema(surveys, {
   clientName: z.string().min(1).max(200),
-  type: z.string().min(1).max(50),
+  type: z.string().min(1).max(50).optional(),
+  siteType: z.string().max(50).optional(),
+  address: z.string().max(500).optional(),
 }).omit({ id: true, createdAt: true, updatedAt: true });
 
 export const insertSurveyWasteTypeSchema = createInsertSchema(surveyWasteTypes, {
   wasteType: z.string().min(1).max(100),
+}).omit({ id: true });
+
+export const insertSurveyPhotoSchema = createInsertSchema(surveyPhotos, {
+  url: z.string().min(1).max(2000),
+}).omit({ id: true, createdAt: true });
+
+export const insertSurveyProposalPersonnelSchema = createInsertSchema(surveyProposalPersonnel, {
+  role: z.string().min(1).max(200),
+}).omit({ id: true });
+
+export const insertSurveyProposalEquipmentSchema = createInsertSchema(surveyProposalEquipment, {
+  item: z.string().min(1).max(200),
+}).omit({ id: true });
+
+export const insertSurveyProposalSuppliesSchema = createInsertSchema(surveyProposalSupplies, {
+  item: z.string().min(1).max(200),
+}).omit({ id: true });
+
+export const insertSurveyProposalRentalsSchema = createInsertSchema(surveyProposalRentals, {
+  item: z.string().min(1).max(200),
+}).omit({ id: true });
+
+export const insertSurveySubproductSchema = createInsertSchema(surveySubproducts, {
+  name: z.string().min(1).max(300),
+}).omit({ id: true });
+
+export const insertSurveyServiceSchema = createInsertSchema(surveyServices, {
+  serviceName: z.string().min(1).max(300),
+}).omit({ id: true });
+
+export const insertGateConfigSchema = createInsertSchema(surveyGateConfigs, {
+  gate: z.string().min(1).max(50),
+  section: z.string().min(1).max(100),
+  fieldPath: z.string().min(1).max(200),
+  label: z.string().min(1).max(300),
 }).omit({ id: true });
 
 export const insertDocumentSchema = createInsertSchema(operationalDocuments, {
@@ -127,9 +340,25 @@ export const insertDocumentSchema = createInsertSchema(operationalDocuments, {
   category: z.string().min(1).max(100),
 }).omit({ id: true, createdAt: true, updatedAt: true });
 
-// Types
+// ─── Types ──────────────────────────────────────────────
+
 export type Survey = typeof surveys.$inferSelect;
 export type InsertSurvey = z.infer<typeof insertSurveySchema>;
 export type SurveyWasteType = typeof surveyWasteTypes.$inferSelect;
+export type SurveyPhoto = typeof surveyPhotos.$inferSelect;
+export type SurveyProposalPersonnel = typeof surveyProposalPersonnel.$inferSelect;
+export type SurveyProposalEquipment = typeof surveyProposalEquipment.$inferSelect;
+export type SurveyProposalSupplies = typeof surveyProposalSupplies.$inferSelect;
+export type SurveyProposalRentals = typeof surveyProposalRentals.$inferSelect;
+export type SurveySubproduct = typeof surveySubproducts.$inferSelect;
+export type SurveyService = typeof surveyServices.$inferSelect;
+export type SurveyGateConfig = typeof surveyGateConfigs.$inferSelect;
 export type OperationalDocument = typeof operationalDocuments.$inferSelect;
 export type InsertDocument = z.infer<typeof insertDocumentSchema>;
+
+export type Installations = z.infer<typeof installationsSchema>;
+export type PersonnelPolicies = z.infer<typeof personnelPoliciesSchema>;
+export type TransportPolicies = z.infer<typeof transportPoliciesSchema>;
+export type AllowedEquipment = z.infer<typeof allowedEquipmentSchema>;
+export type LegalRequirements = z.infer<typeof legalRequirementsSchema>;
+export type OperationArea = z.infer<typeof operationAreaSchema>;

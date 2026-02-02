@@ -1,7 +1,7 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 
-// --- Surveys ---
+// ─── Surveys ────────────────────────────────────────────
 
 export function useSurveys() {
   return useQuery<any[]>({
@@ -9,7 +9,7 @@ export function useSurveys() {
   });
 }
 
-export function useSurvey(id: number) {
+export function useSurvey(id: number | null) {
   return useQuery<any>({
     queryKey: [`/api/operaciones/surveys/${id}`],
     enabled: !!id,
@@ -40,25 +40,110 @@ export function useUpdateSurvey() {
       const res = await apiRequest("PATCH", `/api/operaciones/surveys/${id}`, data);
       return res.json();
     },
-    onSuccess: () => {
+    onSuccess: (_data: any, variables: any) => {
       queryClient.invalidateQueries({ queryKey: ["/api/operaciones/surveys"] });
+      queryClient.invalidateQueries({ queryKey: [`/api/operaciones/surveys/${variables.id}`] });
     },
   });
 }
 
-export function useCompleteSurvey() {
+// ─── Section update (JSONB) ─────────────────────────────
+
+export function useUpdateSurveySection() {
   return useMutation({
-    mutationFn: async (id: number) => {
-      const res = await apiRequest("POST", `/api/operaciones/surveys/${id}/complete`);
+    mutationFn: async ({ surveyId, sectionName, data }: { surveyId: number; sectionName: string; data: any }) => {
+      const res = await apiRequest("PATCH", `/api/operaciones/surveys/${surveyId}/section/${sectionName}`, data);
       return res.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/operaciones/surveys"] });
+    onSuccess: (_data: any, variables: any) => {
+      queryClient.invalidateQueries({ queryKey: [`/api/operaciones/surveys/${variables.surveyId}`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/operaciones/surveys/${variables.surveyId}/gate-status`] });
     },
   });
 }
 
-// --- Documents ---
+// ─── Gate status ────────────────────────────────────────
+
+export function useGateStatus(surveyId: number | null, gate: string = "phase1") {
+  return useQuery<any>({
+    queryKey: [`/api/operaciones/surveys/${surveyId}/gate-status?gate=${gate}`],
+    enabled: !!surveyId,
+  });
+}
+
+// ─── Status advancement ─────────────────────────────────
+
+export function useAdvanceSurveyStatus() {
+  return useMutation({
+    mutationFn: async ({ surveyId, targetStatus }: { surveyId: number; targetStatus: string }) => {
+      const res = await apiRequest("POST", `/api/operaciones/surveys/${surveyId}/advance`, { targetStatus });
+      return res.json();
+    },
+    onSuccess: (_data: any, variables: any) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/operaciones/surveys"] });
+      queryClient.invalidateQueries({ queryKey: [`/api/operaciones/surveys/${variables.surveyId}`] });
+    },
+  });
+}
+
+// ─── Generic sub-item CRUD hook factory ─────────────────
+
+function createSubItemHooks(resource: string) {
+  return {
+    useItems: (surveyId: number | null) =>
+      useQuery<any[]>({
+        queryKey: [`/api/operaciones/surveys/${surveyId}/${resource}`],
+        enabled: !!surveyId,
+      }),
+
+    useCreate: () =>
+      useMutation({
+        mutationFn: async ({ surveyId, ...data }: any) => {
+          const res = await apiRequest("POST", `/api/operaciones/surveys/${surveyId}/${resource}`, data);
+          return res.json();
+        },
+        onSuccess: (_data: any, variables: any) => {
+          queryClient.invalidateQueries({ queryKey: [`/api/operaciones/surveys/${variables.surveyId}/${resource}`] });
+          queryClient.invalidateQueries({ queryKey: [`/api/operaciones/surveys/${variables.surveyId}`] });
+        },
+      }),
+
+    useUpdate: () =>
+      useMutation({
+        mutationFn: async ({ surveyId, itemId, ...data }: any) => {
+          const res = await apiRequest("PATCH", `/api/operaciones/surveys/${surveyId}/${resource}/${itemId}`, data);
+          return res.json();
+        },
+        onSuccess: (_data: any, variables: any) => {
+          queryClient.invalidateQueries({ queryKey: [`/api/operaciones/surveys/${variables.surveyId}/${resource}`] });
+          queryClient.invalidateQueries({ queryKey: [`/api/operaciones/surveys/${variables.surveyId}`] });
+        },
+      }),
+
+    useDelete: () =>
+      useMutation({
+        mutationFn: async ({ surveyId, itemId }: { surveyId: number; itemId: number }) => {
+          const res = await apiRequest("DELETE", `/api/operaciones/surveys/${surveyId}/${resource}/${itemId}`);
+          return res.json();
+        },
+        onSuccess: (_data: any, variables: any) => {
+          queryClient.invalidateQueries({ queryKey: [`/api/operaciones/surveys/${variables.surveyId}/${resource}`] });
+          queryClient.invalidateQueries({ queryKey: [`/api/operaciones/surveys/${variables.surveyId}`] });
+        },
+      }),
+  };
+}
+
+// Sub-item hooks
+export const subproductsApi = createSubItemHooks("subproducts");
+export const servicesApi = createSubItemHooks("services");
+export const photosApi = createSubItemHooks("photos");
+export const proposalPersonnelApi = createSubItemHooks("proposal-personnel");
+export const proposalEquipmentApi = createSubItemHooks("proposal-equipment");
+export const proposalSuppliesApi = createSubItemHooks("proposal-supplies");
+export const proposalRentalsApi = createSubItemHooks("proposal-rentals");
+
+// ─── Documents ──────────────────────────────────────────
 
 export function useDocuments() {
   return useQuery<any[]>({

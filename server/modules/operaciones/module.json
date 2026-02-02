@@ -8,7 +8,7 @@
   "showInNav": true,
   "basePath": "/operaciones",
   "apiPrefix": "/api/operaciones",
-  "dependencies": ["auth"],
+  "dependencies": ["auth", "comercial"],
   "requiredEnvVars": [],
   "hasNovaTools": true,
   "source": "innovative",

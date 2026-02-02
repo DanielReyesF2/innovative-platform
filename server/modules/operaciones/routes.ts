@@ -5,9 +5,52 @@ import {
   getSurveyById,
   getSurveysByStatus,
   createSurvey,
+  createSurveyFromProspect,
   updateSurvey,
-  completeSurvey,
+  updateSurveySection,
+  checkGateCompleteness,
+  advanceSurveyStatus,
   addSurveyWasteType,
+  // Photos
+  getSurveyPhotos,
+  createSurveyPhoto,
+  updateSurveyPhoto,
+  deleteSurveyPhoto,
+  // Subproducts
+  getSurveySubproducts,
+  createSurveySubproduct,
+  updateSurveySubproduct,
+  deleteSurveySubproduct,
+  // Services
+  getSurveyServicesItems,
+  createSurveyService,
+  updateSurveyService,
+  deleteSurveyService,
+  // Proposal Personnel
+  getSurveyProposalPersonnel,
+  createProposalPersonnel,
+  updateProposalPersonnel,
+  deleteProposalPersonnel,
+  // Proposal Equipment
+  getSurveyProposalEquipment,
+  createProposalEquipment,
+  updateProposalEquipment,
+  deleteProposalEquipment,
+  // Proposal Supplies
+  getSurveyProposalSupplies,
+  createProposalSupplies,
+  updateProposalSupplies,
+  deleteProposalSupplies,
+  // Proposal Rentals
+  getSurveyProposalRentals,
+  createProposalRentals,
+  updateProposalRentals,
+  deleteProposalRentals,
+  // Gate config
+  getGateConfigs,
+  createGateConfig,
+  updateGateConfig,
+  // Documents
   getDocuments,
   getDocumentById,
   getExpiringDocuments,
@@ -17,13 +60,24 @@ import {
   deleteDocument,
   getSurveySummary,
 } from "./storage";
-import { insertSurveySchema, insertDocumentSchema } from "../../../shared/schema/operaciones";
+import {
+  insertSurveySchema,
+  insertDocumentSchema,
+  insertSurveyPhotoSchema,
+  insertSurveySubproductSchema,
+  insertSurveyServiceSchema,
+  insertSurveyProposalPersonnelSchema,
+  insertSurveyProposalEquipmentSchema,
+  insertSurveyProposalSuppliesSchema,
+  insertSurveyProposalRentalsSchema,
+  insertGateConfigSchema,
+} from "../../../shared/schema/operaciones";
 
 export const router = Router();
 
 router.use(requireAuth);
 
-// --- Surveys (Levantamientos) ---
+// ─── Surveys (Levantamientos) ───────────────────────────
 
 router.get("/surveys", async (_req, res) => {
   try {
@@ -66,14 +120,23 @@ router.get("/surveys/:id", async (req, res) => {
   }
 });
 
+// Create survey — supports both direct creation and from-prospect
 router.post("/surveys", async (req, res) => {
   try {
+    const { prospectId, assignedCommercialId } = req.body;
+
+    if (prospectId) {
+      const userId = assignedCommercialId || (req as any).user?.id;
+      const survey = await createSurveyFromProspect(prospectId, userId);
+      return res.status(201).json(survey);
+    }
+
     const parsed = insertSurveySchema.parse(req.body);
     const survey = await createSurvey(parsed);
     res.status(201).json(survey);
-  } catch (error) {
+  } catch (error: any) {
     console.error("[operaciones] Create survey error:", error);
-    res.status(400).json({ message: "Datos invalidos" });
+    res.status(400).json({ message: error.message || "Datos invalidos" });
   }
 });
 
@@ -88,16 +151,54 @@ router.patch("/surveys/:id", async (req, res) => {
   }
 });
 
-router.post("/surveys/:id/complete", async (req, res) => {
+// ─── Section JSONB update ───────────────────────────────
+
+router.patch("/surveys/:id/section/:name", async (req, res) => {
   try {
-    const updated = await completeSurvey(Number(req.params.id));
-    if (!updated) return res.status(404).json({ message: "Levantamiento no encontrado" });
+    const updated = await updateSurveySection(
+      Number(req.params.id),
+      req.params.name,
+      req.body
+    );
     res.json(updated);
-  } catch (error) {
-    console.error("[operaciones] Complete survey error:", error);
-    res.status(500).json({ message: "Internal server error" });
+  } catch (error: any) {
+    console.error("[operaciones] Update section error:", error);
+    res.status(400).json({ message: error.message || "Datos invalidos" });
   }
 });
+
+// ─── Gate status ────────────────────────────────────────
+
+router.get("/surveys/:id/gate-status", async (req, res) => {
+  try {
+    const gateName = (req.query.gate as string) || "phase1";
+    const result = await checkGateCompleteness(Number(req.params.id), gateName);
+    res.json(result);
+  } catch (error: any) {
+    console.error("[operaciones] Gate status error:", error);
+    res.status(400).json({ message: error.message || "Error checking gate" });
+  }
+});
+
+// ─── Status advancement ─────────────────────────────────
+
+router.post("/surveys/:id/advance", async (req, res) => {
+  try {
+    const { targetStatus } = req.body;
+    if (!targetStatus) return res.status(400).json({ message: "targetStatus requerido" });
+
+    const result = await advanceSurveyStatus(Number(req.params.id), targetStatus);
+    if (!result.success) {
+      return res.status(422).json(result);
+    }
+    res.json(result);
+  } catch (error: any) {
+    console.error("[operaciones] Advance status error:", error);
+    res.status(400).json({ message: error.message || "Error advancing status" });
+  }
+});
+
+// ─── Waste types (legacy) ───────────────────────────────
 
 router.post("/surveys/:id/waste-types", async (req, res) => {
   try {
@@ -112,7 +213,342 @@ router.post("/surveys/:id/waste-types", async (req, res) => {
   }
 });
 
-// --- Documents ---
+// ─── Photos (Section 8) ────────────────────────────────
+
+router.get("/surveys/:id/photos", async (req, res) => {
+  try {
+    const photos = await getSurveyPhotos(Number(req.params.id));
+    res.json(photos);
+  } catch (error) {
+    console.error("[operaciones] Get photos error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+router.post("/surveys/:id/photos", async (req, res) => {
+  try {
+    const data = { ...req.body, surveyId: Number(req.params.id) };
+    const photo = await createSurveyPhoto(data);
+    res.status(201).json(photo);
+  } catch (error) {
+    console.error("[operaciones] Create photo error:", error);
+    res.status(400).json({ message: "Datos invalidos" });
+  }
+});
+
+router.patch("/surveys/:id/photos/:itemId", async (req, res) => {
+  try {
+    const updated = await updateSurveyPhoto(Number(req.params.itemId), req.body);
+    res.json(updated);
+  } catch (error) {
+    console.error("[operaciones] Update photo error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+router.delete("/surveys/:id/photos/:itemId", async (req, res) => {
+  try {
+    await deleteSurveyPhoto(Number(req.params.itemId));
+    res.json({ message: "Eliminado" });
+  } catch (error) {
+    console.error("[operaciones] Delete photo error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+// ─── Subproducts (Section 13) ───────────────────────────
+
+router.get("/surveys/:id/subproducts", async (req, res) => {
+  try {
+    const items = await getSurveySubproducts(Number(req.params.id));
+    res.json(items);
+  } catch (error) {
+    console.error("[operaciones] Get subproducts error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+router.post("/surveys/:id/subproducts", async (req, res) => {
+  try {
+    const data = { ...req.body, surveyId: Number(req.params.id) };
+    const item = await createSurveySubproduct(data);
+    res.status(201).json(item);
+  } catch (error) {
+    console.error("[operaciones] Create subproduct error:", error);
+    res.status(400).json({ message: "Datos invalidos" });
+  }
+});
+
+router.patch("/surveys/:id/subproducts/:itemId", async (req, res) => {
+  try {
+    const updated = await updateSurveySubproduct(Number(req.params.itemId), req.body);
+    res.json(updated);
+  } catch (error) {
+    console.error("[operaciones] Update subproduct error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+router.delete("/surveys/:id/subproducts/:itemId", async (req, res) => {
+  try {
+    await deleteSurveySubproduct(Number(req.params.itemId));
+    res.json({ message: "Eliminado" });
+  } catch (error) {
+    console.error("[operaciones] Delete subproduct error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+// ─── Services (Section 14) ──────────────────────────────
+
+router.get("/surveys/:id/services", async (req, res) => {
+  try {
+    const items = await getSurveyServicesItems(Number(req.params.id));
+    res.json(items);
+  } catch (error) {
+    console.error("[operaciones] Get services error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+router.post("/surveys/:id/services", async (req, res) => {
+  try {
+    const data = { ...req.body, surveyId: Number(req.params.id) };
+    const item = await createSurveyService(data);
+    res.status(201).json(item);
+  } catch (error) {
+    console.error("[operaciones] Create service error:", error);
+    res.status(400).json({ message: "Datos invalidos" });
+  }
+});
+
+router.patch("/surveys/:id/services/:itemId", async (req, res) => {
+  try {
+    const updated = await updateSurveyService(Number(req.params.itemId), req.body);
+    res.json(updated);
+  } catch (error) {
+    console.error("[operaciones] Update service error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+router.delete("/surveys/:id/services/:itemId", async (req, res) => {
+  try {
+    await deleteSurveyService(Number(req.params.itemId));
+    res.json({ message: "Eliminado" });
+  } catch (error) {
+    console.error("[operaciones] Delete service error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+// ─── Proposal Personnel (Section 9) ─────────────────────
+
+router.get("/surveys/:id/proposal-personnel", async (req, res) => {
+  try {
+    const items = await getSurveyProposalPersonnel(Number(req.params.id));
+    res.json(items);
+  } catch (error) {
+    console.error("[operaciones] Get proposal personnel error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+router.post("/surveys/:id/proposal-personnel", async (req, res) => {
+  try {
+    const data = { ...req.body, surveyId: Number(req.params.id) };
+    const item = await createProposalPersonnel(data);
+    res.status(201).json(item);
+  } catch (error) {
+    console.error("[operaciones] Create proposal personnel error:", error);
+    res.status(400).json({ message: "Datos invalidos" });
+  }
+});
+
+router.patch("/surveys/:id/proposal-personnel/:itemId", async (req, res) => {
+  try {
+    const updated = await updateProposalPersonnel(Number(req.params.itemId), req.body);
+    res.json(updated);
+  } catch (error) {
+    console.error("[operaciones] Update proposal personnel error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+router.delete("/surveys/:id/proposal-personnel/:itemId", async (req, res) => {
+  try {
+    await deleteProposalPersonnel(Number(req.params.itemId));
+    res.json({ message: "Eliminado" });
+  } catch (error) {
+    console.error("[operaciones] Delete proposal personnel error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+// ─── Proposal Equipment (Section 10) ────────────────────
+
+router.get("/surveys/:id/proposal-equipment", async (req, res) => {
+  try {
+    const items = await getSurveyProposalEquipment(Number(req.params.id));
+    res.json(items);
+  } catch (error) {
+    console.error("[operaciones] Get proposal equipment error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+router.post("/surveys/:id/proposal-equipment", async (req, res) => {
+  try {
+    const data = { ...req.body, surveyId: Number(req.params.id) };
+    const item = await createProposalEquipment(data);
+    res.status(201).json(item);
+  } catch (error) {
+    console.error("[operaciones] Create proposal equipment error:", error);
+    res.status(400).json({ message: "Datos invalidos" });
+  }
+});
+
+router.patch("/surveys/:id/proposal-equipment/:itemId", async (req, res) => {
+  try {
+    const updated = await updateProposalEquipment(Number(req.params.itemId), req.body);
+    res.json(updated);
+  } catch (error) {
+    console.error("[operaciones] Update proposal equipment error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+router.delete("/surveys/:id/proposal-equipment/:itemId", async (req, res) => {
+  try {
+    await deleteProposalEquipment(Number(req.params.itemId));
+    res.json({ message: "Eliminado" });
+  } catch (error) {
+    console.error("[operaciones] Delete proposal equipment error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+// ─── Proposal Supplies (Section 11) ─────────────────────
+
+router.get("/surveys/:id/proposal-supplies", async (req, res) => {
+  try {
+    const items = await getSurveyProposalSupplies(Number(req.params.id));
+    res.json(items);
+  } catch (error) {
+    console.error("[operaciones] Get proposal supplies error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+router.post("/surveys/:id/proposal-supplies", async (req, res) => {
+  try {
+    const data = { ...req.body, surveyId: Number(req.params.id) };
+    const item = await createProposalSupplies(data);
+    res.status(201).json(item);
+  } catch (error) {
+    console.error("[operaciones] Create proposal supplies error:", error);
+    res.status(400).json({ message: "Datos invalidos" });
+  }
+});
+
+router.patch("/surveys/:id/proposal-supplies/:itemId", async (req, res) => {
+  try {
+    const updated = await updateProposalSupplies(Number(req.params.itemId), req.body);
+    res.json(updated);
+  } catch (error) {
+    console.error("[operaciones] Update proposal supplies error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+router.delete("/surveys/:id/proposal-supplies/:itemId", async (req, res) => {
+  try {
+    await deleteProposalSupplies(Number(req.params.itemId));
+    res.json({ message: "Eliminado" });
+  } catch (error) {
+    console.error("[operaciones] Delete proposal supplies error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+// ─── Proposal Rentals (Section 12) ──────────────────────
+
+router.get("/surveys/:id/proposal-rentals", async (req, res) => {
+  try {
+    const items = await getSurveyProposalRentals(Number(req.params.id));
+    res.json(items);
+  } catch (error) {
+    console.error("[operaciones] Get proposal rentals error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+router.post("/surveys/:id/proposal-rentals", async (req, res) => {
+  try {
+    const data = { ...req.body, surveyId: Number(req.params.id) };
+    const item = await createProposalRentals(data);
+    res.status(201).json(item);
+  } catch (error) {
+    console.error("[operaciones] Create proposal rentals error:", error);
+    res.status(400).json({ message: "Datos invalidos" });
+  }
+});
+
+router.patch("/surveys/:id/proposal-rentals/:itemId", async (req, res) => {
+  try {
+    const updated = await updateProposalRentals(Number(req.params.itemId), req.body);
+    res.json(updated);
+  } catch (error) {
+    console.error("[operaciones] Update proposal rentals error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+router.delete("/surveys/:id/proposal-rentals/:itemId", async (req, res) => {
+  try {
+    await deleteProposalRentals(Number(req.params.itemId));
+    res.json({ message: "Eliminado" });
+  } catch (error) {
+    console.error("[operaciones] Delete proposal rentals error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+// ─── Gate Config Admin ──────────────────────────────────
+
+router.get("/gate-configs", async (_req, res) => {
+  try {
+    const configs = await getGateConfigs();
+    res.json(configs);
+  } catch (error) {
+    console.error("[operaciones] Get gate configs error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+router.post("/gate-configs", async (req, res) => {
+  try {
+    const parsed = insertGateConfigSchema.parse(req.body);
+    const config = await createGateConfig(parsed);
+    res.status(201).json(config);
+  } catch (error) {
+    console.error("[operaciones] Create gate config error:", error);
+    res.status(400).json({ message: "Datos invalidos" });
+  }
+});
+
+router.patch("/gate-configs/:id", async (req, res) => {
+  try {
+    const updated = await updateGateConfig(Number(req.params.id), req.body);
+    if (!updated) return res.status(404).json({ message: "Config no encontrada" });
+    res.json(updated);
+  } catch (error) {
+    console.error("[operaciones] Update gate config error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+// ─── Documents ──────────────────────────────────────────
 
 router.get("/documents", async (_req, res) => {
   try {

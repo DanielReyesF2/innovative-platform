@@ -11,6 +11,7 @@ const LoginPage = lazy(() => import("@/features/auth/page"));
 const DashboardPage = lazy(() => import("@/features/dashboard/page"));
 const ComercialPage = lazy(() => import("@/features/comercial/page"));
 const OperacionesPage = lazy(() => import("@/features/operaciones/page"));
+const SurveyFormPage = lazy(() => import("@/features/operaciones/components/SurveyForm"));
 const SubproductosPage = lazy(() => import("@/features/subproductos/page"));
 const NovaPage = lazy(() => import("@/features/nova/page"));
 const SettingsPage = lazy(() => import("@/features/settings/page"));
@@ -31,6 +32,7 @@ function AppRouter() {
         <Route path="/login" component={LoginPage} />
         <Route path="/">{() => <ProtectedRoute><DashboardPage /></ProtectedRoute>}</Route>
         <Route path="/comercial">{() => <ProtectedRoute><ComercialPage /></ProtectedRoute>}</Route>
+        <Route path="/operaciones/levantamiento/:id">{(params) => <ProtectedRoute><SurveyFormPage surveyId={Number(params.id)} /></ProtectedRoute>}</Route>
         <Route path="/operaciones">{() => <ProtectedRoute><OperacionesPage /></ProtectedRoute>}</Route>
         <Route path="/subproductos">{() => <ProtectedRoute><SubproductosPage /></ProtectedRoute>}</Route>
         <Route path="/nova">{() => <ProtectedRoute><NovaPage /></ProtectedRoute>}</Route>

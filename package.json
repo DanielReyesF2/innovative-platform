@@ -10,7 +10,8 @@
     "start": "NODE_ENV=production node dist/index.js",
     "check": "tsc --noEmit",
     "db:push": "drizzle-kit push",
-    "db:seed": "tsx scripts/seed.ts"
+    "db:seed": "tsx scripts/seed.ts",
+    "db:reset": "tsx scripts/reset-db.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
