@@ -1,11 +1,9 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation, Link } from "wouter";
-import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
-  LogOut,
   Menu,
   X,
   type LucideIcon,
@@ -29,7 +27,6 @@ function getIcon(iconName: string): LucideIcon {
 export function Sidebar() {
   const [location] = useLocation();
   const [isOpen, setIsOpen] = useState(false);
-  const { logout } = useAuth();
 
   // Fetch available modules from the server
   const { data: modules = [] } = useQuery<ModuleNavItem[]>({
@@ -105,16 +102,8 @@ export function Sidebar() {
           </ul>
         </nav>
 
-        {/* Footer */}
-        <div className="border-t border-sidebar-border p-3">
-          <button
-            onClick={logout}
-            className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-          >
-            <LogOut className="h-4 w-4" />
-            Cerrar sesion
-          </button>
-        </div>
+        {/* Footer spacer */}
+        <div className="border-t border-sidebar-border p-3" />
       </aside>
     </>
   );

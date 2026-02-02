@@ -16,6 +16,7 @@ const SubproductosPage = lazy(() => import("@/features/subproductos/page"));
 const NovaPage = lazy(() => import("@/features/nova/page"));
 const SettingsPage = lazy(() => import("@/features/settings/page"));
 const KpisPage = lazy(() => import("@/features/kpis/page"));
+const ProfilePage = lazy(() => import("@/features/auth/profile-page"));
 
 function PageLoader() {
   return (
@@ -36,8 +37,9 @@ function AppRouter() {
         <Route path="/operaciones">{() => <ProtectedRoute><OperacionesPage /></ProtectedRoute>}</Route>
         <Route path="/subproductos">{() => <ProtectedRoute><SubproductosPage /></ProtectedRoute>}</Route>
         <Route path="/nova">{() => <ProtectedRoute><NovaPage /></ProtectedRoute>}</Route>
-        <Route path="/settings">{() => <ProtectedRoute><SettingsPage /></ProtectedRoute>}</Route>
+        <Route path="/settings">{() => <ProtectedRoute adminOnly><SettingsPage /></ProtectedRoute>}</Route>
         <Route path="/kpis">{() => <ProtectedRoute><KpisPage /></ProtectedRoute>}</Route>
+        <Route path="/perfil">{() => <ProtectedRoute><ProfilePage /></ProtectedRoute>}</Route>
         <Route>
           <div className="flex items-center justify-center min-h-screen">
             <h1 className="text-2xl font-bold">404 - Page Not Found</h1>

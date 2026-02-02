@@ -5,7 +5,7 @@
   "description": "Conexion a Nova AI centralizado: proxy, chat component con SSE streaming",
   "icon": "Bot",
   "navOrder": 99,
-  "showInNav": true,
+  "showInNav": false,
   "basePath": "/nova",
   "apiPrefix": "/api/nova",
   "dependencies": ["auth"],

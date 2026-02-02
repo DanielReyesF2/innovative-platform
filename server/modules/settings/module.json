@@ -5,7 +5,7 @@
   "description": "Hub centralizado de configuracion: usuarios, roles, areas, empresa, modulos",
   "icon": "Settings",
   "navOrder": 99,
-  "showInNav": true,
+  "showInNav": false,
   "basePath": "/settings",
   "apiPrefix": "/api/settings",
   "dependencies": ["auth"],
