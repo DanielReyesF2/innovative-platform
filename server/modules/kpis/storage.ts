@@ -19,8 +19,8 @@ export async function getKpiCategories() {
 export async function createKpiCategory(data: {
   name: string;
   displayName: string;
-  icon?: string;
-  color?: string;
+  icon?: string | null;
+  color?: string | null;
 }) {
   const [category] = await db
     .insert(kpiCategories)
@@ -105,7 +105,7 @@ export async function getKpiById(id: number) {
 export async function createKpi(data: Record<string, any>, createdById: number) {
   const [kpi] = await db
     .insert(kpis)
-    .values({ ...data, createdById })
+    .values({ ...data, createdById } as any)
     .returning();
   return kpi;
 }
@@ -323,7 +323,7 @@ export async function createActionPlan(
 
   const [plan] = await db
     .insert(kpiActionPlans)
-    .values(values)
+    .values(values as any)
     .returning();
   return plan;
 }

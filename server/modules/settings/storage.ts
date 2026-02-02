@@ -360,7 +360,7 @@ export async function getModuleConfigs(moduleName: string) {
 }
 
 export async function upsertModuleConfig(
-  data: { moduleName: string; configKey: string; configValue: unknown },
+  data: { moduleName: string; configKey: string; configValue?: unknown },
   updatedById: number
 ) {
   const existing = await db.query.moduleConfig.findFirst({
