@@ -1,0 +1,41 @@
+{
+  "company": "Innovative Group",
+  "areas": ["Dirección", "Comercial", "Operaciones", "Subproductos"],
+  "users": [
+    {
+      "name": "Carmen Rodríguez",
+      "email": "carmen@innovative-la.com",
+      "role": "comercial",
+      "area": "Comercial",
+      "password": "Innovative2026!"
+    },
+    {
+      "name": "Armando Martínez",
+      "email": "armando@innovative-la.com",
+      "role": "comercial",
+      "area": "Comercial",
+      "password": "Innovative2026!"
+    },
+    {
+      "name": "Cristina Silva",
+      "email": "cristina@innovative-la.com",
+      "role": "comercial",
+      "area": "Comercial",
+      "password": "Innovative2026!"
+    },
+    {
+      "name": "Laura Mesa",
+      "email": "laura.mesa@innovative-la.com",
+      "role": "comercial",
+      "area": "Comercial",
+      "password": "Innovative2026!"
+    },
+    {
+      "name": "Laura Sobrino",
+      "email": "laura.sobrino@innovative-la.com",
+      "role": "comercial",
+      "area": "Comercial",
+      "password": "Innovative2026!"
+    }
+  ]
+}

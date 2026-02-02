@@ -22,7 +22,7 @@ interface ModuleNavItem {
 }
 
 function getIcon(iconName: string): LucideIcon {
-  const icon = (LucideIcons as Record<string, LucideIcon>)[iconName];
+  const icon = (LucideIcons as unknown as Record<string, LucideIcon>)[iconName];
   return icon || LayoutDashboard;
 }
 
@@ -70,10 +70,18 @@ export function Sidebar() {
         )}
       >
         {/* Logo / brand */}
-        <div className="flex h-14 items-center border-b px-4">
-          <h1 className="text-lg font-bold text-sidebar-foreground">
-            Innovative Group
-          </h1>
+        <div className="flex h-14 items-center gap-2.5 border-b border-sidebar-border px-4">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-sidebar-primary/20">
+            <LucideIcons.Leaf className="h-4.5 w-4.5 text-sidebar-primary" />
+          </div>
+          <div className="flex flex-col">
+            <span className="text-sm font-bold leading-tight text-sidebar-foreground">
+              Innovative
+            </span>
+            <span className="text-[10px] font-medium uppercase tracking-wider text-sidebar-primary">
+              Group
+            </span>
+          </div>
         </div>
 
         {/* Navigation — all items come from GET /api/modules */}
@@ -98,10 +106,10 @@ export function Sidebar() {
         </nav>
 
         {/* Footer */}
-        <div className="border-t p-3">
+        <div className="border-t border-sidebar-border p-3">
           <button
             onClick={logout}
-            className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+            className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
           >
             <LogOut className="h-4 w-4" />
             Cerrar sesion

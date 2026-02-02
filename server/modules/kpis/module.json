@@ -1,0 +1,20 @@
+{
+  "name": "kpis",
+  "displayName": "Centro de Control KPIs",
+  "version": "1.0.0",
+  "description": "KPI tracking, compliance, action plans, trend analysis",
+  "icon": "Target",
+  "navOrder": 2,
+  "showInNav": true,
+  "basePath": "/kpis",
+  "apiPrefix": "/api/kpis",
+  "dependencies": ["auth"],
+  "requiredEnvVars": [],
+  "hasNovaTools": true,
+  "source": "orsega",
+  "files": {
+    "client": "client/features/kpis/",
+    "server": "server/modules/kpis/",
+    "schema": "shared/schema/kpis.ts"
+  }
+}

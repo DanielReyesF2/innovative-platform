@@ -1,0 +1,20 @@
+{
+  "name": "settings",
+  "displayName": "Configuracion",
+  "version": "1.0.0",
+  "description": "Hub centralizado de configuracion: usuarios, roles, areas, empresa, modulos",
+  "icon": "Settings",
+  "navOrder": 99,
+  "showInNav": true,
+  "basePath": "/settings",
+  "apiPrefix": "/api/settings",
+  "dependencies": ["auth"],
+  "requiredEnvVars": [],
+  "hasNovaTools": false,
+  "source": "orsega",
+  "files": {
+    "client": "client/features/settings/",
+    "server": "server/modules/settings/",
+    "schema": "shared/schema/settings.ts"
+  }
+}

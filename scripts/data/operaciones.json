@@ -1,0 +1,189 @@
+{
+  "documents": [
+    {
+      "name": "Licencia Ambiental Única (LAU)",
+      "type": "Licencia Ambiental",
+      "category": "Licencias",
+      "issueDate": "2024-03-15",
+      "expirationDate": "2027-03-15"
+    },
+    {
+      "name": "Autorización SEMARNAT Transporte de RP",
+      "type": "Permiso de Transporte",
+      "category": "Permisos",
+      "issueDate": "2025-01-10",
+      "expirationDate": "2026-01-10"
+    },
+    {
+      "name": "Certificado ISO 14001:2015",
+      "type": "Certificación ISO",
+      "category": "Certificaciones",
+      "issueDate": "2024-06-01",
+      "expirationDate": "2027-06-01"
+    },
+    {
+      "name": "Registro como Empresa Generadora de Residuos",
+      "type": "Registro Ambiental",
+      "category": "Permisos",
+      "issueDate": "2023-09-20",
+      "expirationDate": "2026-09-20"
+    },
+    {
+      "name": "Póliza RC Daños a Terceros",
+      "type": "Seguro",
+      "category": "Seguros",
+      "issueDate": "2025-07-01",
+      "expirationDate": "2026-07-01"
+    },
+    {
+      "name": "Póliza RC Ambiental",
+      "type": "Seguro",
+      "category": "Seguros",
+      "issueDate": "2025-07-01",
+      "expirationDate": "2026-07-01"
+    },
+    {
+      "name": "Certificado Empresa Socialmente Responsable (ESR)",
+      "type": "Certificación ESR",
+      "category": "Certificaciones",
+      "issueDate": "2025-04-01",
+      "expirationDate": "2026-04-01"
+    },
+    {
+      "name": "Permiso Estatal de Operación - Planta Ecatepec",
+      "type": "Permiso de Operación",
+      "category": "Permisos",
+      "issueDate": "2024-11-15",
+      "expirationDate": "2026-11-15"
+    },
+    {
+      "name": "Licencia de Funcionamiento Municipal",
+      "type": "Licencia Municipal",
+      "category": "Licencias",
+      "issueDate": "2025-02-01",
+      "expirationDate": "2026-02-01"
+    },
+    {
+      "name": "Verificación Vehicular Flotilla (12 unidades)",
+      "type": "Verificación Vehicular",
+      "category": "Permisos",
+      "issueDate": "2025-09-01",
+      "expirationDate": "2026-03-01"
+    }
+  ],
+  "surveys": [
+    {
+      "clientName": "Grupo Bimbo - Planta Azcapotzalco",
+      "scheduledDate": "2026-01-10",
+      "completedDate": "2026-01-10",
+      "status": "completado",
+      "type": "Levantamiento",
+      "assignedTo": "roberto@innovative-la.com",
+      "estimatedVolume": "200 ton/mes",
+      "estimatedValue": 480000,
+      "hasReport": true,
+      "observations": "Planta con alto potencial de valorización. Infraestructura existente es buena. Requieren mejora en separación en fuente.",
+      "generalInfo": {
+        "razonSocial": "Grupo Bimbo S.A.B. de C.V.",
+        "rfc": "GBI941215AA5",
+        "direccion": "Av. Rio Churubusco 300, Col. Del Carmen, Azcapotzalco, CDMX",
+        "giro": "Alimentos - Panificación",
+        "numEmpleados": 1200,
+        "horarioOperacion": "24 hrs (3 turnos)",
+        "contactoOperativo": "Ing. Manuel Soto",
+        "telefonoOperativo": "+52 55 5001 2345"
+      },
+      "wasteTypes": [
+        { "wasteType": "Orgánicos (merma de producción)", "quantity": "80 ton/mes", "percentage": 40, "currentDestination": "Relleno sanitario", "monthlyCost": 48000 },
+        { "wasteType": "Cartón y papel", "quantity": "50 ton/mes", "percentage": 25, "currentDestination": "Reciclador local", "monthlyCost": 0 },
+        { "wasteType": "Plástico (film, PET, HDPE)", "quantity": "30 ton/mes", "percentage": 15, "currentDestination": "Relleno sanitario", "monthlyCost": 18000 },
+        { "wasteType": "Tarimas de madera", "quantity": "20 ton/mes", "percentage": 10, "currentDestination": "Reúso parcial", "monthlyCost": 5000 },
+        { "wasteType": "Metales (chatarra)", "quantity": "10 ton/mes", "percentage": 5, "currentDestination": "Chatarrería", "monthlyCost": 0 },
+        { "wasteType": "Residuos generales", "quantity": "10 ton/mes", "percentage": 5, "currentDestination": "Relleno sanitario", "monthlyCost": 6000 }
+      ],
+      "currentServices": {
+        "providerName": "Recolectora del Centro S.A.",
+        "contractActive": true,
+        "contractEnd": "2026-06-30",
+        "monthlyCost": 77000,
+        "collectionFrequency": "Diaria",
+        "serviceType": "Recolección y disposición",
+        "includesSeparation": false,
+        "includesValorization": false,
+        "includesReporting": false,
+        "satisfactionLevel": 5,
+        "reasonForChange": "No ofrecen separación ni valorización, sin reportes ambientales"
+      },
+      "infrastructure": {
+        "hasStorageArea": true,
+        "storageAreaSize": "120 m²",
+        "storageType": "Techado con piso de concreto",
+        "containerCount": 8,
+        "hasCompactor": true,
+        "hasWarehouse": true,
+        "vehicleAccess": "Acceso para tráiler, andén de descarga",
+        "scheduleRestrictions": "Recolección nocturna preferida (22:00-06:00)",
+        "availableSpace": "Espacio adicional de 50 m² para contenedores de separación"
+      },
+      "needs": {
+        "needsSeparation": true,
+        "needsValorization": true,
+        "needsTraceability": true,
+        "needsMonthlyReporting": true,
+        "certifications": ["ISO 14001", "Zero Waste (GBCI)"],
+        "environmentalGoals": "Alcanzar 90% de desvío de relleno sanitario para 2027",
+        "availableBudget": 500000,
+        "urgency": "Alta",
+        "decisionMaker": "Dir. de Sustentabilidad Corporativa"
+      }
+    },
+    {
+      "clientName": "Liverpool - Corporativo Santa Fe",
+      "scheduledDate": "2026-01-25",
+      "completedDate": null,
+      "status": "en_proceso",
+      "type": "Levantamiento",
+      "assignedTo": "roberto@innovative-la.com",
+      "estimatedVolume": "90 ton/mes",
+      "estimatedValue": 195000,
+      "hasReport": false,
+      "observations": "Levantamiento parcial - falta visitar cedis y 2 tiendas.",
+      "generalInfo": {
+        "razonSocial": "El Puerto de Liverpool S.A.B. de C.V.",
+        "rfc": "PLC810211LU7",
+        "direccion": "Av. Vasco de Quiroga 3800, Santa Fe, CDMX",
+        "giro": "Retail - Tiendas departamentales",
+        "numEmpleados": 850,
+        "horarioOperacion": "10:00-21:00",
+        "contactoOperativo": "Mariana Solís",
+        "telefonoOperativo": "+52 55 5268 7200"
+      },
+      "wasteTypes": [
+        { "wasteType": "Cartón de embalaje", "quantity": "40 ton/mes", "percentage": 44, "currentDestination": "Reciclador", "monthlyCost": 0 },
+        { "wasteType": "Plástico (film stretch, bolsas)", "quantity": "15 ton/mes", "percentage": 17, "currentDestination": "Relleno sanitario", "monthlyCost": 9000 },
+        { "wasteType": "Orgánicos (food court)", "quantity": "20 ton/mes", "percentage": 22, "currentDestination": "Relleno sanitario", "monthlyCost": 12000 },
+        { "wasteType": "Residuos generales", "quantity": "15 ton/mes", "percentage": 17, "currentDestination": "Relleno sanitario", "monthlyCost": 9000 }
+      ],
+      "currentServices": null,
+      "infrastructure": null,
+      "needs": null
+    },
+    {
+      "clientName": "Aeropuerto AIFA - Zona Operativa",
+      "scheduledDate": "2026-02-10",
+      "completedDate": null,
+      "status": "agendado",
+      "type": "Levantamiento",
+      "assignedTo": "roberto@innovative-la.com",
+      "estimatedVolume": "180 ton/mes",
+      "estimatedValue": 390000,
+      "hasReport": false,
+      "observations": null,
+      "generalInfo": null,
+      "wasteTypes": [],
+      "currentServices": null,
+      "infrastructure": null,
+      "needs": null
+    }
+  ]
+}

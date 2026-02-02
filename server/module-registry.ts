@@ -6,6 +6,8 @@ import comercialRouter from "./modules/comercial/routes";
 import operacionesRouter from "./modules/operaciones/routes";
 import subproductosRouter from "./modules/subproductos/routes";
 import novaRouter from "./modules/nova/routes";
+import settingsRouter from "./modules/settings/routes";
+import kpisRouter from "./modules/kpis/routes";
 
 export const moduleRouters: Record<string, Router> = {
 "auth": authRouter,
@@ -14,4 +16,6 @@ export const moduleRouters: Record<string, Router> = {
   "operaciones": operacionesRouter,
   "subproductos": subproductosRouter,
   "nova": novaRouter,
+  "settings": settingsRouter,
+  "kpis": kpisRouter,
 };

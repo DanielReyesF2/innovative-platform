@@ -6,3 +6,5 @@ export * from "./comercial";
 export * from "./operaciones";
 export * from "./subproductos";
 export * from "./nova";
+export * from "./settings";
+export * from "./kpis";
