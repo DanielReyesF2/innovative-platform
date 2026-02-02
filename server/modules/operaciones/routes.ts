@@ -1,5 +1,6 @@
 import { Router } from "express";
-import { requireAuth } from "../../middleware/auth";
+import { z } from "zod";
+import { requireAuth, requireRole } from "../../middleware/auth";
 import {
   getSurveys,
   getSurveyById,
@@ -59,6 +60,9 @@ import {
   updateDocument,
   deleteDocument,
   getSurveySummary,
+  getPendingReviewSurveys,
+  acceptSurvey,
+  rejectSurvey,
 } from "./storage";
 import {
   insertSurveySchema,
@@ -88,6 +92,86 @@ router.get("/surveys", async (_req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 });
+
+// --- Handoff: Pending review, Accept, Reject ---
+
+const acceptSurveySchema = z.object({
+  scheduledDate: z.string().min(1, "Fecha requerida"),
+  assignedToId: z.number().int().positive("Operador requerido"),
+  schedulingNotes: z.string().max(500).optional(),
+});
+
+const rejectSurveySchema = z.object({
+  rejectionReason: z.string().min(10, "Motivo debe tener al menos 10 caracteres").max(1000),
+});
+
+router.get(
+  "/surveys/pending-review",
+  requireRole("admin", "operaciones"),
+  async (_req, res) => {
+    try {
+      const surveys = await getPendingReviewSurveys();
+      res.json(surveys);
+    } catch (error) {
+      console.error("[operaciones] Get pending review surveys error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  }
+);
+
+router.post(
+  "/surveys/:id/accept",
+  requireRole("admin", "operaciones"),
+  async (req, res) => {
+    try {
+      const parsed = acceptSurveySchema.parse(req.body);
+      const updated = await acceptSurvey(
+        Number(req.params.id),
+        {
+          scheduledDate: new Date(parsed.scheduledDate),
+          assignedToId: parsed.assignedToId,
+          schedulingNotes: parsed.schedulingNotes,
+        },
+        (req as any).user.id
+      );
+      res.json(updated);
+    } catch (error: any) {
+      console.error("[operaciones] Accept survey error:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.errors[0].message });
+      }
+      const msg = error.message || "Internal server error";
+      if (msg.startsWith("NOT_FOUND")) return res.status(404).json({ message: "Levantamiento no encontrado" });
+      if (msg.startsWith("CONFLICT:")) return res.status(409).json({ message: msg.slice(9) });
+      res.status(500).json({ message: "Internal server error" });
+    }
+  }
+);
+
+router.post(
+  "/surveys/:id/reject",
+  requireRole("admin", "operaciones"),
+  async (req, res) => {
+    try {
+      const parsed = rejectSurveySchema.parse(req.body);
+      const result = await rejectSurvey(
+        Number(req.params.id),
+        parsed.rejectionReason,
+        (req as any).user.id
+      );
+      res.json(result);
+    } catch (error: any) {
+      console.error("[operaciones] Reject survey error:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.errors[0].message });
+      }
+      const msg = error.message || "Internal server error";
+      if (msg.startsWith("NOT_FOUND")) return res.status(404).json({ message: "Levantamiento no encontrado" });
+      if (msg.startsWith("CONFLICT:")) return res.status(409).json({ message: msg.slice(9) });
+      res.status(500).json({ message: "Internal server error" });
+    }
+  }
+);
 
 router.get("/surveys/summary", async (_req, res) => {
   try {

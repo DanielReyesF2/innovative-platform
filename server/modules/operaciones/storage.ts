@@ -532,6 +532,83 @@ export async function deleteDocument(id: number) {
   await db.delete(operationalDocuments).where(eq(operationalDocuments.id, id));
 }
 
+// ─── Handoff: Pending review, Accept, Reject ────────────
+
+export async function getPendingReviewSurveys() {
+  return db.query.surveys.findMany({
+    where: eq(surveys.status, "pendiente_operaciones" as any),
+    orderBy: [desc(surveys.createdAt)],
+  });
+}
+
+export async function acceptSurvey(
+  id: number,
+  data: { scheduledDate: Date; assignedToId: number; schedulingNotes?: string },
+  acceptedById: number
+) {
+  const survey = await db.query.surveys.findFirst({ where: eq(surveys.id, id) });
+  if (!survey) throw new Error("NOT_FOUND");
+  if (survey.status !== "pendiente_operaciones") {
+    throw new Error("CONFLICT:Solo se pueden aceptar solicitudes en estado 'pendiente_operaciones'");
+  }
+
+  const [updated] = await db
+    .update(surveys)
+    .set({
+      status: "agendado",
+      scheduledDate: data.scheduledDate,
+      assignedOperationsId: data.assignedToId,
+      schedulingNotes: data.schedulingNotes || null,
+      acceptedById,
+      acceptedAt: new Date(),
+      updatedAt: new Date(),
+    })
+    .where(eq(surveys.id, id))
+    .returning();
+  return updated;
+}
+
+export async function rejectSurvey(
+  id: number,
+  rejectionReason: string,
+  rejectedById: number
+) {
+  const survey = await db.query.surveys.findFirst({ where: eq(surveys.id, id) });
+  if (!survey) throw new Error("NOT_FOUND");
+  if (survey.status !== "pendiente_operaciones") {
+    throw new Error("CONFLICT:Solo se pueden rechazar solicitudes en estado 'pendiente_operaciones'");
+  }
+
+  const result = await db.transaction(async (tx) => {
+    const [updated] = await tx
+      .update(surveys)
+      .set({
+        status: "rechazado",
+        rejectionReason,
+        rejectedById,
+        rejectedAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(surveys.id, id))
+      .returning();
+
+    if (updated.prospectId) {
+      await tx
+        .update(prospects)
+        .set({
+          stage: "lead",
+          surveyId: null,
+          updatedAt: new Date(),
+        })
+        .where(eq(prospects.id, updated.prospectId));
+    }
+
+    return { survey: updated };
+  });
+
+  return result;
+}
+
 // ─── Summary stats ──────────────────────────────────────
 
 export async function getSurveySummary() {

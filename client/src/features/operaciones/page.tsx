@@ -14,8 +14,18 @@ import {
   ChevronRight,
   AlertCircle,
   Plus,
+  Inbox,
+  BarChart3,
 } from "lucide-react";
-import { useSurveys, useSurveySummary, useDocuments, useExpiredDocuments } from "./api";
+import {
+  useSurveys,
+  useSurveySummary,
+  useDocuments,
+  useExpiredDocuments,
+  usePendingReviewSurveys,
+} from "./api";
+import { KpiSection } from "@/features/kpis/components/KpiSection";
+import { ReviewSurveyModal } from "./components/ReviewSurveyModal";
 
 const STATUS_LABELS: Record<string, string> = {
   borrador_comercial: "Borrador Comercial",
@@ -24,6 +34,7 @@ const STATUS_LABELS: Record<string, string> = {
   en_sitio: "En Sitio",
   completado: "Completado",
   cancelado: "Cancelado",
+  rechazado: "Rechazado",
 };
 
 const STATUS_COLORS: Record<string, string> = {
@@ -33,6 +44,7 @@ const STATUS_COLORS: Record<string, string> = {
   en_sitio: "bg-orange-100 text-orange-800",
   completado: "bg-green-100 text-green-800",
   cancelado: "bg-gray-100 text-gray-800",
+  rechazado: "bg-red-100 text-red-800",
 };
 
 const DOC_STATUS_COLORS: Record<string, string> = {
@@ -47,19 +59,25 @@ export default function OperacionesPage() {
   const { data: summary } = useSurveySummary();
   const { data: documents = [] } = useDocuments();
   const { data: expiredDocs = [] } = useExpiredDocuments();
+  const { data: pendingReview = [] } = usePendingReviewSurveys();
 
-  const [activeTab, setActiveTab] = useState<"surveys" | "documents">("surveys");
+  const [activeTab, setActiveTab] = useState<"solicitudes" | "surveys" | "documents" | "kpis">(
+    "solicitudes"
+  );
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [reviewSurvey, setReviewSurvey] = useState<any>(null);
 
-  // Filter surveys
-  const filteredSurveys = surveys.filter((s: any) => {
-    const matchesSearch =
-      !searchTerm ||
-      s.clientName?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === "all" || s.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+  // Filter surveys (exclude pendiente_operaciones from main list)
+  const filteredSurveys = surveys
+    .filter((s: any) => s.status !== "pendiente_operaciones")
+    .filter((s: any) => {
+      const matchesSearch =
+        !searchTerm ||
+        s.clientName?.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesStatus = statusFilter === "all" || s.status === statusFilter;
+      return matchesSearch && matchesStatus;
+    });
 
   // Filter documents
   const filteredDocs = documents.filter((d: any) => {
@@ -98,6 +116,12 @@ export default function OperacionesPage() {
       {/* KPI Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <MetricCard
+          title="Solicitudes"
+          value={String(pendingReview.length)}
+          description="Pendientes de revision"
+          icon={<Inbox className="h-4 w-4 text-muted-foreground" />}
+        />
+        <MetricCard
           title="Levantamientos Pendientes"
           value={String(pendingSurveys)}
           description="Borrador + En proceso"
@@ -110,12 +134,6 @@ export default function OperacionesPage() {
           icon={<CheckCircle className="h-4 w-4 text-muted-foreground" />}
         />
         <MetricCard
-          title="Sin Reporte"
-          value={String(withoutReport)}
-          description="Completados sin reporte"
-          icon={<AlertTriangle className="h-4 w-4 text-muted-foreground" />}
-        />
-        <MetricCard
           title="Docs Vencidos"
           value={String(expiredDocs.length)}
           description="Requieren renovacion"
@@ -125,6 +143,22 @@ export default function OperacionesPage() {
 
       {/* Tab selector */}
       <div className="flex gap-2 border-b pb-2">
+        <button
+          onClick={() => setActiveTab("solicitudes")}
+          className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-t-md transition-colors ${
+            activeTab === "solicitudes"
+              ? "border-b-2 border-primary text-primary"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <Inbox className="h-4 w-4" />
+          Solicitudes
+          {pendingReview.length > 0 && (
+            <span className="inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-amber-500 px-1.5 text-xs font-bold text-white">
+              {pendingReview.length}
+            </span>
+          )}
+        </button>
         <button
           onClick={() => setActiveTab("surveys")}
           className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-t-md transition-colors ${
@@ -147,37 +181,95 @@ export default function OperacionesPage() {
           <FileText className="h-4 w-4" />
           Documentos ({documents.length})
         </button>
+        <button
+          onClick={() => setActiveTab("kpis")}
+          className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-t-md transition-colors ${
+            activeTab === "kpis"
+              ? "border-b-2 border-primary text-primary"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <BarChart3 className="h-4 w-4" />
+          KPIs
+        </button>
       </div>
 
-      {/* Search */}
-      <div className="flex items-center gap-3">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder={activeTab === "surveys" ? "Buscar levantamientos..." : "Buscar documentos..."}
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-9"
-          />
+      {/* Search (not shown for solicitudes or kpis) */}
+      {(activeTab === "surveys" || activeTab === "documents") && (
+        <div className="flex items-center gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder={activeTab === "surveys" ? "Buscar levantamientos..." : "Buscar documentos..."}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+          {activeTab === "surveys" && (
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+            >
+              <option value="all">Todos los estados</option>
+              {Object.entries(STATUS_LABELS).map(([key, label]) => (
+                <option key={key} value={key}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          )}
         </div>
-        {activeTab === "surveys" && (
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="h-10 rounded-md border border-input bg-background px-3 text-sm"
-          >
-            <option value="all">Todos los estados</option>
-            {Object.entries(STATUS_LABELS).map(([key, label]) => (
-              <option key={key} value={key}>
-                {label}
-              </option>
-            ))}
-          </select>
-        )}
-      </div>
+      )}
 
       {/* Content */}
-      {activeTab === "surveys" ? (
+      {activeTab === "kpis" ? (
+        <KpiSection moduleSlug="operaciones" compact />
+      ) : activeTab === "solicitudes" ? (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">
+              Solicitudes Pendientes ({pendingReview.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {pendingReview.length === 0 ? (
+              <EmptyState message="No hay solicitudes pendientes" />
+            ) : (
+              <div className="space-y-3">
+                {pendingReview.map((survey: any) => (
+                  <button
+                    key={survey.id}
+                    onClick={() => setReviewSurvey(survey)}
+                    className="flex w-full items-center justify-between rounded-lg border border-amber-200 bg-amber-50/50 p-4 text-left transition-colors hover:bg-amber-100/50"
+                  >
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold">{survey.clientName}</span>
+                        <span className="inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
+                          Pendiente Operaciones
+                        </span>
+                      </div>
+                      <div className="mt-1 flex items-center gap-4 text-sm text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          <Calendar className="h-3 w-3" />
+                          {new Date(survey.createdAt).toLocaleDateString("es-MX")}
+                        </span>
+                        {survey.estimatedVolume && <span>{survey.estimatedVolume}</span>}
+                        {survey.estimatedValue && (
+                          <span>${Number(survey.estimatedValue).toLocaleString("es-MX")}</span>
+                        )}
+                      </div>
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                  </button>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      ) : activeTab === "surveys" ? (
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">
@@ -280,6 +372,14 @@ export default function OperacionesPage() {
             )}
           </CardContent>
         </Card>
+      )}
+
+      {/* Review survey modal */}
+      {reviewSurvey && (
+        <ReviewSurveyModal
+          survey={reviewSurvey}
+          onClose={() => setReviewSurvey(null)}
+        />
       )}
     </div>
   );

@@ -17,6 +17,7 @@ import {
   getPendingActionPlans,
   createActionPlan,
   updateActionPlan,
+  getAreaByModuleSlug,
   seedKpiCategories,
 } from "./storage";
 import {
@@ -51,9 +52,10 @@ router.use(async (_req, _res, next) => {
 // Summary (static route first)
 // ========================
 
-router.get("/summary", async (_req, res) => {
+router.get("/summary", async (req, res) => {
   try {
-    const summary = await getKpiSummary();
+    const { areaId } = req.query;
+    const summary = await getKpiSummary(areaId ? Number(areaId) : undefined);
     res.json(summary);
   } catch (error) {
     console.error("[kpis] Get summary error:", error);
@@ -90,9 +92,10 @@ router.post("/categories", async (req, res) => {
 // Action Plans - pending (static route before /:id)
 // ========================
 
-router.get("/action-plans/pending", async (_req, res) => {
+router.get("/action-plans/pending", async (req, res) => {
   try {
-    const plans = await getPendingActionPlans();
+    const { areaId } = req.query;
+    const plans = await getPendingActionPlans(areaId ? Number(areaId) : undefined);
     res.json(plans);
   } catch (error) {
     console.error("[kpis] Get pending action plans error:", error);
@@ -106,12 +109,13 @@ router.get("/action-plans/pending", async (_req, res) => {
 
 router.get("/", async (req, res) => {
   try {
-    const { categoryId, status, frequency, ownerId } = req.query;
+    const { categoryId, status, frequency, ownerId, areaId } = req.query;
     const kpis = await getKpis({
       categoryId: categoryId ? Number(categoryId) : undefined,
       status: status as string,
       frequency: frequency as string,
       ownerId: ownerId ? Number(ownerId) : undefined,
+      areaId: areaId ? Number(areaId) : undefined,
     });
     res.json(kpis);
   } catch (error) {
@@ -173,6 +177,21 @@ router.patch("/action-plans/:id", async (req, res) => {
   } catch (error) {
     console.error("[kpis] Update action plan error:", error);
     res.status(400).json({ message: "Datos invalidos" });
+  }
+});
+
+// ========================
+// Area by module slug
+// ========================
+
+router.get("/area-by-module/:slug", async (req, res) => {
+  try {
+    const result = await getAreaByModuleSlug(req.params.slug);
+    if (!result) return res.status(404).json({ message: "Area no encontrada para este modulo" });
+    res.json(result);
+  } catch (error) {
+    console.error("[kpis] Get area by module slug error:", error);
+    res.status(500).json({ message: "Internal server error" });
   }
 });
 

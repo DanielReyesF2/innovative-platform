@@ -14,6 +14,7 @@ export const areas = pgTable("areas", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   companyId: integer("company_id").references(() => companies.id),
+  moduleSlug: text("module_slug"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -45,6 +46,7 @@ export const insertCompanySchema = createInsertSchema(companies, {
 
 export const insertAreaSchema = createInsertSchema(areas, {
   name: z.string().min(1).max(200),
+  moduleSlug: z.string().max(50).optional(),
 }).omit({ id: true, createdAt: true });
 
 // Types

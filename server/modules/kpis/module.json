@@ -5,7 +5,7 @@
   "description": "KPI tracking, compliance, action plans, trend analysis",
   "icon": "Target",
   "navOrder": 2,
-  "showInNav": true,
+  "showInNav": false,
   "basePath": "/kpis",
   "apiPrefix": "/api/kpis",
   "dependencies": ["auth"],

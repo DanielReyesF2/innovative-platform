@@ -13,6 +13,7 @@ export const surveyStatusEnum = pgEnum("survey_status", [
   "en_sitio",
   "completado",
   "cancelado",
+  "rechazado",
 ]);
 
 export const documentStatusEnum = pgEnum("document_status", [
@@ -137,6 +138,14 @@ export const surveys = pgTable("surveys", {
   // Phase gates
   phase1CompletedAt: timestamp("phase1_completed_at"),
   phase2CompletedAt: timestamp("phase2_completed_at"),
+  // Handoff from comercial
+  sentById: integer("sent_by_id").references(() => users.id),
+  rejectionReason: text("rejection_reason"),
+  rejectedById: integer("rejected_by_id").references(() => users.id),
+  rejectedAt: timestamp("rejected_at"),
+  acceptedById: integer("accepted_by_id").references(() => users.id),
+  acceptedAt: timestamp("accepted_at"),
+  schedulingNotes: text("scheduling_notes"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

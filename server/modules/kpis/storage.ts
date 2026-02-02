@@ -1,11 +1,12 @@
 import { db } from "../../db";
-import { eq, desc, and, sql } from "drizzle-orm";
+import { eq, desc, and, sql, inArray } from "drizzle-orm";
 import {
   kpiCategories,
   kpis,
   kpiEntries,
   kpiActionPlans,
 } from "../../../shared/schema/kpis";
+import { areas } from "../../../shared/schema/common";
 
 // --- Categories ---
 
@@ -35,6 +36,7 @@ export async function getKpis(filters?: {
   status?: string;
   frequency?: string;
   ownerId?: number;
+  areaId?: number;
 }) {
   const conditions = [];
 
@@ -49,6 +51,9 @@ export async function getKpis(filters?: {
   }
   if (filters?.ownerId) {
     conditions.push(eq(kpis.ownerId, filters.ownerId));
+  }
+  if (filters?.areaId) {
+    conditions.push(eq(kpis.areaId, filters.areaId));
   }
 
   const allKpis = await db
@@ -125,11 +130,16 @@ export async function archiveKpi(id: number) {
 
 // --- KPI Summary ---
 
-export async function getKpiSummary() {
+export async function getKpiSummary(areaId?: number) {
+  const conditions = [eq(kpis.status, "activo")];
+  if (areaId) {
+    conditions.push(eq(kpis.areaId, areaId));
+  }
+
   const activeKpis = await db
     .select()
     .from(kpis)
-    .where(eq(kpis.status, "activo"));
+    .where(and(...conditions));
 
   let total = activeKpis.length;
   let onTarget = 0;
@@ -270,7 +280,29 @@ export async function getActionPlans(kpiId?: number) {
   });
 }
 
-export async function getPendingActionPlans() {
+export async function getPendingActionPlans(areaId?: number) {
+  if (areaId) {
+    // Get KPI IDs that belong to this area, then filter action plans
+    const areaKpis = await db
+      .select({ id: kpis.id })
+      .from(kpis)
+      .where(eq(kpis.areaId, areaId));
+    const kpiIds = areaKpis.map((k) => k.id);
+
+    if (kpiIds.length === 0) return [];
+
+    return db
+      .select()
+      .from(kpiActionPlans)
+      .where(
+        and(
+          sql`${kpiActionPlans.status} in ('pendiente', 'en_proceso')`,
+          inArray(kpiActionPlans.kpiId, kpiIds)
+        )
+      )
+      .orderBy(kpiActionPlans.dueDate);
+  }
+
   return db
     .select()
     .from(kpiActionPlans)
@@ -314,6 +346,16 @@ export async function updateActionPlan(id: number, data: Record<string, any>) {
   return updated;
 }
 
+// --- Area by Module Slug ---
+
+export async function getAreaByModuleSlug(slug: string) {
+  const area = await db.query.areas.findFirst({
+    where: eq(areas.moduleSlug, slug),
+  });
+  if (!area) return null;
+  return { areaId: area.id, areaName: area.name };
+}
+
 // --- Seed KPI Categories ---
 
 let categoriesSeeded = false;
@@ -339,4 +381,6 @@ export async function seedKpiCategories() {
       await db.insert(kpiCategories).values({ ...cat, isSystem: true });
     }
   }
+
+  categoriesSeeded = true;
 }

@@ -9,6 +9,11 @@ import {
   type InsertProspect,
   type InsertLead,
 } from "../../../shared/schema/comercial";
+import {
+  surveys,
+  surveyWasteTypes,
+  surveyCurrentServices,
+} from "../../../shared/schema/operaciones";
 
 // --- Prospects ---
 
@@ -148,4 +153,109 @@ export async function getSalesMetricsByUser(userId: number) {
     where: eq(salesMetrics.userId, userId),
     orderBy: [desc(salesMetrics.period)],
   });
+}
+
+// --- Handoff to Operaciones ---
+
+export async function sendProspectToOperaciones(prospectId: number, sentById: number) {
+  // Read prospect outside transaction for validation
+  const prospect = await db.query.prospects.findFirst({
+    where: eq(prospects.id, prospectId),
+  });
+  if (!prospect) throw new Error("NOT_FOUND");
+
+  // State guard: only "lead" stage can be sent
+  if (prospect.stage !== "lead") {
+    throw new Error("CONFLICT:El prospecto no esta en etapa 'lead'");
+  }
+
+  // Idempotency: check no active survey exists
+  if (prospect.surveyId) {
+    const existing = await db.query.surveys.findFirst({
+      where: eq(surveys.id, prospect.surveyId),
+    });
+    if (existing && existing.status !== "rechazado") {
+      throw new Error("CONFLICT:Este prospecto ya tiene una solicitud activa");
+    }
+  }
+
+  // Validate levantamiento data
+  const levData = prospect.levantamientoData as any;
+  if (!levData?.generalInfo?.razonSocial) {
+    throw new Error("VALIDATION:Se requiere al menos razon social en datos de levantamiento");
+  }
+  if (!levData?.wasteTypes?.length || !levData.wasteTypes[0]?.wasteType) {
+    throw new Error("VALIDATION:Se requiere al menos un tipo de residuo");
+  }
+
+  // All writes in a single transaction
+  const result = await db.transaction(async (tx) => {
+    // Create survey (scheduledDate = null until operaciones accepts)
+    const [survey] = await tx
+      .insert(surveys)
+      .values({
+        clientName: prospect.name,
+        status: "pendiente_operaciones",
+        type: "Levantamiento",
+        estimatedVolume: prospect.estimatedVolume,
+        estimatedValue: prospect.estimatedValue,
+        address: levData.generalInfo?.direccion || null,
+        prospectId: prospect.id,
+        sentById,
+      })
+      .returning();
+
+    // Insert waste types
+    for (const wt of levData.wasteTypes) {
+      if (!wt.wasteType) continue;
+      await tx.insert(surveyWasteTypes).values({
+        surveyId: survey.id,
+        wasteType: wt.wasteType,
+        quantity: wt.quantity || null,
+        percentage: wt.percentage ? Number(wt.percentage) : null,
+        currentDestination: wt.currentDestination || null,
+        monthlyCost: wt.monthlyCost || null,
+      });
+    }
+
+    // Insert current services (explicit mapping to avoid type mismatches from jsonb)
+    if (levData.currentServices && Object.keys(levData.currentServices).length > 0) {
+      const cs = levData.currentServices;
+      await tx.insert(surveyCurrentServices).values({
+        surveyId: survey.id,
+        providerName: cs.providerName || null,
+        contractActive: cs.contractActive ?? false,
+        contractStart: cs.contractStart ? new Date(cs.contractStart) : null,
+        contractEnd: cs.contractEnd ? new Date(cs.contractEnd) : null,
+        monthlyCost: cs.monthlyCost || null,
+        collectionFrequency: cs.collectionFrequency || null,
+        serviceType: cs.serviceType || null,
+        includesSeparation: cs.includesSeparation ?? false,
+        includesValorization: cs.includesValorization ?? false,
+        includesReporting: cs.includesReporting ?? false,
+        satisfactionLevel: cs.satisfactionLevel ? Number(cs.satisfactionLevel) || null : null,
+        reasonForChange: cs.reasonForChange || null,
+      });
+    }
+
+    // Note: infrastructure & needs data stays in prospect.levantamientoData
+    // (surveyInfrastructure/surveyNeeds tables were replaced by on-site JSONB sections)
+
+    // Update prospect
+    const [updated] = await tx
+      .update(prospects)
+      .set({
+        stage: "levantamiento",
+        surveyId: survey.id,
+        sentToOpsAt: new Date(),
+        sentToOpsById: sentById,
+        updatedAt: new Date(),
+      })
+      .where(eq(prospects.id, prospectId))
+      .returning();
+
+    return { prospect: updated, surveyId: survey.id };
+  });
+
+  return result;
 }

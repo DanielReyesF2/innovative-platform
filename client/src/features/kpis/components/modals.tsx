@@ -210,7 +210,7 @@ export function KpiDetailModal({ kpiId, onClose }: { kpiId: number; onClose: () 
 // Create KPI Modal
 // ========================
 
-export function CreateKpiModal({ categories, onClose }: { categories: any[]; onClose: () => void }) {
+export function CreateKpiModal({ categories, onClose, defaultAreaId }: { categories: any[]; onClose: () => void; defaultAreaId?: number }) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [categoryId, setCategoryId] = useState("");
@@ -221,7 +221,7 @@ export function CreateKpiModal({ categories, onClose }: { categories: any[]; onC
 
   const handleSubmit = () => {
     createKpi.mutate(
-      { name, description: description || undefined, categoryId: categoryId ? Number(categoryId) : undefined, unit: unit || undefined, targetValue: targetValue || undefined, frequency },
+      { name, description: description || undefined, categoryId: categoryId ? Number(categoryId) : undefined, unit: unit || undefined, targetValue: targetValue || undefined, frequency, areaId: defaultAreaId || undefined },
       { onSuccess: () => onClose() }
     );
   };
@@ -284,7 +284,7 @@ function EditKpiModal({ kpi, onClose }: { kpi: any; onClose: () => void }) {
 // Create Action Plan Modal
 // ========================
 
-export function CreateActionPlanModal({ kpis, onClose }: { kpis: any[]; onClose: () => void }) {
+export function CreateActionPlanModal({ kpis, onClose, defaultAreaId }: { kpis: any[]; onClose: () => void; defaultAreaId?: number }) {
   const [kpiId, setKpiId] = useState("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");

@@ -110,6 +110,21 @@ export function useRejectionReasons() {
   });
 }
 
+// --- Handoff to Operaciones ---
+
+export function useSendToOperaciones() {
+  return useMutation({
+    mutationFn: async (prospectId: number) => {
+      const res = await apiRequest("POST", `/api/comercial/prospects/${prospectId}/send-to-operaciones`);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/comercial/prospects"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/comercial/pipeline"] });
+    },
+  });
+}
+
 // --- Sales Metrics ---
 
 export function useSalesMetrics(period?: string) {

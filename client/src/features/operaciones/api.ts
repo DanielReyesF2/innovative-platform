@@ -86,6 +86,40 @@ export function useAdvanceSurveyStatus() {
   });
 }
 
+// ─── Handoff: Pending review, Accept, Reject ────────────
+
+export function usePendingReviewSurveys() {
+  return useQuery<any[]>({
+    queryKey: ["/api/operaciones/surveys/pending-review"],
+  });
+}
+
+export function useAcceptSurvey() {
+  return useMutation({
+    mutationFn: async ({ id, ...data }: { id: number; scheduledDate: string; assignedToId: number; schedulingNotes?: string }) => {
+      const res = await apiRequest("POST", `/api/operaciones/surveys/${id}/accept`, data);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/operaciones/surveys"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/operaciones/surveys/pending-review"] });
+    },
+  });
+}
+
+export function useRejectSurvey() {
+  return useMutation({
+    mutationFn: async ({ id, rejectionReason }: { id: number; rejectionReason: string }) => {
+      const res = await apiRequest("POST", `/api/operaciones/surveys/${id}/reject`, { rejectionReason });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/operaciones/surveys"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/operaciones/surveys/pending-review"] });
+    },
+  });
+}
+
 // ─── Generic sub-item CRUD hook factory ─────────────────
 
 function createSubItemHooks(resource: string) {

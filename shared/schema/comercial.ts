@@ -1,4 +1,4 @@
-import { pgTable, serial, text, integer, timestamp, boolean, numeric, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, integer, timestamp, boolean, numeric, jsonb, pgEnum } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { users } from "./common";
@@ -65,6 +65,11 @@ export const prospects = pgTable("prospects", {
   rejectionDetail: text("rejection_detail"),
   rejectionDate: timestamp("rejection_date"),
   proposalDate: timestamp("proposal_date"),
+  // Handoff to operaciones
+  surveyId: integer("survey_id"),
+  levantamientoData: jsonb("levantamiento_data"),
+  sentToOpsAt: timestamp("sent_to_ops_at"),
+  sentToOpsById: integer("sent_to_ops_by_id").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

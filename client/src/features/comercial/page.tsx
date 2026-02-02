@@ -12,8 +12,11 @@ import {
   Filter,
   ChevronRight,
   AlertCircle,
+  BarChart3,
 } from "lucide-react";
 import { useProspects, usePipeline, useLeads } from "./api";
+import { KpiSection } from "@/features/kpis/components/KpiSection";
+import { ProspectDetail } from "./components/ProspectDetail";
 
 const STAGE_LABELS: Record<string, string> = {
   lead: "Leads",
@@ -42,6 +45,50 @@ const PRIORITY_COLORS: Record<string, string> = {
 
 export default function ComercialPage() {
   const { user } = useAuth();
+  const [mainTab, setMainTab] = useState<"pipeline" | "kpis">("pipeline");
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">Pipeline Comercial</h1>
+        <p className="text-muted-foreground">
+          Gestión de prospectos, leads y embudo de ventas
+        </p>
+      </div>
+
+      {/* Main tab selector */}
+      <div className="flex gap-2 border-b pb-2">
+        <button
+          onClick={() => setMainTab("pipeline")}
+          className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-t-md transition-colors ${
+            mainTab === "pipeline"
+              ? "border-b-2 border-primary text-primary"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <TrendingUp className="h-4 w-4" />
+          Pipeline
+        </button>
+        <button
+          onClick={() => setMainTab("kpis")}
+          className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-t-md transition-colors ${
+            mainTab === "kpis"
+              ? "border-b-2 border-primary text-primary"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <BarChart3 className="h-4 w-4" />
+          KPIs
+        </button>
+      </div>
+
+      {mainTab === "pipeline" ? <PipelineView /> : <KpiSection moduleSlug="comercial" compact />}
+    </div>
+  );
+}
+
+function PipelineView() {
   const { data: prospects = [] } = useProspects();
   const { data: pipeline = [] } = usePipeline();
   const { data: leads = [] } = useLeads();
@@ -76,15 +123,7 @@ export default function ComercialPage() {
   });
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Pipeline Comercial</h1>
-        <p className="text-muted-foreground">
-          Gestión de prospectos, leads y embudo de ventas
-        </p>
-      </div>
-
+    <>
       {/* KPI Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <MetricCard
@@ -233,14 +272,14 @@ export default function ComercialPage() {
         </CardContent>
       </Card>
 
-      {/* Prospect detail modal */}
+      {/* Prospect detail */}
       {selectedProspect && (
-        <ProspectDetailModal
+        <ProspectDetail
           prospect={selectedProspect}
           onClose={() => setSelectedProspect(null)}
         />
       )}
-    </div>
+    </>
   );
 }
 
@@ -269,71 +308,3 @@ function MetricCard({
   );
 }
 
-function ProspectDetailModal({
-  prospect,
-  onClose,
-}: {
-  prospect: any;
-  onClose: () => void;
-}) {
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="max-h-[80vh] w-full max-w-2xl overflow-auto rounded-lg bg-background p-6 shadow-lg">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-xl font-bold">{prospect.name}</h2>
-          <Button variant="ghost" size="sm" onClick={onClose}>
-            ✕
-          </Button>
-        </div>
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          <InfoRow label="Industria" value={prospect.industry} />
-          <InfoRow label="Ubicación" value={prospect.location} />
-          <InfoRow label="Etapa" value={STAGE_LABELS[prospect.stage] || prospect.stage} />
-          <InfoRow label="Probabilidad" value={`${prospect.probability}%`} />
-          <InfoRow label="Potencial" value={prospect.potential} />
-          <InfoRow
-            label="Valor Estimado"
-            value={`$${Number(prospect.estimatedValue || 0).toLocaleString("es-MX")}`}
-          />
-          <InfoRow label="Volumen Estimado" value={prospect.estimatedVolume} />
-          <InfoRow label="Tiempo Cierre" value={prospect.estimatedCloseTime} />
-        </div>
-
-        {prospect.contactName && (
-          <div className="mt-4 rounded-lg border p-3">
-            <h3 className="mb-2 text-sm font-semibold">Contacto</h3>
-            <p className="text-sm">{prospect.contactName}</p>
-            {prospect.contactRole && (
-              <p className="text-xs text-muted-foreground">{prospect.contactRole}</p>
-            )}
-          </div>
-        )}
-
-        {prospect.lastActivity && (
-          <div className="mt-3">
-            <span className="text-sm font-medium">Última actividad: </span>
-            <span className="text-sm text-muted-foreground">{prospect.lastActivity}</span>
-          </div>
-        )}
-
-        {prospect.nextStep && (
-          <div className="mt-2">
-            <span className="text-sm font-medium">Siguiente paso: </span>
-            <span className="text-sm text-muted-foreground">{prospect.nextStep}</span>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function InfoRow({ label, value }: { label: string; value?: string | null }) {
-  if (!value) return null;
-  return (
-    <div>
-      <div className="text-xs text-muted-foreground">{label}</div>
-      <div className="text-sm font-medium">{value}</div>
-    </div>
-  );
-}

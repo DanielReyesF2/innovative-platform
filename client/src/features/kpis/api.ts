@@ -3,9 +3,14 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 
 // --- Summary ---
 
-export function useKpiSummary() {
+export function useKpiSummary(areaId?: number) {
+  const qs = areaId ? `?areaId=${areaId}` : "";
   return useQuery<any>({
-    queryKey: ["/api/kpis/summary"],
+    queryKey: ["/api/kpis/summary", areaId],
+    queryFn: async () => {
+      const res = await apiRequest("GET", `/api/kpis/summary${qs}`);
+      return res.json();
+    },
   });
 }
 
@@ -36,12 +41,14 @@ export function useKpis(filters?: {
   status?: string;
   frequency?: string;
   ownerId?: number;
+  areaId?: number;
 }) {
   const params = new URLSearchParams();
   if (filters?.categoryId) params.set("categoryId", String(filters.categoryId));
   if (filters?.status) params.set("status", filters.status);
   if (filters?.frequency) params.set("frequency", filters.frequency);
   if (filters?.ownerId) params.set("ownerId", String(filters.ownerId));
+  if (filters?.areaId) params.set("areaId", String(filters.areaId));
   const qs = params.toString();
 
   return useQuery<any[]>({
@@ -144,9 +151,14 @@ export function useKpiTrend(kpiId: number) {
 
 // --- Action Plans ---
 
-export function usePendingActionPlans() {
+export function usePendingActionPlans(areaId?: number) {
+  const qs = areaId ? `?areaId=${areaId}` : "";
   return useQuery<any[]>({
-    queryKey: ["/api/kpis/action-plans/pending"],
+    queryKey: ["/api/kpis/action-plans/pending", areaId],
+    queryFn: async () => {
+      const res = await apiRequest("GET", `/api/kpis/action-plans/pending${qs}`);
+      return res.json();
+    },
   });
 }
 
@@ -180,5 +192,19 @@ export function useUpdateActionPlan() {
       queryClient.invalidateQueries({ queryKey: ["/api/kpis/action-plans/pending"] });
       queryClient.invalidateQueries({ queryKey: ["/api/kpis"] });
     },
+  });
+}
+
+// --- Area by Module ---
+
+export function useAreaByModule(slug?: string) {
+  return useQuery<{ areaId: number; areaName: string } | null>({
+    queryKey: ["/api/kpis/area-by-module", slug],
+    queryFn: async () => {
+      if (!slug) return null;
+      const res = await apiRequest("GET", `/api/kpis/area-by-module/${slug}`);
+      return res.json();
+    },
+    enabled: !!slug,
   });
 }

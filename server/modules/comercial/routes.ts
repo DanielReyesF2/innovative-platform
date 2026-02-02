@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { requireAuth } from "../../middleware/auth";
+import { requireAuth, requireRole } from "../../middleware/auth";
 import {
   getProspects,
   getProspectById,
@@ -15,6 +15,7 @@ import {
   getPipelineSummary,
   getSalesMetrics,
   getSalesMetricsByUser,
+  sendProspectToOperaciones,
 } from "./storage";
 import { insertProspectSchema, insertLeadSchema } from "../../../shared/schema/comercial";
 
@@ -95,6 +96,29 @@ router.post("/prospects/:id/reject", async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 });
+
+// --- Handoff to Operaciones ---
+
+router.post(
+  "/prospects/:id/send-to-operaciones",
+  requireRole("admin", "comercial"),
+  async (req, res) => {
+    try {
+      const result = await sendProspectToOperaciones(
+        Number(req.params.id),
+        (req as any).user.id
+      );
+      res.json(result);
+    } catch (error: any) {
+      console.error("[comercial] Send to operaciones error:", error);
+      const msg = error.message || "Internal server error";
+      if (msg.startsWith("NOT_FOUND")) return res.status(404).json({ message: "Prospecto no encontrado" });
+      if (msg.startsWith("CONFLICT:")) return res.status(409).json({ message: msg.slice(9) });
+      if (msg.startsWith("VALIDATION:")) return res.status(400).json({ message: msg.slice(11) });
+      res.status(500).json({ message: "Internal server error" });
+    }
+  }
+);
 
 // --- Leads ---
 

@@ -12,6 +12,7 @@ import {
   Send,
   CheckCircle,
   Clock,
+  BarChart3,
 } from "lucide-react";
 import {
   useServiceClients,
@@ -19,6 +20,7 @@ import {
   usePendingReports,
   useClientTraceabilitySummary,
 } from "./api";
+import { KpiSection } from "@/features/kpis/components/KpiSection";
 
 const REPORT_STATUS_LABELS: Record<string, string> = {
   pendiente: "Pendiente",
@@ -35,10 +37,7 @@ const REPORT_STATUS_COLORS: Record<string, string> = {
 };
 
 export default function SubproductosPage() {
-  const { data: clients = [] } = useServiceClients();
-  const { data: summary } = useSubproductosSummary();
-  const { data: pendingReports = [] } = usePendingReports();
-  const [selectedClient, setSelectedClient] = useState<any>(null);
+  const [mainTab, setMainTab] = useState<"trazabilidad" | "kpis">("trazabilidad");
 
   return (
     <div className="space-y-6">
@@ -50,6 +49,45 @@ export default function SubproductosPage() {
         </p>
       </div>
 
+      {/* Main tab selector */}
+      <div className="flex gap-2 border-b pb-2">
+        <button
+          onClick={() => setMainTab("trazabilidad")}
+          className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-t-md transition-colors ${
+            mainTab === "trazabilidad"
+              ? "border-b-2 border-primary text-primary"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <Recycle className="h-4 w-4" />
+          Trazabilidad
+        </button>
+        <button
+          onClick={() => setMainTab("kpis")}
+          className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-t-md transition-colors ${
+            mainTab === "kpis"
+              ? "border-b-2 border-primary text-primary"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <BarChart3 className="h-4 w-4" />
+          KPIs
+        </button>
+      </div>
+
+      {mainTab === "trazabilidad" ? <TrazabilidadView /> : <KpiSection moduleSlug="subproductos" compact />}
+    </div>
+  );
+}
+
+function TrazabilidadView() {
+  const { data: clients = [] } = useServiceClients();
+  const { data: summary } = useSubproductosSummary();
+  const { data: pendingReports = [] } = usePendingReports();
+  const [selectedClient, setSelectedClient] = useState<any>(null);
+
+  return (
+    <>
       {/* KPI Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <MetricCard
@@ -162,7 +200,7 @@ export default function SubproductosPage() {
           onClose={() => setSelectedClient(null)}
         />
       )}
-    </div>
+    </>
   );
 }
 
