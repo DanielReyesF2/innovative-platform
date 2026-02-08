@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
-import { Eye, EyeOff, LogIn, Leaf } from "lucide-react";
+import { Eye, EyeOff, LogIn } from "lucide-react";
 
 export default function LoginPage() {
   const [username, setUsername] = useState("");
@@ -43,10 +43,11 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-green-900 via-green-800 to-green-950 p-4">
       <Card className="w-full max-w-md border-0 shadow-2xl">
         <CardHeader className="text-center pb-2">
-          <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary">
-            <Leaf className="h-7 w-7 text-white" />
-          </div>
-          <CardTitle className="text-2xl">Innovative Group</CardTitle>
+          <img src="/logo-icon.svg" alt="Innovative Group" className="mx-auto mb-3 h-16 w-16" />
+          <CardTitle className="text-2xl">
+            <span className="text-foreground">Innovative </span>
+            <span className="font-extrabold text-[#7BC043]">Group</span>
+          </CardTitle>
           <CardDescription>
             Ingresa tus credenciales para acceder
           </CardDescription>

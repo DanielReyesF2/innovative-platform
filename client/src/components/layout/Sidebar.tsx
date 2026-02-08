@@ -68,9 +68,7 @@ export function Sidebar() {
       >
         {/* Logo / brand */}
         <div className="flex h-14 items-center gap-2.5 border-b border-sidebar-border px-4">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-sidebar-primary/20">
-            <LucideIcons.Leaf className="h-4.5 w-4.5 text-sidebar-primary" />
-          </div>
+          <img src="/logo-icon.svg" alt="Innovative Group" className="h-8 w-8" />
           <div className="flex flex-col">
             <span className="text-sm font-bold leading-tight text-sidebar-foreground">
               Innovative
