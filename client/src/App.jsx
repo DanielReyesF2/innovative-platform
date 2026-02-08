@@ -4537,6 +4537,18 @@ const InnovativeDemo = () => {
     return emailToCode[loginEmail.toLowerCase()] || 'VA';
   })();
 
+  // Nombre del usuario actual y saludo contextual
+  const currentUserName = (() => {
+    const usuario = USUARIOS_AUTORIZADOS.find(u => u.email.toLowerCase() === loginEmail.toLowerCase());
+    return usuario?.nombre?.split(' ')[0] || 'Usuario';
+  })();
+  const userGreeting = (() => {
+    const h = new Date().getHours();
+    if (h < 12) return 'Buenos días';
+    if (h < 19) return 'Buenas tardes';
+    return 'Buenas noches';
+  })();
+
   // Shared section header component for all views
   const SectionHeader = ({ color, icon: Icon, label, linkLabel, onLinkClick }) => (
     <div className="flex items-center gap-3 mb-4 mt-8 first:mt-0">
@@ -5002,8 +5014,8 @@ const InnovativeDemo = () => {
       {/* HEADER */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-xl font-bold text-[#1c2c4a]">Dashboard Ejecutivo</h1>
-          <p className="text-sm text-[#6b7280] mt-0.5">Vista general de toda la operación</p>
+          <h1 className="text-xl font-bold text-[#1c2c4a]">{userGreeting}, {currentUserName}</h1>
+          <p className="text-sm text-[#6b7280] mt-0.5">Aquí tienes el pulso de toda tu operación</p>
         </div>
         <div className="text-xs text-[#6b7280] bg-white px-3 py-1.5 rounded-lg border border-[#e5e7eb]">
           {new Date().toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
@@ -5325,7 +5337,7 @@ const InnovativeDemo = () => {
                       onClick={() => { setHubEjecutivo(member); setHubTab('pipeline'); setCurrentView('hub-ejecutivo'); }}>
                       <td className="py-2.5">
                         <div className="flex items-center gap-2">
-                          <div className="w-7 h-7 rounded-full bg-[#00a8a8] flex items-center justify-center text-white text-[10px] font-bold">{member.codigo}</div>
+                          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#00a8a8] to-[#0D47A1] flex items-center justify-center text-white text-[10px] font-bold shadow-sm">{member.codigo}</div>
                           <div>
                             <div className="font-semibold text-[#1c2c4a]">{member.name.split(' ')[0]}</div>
                             <div className="text-[10px] text-[#6b7280]">{member.zona}</div>
@@ -5931,8 +5943,8 @@ const InnovativeDemo = () => {
         {/* HEADER */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-xl font-bold text-[#1c2c4a]">Pipeline Comercial</h1>
-          <p className="text-sm text-[#6b7280] mt-0.5">Centro de control del equipo de ventas</p>
+          <h1 className="text-xl font-bold text-[#1c2c4a]">{userGreeting}, {currentUserName}</h1>
+          <p className="text-sm text-[#6b7280] mt-0.5">Tu pipeline comercial al momento</p>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -6007,23 +6019,38 @@ const InnovativeDemo = () => {
       <SectionHeader color="#00a8a8" icon={Users} label="Equipo" linkLabel="Ver Dashboard" onLinkClick={() => setCurrentView('dashboard')} />
 
       {/* Presupuesto por Ejecutivo (grid) */}
-      <div className="bg-white rounded-xl border border-[#e5e7eb] card-modern p-5">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-semibold text-[#1c2c4a]">Presupuesto por Ejecutivo</h3>
-          <span className="text-xs text-[#6b7280]">Mensual / Anual</span>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-          {salesTeamData.filter(m => m.presupuestoAnual2026 > 0 && m.codigo !== 'VA').sort((a, b) => b.presupuestoAnual2026 - a.presupuestoAnual2026).map(member => (
-              <div key={member.codigo} onClick={() => { setHubEjecutivo(member); setHubTab('pipeline'); setCurrentView('hub-ejecutivo'); }} className="flex items-center gap-3 bg-[#f3f4f6] rounded-lg px-4 py-3 cursor-pointer hover:bg-[#e5e7eb] transition-colors">
-                <div className="w-9 h-9 rounded-full bg-[#00a8a8] flex items-center justify-center text-white text-xs font-bold flex-shrink-0">{member.codigo}</div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+        {salesTeamData.filter(m => m.presupuestoAnual2026 > 0 && m.codigo !== 'VA').sort((a, b) => b.presupuestoAnual2026 - a.presupuestoAnual2026).map(member => {
+          const pct = member.cumplimientoPresupuesto || 0;
+          const barColor = pct >= 80 ? '#2E7D32' : pct >= 40 ? '#F57C00' : '#ef4444';
+          const memberProspectos = kanbanProspectos.filter(p => p.ejecutivo === member.codigo);
+          return (
+            <div key={member.codigo} onClick={() => { setHubEjecutivo(member); setHubTab('pipeline'); setCurrentView('hub-ejecutivo'); }}
+              className="bg-white rounded-xl border border-[#e5e7eb] p-4 cursor-pointer hover:shadow-lg hover:border-[#00a8a8]/40 transition-all group relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#00a8a8] to-[#0D47A1] opacity-60 group-hover:opacity-100 transition-opacity" />
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#00a8a8] to-[#0D47A1] flex items-center justify-center text-white text-xs font-bold flex-shrink-0 shadow-sm">{member.codigo}</div>
                 <div className="min-w-0">
-                  <div className="text-xs font-medium text-[#1c2c4a] truncate">{member.name.split(' ')[0]}</div>
-                  <div className="text-sm font-bold text-[#0D47A1]">${(member.presupuestoMensual / 1000000).toFixed(1)}M<span className="text-[10px] font-normal text-[#6b7280]">/mes</span></div>
-                  <div className="text-[10px] text-[#6b7280]">Anual: ${(member.presupuestoAnual2026 / 1000000).toFixed(1)}M</div>
+                  <div className="text-sm font-semibold text-[#1c2c4a] truncate">{member.name.split(' ')[0]}</div>
+                  <div className="text-[10px] text-[#6b7280]">{member.zona || member.role}</div>
                 </div>
               </div>
-          ))}
-        </div>
+              <div className="text-lg font-bold text-[#1c2c4a]">${(member.presupuestoMensual / 1000000).toFixed(1)}M<span className="text-xs font-normal text-[#6b7280] ml-0.5">/mes</span></div>
+              <div className="flex items-center justify-between mt-1 mb-2">
+                <span className="text-[10px] text-[#6b7280]">Anual: ${(member.presupuestoAnual2026 / 1000000).toFixed(1)}M</span>
+                <span className="text-[10px] font-semibold" style={{ color: barColor }}>{pct}%</span>
+              </div>
+              <div className="w-full h-1.5 bg-[#f3f4f6] rounded-full overflow-hidden">
+                <div className="h-full rounded-full transition-all" style={{ width: `${Math.min(pct, 100)}%`, backgroundColor: barColor }} />
+              </div>
+              <div className="flex items-center gap-2 mt-2.5 pt-2 border-t border-[#f3f4f6]">
+                <span className="text-[10px] text-[#6b7280]">{memberProspectos.length} opps</span>
+                <span className="text-[10px] text-[#6b7280]">·</span>
+                <span className="text-[10px] text-[#6b7280]">${((memberProspectos.reduce((s, p) => s + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0)) / 1000000).toFixed(1)}M pipeline</span>
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       {/* Distribución de Pipeline por Ejecutivo — Barras apiladas por etapa */}
@@ -6591,7 +6618,7 @@ const InnovativeDemo = () => {
         {/* HEADER */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-xl font-bold text-[#1c2c4a]">Operaciones</h1>
+            <h1 className="text-xl font-bold text-[#1c2c4a]">{userGreeting}, {currentUserName}</h1>
             <p className="text-sm text-[#6b7280] mt-0.5">Levantamientos, propuestas y documentación</p>
           </div>
           <button
@@ -7033,8 +7060,8 @@ const InnovativeDemo = () => {
         {/* HEADER */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-xl font-bold text-[#1c2c4a]">Trazabilidad</h1>
-            <p className="text-sm text-[#6b7280] mt-0.5">Análisis de flujo, conversión y velocidad del pipeline</p>
+            <h1 className="text-xl font-bold text-[#1c2c4a]">{userGreeting}, {currentUserName}</h1>
+            <p className="text-sm text-[#6b7280] mt-0.5">Flujo, conversión y velocidad del pipeline</p>
           </div>
         </div>
 
@@ -7435,7 +7462,7 @@ const InnovativeDemo = () => {
         {/* HEADER */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-xl font-bold text-[#1c2c4a]">Economía Circular</h1>
+            <h1 className="text-xl font-bold text-[#1c2c4a]">{userGreeting}, {currentUserName}</h1>
             <p className="text-sm text-[#6b7280] mt-0.5">Trazabilidad, subproductos y reporteo ambiental</p>
           </div>
           <button
