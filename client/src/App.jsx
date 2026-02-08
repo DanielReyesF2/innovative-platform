@@ -4175,6 +4175,9 @@ const InnovativeDemo = () => {
   });
   const [showKpiPanel, setShowKpiPanel] = useState(false);
   const [kpiPanelArea, setKpiPanelArea] = useState(null); // 'comercial' | 'operacion' | 'subproductos'
+  const [kpiSelectedEjecutivo, setKpiSelectedEjecutivo] = useState(null); // member object when row clicked
+  const [ejecutivoComentarios, setEjecutivoComentarios] = useState({}); // { 'prospectoId': [{text, date}] }
+  const [nuevoComentario, setNuevoComentario] = useState('');
   const [notifications] = useState(7);
   const [leadsConAsignacion, setLeadsConAsignacion] = useState(leadsData.map(lead => ({ ...lead, asignadoA: lead.asignadoA || null })));
   const [mostrarTodosLeads, setMostrarTodosLeads] = useState(false);
@@ -8004,14 +8007,17 @@ const InnovativeDemo = () => {
                         const score = metasConMeta > 0 ? totalCumplimiento / metasConMeta : 0;
 
                         return (
-                          <tr key={member.id} className="border-b border-[#e5e7eb] hover:bg-[#f3f4f6]/50 transition-colors">
+                          <React.Fragment key={member.id}>
+                          <tr className="border-b border-[#e5e7eb] hover:bg-[#f3f4f6]/50 transition-colors cursor-pointer" onClick={() => setKpiSelectedEjecutivo(kpiSelectedEjecutivo?.id === member.id ? null : member)}>
                             <td className="px-4 py-3">
                               <div className="flex items-center gap-3">
                                 <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold" style={{ backgroundColor: config.color }}>
                                   {member.codigo}
                                 </div>
                                 <div>
-                                  <div className="text-sm font-semibold text-[#1c2c4a]">{member.name.split(' ').slice(0, 2).join(' ')}</div>
+                                  <div className="text-sm font-semibold text-[#1c2c4a] flex items-center gap-1.5">{member.name.split(' ').slice(0, 2).join(' ')}
+                                    <ChevronRight size={12} className={`text-[#6b7280] transition-transform ${kpiSelectedEjecutivo?.id === member.id ? 'rotate-90' : ''}`} />
+                                  </div>
                                   <div className="text-xs text-[#6b7280]">{member.zona}</div>
                                 </div>
                               </div>
@@ -8090,6 +8096,172 @@ const InnovativeDemo = () => {
                               </div>
                             </td>
                           </tr>
+                          {/* Expandible: Leads y Prospectos del Ejecutivo */}
+                          {kpiSelectedEjecutivo?.id === member.id && (() => {
+                            const memberProspectos = kanbanProspectos.filter(p => p.ejecutivo === member.codigo);
+                            const memberLeads = memberProspectos.filter(p => ['Lead nuevo', 'Reunión agendada'].includes(p.status));
+                            const memberProsp = memberProspectos.filter(p => !['Lead nuevo', 'Reunión agendada', 'Propuesta Rechazada'].includes(p.status));
+                            const memberRechazadas = memberProspectos.filter(p => p.status === 'Propuesta Rechazada');
+                            return (
+                              <tr>
+                                <td colSpan={kpiKeys.length + 3} className="p-0">
+                                  <div className="bg-[#faf7f2] border-b border-[#e5e7eb] px-6 py-4" onClick={e => e.stopPropagation()}>
+                                    {/* Summary pills */}
+                                    <div className="flex items-center gap-3 mb-4">
+                                      <div className="flex items-center gap-2 bg-[#6b7280]/10 px-3 py-1.5 rounded-full">
+                                        <div className="w-2 h-2 rounded-full bg-[#6b7280]"></div>
+                                        <span className="text-xs font-semibold text-[#6b7280]">{memberLeads.length} Leads</span>
+                                      </div>
+                                      <div className="flex items-center gap-2 bg-[#00a8a8]/10 px-3 py-1.5 rounded-full">
+                                        <div className="w-2 h-2 rounded-full bg-[#00a8a8]"></div>
+                                        <span className="text-xs font-semibold text-[#00a8a8]">{memberProsp.length} Prospectos</span>
+                                      </div>
+                                      {memberRechazadas.length > 0 && (
+                                        <div className="flex items-center gap-2 bg-red-500/10 px-3 py-1.5 rounded-full">
+                                          <div className="w-2 h-2 rounded-full bg-red-500"></div>
+                                          <span className="text-xs font-semibold text-red-500">{memberRechazadas.length} Rechazadas</span>
+                                        </div>
+                                      )}
+                                      <div className="ml-auto text-xs font-bold text-[#0D47A1]">
+                                        Pipeline: ${(memberProspectos.reduce((s, p) => s + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0) / 1000000).toFixed(1)}M
+                                      </div>
+                                    </div>
+
+                                    {/* Leads */}
+                                    {memberLeads.length > 0 && (
+                                      <div className="mb-4">
+                                        <h4 className="text-xs font-semibold text-[#6b7280] uppercase tracking-wider mb-2">Leads ({memberLeads.length})</h4>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                          {memberLeads.map(lead => {
+                                            const stage = KANBAN_STAGES.find(s => s.id === lead.status);
+                                            const comentarios = ejecutivoComentarios[lead.id] || [];
+                                            return (
+                                              <div key={lead.id} className="bg-white rounded-lg border border-[#e5e7eb] p-3">
+                                                <div className="flex items-start justify-between mb-1">
+                                                  <div className="flex-1 min-w-0">
+                                                    <div className="text-sm font-semibold text-[#1c2c4a] truncate">{lead.empresa}</div>
+                                                    <div className="text-xs text-[#6b7280]">{lead.industria} {lead.ciudad ? `• ${lead.ciudad.split(',')[0]}` : ''}</div>
+                                                  </div>
+                                                  <span className="text-[10px] font-medium px-2 py-0.5 rounded-full flex-shrink-0 ml-2" style={{ backgroundColor: `${stage?.color}15`, color: stage?.color }}>{stage?.label}</span>
+                                                </div>
+                                                {/* Comentarios */}
+                                                {comentarios.length > 0 && (
+                                                  <div className="mt-2 space-y-1">
+                                                    {comentarios.slice(-2).map((c, i) => (
+                                                      <div key={i} className="text-[11px] text-[#6b7280] bg-[#f3f4f6] rounded px-2 py-1 italic">"{c.text}" <span className="text-[10px] text-[#6b7280]/60">— {c.date}</span></div>
+                                                    ))}
+                                                  </div>
+                                                )}
+                                                {/* Add comment */}
+                                                <div className="mt-2 flex gap-1.5">
+                                                  <input
+                                                    type="text"
+                                                    placeholder="Agregar nota..."
+                                                    className="flex-1 text-xs border border-[#e5e7eb] rounded-md px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-[#00a8a8] bg-white"
+                                                    onClick={e => e.stopPropagation()}
+                                                    onKeyDown={e => {
+                                                      if (e.key === 'Enter' && e.target.value.trim()) {
+                                                        const txt = e.target.value.trim();
+                                                        setEjecutivoComentarios(prev => ({
+                                                          ...prev,
+                                                          [lead.id]: [...(prev[lead.id] || []), { text: txt, date: new Date().toLocaleDateString('es-MX', { day: '2-digit', month: 'short' }) }]
+                                                        }));
+                                                        e.target.value = '';
+                                                      }
+                                                    }}
+                                                  />
+                                                </div>
+                                              </div>
+                                            );
+                                          })}
+                                        </div>
+                                      </div>
+                                    )}
+
+                                    {/* Prospectos */}
+                                    {memberProsp.length > 0 && (
+                                      <div className="mb-4">
+                                        <h4 className="text-xs font-semibold text-[#00a8a8] uppercase tracking-wider mb-2">Prospectos ({memberProsp.length})</h4>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                          {memberProsp.map(prosp => {
+                                            const stage = KANBAN_STAGES.find(s => s.id === prosp.status);
+                                            const valor = prosp.propuesta?.ventaTotal || prosp.facturacionEstimada || 0;
+                                            const comentarios = ejecutivoComentarios[prosp.id] || [];
+                                            return (
+                                              <div key={prosp.id} className="bg-white rounded-lg border border-[#e5e7eb] p-3">
+                                                <div className="flex items-start justify-between mb-1">
+                                                  <div className="flex-1 min-w-0">
+                                                    <div className="text-sm font-semibold text-[#1c2c4a] truncate">{prosp.empresa}</div>
+                                                    <div className="text-xs text-[#6b7280]">
+                                                      {prosp.industria} {prosp.ciudad ? `• ${prosp.ciudad.split(',')[0]}` : ''}
+                                                      {valor > 0 && <span className="font-bold text-[#0D47A1] ml-2">${(valor / 1000000).toFixed(2)}M</span>}
+                                                    </div>
+                                                  </div>
+                                                  <span className="text-[10px] font-medium px-2 py-0.5 rounded-full flex-shrink-0 ml-2" style={{ backgroundColor: `${stage?.color}15`, color: stage?.color }}>{stage?.label}</span>
+                                                </div>
+                                                {/* Servicios */}
+                                                {prosp.servicios && prosp.servicios.length > 0 && (
+                                                  <div className="flex flex-wrap gap-1 mt-1">
+                                                    {prosp.servicios.slice(0, 3).map(s => (
+                                                      <span key={s} className="text-[9px] bg-[#f3f4f6] text-[#6b7280] px-1.5 py-0.5 rounded">{SERVICIOS_INNOVATIVE.find(si => si.id === s)?.nombre || s}</span>
+                                                    ))}
+                                                    {prosp.servicios.length > 3 && <span className="text-[9px] text-[#6b7280]">+{prosp.servicios.length - 3}</span>}
+                                                  </div>
+                                                )}
+                                                {/* Comentarios */}
+                                                {comentarios.length > 0 && (
+                                                  <div className="mt-2 space-y-1">
+                                                    {comentarios.slice(-2).map((c, i) => (
+                                                      <div key={i} className="text-[11px] text-[#6b7280] bg-[#f3f4f6] rounded px-2 py-1 italic">"{c.text}" <span className="text-[10px] text-[#6b7280]/60">— {c.date}</span></div>
+                                                    ))}
+                                                  </div>
+                                                )}
+                                                {/* Add comment */}
+                                                <div className="mt-2 flex gap-1.5">
+                                                  <input
+                                                    type="text"
+                                                    placeholder="Agregar nota..."
+                                                    className="flex-1 text-xs border border-[#e5e7eb] rounded-md px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-[#00a8a8] bg-white"
+                                                    onClick={e => e.stopPropagation()}
+                                                    onKeyDown={e => {
+                                                      if (e.key === 'Enter' && e.target.value.trim()) {
+                                                        const txt = e.target.value.trim();
+                                                        setEjecutivoComentarios(prev => ({
+                                                          ...prev,
+                                                          [prosp.id]: [...(prev[prosp.id] || []), { text: txt, date: new Date().toLocaleDateString('es-MX', { day: '2-digit', month: 'short' }) }]
+                                                        }));
+                                                        e.target.value = '';
+                                                      }
+                                                    }}
+                                                  />
+                                                </div>
+                                              </div>
+                                            );
+                                          })}
+                                        </div>
+                                      </div>
+                                    )}
+
+                                    {/* Rechazadas (collapsed) */}
+                                    {memberRechazadas.length > 0 && (
+                                      <div>
+                                        <h4 className="text-xs font-semibold text-red-500 uppercase tracking-wider mb-2">Rechazadas ({memberRechazadas.length})</h4>
+                                        <div className="flex flex-wrap gap-2">
+                                          {memberRechazadas.map(r => (
+                                            <div key={r.id} className="bg-white rounded-md border border-red-200 px-3 py-2 text-xs">
+                                              <span className="font-medium text-[#1c2c4a]">{r.empresa}</span>
+                                              <span className="text-[#6b7280] ml-1">— {r.motivoRechazo || 'Sin motivo'}</span>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          })()}
+                          </React.Fragment>
                         );
                       })}
                     </tbody>
