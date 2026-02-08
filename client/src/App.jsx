@@ -4171,7 +4171,7 @@ const InnovativeDemo = () => {
   const [clienteSeleccionadoVista, setClienteSeleccionadoVista] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [expandedSections, setExpandedSections] = useState({
-    comercial: true, operacion: true, trazabilidad: true, subproductos: true
+    comercial: false, operacion: false, trazabilidad: false, subproductos: false
   });
   const [showKpiPanel, setShowKpiPanel] = useState(false);
   const [kpiPanelArea, setKpiPanelArea] = useState(null); // 'comercial' | 'operacion' | 'subproductos'
@@ -4747,8 +4747,6 @@ const InnovativeDemo = () => {
         { id: 'subproductos', icon: Leaf, label: 'Economía Circular' },
       ]
     },
-    { type: 'category', label: 'SISTEMA' },
-    { type: 'item', id: 'admin', icon: Settings, label: 'Administración' },
   ];
 
   const Sidebar = () => {
@@ -4899,6 +4897,21 @@ const InnovativeDemo = () => {
             </div>
           </div>
         )}
+        <button
+          onClick={() => {
+            setCurrentView('admin');
+            setSelectedClient(null);
+            setSelectedTeamMember(null);
+          }}
+          className={`w-full flex items-center ${sidebarOpen ? 'justify-start gap-2.5' : 'justify-center'} px-2.5 py-1.5 rounded-md text-[13px] font-medium transition-all ${
+            currentView === 'admin'
+              ? 'bg-[#00a8a8]/10 text-[#00a8a8]'
+              : 'text-[#6b7280] hover:bg-[#f3f4f6] hover:text-[#1c2c4a]'
+          }`}
+        >
+          <Settings size={16} className="flex-shrink-0" />
+          {sidebarOpen && <span className="flex-1 text-left">Administración</span>}
+        </button>
         <button
           onClick={() => { localStorage.removeItem('innovative_session'); setCurrentView('login'); setLoginEmail(''); setLoginPassword(''); }}
           className={`w-full flex items-center ${sidebarOpen ? 'justify-start gap-2.5' : 'justify-center'} px-2.5 py-1.5 text-[#6b7280] hover:bg-red-500/10 hover:text-red-600 rounded-md text-[13px] font-medium transition-all`}
