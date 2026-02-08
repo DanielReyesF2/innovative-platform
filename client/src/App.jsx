@@ -5038,18 +5038,18 @@ const InnovativeDemo = () => {
         </div>
       </div>
 
-      {/* ROW 2: Presupuesto por Ejecutivo (compact row) */}
+      {/* ROW 2: Presupuesto por Ejecutivo (grid) */}
       <div className="mt-4 bg-white rounded-xl border border-[#e5e7eb] card-modern p-5">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-sm font-semibold text-[#1c2c4a]">Presupuesto por Ejecutivo</h3>
           <span className="text-xs text-[#6b7280]">Mensual / Anual</span>
         </div>
-        <div className="flex gap-3 overflow-x-auto">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
           {salesTeamData.filter(m => m.presupuestoAnual2026 > 0 && m.codigo !== 'VA').sort((a, b) => b.presupuestoAnual2026 - a.presupuestoAnual2026).slice(0, 5).map(member => (
-            <div key={member.codigo} className="flex-shrink-0 flex items-center gap-2 bg-[#f3f4f6] rounded-lg px-3 py-2">
-              <div className="w-7 h-7 rounded-full bg-[#00a8a8] flex items-center justify-center text-white text-xs font-bold">{member.codigo}</div>
-              <div>
-                <div className="text-xs font-medium text-[#1c2c4a]">{member.name.split(' ')[0]}</div>
+            <div key={member.codigo} className="flex items-center gap-3 bg-[#f3f4f6] rounded-lg px-4 py-3">
+              <div className="w-9 h-9 rounded-full bg-[#00a8a8] flex items-center justify-center text-white text-xs font-bold flex-shrink-0">{member.codigo}</div>
+              <div className="min-w-0">
+                <div className="text-xs font-medium text-[#1c2c4a] truncate">{member.name.split(' ')[0]}</div>
                 <div className="text-sm font-bold text-[#0D47A1]">${(member.presupuestoMensual / 1000000).toFixed(1)}M<span className="text-[10px] font-normal text-[#6b7280]">/mes</span></div>
                 <div className="text-[10px] text-[#6b7280]">Anual: ${(member.presupuestoAnual2026 / 1000000).toFixed(1)}M</div>
               </div>
@@ -5539,18 +5539,18 @@ const InnovativeDemo = () => {
         </div>
       </div>
 
-      {/* Presupuesto por Ejecutivo (compact row) */}
+      {/* Presupuesto por Ejecutivo (grid) */}
       <div className="mt-4 bg-white rounded-xl border border-[#e5e7eb] card-modern p-5">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-sm font-semibold text-[#1c2c4a]">Presupuesto por Ejecutivo</h3>
           <span className="text-xs text-[#6b7280]">Mensual / Anual</span>
         </div>
-        <div className="flex gap-3 overflow-x-auto">
-          {salesTeamData.filter(m => m.presupuestoAnual2026 > 0 && m.codigo !== 'VA').map(member => (
-              <div key={member.codigo} className="flex-shrink-0 flex items-center gap-2 bg-[#f3f4f6] rounded-lg px-3 py-2">
-                <div className="w-7 h-7 rounded-full bg-[#00a8a8] flex items-center justify-center text-white text-xs font-bold">{member.codigo}</div>
-                <div>
-                  <div className="text-xs font-medium text-[#1c2c4a]">{member.name.split(' ')[0]}</div>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+          {salesTeamData.filter(m => m.presupuestoAnual2026 > 0 && m.codigo !== 'VA').sort((a, b) => b.presupuestoAnual2026 - a.presupuestoAnual2026).map(member => (
+              <div key={member.codigo} className="flex items-center gap-3 bg-[#f3f4f6] rounded-lg px-4 py-3">
+                <div className="w-9 h-9 rounded-full bg-[#00a8a8] flex items-center justify-center text-white text-xs font-bold flex-shrink-0">{member.codigo}</div>
+                <div className="min-w-0">
+                  <div className="text-xs font-medium text-[#1c2c4a] truncate">{member.name.split(' ')[0]}</div>
                   <div className="text-sm font-bold text-[#0D47A1]">${(member.presupuestoMensual / 1000000).toFixed(1)}M<span className="text-[10px] font-normal text-[#6b7280]">/mes</span></div>
                   <div className="text-[10px] text-[#6b7280]">Anual: ${(member.presupuestoAnual2026 / 1000000).toFixed(1)}M</div>
                 </div>
