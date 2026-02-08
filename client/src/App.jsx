@@ -4140,20 +4140,11 @@ const calcularDiasHabiles = (fechaInicio) => {
 };
 
 const InnovativeDemo = () => {
-  // Auto-login: leer sesión guardada de localStorage
-  const savedSession = (() => {
-    try {
-      const s = localStorage.getItem('innovative_session');
-      if (s) {
-        const parsed = JSON.parse(s);
-        if (parsed.email && parsed.loggedIn) return parsed;
-      }
-    } catch (e) { /* ignore */ }
-    return null;
-  })();
+  // Auth is handled externally - always start with dashboard
+  // User is already authenticated when this component renders
 
-  const [currentView, setCurrentView] = useState(savedSession ? 'dashboard' : 'login');
-  const [loginEmail, setLoginEmail] = useState(savedSession?.email || '');
+  const [currentView, setCurrentView] = useState('dashboard');
+  const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [loginError, setLoginError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
