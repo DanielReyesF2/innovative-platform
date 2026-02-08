@@ -10009,9 +10009,9 @@ function AuthenticatedApp() {
   // Show loading screen while checking auth
   if (!authReady || isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-green-900 via-green-800 to-green-950">
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-[#1B5E20] via-[#2E7D32] to-[#388E3C]">
         <div className="text-center">
-          <img src="/logo-icon.svg" alt="Innovative Group" className="mx-auto mb-4 h-16 w-16 animate-pulse" />
+          <img src="/IGMexico-Blanco.png" alt="Innovative Group" className="mx-auto mb-4 w-48 animate-pulse" />
           <p className="text-white/80 text-sm">Cargando...</p>
         </div>
       </div>
