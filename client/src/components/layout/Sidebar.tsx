@@ -6,10 +6,12 @@ import {
   LayoutDashboard,
   Menu,
   X,
+  LogOut,
   type LucideIcon,
 } from "lucide-react";
 import * as LucideIcons from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/lib/auth";
 
 interface ModuleNavItem {
   name: string;
@@ -27,6 +29,7 @@ function getIcon(iconName: string): LucideIcon {
 export function Sidebar() {
   const [location] = useLocation();
   const [isOpen, setIsOpen] = useState(false);
+  const { user, logout } = useAuth();
 
   // Fetch available modules from the server
   const { data: modules = [] } = useQuery<ModuleNavItem[]>({
@@ -100,8 +103,31 @@ export function Sidebar() {
           </ul>
         </nav>
 
-        {/* Footer spacer */}
-        <div className="border-t border-sidebar-border p-3" />
+        {/* User info + Logout */}
+        <div className="border-t border-sidebar-border p-3">
+          {user && (
+            <div className="flex items-center gap-2.5 px-2 py-1.5 mb-2">
+              <div className="w-8 h-8 rounded-full bg-sidebar-primary flex items-center justify-center text-xs font-semibold text-sidebar-primary-foreground flex-shrink-0">
+                {user.name?.charAt(0).toUpperCase() || "U"}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-medium text-sidebar-foreground truncate">
+                  {user.name || "Usuario"}
+                </div>
+                <div className="text-[10px] text-sidebar-foreground/60 truncate">
+                  {user.email}
+                </div>
+              </div>
+            </div>
+          )}
+          <button
+            onClick={logout}
+            className="w-full flex items-center gap-2.5 px-2 py-1.5 text-sidebar-foreground/70 hover:bg-red-500/10 hover:text-red-400 rounded-md text-sm font-medium transition-colors"
+          >
+            <LogOut className="h-4 w-4" />
+            Cerrar sesión
+          </button>
+        </div>
       </aside>
     </>
   );
