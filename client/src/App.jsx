@@ -4772,9 +4772,15 @@ const InnovativeDemo = () => {
       {/* Logo */}
       <div className="px-4 py-3 flex items-center justify-between">
         {sidebarOpen ? (
-          <img src="/IGMexico-V-Color-Logo.png" alt="Innovative Group" className="h-8 object-contain" />
+          <div className="flex items-center gap-2">
+            <img
+              src="/IGMexico-V-Color-Logo.png?v=2"
+              alt=""
+              style={{ height: '32px', width: 'auto', maxWidth: '140px' }}
+            />
+          </div>
         ) : (
-          <div className="w-7 h-7 rounded-md bg-[#00a8a8] flex items-center justify-center text-white text-[10px] font-bold">IG</div>
+          <div className="w-7 h-7 rounded-md bg-[#1B5E20] flex items-center justify-center text-white text-[10px] font-bold">IG</div>
         )}
         <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-[#6b7280] hover:text-[#1c2c4a] transition-colors p-1 rounded-md hover:bg-[#f3f4f6]">
           {sidebarOpen ? <X size={16} /> : <Menu size={16} />}
