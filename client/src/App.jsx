@@ -4770,20 +4770,14 @@ const InnovativeDemo = () => {
     return (
     <div className={`bg-white h-screen transition-all duration-300 ${sidebarOpen ? 'w-56' : 'w-[60px]'} flex flex-col border-r border-[#e5e7eb] relative overflow-hidden`}>
       {/* Logo */}
-      <div className="px-3 py-3 flex items-center justify-between border-b border-[#e5e7eb]">
+      <div className="px-4 py-3 flex items-center justify-between">
         {sidebarOpen ? (
-          <img
-            src="/IGMexico-V-Color-Logo.png?v=3"
-            alt="Innovative Group"
-            width="140"
-            height="40"
-            style={{ width: '140px', height: 'auto', objectFit: 'contain' }}
-          />
+          <img src="/IGMexico-V-Color-Logo.png" alt="Innovative Group" className="h-8 object-contain" />
         ) : (
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#1B5E20] to-[#2E7D32] flex items-center justify-center text-white text-[11px] font-bold shadow-sm">IG</div>
+          <div className="w-7 h-7 rounded-md bg-[#00a8a8] flex items-center justify-center text-white text-[10px] font-bold">IG</div>
         )}
-        <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-[#6b7280] hover:text-[#1c2c4a] transition-colors p-1.5 rounded-md hover:bg-[#f3f4f6]">
-          {sidebarOpen ? <X size={18} /> : <Menu size={18} />}
+        <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-[#6b7280] hover:text-[#1c2c4a] transition-colors p-1 rounded-md hover:bg-[#f3f4f6]">
+          {sidebarOpen ? <X size={16} /> : <Menu size={16} />}
         </button>
       </div>
 
