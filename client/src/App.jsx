@@ -5027,7 +5027,7 @@ const InnovativeDemo = () => {
         {/* Pipeline Total */}
         <div className="bg-gradient-to-br from-[#1c2c4a] to-[#0D47A1] rounded-xl p-5 text-white">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-medium text-white/70">Pipeline Comercial</span>
+            <span className="text-xs font-medium text-white/70">Pipeline por Ejecutivo</span>
             <DollarSign size={18} className="text-white/40" />
           </div>
           <div className="text-2xl font-bold">${(pipelinePonderado / 1000000).toFixed(1)}M</div>
@@ -5966,12 +5966,20 @@ const InnovativeDemo = () => {
 
       {/* KPI CARDS */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
-        {/* Card 1: Presupuesto Mes */}
+        {/* Card 1: Presupuesto Mes vs Proyección de Cierre */}
         <div className="rounded-xl border border-[#00a8a8]/10 card-modern p-5" style={{ backgroundColor: 'rgba(0,168,168,0.04)' }}>
           <div className="flex items-center justify-between">
             <div>
               <div className="text-[13px] font-medium text-[#6b7280] mb-1">Presupuesto Mes</div>
               <div className="text-2xl font-bold text-[#1c2c4a]">${(presupuestoMesEquipo / 1000000).toFixed(1)}M</div>
+              <div className="text-xs text-[#6b7280] mt-1">
+                Cierre: <span className="font-semibold text-[#00a8a8]">${(montoPropuestas / 1000000).toFixed(1)}M</span>
+                {presupuestoMesEquipo > 0 && (
+                  <span className={`ml-1.5 font-semibold ${(montoPropuestas / presupuestoMesEquipo) >= 1 ? 'text-[#2E7D32]' : 'text-[#F57C00]'}`}>
+                    ({Math.round((montoPropuestas / presupuestoMesEquipo) * 100)}%)
+                  </span>
+                )}
+              </div>
             </div>
             <div className="w-10 h-10 rounded-xl bg-[#00a8a8]/10 flex items-center justify-center">
               <DollarSign className="text-[#00a8a8]" size={20} />
