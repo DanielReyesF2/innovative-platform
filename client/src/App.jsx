@@ -4537,6 +4537,20 @@ const InnovativeDemo = () => {
     return emailToCode[loginEmail.toLowerCase()] || 'VA';
   })();
 
+  // Shared section header component for all views
+  const SectionHeader = ({ color, icon: Icon, label, linkLabel, onLinkClick }) => (
+    <div className="flex items-center gap-3 mb-4 mt-8 first:mt-0">
+      <div className="w-1 h-8 rounded-full" style={{ backgroundColor: color }} />
+      <Icon size={18} style={{ color }} />
+      <h2 className="text-[13px] font-bold text-[#1c2c4a] uppercase tracking-wider">{label}</h2>
+      {linkLabel && (
+        <button onClick={onLinkClick} className="ml-auto text-xs font-medium flex items-center gap-1 hover:underline" style={{ color }}>
+          {linkLabel} <ChevronRight size={14} />
+        </button>
+      )}
+    </div>
+  );
+
   // Campos requeridos para enviar a operaciones
   const calcularCamposCompletos = (p) => {
     const campos = [
@@ -4980,20 +4994,6 @@ const InnovativeDemo = () => {
 
     // Alertas
     const alertasActivas = alertas.slice(0, 5);
-
-    // Section header helper
-    const SectionHeader = ({ color, icon: Icon, label, linkLabel, onLinkClick }) => (
-      <div className="flex items-center gap-3 mb-4 mt-8">
-        <div className="w-1 h-8 rounded-full" style={{ backgroundColor: color }} />
-        <Icon size={18} style={{ color }} />
-        <h2 className="text-base font-bold text-[#1c2c4a] uppercase tracking-wider text-[13px]">{label}</h2>
-        {linkLabel && (
-          <button onClick={onLinkClick} className="ml-auto text-xs font-medium flex items-center gap-1 hover:underline" style={{ color }}>
-            {linkLabel} <ChevronRight size={14} />
-          </button>
-        )}
-      </div>
-    );
 
     return (
     <div className="p-4 md:p-6 lg:p-8 bg-[#faf7f2] min-h-screen">
@@ -5927,8 +5927,13 @@ const InnovativeDemo = () => {
     return (
     <div className="p-4 md:p-6 lg:p-8 bg-[#faf7f2] min-h-screen">
       <div className="max-w-[1400px] mx-auto">
-      <div className="flex items-center justify-between">
 
+        {/* HEADER */}
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-xl font-bold text-[#1c2c4a]">Pipeline Comercial</h1>
+          <p className="text-sm text-[#6b7280] mt-0.5">Centro de control del equipo de ventas</p>
+        </div>
         <div className="flex items-center gap-2">
           <button
             onClick={() => setShowNuevoLead(true)}
@@ -5999,8 +6004,10 @@ const InnovativeDemo = () => {
         </div>
       </div>
 
+      <SectionHeader color="#00a8a8" icon={Users} label="Equipo" linkLabel="Ver Dashboard" onLinkClick={() => setCurrentView('dashboard')} />
+
       {/* Presupuesto por Ejecutivo (grid) */}
-      <div className="mt-4 bg-white rounded-xl border border-[#e5e7eb] card-modern p-5">
+      <div className="bg-white rounded-xl border border-[#e5e7eb] card-modern p-5">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-sm font-semibold text-[#1c2c4a]">Presupuesto por Ejecutivo</h3>
           <span className="text-xs text-[#6b7280]">Mensual / Anual</span>
@@ -6086,8 +6093,10 @@ const InnovativeDemo = () => {
         </div>
       </div>
 
+      <SectionHeader color="#0D47A1" icon={ClipboardList} label="Pipeline Detallado" />
+
       {/* VIEW TOGGLE */}
-      <div className="mt-6 flex items-center justify-between">
+      <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 bg-white rounded-lg border border-[#e5e7eb] p-1">
           {[
             { id: 'kanban', label: 'Kanban', icon: ClipboardList },
@@ -6577,8 +6586,14 @@ const InnovativeDemo = () => {
 
     return (
       <div className="p-4 md:p-6 lg:p-8 bg-[#faf7f2] min-h-screen">
-        <div className="flex items-center justify-between">
+        <div className="max-w-[1400px] mx-auto">
 
+        {/* HEADER */}
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-xl font-bold text-[#1c2c4a]">Operaciones</h1>
+            <p className="text-sm text-[#6b7280] mt-0.5">Levantamientos, propuestas y documentación</p>
+          </div>
           <button
             onClick={() => { setKpiPanelArea('operacion'); setShowKpiPanel(true); }}
             className="flex items-center gap-2 px-4 py-2.5 bg-[#F57C00] hover:bg-[#E65100] text-white rounded-lg text-sm font-semibold transition-all shadow-sm hover:shadow-md"
@@ -6636,8 +6651,10 @@ const InnovativeDemo = () => {
           </div>
         </div>
 
+        <SectionHeader color="#F57C00" icon={BarChart3} label="Métricas y Análisis" />
+
         {/* CHARTS ROW */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <div className="bg-white rounded-xl border border-[#e5e7eb] card-modern p-5">
             <h3 className="text-sm font-semibold text-[#1c2c4a] mb-4">Levantamientos por Ejecutivo</h3>
             <div style={{ height: 200 }}>
@@ -6671,8 +6688,10 @@ const InnovativeDemo = () => {
           </div>
         </div>
 
+        <SectionHeader color="#0D47A1" icon={ClipboardList} label="Registros Detallados" />
+
         {/* ACCIONES */}
-        <div className="flex justify-between items-center mt-8 mb-6">
+        <div className="flex justify-between items-center mb-4">
           <div className="flex gap-3">
             <button 
               onClick={() => setMostrarFiltros(!mostrarFiltros)}
@@ -6938,6 +6957,7 @@ const InnovativeDemo = () => {
             ))}
         </div>
       </div>
+      </div>
     </div>
   );
   };
@@ -7008,10 +7028,18 @@ const InnovativeDemo = () => {
 
     return (
       <div className="p-4 md:p-6 lg:p-8 bg-[#faf7f2] min-h-screen">
+        <div className="max-w-[1400px] mx-auto">
 
+        {/* HEADER */}
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-xl font-bold text-[#1c2c4a]">Trazabilidad</h1>
+            <p className="text-sm text-[#6b7280] mt-0.5">Análisis de flujo, conversión y velocidad del pipeline</p>
+          </div>
+        </div>
 
         {/* INDICADORES CLAVE */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Total Prospectos Activos */}
           <div className="rounded-xl border border-[#00a8a8]/10 card-modern p-5" style={{ backgroundColor: 'rgba(0,168,168,0.04)' }}>
             <div className="flex items-center justify-between">
@@ -7067,8 +7095,10 @@ const InnovativeDemo = () => {
           </div>
         </div>
 
+        <SectionHeader color="#7C3AED" icon={TrendingUp} label="Análisis de Conversión" />
+
         {/* CONVERSIÓN ENTRE ETAPAS — Funnel horizontal */}
-        <div className="mt-6 bg-white rounded-xl border border-[#e5e7eb] card-modern p-5">
+        <div className="bg-white rounded-xl border border-[#e5e7eb] card-modern p-5">
           <h3 className="text-sm font-semibold text-[#1c2c4a] mb-4">Flujo de Conversión entre Etapas</h3>
           <div className="flex items-center justify-between overflow-x-auto gap-1">
             {metricasPorEtapa.map((etapa, idx) => (
@@ -7278,6 +7308,7 @@ const InnovativeDemo = () => {
         </div>
 
       </div>
+      </div>
     );
   };
 
@@ -7399,8 +7430,14 @@ const InnovativeDemo = () => {
 
     return (
       <div className="p-4 md:p-6 lg:p-8 bg-[#faf7f2] min-h-screen">
-        <div className="flex items-center justify-between">
+        <div className="max-w-[1400px] mx-auto">
 
+        {/* HEADER */}
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-xl font-bold text-[#1c2c4a]">Economía Circular</h1>
+            <p className="text-sm text-[#6b7280] mt-0.5">Trazabilidad, subproductos y reporteo ambiental</p>
+          </div>
           <button
             onClick={() => { setKpiPanelArea('subproductos'); setShowKpiPanel(true); }}
             className="flex items-center gap-2 px-4 py-2.5 bg-[#2E7D32] hover:bg-[#1B5E20] text-white rounded-lg text-sm font-semibold transition-all shadow-sm hover:shadow-md"
@@ -7411,7 +7448,7 @@ const InnovativeDemo = () => {
         </div>
 
         {/* KPI CARDS */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="rounded-xl border border-[#2E7D32]/10 card-modern p-5" style={{ backgroundColor: 'rgba(46,125,50,0.04)' }}>
             <div className="flex items-center justify-between">
               <div>
@@ -7458,8 +7495,10 @@ const InnovativeDemo = () => {
           </div>
         </div>
 
+        <SectionHeader color="#2E7D32" icon={Leaf} label="Trazabilidad por Cliente" />
+
         {/* BARRA SUPERIOR: CLIENTE Y ACCIONES */}
-        <div className="mt-8 bg-white rounded-xl p-5 border border-[#e5e7eb] shadow-sm">
+        <div className="bg-white rounded-xl p-5 border border-[#e5e7eb] shadow-sm">
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div className="flex items-center gap-4 flex-1 min-w-[300px]">
               <label className="text-sm font-medium text-[#1c2c4a] whitespace-nowrap">Cliente:</label>
@@ -8096,6 +8135,7 @@ const InnovativeDemo = () => {
             </div>
           </div>
         )}
+      </div>
       </div>
     );
   };
