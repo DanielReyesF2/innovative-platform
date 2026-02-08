@@ -5613,7 +5613,6 @@ const InnovativeDemo = () => {
         <div className="flex items-center gap-2 bg-white rounded-lg border border-[#e5e7eb] p-1">
           {[
             { id: 'kanban', label: 'Kanban', icon: ClipboardList },
-            { id: 'funnel', label: 'Funnel', icon: TrendingDown },
             { id: 'tabla', label: 'Tabla', icon: BarChart3 },
           ].map(view => (
             <button
@@ -5704,13 +5703,21 @@ const InnovativeDemo = () => {
 
                     {/* Droppable Area */}
                     <DroppableColumn stageId={stage.id}>
-                      <SortableContext items={stageItems.map(p => p.id)} strategy={verticalListSortingStrategy}>
+                      <SortableContext items={stageItems.slice(0, 10).map(p => p.id)} strategy={verticalListSortingStrategy}>
                         <div className="space-y-0">
-                          {stageItems.map(prospecto => (
+                          {stageItems.slice(0, 10).map(prospecto => (
                             <DraggableCard key={prospecto.id} prospecto={prospecto} />
                           ))}
                         </div>
                       </SortableContext>
+                      {stageItems.length > 10 && (
+                        <button
+                          onClick={() => { setPipelineViewMode('tabla'); }}
+                          className="w-full mt-2 py-2 text-xs font-medium text-[#00a8a8] hover:text-[#008080] bg-[#00a8a8]/5 hover:bg-[#00a8a8]/10 rounded-lg transition-colors flex items-center justify-center gap-1"
+                        >
+                          Ver {stageItems.length - 10} más <ChevronDown size={12} />
+                        </button>
+                      )}
                       {stageItems.length === 0 && (
                         <div className="flex items-center justify-center h-20 border-2 border-dashed border-[#e5e7eb] rounded-lg text-xs text-[#6b7280]">
                           Arrastra aquí
@@ -5758,97 +5765,6 @@ const InnovativeDemo = () => {
       )}
 
       {/* FUNNEL VIEW */}
-      {pipelineViewMode === 'funnel' && (
-        <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Nivo Funnel Chart */}
-          <div className="bg-white rounded-xl border border-[#e5e7eb] card-modern p-5">
-            <h3 className="text-base font-semibold text-[#1c2c4a] mb-4">Embudo de Ventas</h3>
-            <div style={{ height: 400 }}>
-              {funnelData.length > 0 && (
-                <ResponsiveFunnel
-                  data={funnelData}
-                  margin={{ top: 20, right: 20, bottom: 20, left: 20 }}
-                  direction="horizontal"
-                  valueFormat=">-.0f"
-                  colors={KANBAN_STAGES.filter(s => kanbanProspectos.some(p => p.status === s.id)).map(s => s.color)}
-                  borderWidth={0}
-                  labelColor={{ from: 'color', modifiers: [['darker', 3]] }}
-                  beforeSeparatorLength={40}
-                  beforeSeparatorOffset={10}
-                  afterSeparatorLength={40}
-                  afterSeparatorOffset={10}
-                  currentPartSizeExtension={10}
-                  currentBorderWidth={0}
-                  motionConfig="wobbly"
-                />
-              )}
-            </div>
-          </div>
-
-          {/* Bar Chart Comparison */}
-          <div className="bg-white rounded-xl border border-[#e5e7eb] card-modern p-5">
-            <h3 className="text-base font-semibold text-[#1c2c4a] mb-4">Valor por Stage</h3>
-            <div style={{ height: 400 }}>
-              <ResponsiveBar
-                data={barData}
-                keys={['Cantidad']}
-                indexBy="stage"
-                margin={{ top: 20, right: 30, bottom: 60, left: 60 }}
-                padding={0.3}
-                colors={({ data }) => {
-                  const stage = KANBAN_STAGES.find(s => s.label === data.stage);
-                  return stage?.color || '#6b7280';
-                }}
-                borderRadius={4}
-                axisBottom={{
-                  tickSize: 0,
-                  tickPadding: 8,
-                  tickRotation: -25,
-                }}
-                axisLeft={{
-                  tickSize: 0,
-                  tickPadding: 8,
-                }}
-                labelTextColor="#ffffff"
-                theme={{
-                  axis: { ticks: { text: { fill: '#6b7280', fontSize: 11 } } },
-                  grid: { line: { stroke: '#e5e7eb' } },
-                }}
-                motionConfig="gentle"
-              />
-            </div>
-          </div>
-
-          {/* Conversion Rates */}
-          <div className="bg-white rounded-xl border border-[#e5e7eb] card-modern p-6 lg:col-span-2">
-            <h3 className="text-base font-semibold text-[#1c2c4a] mb-4">Tasas de Conversión por Stage</h3>
-            <div className="flex items-center gap-2">
-              {KANBAN_STAGES.map((stage, idx) => {
-                const count = kanbanProspectos.filter(p => p.status === stage.id).length;
-                const prevCount = idx > 0 ? kanbanProspectos.filter(p => p.status === KANBAN_STAGES[idx - 1].id).length : count;
-                const convRate = prevCount > 0 ? ((count / prevCount) * 100).toFixed(0) : '—';
-
-                return (
-                  <React.Fragment key={stage.id}>
-                    <div className="flex-1 text-center p-4 rounded-lg border border-[#e5e7eb]" style={{ borderTopColor: stage.color, borderTopWidth: 3 }}>
-                      <div className="text-2xl font-bold text-[#1c2c4a]">{count}</div>
-                      <div className="text-xs text-[#6b7280] mt-1">{stage.label}</div>
-                      <div className="text-xs font-medium mt-1" style={{ color: stage.color }}>{stage.prob} prob.</div>
-                    </div>
-                    {idx < KANBAN_STAGES.length - 1 && (
-                      <div className="flex flex-col items-center">
-                        <ArrowRight size={16} className="text-[#e5e7eb]" />
-                        <span className="text-xs font-semibold text-[#6b7280]">{convRate}%</span>
-                      </div>
-                    )}
-                  </React.Fragment>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* TABLE VIEW */}
       {pipelineViewMode === 'tabla' && (
         <div className="mt-6 bg-white rounded-xl border border-[#e5e7eb] shadow-sm overflow-hidden">
