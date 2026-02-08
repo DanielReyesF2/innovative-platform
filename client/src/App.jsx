@@ -4943,70 +4943,171 @@ const InnovativeDemo = () => {
     const alertasActivas = alertas.slice(0, 4);
 
     return (
-    <div className="p-6 bg-[#faf7f2] min-h-screen">
+    <div className="p-4 md:p-6 lg:p-8 bg-[#faf7f2] min-h-screen">
+      <div className="max-w-[1400px] mx-auto">
 
+      {/* HEADER */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-bold text-[#1c2c4a]">Dashboard Ejecutivo</h1>
+          <p className="text-sm text-[#6b7280] mt-0.5">Resumen general del pipeline comercial</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setCurrentView('comercial')}
+            className="flex items-center gap-2 px-4 py-2.5 bg-[#1c2c4a] hover:bg-[#1c2c4a]/90 text-white rounded-lg text-sm font-semibold transition-all shadow-sm hover:shadow-md"
+          >
+            <Target size={16} />
+            Ver Pipeline
+          </button>
+          <button
+            onClick={() => { setKpiPanelArea('comercial'); setShowKpiPanel(true); }}
+            className="flex items-center gap-2 px-4 py-2.5 bg-[#00a8a8] hover:bg-[#008080] text-white rounded-lg text-sm font-semibold transition-all shadow-sm hover:shadow-md"
+          >
+            <Award size={16} />
+            KPIs del Equipo
+          </button>
+        </div>
+      </div>
 
       {/* ROW 1: KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
         {/* Pipeline Ponderado */}
-        <div className="rounded-xl border border-[#00a8a8]/10 card-modern p-5" style={{ backgroundColor: 'rgba(0,168,168,0.04)' }}>
+        <div className="bg-white rounded-xl border border-[#e5e7eb] card-modern p-6">
           <div className="flex items-center justify-between">
             <div>
               <div className="text-[13px] font-medium text-[#6b7280] mb-1">Pipeline Ponderado</div>
-              <div className="text-2xl font-bold text-[#1c2c4a]">${(pipelinePonderado / 1000000).toFixed(1)}M</div>
+              <div className="text-3xl font-bold text-[#1c2c4a]">${(pipelinePonderado / 1000000).toFixed(1)}M</div>
             </div>
-            <div className="w-10 h-10 rounded-xl bg-[#00a8a8]/10 flex items-center justify-center">
-              <DollarSign className="text-[#00a8a8]" size={20} />
+            <div className="w-12 h-12 rounded-xl bg-[#00a8a8]/10 flex items-center justify-center">
+              <DollarSign className="text-[#00a8a8]" size={24} />
             </div>
           </div>
         </div>
 
         {/* Oportunidades Activas */}
-        <div className="bg-white rounded-xl border border-[#e5e7eb] card-modern p-5">
+        <div className="bg-white rounded-xl border border-[#e5e7eb] card-modern p-6">
           <div className="flex items-center justify-between">
             <div>
               <div className="text-[13px] font-medium text-[#6b7280] mb-1">Oportunidades Activas</div>
-              <div className="text-2xl font-bold text-[#1c2c4a]">{leadsActivos.length}</div>
+              <div className="text-3xl font-bold text-[#1c2c4a]">{leadsActivos.length}</div>
             </div>
-            <div className="w-10 h-10 rounded-xl bg-[#0D47A1]/10 flex items-center justify-center">
-              <Target className="text-[#0D47A1]" size={20} />
+            <div className="w-12 h-12 rounded-xl bg-[#0D47A1]/10 flex items-center justify-center">
+              <Target className="text-[#0D47A1]" size={24} />
             </div>
           </div>
         </div>
 
         {/* Win Rate */}
-        <div className="rounded-xl border border-[#2E7D32]/10 card-modern p-5" style={{ backgroundColor: 'rgba(46,125,50,0.04)' }}>
+        <div className="bg-white rounded-xl border border-[#e5e7eb] card-modern p-6">
           <div className="flex items-center justify-between">
             <div>
               <div className="text-[13px] font-medium text-[#6b7280] mb-1">Win Rate</div>
-              <div className="text-2xl font-bold text-[#1c2c4a]">{winRate.toFixed(0)}%</div>
+              <div className="text-3xl font-bold text-[#1c2c4a]">{winRate.toFixed(0)}%</div>
             </div>
-            <div className="w-10 h-10 rounded-xl bg-[#2E7D32]/10 flex items-center justify-center">
-              <Award className="text-[#2E7D32]" size={20} />
+            <div className="w-12 h-12 rounded-xl bg-[#2E7D32]/10 flex items-center justify-center">
+              <Award className="text-[#2E7D32]" size={24} />
             </div>
           </div>
         </div>
 
         {/* Pipeline Velocity */}
-        <div className="bg-white rounded-xl border border-[#e5e7eb] card-modern p-5">
+        <div className="bg-white rounded-xl border border-[#e5e7eb] card-modern p-6">
           <div className="flex items-center justify-between">
             <div>
               <div className="text-[13px] font-medium text-[#6b7280] mb-1">Velocity</div>
-              <div className="text-2xl font-bold text-[#1c2c4a]">${(velocity / 1000000).toFixed(1)}M</div>
+              <div className="text-3xl font-bold text-[#1c2c4a]">${(velocity / 1000000).toFixed(1)}M</div>
             </div>
-            <div className="w-10 h-10 rounded-xl bg-[#F57C00]/10 flex items-center justify-center">
-              <TrendingUp className="text-[#F57C00]" size={20} />
+            <div className="w-12 h-12 rounded-xl bg-[#F57C00]/10 flex items-center justify-center">
+              <TrendingUp className="text-[#F57C00]" size={24} />
             </div>
           </div>
         </div>
       </div>
 
-      {/* ROW 2: Mini Funnel + Presupuesto vs Real */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
-        {/* Mini Pipeline Funnel */}
+      {/* ROW 2: Presupuesto por Ejecutivo (compact row) */}
+      <div className="mt-4 bg-white rounded-xl border border-[#e5e7eb] card-modern p-5">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-semibold text-[#1c2c4a]">Presupuesto por Ejecutivo</h3>
+          <span className="text-xs text-[#6b7280]">Mensual / Anual</span>
+        </div>
+        <div className="flex gap-3 overflow-x-auto">
+          {salesTeamData.filter(m => m.presupuestoAnual2026 > 0 && m.codigo !== 'VA').sort((a, b) => b.presupuestoAnual2026 - a.presupuestoAnual2026).slice(0, 5).map(member => (
+            <div key={member.codigo} className="flex-shrink-0 flex items-center gap-2 bg-[#f3f4f6] rounded-lg px-3 py-2">
+              <div className="w-7 h-7 rounded-full bg-[#00a8a8] flex items-center justify-center text-white text-xs font-bold">{member.codigo}</div>
+              <div>
+                <div className="text-xs font-medium text-[#1c2c4a]">{member.name.split(' ')[0]}</div>
+                <div className="text-sm font-bold text-[#0D47A1]">${(member.presupuestoMensual / 1000000).toFixed(1)}M<span className="text-[10px] font-normal text-[#6b7280]">/mes</span></div>
+                <div className="text-[10px] text-[#6b7280]">Anual: ${(member.presupuestoAnual2026 / 1000000).toFixed(1)}M</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ROW 3: Pipeline por Ejecutivo */}
+      <div className="mt-4 bg-white rounded-xl border border-[#e5e7eb] card-modern p-5">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-semibold text-[#1c2c4a]">Pipeline por Ejecutivo</h3>
+          <button
+            onClick={() => setCurrentView('comercial')}
+            className="text-xs text-[#00a8a8] hover:text-[#008080] font-medium flex items-center gap-1"
+          >
+            Ver Pipeline completo <ChevronRight size={14} />
+          </button>
+        </div>
+        <div className="space-y-3">
+          {salesTeamData.map(member => {
+            const memberProspectos = topProspectos.filter(p => p.ejecutivo === member.codigo);
+            const memberPipeline = memberProspectos.reduce((s, p) => s + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0);
+            const porEtapa = stageData.map(s => memberProspectos.filter(p => p.status === s.id).length);
+            if (memberProspectos.length === 0) return null;
+            return (
+              <div key={member.codigo} className="flex items-center gap-3">
+                <div className="w-7 h-7 rounded-full bg-[#00a8a8] flex items-center justify-center text-white text-xs font-bold flex-shrink-0">{member.codigo}</div>
+                <div className="flex-1">
+                  <div className="flex justify-between text-xs mb-1">
+                    <span className="font-medium text-[#1c2c4a]">{member.name.split(' ')[0]} — {memberProspectos.length} prospectos</span>
+                    <span className="font-bold text-[#0D47A1]">${(memberPipeline / 1000000).toFixed(1)}M</span>
+                  </div>
+                  <div className="w-full h-3 bg-[#e5e7eb] rounded-full overflow-hidden flex">
+                    {stageData.map((stage, idx) => {
+                      const pct = memberProspectos.length > 0 ? (porEtapa[idx] / memberProspectos.length * 100) : 0;
+                      if (pct === 0) return null;
+                      return (
+                        <div
+                          key={stage.id}
+                          className="h-full first:rounded-l-full last:rounded-r-full transition-all duration-500"
+                          style={{ width: `${pct}%`, backgroundColor: stage.color }}
+                          title={`${stage.label}: ${porEtapa[idx]}`}
+                        ></div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            );
+          }).filter(Boolean)}
+          <div className="flex justify-between items-center text-xs text-[#6b7280] pt-2 border-t border-[#e5e7eb]">
+            <span>Total: {topProspectos.length} prospectos • ${(pipelineBruto / 1000000).toFixed(1)}M</span>
+            <div className="flex gap-2">
+              {stageData.map(s => (
+                <div key={s.id} className="flex items-center gap-1 text-[9px]">
+                  <div className="w-2 h-2 rounded-sm" style={{ backgroundColor: s.color }}></div>
+                  {s.label}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ROW 4: Pipeline por Stage + Presupuesto Chart */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-4">
+        {/* Pipeline por Stage */}
         <div className="lg:col-span-2 bg-white rounded-xl border border-[#e5e7eb] card-modern p-5">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-base font-semibold text-[#1c2c4a]">Pipeline por Stage</h3>
+            <h3 className="text-sm font-semibold text-[#1c2c4a]">Pipeline por Stage</h3>
             <button
               onClick={() => setCurrentView('comercial')}
               className="text-xs text-[#00a8a8] hover:text-[#008080] font-medium flex items-center gap-1"
@@ -5014,37 +5115,36 @@ const InnovativeDemo = () => {
               Ver Pipeline completo <ChevronRight size={14} />
             </button>
           </div>
-          <div className="space-y-3">
+          <div className="space-y-2.5">
             {stageData.map((stage, idx) => {
               const maxCount = Math.max(...stageData.map(s => s.count), 1);
               const pct = (stage.count / maxCount) * 100;
               return (
                 <div key={stage.id} className="flex items-center gap-3">
-                  <div className="w-28 text-xs font-medium text-[#6b7280] text-right">{stage.label}</div>
+                  <div className="w-24 text-xs font-medium text-[#6b7280] text-right truncate">{stage.label}</div>
                   <div className="flex-1 relative">
-                    <div className="w-full bg-[#f3f4f6] rounded-full h-7 overflow-hidden">
+                    <div className="w-full bg-[#f3f4f6] rounded-full h-6 overflow-hidden">
                       <div
-                        className="h-full rounded-full flex items-center justify-end pr-3 transition-all"
-                        style={{ width: `${Math.max(pct, 8)}%`, backgroundColor: stage.color }}
+                        className="h-full rounded-full flex items-center justify-end pr-2.5 transition-all"
+                        style={{ width: `${Math.max(pct, 10)}%`, backgroundColor: stage.color }}
                       >
-                        <span className="text-xs font-bold text-white">{stage.count}</span>
+                        <span className="text-[11px] font-bold text-white">{stage.count}</span>
                       </div>
                     </div>
                   </div>
-                  <div className="w-20 text-right">
+                  <div className="w-16 text-right">
                     <span className="text-xs font-semibold text-[#1c2c4a]">${(stage.valor / 1000000).toFixed(1)}M</span>
                   </div>
-                  <div className="w-12 text-right">
-                    <span className="text-xs font-medium" style={{ color: stage.color }}>{stage.prob}</span>
+                  <div className="w-10 text-right">
+                    <span className="text-[11px] font-medium" style={{ color: stage.color }}>{stage.prob}</span>
                   </div>
                 </div>
               );
             })}
           </div>
-          {/* Conversion summary */}
-          <div className="mt-4 pt-4 border-t border-[#e5e7eb] flex items-center justify-between text-xs text-[#6b7280]">
+          <div className="mt-3 pt-3 border-t border-[#e5e7eb] flex items-center justify-between text-xs text-[#6b7280]">
             <span>Total: {topProspectos.length} oportunidades</span>
-            <span>Pipeline bruto: <span className="font-semibold text-[#1c2c4a]">${(pipelineBruto / 1000000).toFixed(0)}M</span></span>
+            <span>Bruto: <span className="font-semibold text-[#1c2c4a]">${(pipelineBruto / 1000000).toFixed(0)}M</span></span>
             <span>Ponderado: <span className="font-semibold text-[#00a8a8]">${(pipelinePonderado / 1000000).toFixed(1)}M</span></span>
           </div>
         </div>
@@ -5052,7 +5152,7 @@ const InnovativeDemo = () => {
         {/* Presupuesto Resumen */}
         <div className="bg-white rounded-xl border border-[#e5e7eb] card-modern p-5">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-base font-semibold text-[#1c2c4a]">Presupuesto 2026</h3>
+            <h3 className="text-sm font-semibold text-[#1c2c4a]">Presupuesto 2026</h3>
             <button
               onClick={() => setCurrentView('comercial')}
               className="text-xs text-[#00a8a8] hover:text-[#008080] font-medium flex items-center gap-1"
@@ -5064,13 +5164,13 @@ const InnovativeDemo = () => {
             <div className="text-3xl font-bold text-[#1c2c4a]">${(presupuestoTotal / 1000000).toFixed(0)}M</div>
             <div className="text-xs text-[#6b7280] mt-1">Presupuesto anual equipo</div>
           </div>
-          <div className="space-y-3">
+          <div className="space-y-2.5">
             {salesTeamData.filter(m => m.presupuestoAnual2026 > 0).sort((a, b) => b.presupuestoAnual2026 - a.presupuestoAnual2026).slice(0, 5).map(member => {
               const pct = presupuestoTotal > 0 ? (member.presupuestoAnual2026 / presupuestoTotal * 100) : 0;
               return (
                 <div key={member.id} className="flex items-center gap-2">
-                  <div className="w-20 text-xs text-[#6b7280] truncate">{member.name.split(' ')[0]}</div>
-                  <div className="flex-1">
+                  <div className="w-7 h-7 rounded-full bg-[#00a8a8] flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0">{member.name.split(' ')[0].substring(0, 2).toUpperCase()}</div>
+                  <div className="flex-1 min-w-0">
                     <div className="w-full bg-[#f3f4f6] rounded-full h-2">
                       <div className="bg-[#00a8a8] h-2 rounded-full" style={{ width: `${pct}%` }} />
                     </div>
@@ -5216,6 +5316,7 @@ const InnovativeDemo = () => {
         </div>
       </div>
     </div>
+    </div>
     );
   };
 
@@ -5351,7 +5452,8 @@ const InnovativeDemo = () => {
     const activeCard = activeKanbanId ? kanbanProspectos.find(p => p.id === activeKanbanId) : null;
 
     return (
-    <div className="p-6 bg-[#faf7f2] min-h-screen">
+    <div className="p-4 md:p-6 lg:p-8 bg-[#faf7f2] min-h-screen">
+      <div className="max-w-[1400px] mx-auto">
       <div className="flex items-center justify-between">
 
         <div className="flex items-center gap-2">
@@ -5815,6 +5917,8 @@ const InnovativeDemo = () => {
         </div>
       )}
 
+      </div>{/* close max-w-[1400px] */}
+
       {/* Stage Gate Modal */}
       {showStageGateModal && pendingMove && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowStageGateModal(false)}>
@@ -6065,7 +6169,7 @@ const InnovativeDemo = () => {
     }));
 
     return (
-      <div className="p-6 bg-[#faf7f2] min-h-screen">
+      <div className="p-4 md:p-6 lg:p-8 bg-[#faf7f2] min-h-screen">
         <div className="flex items-center justify-between">
 
           <button
@@ -6496,7 +6600,7 @@ const InnovativeDemo = () => {
     };
 
     return (
-      <div className="p-6 bg-[#faf7f2] min-h-screen">
+      <div className="p-4 md:p-6 lg:p-8 bg-[#faf7f2] min-h-screen">
 
 
         {/* INDICADORES CLAVE */}
@@ -6887,7 +6991,7 @@ const InnovativeDemo = () => {
     const aguaAhorrada = Math.round(toneladasCirculares * 26000);
 
     return (
-      <div className="p-6 bg-[#faf7f2] min-h-screen">
+      <div className="p-4 md:p-6 lg:p-8 bg-[#faf7f2] min-h-screen">
         <div className="flex items-center justify-between">
 
           <button
@@ -7820,7 +7924,7 @@ const InnovativeDemo = () => {
       ) : (
         <div className="flex h-screen overflow-hidden bg-[#f5f5f5]">
           <Sidebar />
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto overflow-x-hidden">
             {currentView === 'dashboard' && <DashboardView />}
             {currentView === 'comercial' && <PipelineComercialView />}
             {currentView === 'operacion' && <LevantamientosView />}
