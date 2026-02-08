@@ -28,6 +28,20 @@ const SERVICIOS_INNOVATIVE = [
   { id: 'limpieza', nombre: 'Limpieza Especializada', descripcion: 'Servicios de limpieza industrial' }
 ];
 
+// Color mapping for service types — subtle backgrounds + accents for Kanban cards
+const SERVICE_COLORS = {
+  rme:            { bg: '#EFF6FF', border: '#3B82F6', text: '#2563EB', label: 'RME' },
+  rsu:            { bg: '#F0FDF4', border: '#22C55E', text: '#16A34A', label: 'RSU' },
+  organicos:      { bg: '#F7FEE7', border: '#84CC16', text: '#4D7C0F', label: 'Orgánicos' },
+  rp_rpbi:        { bg: '#FEF2F2', border: '#EF4444', text: '#DC2626', label: 'RP/RPBI' },
+  destrucciones:  { bg: '#FAF5FF', border: '#A855F7', text: '#7C3AED', label: 'Destrucciones' },
+  lodos:          { bg: '#FFFBEB', border: '#F59E0B', text: '#B45309', label: 'Lodos' },
+  true:           { bg: '#F0FDFA', border: '#14B8A6', text: '#0F766E', label: 'TRUE' },
+  biodigestores:  { bg: '#FFF7ED', border: '#F97316', text: '#C2410C', label: 'Biodigestores' },
+  sustayn:        { bg: '#ECFDF5', border: '#10B981', text: '#047857', label: 'Sustayn' },
+  limpieza:       { bg: '#F8FAFC', border: '#64748B', text: '#475569', label: 'Limpieza' },
+};
+
 // INDUSTRIAS ESTÁNDAR
 const INDUSTRIAS = [
   'Automotriz', 'Alimenticia', 'Bebidas', 'Retail', 'Hotelería', 'Restaurantes',
@@ -5839,27 +5853,31 @@ const InnovativeDemo = () => {
       );
     };
 
-    // Draggable Card component
+    // Draggable Card component — color-coded by service type
     const DraggableCard = ({ prospecto }) => {
       const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
         id: prospecto.id,
         data: { type: 'card', prospecto },
       });
-      const style = {
+      const valor = prospecto.propuesta?.ventaTotal || prospecto.facturacionEstimada || 0;
+      const ejecutivo = salesTeamData.find(e => e.codigo === prospecto.ejecutivo);
+      const primaryService = (prospecto.servicios || [])[0] || 'rme';
+      const svc = SERVICE_COLORS[primaryService] || SERVICE_COLORS.rme;
+      const cardStyle = {
         transform: CSS.Transform.toString(transform),
         transition,
         opacity: isDragging ? 0.5 : 1,
+        backgroundColor: svc.bg,
+        borderLeft: `3px solid ${svc.border}`,
       };
-      const valor = prospecto.propuesta?.ventaTotal || prospecto.facturacionEstimada || 0;
-      const ejecutivo = salesTeamData.find(e => e.codigo === prospecto.ejecutivo);
 
       return (
         <div
           ref={setNodeRef}
-          style={style}
+          style={cardStyle}
           {...attributes}
           {...listeners}
-          className="bg-white rounded-lg border border-[#e5e7eb] p-3 mb-2 cursor-grab active:cursor-grabbing hover:shadow-md transition-shadow group"
+          className="rounded-lg p-2.5 mb-2 cursor-grab active:cursor-grabbing hover:shadow-md transition-all group"
           onClick={(e) => {
             if (!isDragging) {
               e.stopPropagation();
@@ -5868,41 +5886,38 @@ const InnovativeDemo = () => {
             }
           }}
         >
-          <div className="flex items-start justify-between mb-2">
-            <div className="flex-1 min-w-0">
-              <h4 className="text-sm font-semibold text-[#1c2c4a] truncate">{prospecto.empresa}</h4>
-              {prospecto.planta && <p className="text-xs text-[#6b7280] truncate">{prospecto.planta}</p>}
-            </div>
-            <GripVertical size={14} className="text-[#e5e7eb] group-hover:text-[#6b7280] flex-shrink-0 mt-0.5" />
+          {/* Row 1: Company name + service badge */}
+          <div className="flex items-start justify-between gap-1.5 mb-1">
+            <h4 className="text-[13px] font-semibold text-[#1c2c4a] truncate leading-tight flex-1 min-w-0">{prospecto.empresa}</h4>
+            <span
+              className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full flex-shrink-0 whitespace-nowrap"
+              style={{ backgroundColor: `${svc.border}18`, color: svc.text }}
+            >
+              {svc.label}
+            </span>
           </div>
-          <div className="flex items-center gap-2 mb-2">
-            <span className="text-xs bg-[#f3f4f6] text-[#6b7280] px-1.5 py-0.5 rounded">{prospecto.industria}</span>
+          {prospecto.planta && <p className="text-[11px] text-[#9ca3af] truncate -mt-0.5 mb-1">{prospecto.planta}</p>}
+          {/* Row 2: Industry + Value */}
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-[10px] text-[#9ca3af]">{prospecto.industria}</span>
+            {valor > 0 && <span className="text-xs font-bold text-[#0D47A1]">${(valor / 1000000).toFixed(2)}M</span>}
           </div>
-          {valor > 0 && (
-            <div className="text-sm font-bold text-[#0D47A1] mb-1">
-              ${(valor / 1000000).toFixed(2)}M
-            </div>
-          )}
-          <div className="flex items-center justify-between text-xs text-[#6b7280]">
+          {/* Row 3: Ejecutivo + City */}
+          <div className="flex items-center justify-between text-[11px] text-[#9ca3af]">
             <span>{ejecutivo?.name?.split(' ')[0] || prospecto.ejecutivo}</span>
-            {prospecto.ciudad && <span className="flex items-center gap-1"><MapPin size={10} />{prospecto.ciudad.split(',')[0]}</span>}
+            {prospecto.ciudad && <span className="flex items-center gap-0.5"><MapPin size={9} />{prospecto.ciudad.split(',')[0]}</span>}
           </div>
-          {/* Checklist progress bar */}
+          {/* Progress micro-bar */}
           {(() => {
             const campos = calcularCamposCompletos(prospecto);
             const completos = campos.filter(c => c.ok).length;
             const total = campos.length;
             const pct = (completos / total) * 100;
+            const barColor = completos === total ? '#2E7D32' : pct >= 60 ? '#F57C00' : '#ef4444';
             return (
-              <div className="mt-2">
-                <div className="flex items-center justify-between mb-0.5">
-                  <span className={`text-[10px] font-medium ${completos === total ? 'text-[#2E7D32]' : 'text-[#6b7280]'}`}>
-                    {completos === total ? 'Listo para Ops' : `${completos}/${total} campos`}
-                  </span>
-                  {completos === total && <CheckSquare size={10} className="text-[#2E7D32]" />}
-                </div>
-                <div className="w-full h-1 bg-[#e5e7eb] rounded-full overflow-hidden">
-                  <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: completos === total ? '#2E7D32' : pct >= 60 ? '#F57C00' : '#ef4444' }}></div>
+              <div className="mt-1.5">
+                <div className="w-full h-[3px] bg-black/[0.04] rounded-full overflow-hidden">
+                  <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: barColor }}></div>
                 </div>
               </div>
             );
@@ -6152,18 +6167,31 @@ const InnovativeDemo = () => {
           ))}
         </div>
 
-        {/* Pipeline Summary Chips */}
-        <div className="flex items-center gap-3">
-          {KANBAN_STAGES.slice(0, 4).map(stage => {
-            const count = kanbanProspectos.filter(p => p.status === stage.id).length;
-            return (
-              <div key={stage.id} className="flex items-center gap-2 text-xs">
-                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: stage.color }}></div>
-                <span className="text-[#6b7280]">{stage.label}:</span>
-                <span className="font-semibold text-[#1c2c4a]">{count}</span>
-              </div>
-            );
-          })}
+        {/* Service Type Summary — how many per service */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {(() => {
+            const counts = {};
+            kanbanProspectos.forEach(p => {
+              const svcId = (p.servicios || [])[0] || 'rme';
+              counts[svcId] = (counts[svcId] || 0) + 1;
+            });
+            return Object.entries(counts)
+              .sort((a, b) => b[1] - a[1])
+              .map(([svcId, count]) => {
+                const svc = SERVICE_COLORS[svcId] || SERVICE_COLORS.rme;
+                return (
+                  <div
+                    key={svcId}
+                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium"
+                    style={{ backgroundColor: svc.bg, color: svc.text, border: `1px solid ${svc.border}30` }}
+                  >
+                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: svc.border }}></div>
+                    {svc.label}
+                    <span className="font-bold">{count}</span>
+                  </div>
+                );
+              });
+          })()}
         </div>
       </div>
 
