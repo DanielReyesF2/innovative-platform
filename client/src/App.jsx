@@ -12,7 +12,7 @@ import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, us
 import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import html2canvas from 'html2canvas';
-import { Home, TrendingUp, Package, Users, FileText, Settings, ChevronRight, Download, Search, Filter, Bell, LogOut, Menu, X, DollarSign, Target, PhoneCall, Award, Calendar, MapPin, Truck, Leaf, Briefcase, ClipboardList, CheckSquare, AlertCircle, Send, Eye, Recycle, Trash2, BarChart3, TrendingDown, ChevronDown, ChevronUp, Save, FileImage, RotateCcw, Building2, GripVertical, Lock, Unlock, ArrowRight, Plus } from 'lucide-react';
+import { Home, TrendingUp, Package, Users, FileText, Settings, ChevronRight, Download, Search, Filter, Bell, LogOut, Menu, X, DollarSign, Target, PhoneCall, Award, Calendar, MapPin, Truck, Leaf, Briefcase, ClipboardList, CheckSquare, AlertCircle, Send, Eye, Recycle, Trash2, BarChart3, TrendingDown, ChevronDown, ChevronUp, Save, FileImage, RotateCcw, Building2, GripVertical, Lock, Unlock, ArrowRight, Plus, ArrowLeft, Upload, Paperclip, MessageSquare, Clock, Image } from 'lucide-react';
 
 // SERVICIOS INNOVATIVE
 const SERVICIOS_INNOVATIVE = [
@@ -4191,6 +4191,13 @@ const InnovativeDemo = () => {
   const [mostrarNuevoDocumento, setMostrarNuevoDocumento] = useState(false);
   const [filtroDocumentos, setFiltroDocumentos] = useState({ tipo: '', categoria: '', status: '' });
 
+  // Ejecutivo Hub states
+  const [hubEjecutivo, setHubEjecutivo] = useState(null); // salesTeamData member
+  const [hubTab, setHubTab] = useState('pipeline'); // 'pipeline' | 'notas' | 'archivos'
+  const [hubNotas, setHubNotas] = useState({}); // { codigoEjecutivo: [{text, date, id}] }
+  const [hubNuevaNota, setHubNuevaNota] = useState('');
+  const [hubArchivos, setHubArchivos] = useState({}); // { codigoEjecutivo: [{name, type, size, date, id}] }
+
   // Pipeline view states
   const [pipelineViewMode, setPipelineViewMode] = useState('kanban'); // 'kanban' | 'funnel' | 'tabla'
   const [kanbanProspectos, setKanbanProspectos] = useState(topProspectos);
@@ -5033,7 +5040,7 @@ const InnovativeDemo = () => {
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
           {salesTeamData.filter(m => m.presupuestoAnual2026 > 0 && m.codigo !== 'VA').sort((a, b) => b.presupuestoAnual2026 - a.presupuestoAnual2026).slice(0, 5).map(member => (
-            <div key={member.codigo} className="flex items-center gap-3 bg-[#f3f4f6] rounded-lg px-4 py-3">
+            <div key={member.codigo} onClick={() => { setHubEjecutivo(member); setHubTab('pipeline'); setCurrentView('hub-ejecutivo'); }} className="flex items-center gap-3 bg-[#f3f4f6] rounded-lg px-4 py-3 cursor-pointer hover:bg-[#e5e7eb] transition-colors">
               <div className="w-9 h-9 rounded-full bg-[#00a8a8] flex items-center justify-center text-white text-xs font-bold flex-shrink-0">{member.codigo}</div>
               <div className="min-w-0">
                 <div className="text-xs font-medium text-[#1c2c4a] truncate">{member.name.split(' ')[0]}</div>
@@ -5065,7 +5072,7 @@ const InnovativeDemo = () => {
             const porEtapa = stageData.map(s => memberProspectos.filter(p => p.status === s.id).length);
             if (memberProspectos.length === 0) return null;
             return (
-              <div key={member.codigo} className="flex items-center gap-3">
+              <div key={member.codigo} onClick={() => { setHubEjecutivo(member); setHubTab('pipeline'); setCurrentView('hub-ejecutivo'); }} className="flex items-center gap-3 cursor-pointer hover:bg-[#f3f4f6] rounded-lg p-2 -mx-2 transition-colors">
                 <div className="w-9 h-9 rounded-full bg-[#00a8a8] flex items-center justify-center text-white text-xs font-bold flex-shrink-0">{member.codigo}</div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-1">
@@ -5316,7 +5323,7 @@ const InnovativeDemo = () => {
             const memberPipeline = memberProspectos.reduce((s, p) => s + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0);
             return (
               <div key={member.id} className="flex items-center gap-3 p-3 rounded-lg hover:bg-[#f3f4f6] transition-colors cursor-pointer"
-                onClick={() => setSelectedTeamMember(member)}>
+                onClick={() => { setHubEjecutivo(member); setHubTab('pipeline'); setCurrentView('hub-ejecutivo'); }}>
                 <div className="w-9 h-9 rounded-full bg-[#00a8a8] flex items-center justify-center text-sm font-bold text-white">
                   {member.codigo}
                 </div>
@@ -5334,6 +5341,415 @@ const InnovativeDemo = () => {
         </div>
       </div>
     </div>
+    </div>
+    );
+  };
+
+  // VISTA: HUB DEL EJECUTIVO — centro de trabajo personal
+  const EjecutivoHubView = () => {
+    if (!hubEjecutivo) return null;
+    const member = hubEjecutivo;
+    const memberProspectos = kanbanProspectos.filter(p => p.ejecutivo === member.codigo);
+    const memberLeads = memberProspectos.filter(p => ['Lead nuevo', 'Reunión agendada'].includes(p.status));
+    const memberProspectosActivos = memberProspectos.filter(p => !['Lead nuevo', 'Reunión agendada', 'Propuesta Rechazada'].includes(p.status));
+    const memberRechazados = memberProspectos.filter(p => p.status === 'Propuesta Rechazada');
+    const memberGanados = memberProspectos.filter(p => p.status === 'Inicio de operación');
+    const totalPipeline = memberProspectos.reduce((s, p) => s + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0);
+    const notas = hubNotas[member.codigo] || [];
+    const archivos = hubArchivos[member.codigo] || [];
+    const fileInputRef = React.createRef();
+
+    const handleFileUpload = (e) => {
+      const files = Array.from(e.target.files || []);
+      if (files.length === 0) return;
+      const nuevosArchivos = files.map((f, idx) => ({
+        id: Date.now() + idx,
+        name: f.name,
+        type: f.type,
+        size: f.size,
+        date: new Date().toISOString().split('T')[0],
+      }));
+      setHubArchivos(prev => ({
+        ...prev,
+        [member.codigo]: [...(prev[member.codigo] || []), ...nuevosArchivos]
+      }));
+      e.target.value = '';
+    };
+
+    const agregarNota = () => {
+      if (!hubNuevaNota.trim()) return;
+      setHubNotas(prev => ({
+        ...prev,
+        [member.codigo]: [...(prev[member.codigo] || []), {
+          id: Date.now(),
+          text: hubNuevaNota.trim(),
+          date: new Date().toISOString(),
+        }]
+      }));
+      setHubNuevaNota('');
+    };
+
+    const eliminarNota = (notaId) => {
+      setHubNotas(prev => ({
+        ...prev,
+        [member.codigo]: (prev[member.codigo] || []).filter(n => n.id !== notaId)
+      }));
+    };
+
+    const eliminarArchivo = (archivoId) => {
+      setHubArchivos(prev => ({
+        ...prev,
+        [member.codigo]: (prev[member.codigo] || []).filter(a => a.id !== archivoId)
+      }));
+    };
+
+    const getFileIcon = (type) => {
+      if (type?.includes('pdf')) return <FileText size={16} className="text-red-500" />;
+      if (type?.includes('image')) return <Image size={16} className="text-blue-500" />;
+      if (type?.includes('sheet') || type?.includes('excel') || type?.includes('csv')) return <BarChart3 size={16} className="text-green-600" />;
+      return <Paperclip size={16} className="text-gray-400" />;
+    };
+
+    const formatFileSize = (bytes) => {
+      if (bytes < 1024) return bytes + ' B';
+      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+      return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    };
+
+    const STAGE_COLORS = {
+      'Lead nuevo': '#6b7280',
+      'Reunión agendada': '#0D47A1',
+      'Levantamiento': '#F57C00',
+      'Propuesta enviada': '#00a8a8',
+      'Negociación': '#7C3AED',
+      'Inicio de operación': '#2E7D32',
+      'Propuesta Rechazada': '#DC2626',
+    };
+
+    const tabs = [
+      { id: 'pipeline', label: 'Pipeline', icon: Target },
+      { id: 'notas', label: 'Notas', icon: MessageSquare, count: notas.length },
+      { id: 'archivos', label: 'Archivos', icon: Paperclip, count: archivos.length },
+    ];
+
+    return (
+    <div className="p-4 md:p-6 lg:p-8 bg-[#faf7f2] min-h-screen">
+      <div className="max-w-[1400px] mx-auto">
+
+      {/* BACK + HEADER */}
+      <div className="flex items-center gap-3 mb-6">
+        <button
+          onClick={() => { setHubEjecutivo(null); setCurrentView('dashboard'); }}
+          className="flex items-center justify-center w-9 h-9 rounded-lg bg-white border border-[#e5e7eb] hover:bg-[#f3f4f6] transition-colors"
+        >
+          <ArrowLeft size={18} className="text-[#6b7280]" />
+        </button>
+        <div className="w-12 h-12 rounded-full bg-[#00a8a8] flex items-center justify-center text-white text-lg font-bold flex-shrink-0">{member.codigo}</div>
+        <div className="flex-1 min-w-0">
+          <h1 className="text-xl font-bold text-[#1c2c4a]">{member.name}</h1>
+          <p className="text-sm text-[#6b7280]">{member.role} — {member.zona}</p>
+        </div>
+        <div className="text-right hidden md:block">
+          <div className="text-sm text-[#6b7280]">Pipeline Total</div>
+          <div className="text-xl font-bold text-[#0D47A1]">${(totalPipeline / 1000000).toFixed(1)}M</div>
+        </div>
+      </div>
+
+      {/* KPI ROW */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
+        <div className="bg-white rounded-xl border border-[#e5e7eb] p-4 text-center">
+          <div className="text-2xl font-bold text-[#1c2c4a]">{memberProspectos.length}</div>
+          <div className="text-xs text-[#6b7280] mt-0.5">Total Prospectos</div>
+        </div>
+        <div className="bg-white rounded-xl border border-[#e5e7eb] p-4 text-center">
+          <div className="text-2xl font-bold text-[#6b7280]">{memberLeads.length}</div>
+          <div className="text-xs text-[#6b7280] mt-0.5">Leads</div>
+        </div>
+        <div className="bg-white rounded-xl border border-[#e5e7eb] p-4 text-center">
+          <div className="text-2xl font-bold text-[#00a8a8]">{memberProspectosActivos.length}</div>
+          <div className="text-xs text-[#6b7280] mt-0.5">Prospectos Activos</div>
+        </div>
+        <div className="bg-white rounded-xl border border-[#e5e7eb] p-4 text-center">
+          <div className="text-2xl font-bold text-[#2E7D32]">{memberGanados.length}</div>
+          <div className="text-xs text-[#6b7280] mt-0.5">Ganados</div>
+        </div>
+      </div>
+
+      {/* PRESUPUESTO BAR */}
+      {member.presupuestoAnual2026 > 0 && (
+        <div className="bg-white rounded-xl border border-[#e5e7eb] p-4 mb-5">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-semibold text-[#1c2c4a]">Presupuesto</span>
+            <span className="text-xs text-[#6b7280]">
+              ${(member.ventasReales / 1000000).toFixed(1)}M de ${(member.presupuestoMensual / 1000000).toFixed(1)}M/mes
+              <span className="ml-2 font-bold" style={{ color: member.cumplimientoPresupuesto >= 70 ? '#2E7D32' : member.cumplimientoPresupuesto >= 40 ? '#F57C00' : '#DC2626' }}>
+                {member.cumplimientoPresupuesto}%
+              </span>
+            </span>
+          </div>
+          <div className="w-full h-3 bg-[#e5e7eb] rounded-full overflow-hidden">
+            <div className="h-full rounded-full transition-all duration-500" style={{
+              width: `${Math.min(member.cumplimientoPresupuesto, 100)}%`,
+              backgroundColor: member.cumplimientoPresupuesto >= 70 ? '#2E7D32' : member.cumplimientoPresupuesto >= 40 ? '#F57C00' : '#DC2626',
+            }} />
+          </div>
+        </div>
+      )}
+
+      {/* TABS */}
+      <div className="flex items-center gap-1 bg-white rounded-xl border border-[#e5e7eb] p-1 mb-5">
+        {tabs.map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => setHubTab(tab.id)}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all flex-1 justify-center ${
+              hubTab === tab.id
+                ? 'bg-[#1c2c4a] text-white shadow-sm'
+                : 'text-[#6b7280] hover:bg-[#f3f4f6]'
+            }`}
+          >
+            <tab.icon size={16} />
+            {tab.label}
+            {tab.count > 0 && (
+              <span className={`text-xs px-1.5 py-0.5 rounded-full ${hubTab === tab.id ? 'bg-white/20' : 'bg-[#e5e7eb]'}`}>{tab.count}</span>
+            )}
+          </button>
+        ))}
+      </div>
+
+      {/* TAB: PIPELINE */}
+      {hubTab === 'pipeline' && (
+        <div className="space-y-4">
+          {/* Stage summary */}
+          <div className="bg-white rounded-xl border border-[#e5e7eb] p-5">
+            <h3 className="text-sm font-semibold text-[#1c2c4a] mb-3">Distribución por Etapa</h3>
+            <div className="space-y-2">
+              {KANBAN_STAGES.map(stage => {
+                const items = memberProspectos.filter(p => p.status === stage.id);
+                const valor = items.reduce((s, p) => s + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0);
+                return (
+                  <div key={stage.id} className="flex items-center gap-3">
+                    <div className="w-3 h-3 rounded-sm flex-shrink-0" style={{ backgroundColor: stage.color }} />
+                    <span className="text-sm text-[#1c2c4a] w-28 flex-shrink-0">{stage.label}</span>
+                    <div className="flex-1 h-2.5 bg-[#e5e7eb] rounded-full overflow-hidden">
+                      <div className="h-full rounded-full" style={{
+                        width: memberProspectos.length > 0 ? `${(items.length / memberProspectos.length) * 100}%` : '0%',
+                        backgroundColor: stage.color,
+                      }} />
+                    </div>
+                    <span className="text-sm font-bold text-[#1c2c4a] w-8 text-right">{items.length}</span>
+                    <span className="text-xs text-[#6b7280] w-20 text-right">${(valor / 1000000).toFixed(1)}M</span>
+                  </div>
+                );
+              })}
+              {memberRechazados.length > 0 && (
+                <div className="flex items-center gap-3">
+                  <div className="w-3 h-3 rounded-sm flex-shrink-0 bg-red-500" />
+                  <span className="text-sm text-[#1c2c4a] w-28 flex-shrink-0">Rechazadas</span>
+                  <div className="flex-1" />
+                  <span className="text-sm font-bold text-red-500 w-8 text-right">{memberRechazados.length}</span>
+                  <span className="text-xs text-[#6b7280] w-20 text-right"></span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Prospectos cards by stage */}
+          {KANBAN_STAGES.map(stage => {
+            const items = memberProspectos.filter(p => p.status === stage.id);
+            if (items.length === 0) return null;
+            return (
+              <div key={stage.id} className="bg-white rounded-xl border border-[#e5e7eb] p-5">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: stage.color }} />
+                  <h3 className="text-sm font-semibold text-[#1c2c4a]">{stage.label}</h3>
+                  <span className="text-xs text-[#6b7280] ml-1">({items.length})</span>
+                  <span className="text-xs text-[#6b7280] ml-auto">{stage.prob}</span>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {items.map(p => (
+                    <div key={p.id} className="border border-[#e5e7eb] rounded-lg p-3 hover:shadow-md transition-shadow bg-[#faf7f2]">
+                      <div className="flex items-start justify-between mb-1.5">
+                        <div className="font-semibold text-sm text-[#1c2c4a] truncate flex-1">{p.empresa}{p.planta ? ` — ${p.planta}` : ''}</div>
+                      </div>
+                      {p.contacto?.nombre && (
+                        <div className="text-xs text-[#6b7280] mb-1 flex items-center gap-1">
+                          <Users size={11} /> {p.contacto.nombre} {p.contacto.puesto ? `— ${p.contacto.puesto}` : ''}
+                        </div>
+                      )}
+                      <div className="flex items-center gap-2 text-xs text-[#6b7280] mb-1.5">
+                        {p.ciudad && <span className="flex items-center gap-0.5"><MapPin size={11} /> {p.ciudad}</span>}
+                        {p.industria && <span>· {p.industria}</span>}
+                      </div>
+                      {p.servicios && p.servicios.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mb-1.5">
+                          {p.servicios.map(s => {
+                            const serv = SERVICIOS_INNOVATIVE.find(si => si.id === s);
+                            return <span key={s} className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#00a8a8]/10 text-[#00a8a8] font-medium">{serv?.nombre || s}</span>;
+                          })}
+                        </div>
+                      )}
+                      <div className="flex items-center justify-between mt-2 pt-2 border-t border-[#e5e7eb]">
+                        <span className="text-sm font-bold text-[#0D47A1]">
+                          {(p.propuesta?.ventaTotal || p.facturacionEstimada) ? `$${((p.propuesta?.ventaTotal || p.facturacionEstimada) / 1000).toFixed(0)}K` : '—'}
+                        </span>
+                        {p.propuesta?.status && (
+                          <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
+                            p.propuesta.status === 'Aceptada' ? 'bg-green-100 text-green-700' :
+                            p.propuesta.status === 'Rechazada' ? 'bg-red-100 text-red-700' :
+                            'bg-gray-100 text-gray-600'
+                          }`}>{p.propuesta.status}</span>
+                        )}
+                        {p.fecha && <span className="text-[10px] text-[#6b7280]">{p.fecha}</span>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+
+          {/* Rechazados */}
+          {memberRechazados.length > 0 && (
+            <div className="bg-white rounded-xl border border-[#e5e7eb] p-5">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-3 h-3 rounded-sm bg-red-500" />
+                <h3 className="text-sm font-semibold text-[#1c2c4a]">Rechazadas</h3>
+                <span className="text-xs text-[#6b7280]">({memberRechazados.length})</span>
+              </div>
+              <div className="space-y-2">
+                {memberRechazados.map(p => (
+                  <div key={p.id} className="flex items-center gap-3 text-sm border border-red-100 bg-red-50/50 rounded-lg px-3 py-2">
+                    <span className="font-medium text-[#1c2c4a] truncate flex-1">{p.empresa}</span>
+                    {p.motivoRechazo && <span className="text-xs text-red-600">{p.motivoRechazo}</span>}
+                    <span className="text-xs text-[#6b7280]">{p.ciudad}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* TAB: NOTAS */}
+      {hubTab === 'notas' && (
+        <div className="space-y-4">
+          {/* Nota del sistema (la que viene en salesTeamData) */}
+          {member.notas && (
+            <div className="bg-[#FFFBEB] rounded-xl border border-[#FDE68A] p-4">
+              <div className="flex items-center gap-2 mb-1">
+                <AlertCircle size={14} className="text-[#D97706]" />
+                <span className="text-xs font-semibold text-[#92400E]">Nota del perfil</span>
+              </div>
+              <p className="text-sm text-[#92400E]">{member.notas}</p>
+            </div>
+          )}
+
+          {/* Input nueva nota */}
+          <div className="bg-white rounded-xl border border-[#e5e7eb] p-4">
+            <div className="flex gap-3">
+              <div className="flex-1">
+                <textarea
+                  value={hubNuevaNota}
+                  onChange={(e) => setHubNuevaNota(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); agregarNota(); }}}
+                  placeholder="Escribe una nota... (Enter para guardar)"
+                  className="w-full border border-[#e5e7eb] rounded-lg px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#00a8a8]/30 focus:border-[#00a8a8]"
+                  rows={2}
+                />
+              </div>
+              <button
+                onClick={agregarNota}
+                disabled={!hubNuevaNota.trim()}
+                className="self-end px-4 py-2 bg-[#00a8a8] hover:bg-[#008080] disabled:opacity-40 text-white rounded-lg text-sm font-medium transition-colors"
+              >
+                <Send size={16} />
+              </button>
+            </div>
+          </div>
+
+          {/* Lista de notas */}
+          {notas.length > 0 ? (
+            <div className="space-y-2">
+              {[...notas].reverse().map(nota => (
+                <div key={nota.id} className="bg-white rounded-xl border border-[#e5e7eb] p-4 group">
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="text-sm text-[#1c2c4a] flex-1 whitespace-pre-wrap">{nota.text}</p>
+                    <button
+                      onClick={() => eliminarNota(nota.id)}
+                      className="opacity-0 group-hover:opacity-100 text-[#6b7280] hover:text-red-500 transition-all flex-shrink-0"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                  <div className="flex items-center gap-1.5 mt-2 text-xs text-[#6b7280]">
+                    <Clock size={11} />
+                    {new Date(nota.date).toLocaleString('es-MX', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="bg-white rounded-xl border border-[#e5e7eb] p-8 text-center">
+              <MessageSquare size={32} className="text-[#d1d5db] mx-auto mb-2" />
+              <p className="text-sm text-[#6b7280]">Sin notas aún. Escribe la primera nota para {member.name.split(' ')[0]}.</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* TAB: ARCHIVOS */}
+      {hubTab === 'archivos' && (
+        <div className="space-y-4">
+          {/* Upload area */}
+          <div
+            className="bg-white rounded-xl border-2 border-dashed border-[#d1d5db] hover:border-[#00a8a8] p-8 text-center transition-colors cursor-pointer"
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <input
+              type="file"
+              ref={fileInputRef}
+              className="hidden"
+              multiple
+              accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,.xlsx,.xls,.csv,.doc,.docx"
+              onChange={handleFileUpload}
+            />
+            <Upload size={32} className="text-[#d1d5db] mx-auto mb-2" />
+            <p className="text-sm font-medium text-[#6b7280]">Click para subir archivos</p>
+            <p className="text-xs text-[#9ca3af] mt-1">PDF, fotos, Excel, Word</p>
+          </div>
+
+          {/* File list */}
+          {archivos.length > 0 ? (
+            <div className="bg-white rounded-xl border border-[#e5e7eb] divide-y divide-[#e5e7eb]">
+              {[...archivos].reverse().map(archivo => (
+                <div key={archivo.id} className="flex items-center gap-3 px-4 py-3 group hover:bg-[#f9fafb] transition-colors">
+                  <div className="w-9 h-9 rounded-lg bg-[#f3f4f6] flex items-center justify-center flex-shrink-0">
+                    {getFileIcon(archivo.type)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium text-[#1c2c4a] truncate">{archivo.name}</div>
+                    <div className="text-xs text-[#6b7280]">{formatFileSize(archivo.size)} · {archivo.date}</div>
+                  </div>
+                  <button
+                    onClick={() => eliminarArchivo(archivo.id)}
+                    className="opacity-0 group-hover:opacity-100 text-[#6b7280] hover:text-red-500 transition-all"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="bg-white rounded-xl border border-[#e5e7eb] p-8 text-center">
+              <Paperclip size={32} className="text-[#d1d5db] mx-auto mb-2" />
+              <p className="text-sm text-[#6b7280]">Sin archivos. Sube PDFs, fotos o Excel para {member.name.split(' ')[0]}.</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      </div>
     </div>
     );
   };
@@ -5552,7 +5968,7 @@ const InnovativeDemo = () => {
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
           {salesTeamData.filter(m => m.presupuestoAnual2026 > 0 && m.codigo !== 'VA').sort((a, b) => b.presupuestoAnual2026 - a.presupuestoAnual2026).map(member => (
-              <div key={member.codigo} className="flex items-center gap-3 bg-[#f3f4f6] rounded-lg px-4 py-3">
+              <div key={member.codigo} onClick={() => { setHubEjecutivo(member); setHubTab('pipeline'); setCurrentView('hub-ejecutivo'); }} className="flex items-center gap-3 bg-[#f3f4f6] rounded-lg px-4 py-3 cursor-pointer hover:bg-[#e5e7eb] transition-colors">
                 <div className="w-9 h-9 rounded-full bg-[#00a8a8] flex items-center justify-center text-white text-xs font-bold flex-shrink-0">{member.codigo}</div>
                 <div className="min-w-0">
                   <div className="text-xs font-medium text-[#1c2c4a] truncate">{member.name.split(' ')[0]}</div>
@@ -5576,7 +5992,7 @@ const InnovativeDemo = () => {
             const porEtapa = KANBAN_STAGES.map(s => memberProspectos.filter(p => p.status === s.id).length);
             if (memberProspectos.length === 0) return null;
             return (
-              <div key={member.codigo} className="flex items-center gap-3">
+              <div key={member.codigo} onClick={() => { setHubEjecutivo(member); setHubTab('pipeline'); setCurrentView('hub-ejecutivo'); }} className="flex items-center gap-3 cursor-pointer hover:bg-[#f3f4f6] rounded-lg p-2 -mx-2 transition-colors">
                 <div className="w-9 h-9 rounded-full bg-[#00a8a8] flex items-center justify-center text-white text-xs font-bold flex-shrink-0">{member.codigo}</div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-1">
@@ -7878,6 +8294,7 @@ const InnovativeDemo = () => {
           <Sidebar />
           <div className="flex-1 overflow-y-auto overflow-x-hidden">
             {currentView === 'dashboard' && <DashboardView />}
+            {currentView === 'hub-ejecutivo' && <EjecutivoHubView />}
             {currentView === 'comercial' && <PipelineComercialView />}
             {currentView === 'operacion' && <LevantamientosView />}
             {currentView === 'trazabilidad' && <TrazabilidadGeneralView />}
