@@ -4968,22 +4968,6 @@ const InnovativeDemo = () => {
           <h1 className="text-xl font-bold text-[#1c2c4a]">Dashboard Ejecutivo</h1>
           <p className="text-sm text-[#6b7280] mt-0.5">Resumen general del pipeline comercial</p>
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setCurrentView('comercial')}
-            className="flex items-center gap-2 px-4 py-2.5 bg-[#1c2c4a] hover:bg-[#1c2c4a]/90 text-white rounded-lg text-sm font-semibold transition-all shadow-sm hover:shadow-md"
-          >
-            <Target size={16} />
-            Ver Pipeline
-          </button>
-          <button
-            onClick={() => { setKpiPanelArea('comercial'); setShowKpiPanel(true); }}
-            className="flex items-center gap-2 px-4 py-2.5 bg-[#00a8a8] hover:bg-[#008080] text-white rounded-lg text-sm font-semibold transition-all shadow-sm hover:shadow-md"
-          >
-            <Award size={16} />
-            KPIs del Equipo
-          </button>
-        </div>
       </div>
 
       {/* ROW 1: KPI Cards */}
