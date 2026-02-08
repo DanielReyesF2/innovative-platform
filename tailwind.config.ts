@@ -3,7 +3,7 @@ import tailwindcssAnimate from "tailwindcss-animate";
 
 const config: Config = {
   darkMode: ["class"],
-  content: ["./client/src/**/*.{ts,tsx}", "./client/index.html"],
+  content: ["./client/src/**/*.{js,jsx,ts,tsx}", "./client/index.html"],
   theme: {
     extend: {
       colors: {
