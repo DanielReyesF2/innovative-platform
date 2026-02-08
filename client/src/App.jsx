@@ -6398,21 +6398,14 @@ const InnovativeDemo = () => {
               <thead className="bg-[#f3f4f6] border-b border-[#e5e7eb]">
                 <tr>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-[#6b7280]">Empresa</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6b7280]">Servicio</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6b7280]">Industria</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6b7280]">Stage</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6b7280]">Ejecutivo</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold text-[#6b7280]">Valor</th>
-                  <th className="px-4 py-3 text-center text-xs font-semibold text-[#6b7280]">Prob.</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold text-[#6b7280]">Ponderado</th>
+                  <th className="px-3 py-3 text-left text-xs font-semibold text-[#6b7280]">Servicio</th>
+                  <th className="px-3 py-3 text-left text-xs font-semibold text-[#6b7280]">Stage</th>
+                  <th className="px-3 py-3 text-left text-xs font-semibold text-[#6b7280]">Ejecutivo</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-[#6b7280]">Contacto</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredProspectos.map(p => {
-                    const valor = p.propuesta?.ventaTotal || p.facturacionEstimada || 0;
-                    const prob = STAGE_PROBABILITY[p.status] || 0.05;
-                    const ponderado = valor * prob;
                     const stage = KANBAN_STAGES.find(s => s.id === p.status);
                     const ejecutivo = salesTeamData.find(e => e.codigo === p.ejecutivo);
                     const primaryService = (p.servicios || [])[0] || 'rme';
@@ -6423,16 +6416,16 @@ const InnovativeDemo = () => {
                         className="border-b border-[#e5e7eb] hover:brightness-95 cursor-pointer transition-colors"
                         style={{ backgroundColor: svc.bg }}
                         onClick={() => { setSelectedProspecto(p); setMostrarDetallesProspecto(true); }}>
-                        <td className="px-4 py-3">
+                        <td className="px-4 py-2.5">
                           <div className="flex items-center gap-2">
                             <div className="w-0.5 h-8 rounded-full flex-shrink-0" style={{ backgroundColor: svc.border }}></div>
-                            <div>
-                              <div className="text-sm font-semibold text-[#1c2c4a]">{p.empresa}</div>
-                              {p.planta && <div className="text-[11px] text-[#9ca3af]">{p.planta}</div>}
+                            <div className="min-w-0">
+                              <div className="text-sm font-semibold text-[#1c2c4a] truncate">{p.empresa}</div>
+                              {p.planta && <div className="text-[11px] text-[#9ca3af] truncate">{p.planta}</div>}
                             </div>
                           </div>
                         </td>
-                        <td className="px-4 py-3">
+                        <td className="px-3 py-2.5">
                           <span
                             className="text-[10px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap"
                             style={{ backgroundColor: `${svc.border}18`, color: svc.text }}
@@ -6440,25 +6433,22 @@ const InnovativeDemo = () => {
                             {svc.label}
                           </span>
                         </td>
-                        <td className="px-4 py-3 text-xs text-[#6b7280]">{p.industria}</td>
-                        <td className="px-4 py-3">
+                        <td className="px-3 py-2.5">
                           <span className="inline-flex items-center gap-1.5 text-xs font-medium px-2 py-1 rounded-full"
                             style={{ backgroundColor: `${stage?.color}15`, color: stage?.color, border: `1px solid ${stage?.color}30` }}>
                             <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: stage?.color }}></span>
                             {stage?.label || p.status}
                           </span>
                         </td>
-                        <td className="px-4 py-3 text-xs text-[#6b7280]">{ejecutivo?.name?.split(' ').slice(0, 2).join(' ') || p.ejecutivo}</td>
-                        <td className="px-4 py-3 text-sm font-semibold text-[#0D47A1] text-right">
-                          {valor > 0 ? `$${(valor / 1000000).toFixed(2)}M` : '—'}
+                        <td className="px-3 py-2.5 text-xs text-[#6b7280]">{ejecutivo?.name?.split(' ').slice(0, 2).join(' ') || p.ejecutivo}</td>
+                        <td className="px-4 py-2.5">
+                          <div className="text-sm text-[#1c2c4a]">{p.contacto?.nombre || '—'}</div>
+                          {p.contacto?.puesto && <div className="text-[11px] text-[#9ca3af] truncate">{p.contacto.puesto}</div>}
+                          <div className="flex items-center gap-3 mt-0.5">
+                            {p.contacto?.correo && <span className="text-[11px] text-[#00a8a8] truncate">{p.contacto.correo}</span>}
+                            {p.contacto?.telefono && <span className="text-[11px] text-[#6b7280]">{p.contacto.telefono}</span>}
+                          </div>
                         </td>
-                        <td className="px-4 py-3 text-center">
-                          <span className="text-xs font-medium" style={{ color: stage?.color }}>{(prob * 100).toFixed(0)}%</span>
-                        </td>
-                        <td className="px-4 py-3 text-sm font-medium text-[#00a8a8] text-right">
-                          {ponderado > 0 ? `$${(ponderado / 1000000).toFixed(2)}M` : '—'}
-                        </td>
-                        <td className="px-4 py-3 text-xs text-[#6b7280]">{p.contacto?.nombre || '—'}</td>
                       </tr>
                     );
                   })}
@@ -6466,16 +6456,8 @@ const InnovativeDemo = () => {
               <tfoot className="bg-[#f3f4f6] border-t-2 border-[#e5e7eb]">
                 <tr>
                   <td className="px-4 py-3 text-sm font-bold text-[#1c2c4a]" colSpan={5}>
-                    Total ({filteredProspectos.length} oportunidades)
+                    Total: {filteredProspectos.length} oportunidades
                   </td>
-                  <td className="px-4 py-3 text-sm font-bold text-[#0D47A1] text-right">
-                    ${(filteredProspectos.reduce((s, p) => s + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0) / 1000000).toFixed(1)}M
-                  </td>
-                  <td className="px-4 py-3"></td>
-                  <td className="px-4 py-3 text-sm font-bold text-[#00a8a8] text-right">
-                    ${(calcularWeightedPipeline(filteredProspectos) / 1000000).toFixed(1)}M
-                  </td>
-                  <td className="px-4 py-3"></td>
                 </tr>
               </tfoot>
             </table>
