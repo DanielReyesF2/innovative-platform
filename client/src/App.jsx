@@ -5069,19 +5069,26 @@ const InnovativeDemo = () => {
             Ver Pipeline completo <ChevronRight size={14} />
           </button>
         </div>
-        <div className="space-y-3">
+        <div className="space-y-4">
           {salesTeamData.map(member => {
             const memberProspectos = topProspectos.filter(p => p.ejecutivo === member.codigo);
             const memberPipeline = memberProspectos.reduce((s, p) => s + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0);
+            const leads = memberProspectos.filter(p => ['Lead nuevo', 'Reunión agendada'].includes(p.status)).length;
+            const prospectos = memberProspectos.filter(p => !['Lead nuevo', 'Reunión agendada', 'Propuesta Rechazada'].includes(p.status)).length;
             const porEtapa = stageData.map(s => memberProspectos.filter(p => p.status === s.id).length);
             if (memberProspectos.length === 0) return null;
             return (
               <div key={member.codigo} className="flex items-center gap-3">
-                <div className="w-7 h-7 rounded-full bg-[#00a8a8] flex items-center justify-center text-white text-xs font-bold flex-shrink-0">{member.codigo}</div>
-                <div className="flex-1">
-                  <div className="flex justify-between text-xs mb-1">
-                    <span className="font-medium text-[#1c2c4a]">{member.name.split(' ')[0]} — {memberProspectos.length} prospectos</span>
-                    <span className="font-bold text-[#0D47A1]">${(memberPipeline / 1000000).toFixed(1)}M</span>
+                <div className="w-9 h-9 rounded-full bg-[#00a8a8] flex items-center justify-center text-white text-xs font-bold flex-shrink-0">{member.codigo}</div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-sm font-semibold text-[#1c2c4a]">{member.name.split(' ')[0]}</span>
+                    <span className="text-sm font-bold text-[#0D47A1]">${(memberPipeline / 1000000).toFixed(1)}M</span>
+                  </div>
+                  <div className="flex items-center gap-3 mb-1.5">
+                    <span className="text-xs text-[#6b7280]"><span className="font-semibold text-[#6b7280]">{leads}</span> leads</span>
+                    <span className="text-xs text-[#00a8a8]"><span className="font-semibold">{prospectos}</span> prospectos</span>
+                    <span className="text-[10px] text-[#6b7280]">({memberProspectos.length} total)</span>
                   </div>
                   <div className="w-full h-3 bg-[#e5e7eb] rounded-full overflow-hidden flex">
                     {stageData.map((stage, idx) => {
@@ -5101,17 +5108,28 @@ const InnovativeDemo = () => {
               </div>
             );
           }).filter(Boolean)}
-          <div className="flex justify-between items-center text-xs text-[#6b7280] pt-2 border-t border-[#e5e7eb]">
-            <span>Total: {topProspectos.length} prospectos • ${(pipelineBruto / 1000000).toFixed(1)}M</span>
-            <div className="flex gap-2">
-              {stageData.map(s => (
-                <div key={s.id} className="flex items-center gap-1 text-[9px]">
-                  <div className="w-2 h-2 rounded-sm" style={{ backgroundColor: s.color }}></div>
-                  {s.label}
+          {(() => {
+            const totalLeads = topProspectos.filter(p => ['Lead nuevo', 'Reunión agendada'].includes(p.status)).length;
+            const totalProspectos = topProspectos.filter(p => !['Lead nuevo', 'Reunión agendada', 'Propuesta Rechazada'].includes(p.status)).length;
+            return (
+              <div className="flex justify-between items-center text-xs pt-3 border-t border-[#e5e7eb]">
+                <div className="flex items-center gap-4">
+                  <span className="text-[#6b7280]">Total: <span className="font-bold text-[#1c2c4a]">{topProspectos.length}</span></span>
+                  <span className="text-[#6b7280]">Leads: <span className="font-bold text-[#6b7280]">{totalLeads}</span></span>
+                  <span className="text-[#00a8a8]">Prospectos: <span className="font-bold">{totalProspectos}</span></span>
+                  <span className="text-[#0D47A1] font-bold">${(pipelineBruto / 1000000).toFixed(1)}M</span>
                 </div>
-              ))}
-            </div>
-          </div>
+                <div className="flex gap-2">
+                  {stageData.map(s => (
+                    <div key={s.id} className="flex items-center gap-1 text-[9px]">
+                      <div className="w-2 h-2 rounded-sm" style={{ backgroundColor: s.color }}></div>
+                      {s.label}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
         </div>
       </div>
 
@@ -5562,19 +5580,26 @@ const InnovativeDemo = () => {
       {/* Distribución de Pipeline por Ejecutivo — Barras apiladas por etapa */}
       <div className="mt-4 bg-white rounded-xl border border-[#e5e7eb] card-modern p-5">
         <h3 className="text-sm font-semibold text-[#1c2c4a] mb-3">Pipeline por Ejecutivo</h3>
-        <div className="space-y-3">
+        <div className="space-y-4">
           {salesTeamData.map(member => {
             const memberProspectos = kanbanProspectos.filter(p => p.ejecutivo === member.codigo);
             const memberPipeline = memberProspectos.reduce((s, p) => s + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0);
+            const leads = memberProspectos.filter(p => ['Lead nuevo', 'Reunión agendada'].includes(p.status)).length;
+            const prospectos = memberProspectos.filter(p => !['Lead nuevo', 'Reunión agendada', 'Propuesta Rechazada'].includes(p.status)).length;
             const porEtapa = KANBAN_STAGES.map(s => memberProspectos.filter(p => p.status === s.id).length);
             if (memberProspectos.length === 0) return null;
             return (
               <div key={member.codigo} className="flex items-center gap-3">
-                <div className="w-7 h-7 rounded-full bg-[#00a8a8] flex items-center justify-center text-white text-xs font-bold flex-shrink-0">{member.codigo}</div>
-                <div className="flex-1">
-                  <div className="flex justify-between text-xs mb-1">
-                    <span className="font-medium text-[#1c2c4a]">{member.name.split(' ')[0]} — {memberProspectos.length} prospectos</span>
-                    <span className="font-bold text-[#0D47A1]">${(memberPipeline / 1000000).toFixed(1)}M</span>
+                <div className="w-9 h-9 rounded-full bg-[#00a8a8] flex items-center justify-center text-white text-xs font-bold flex-shrink-0">{member.codigo}</div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-sm font-semibold text-[#1c2c4a]">{member.name.split(' ')[0]}</span>
+                    <span className="text-sm font-bold text-[#0D47A1]">${(memberPipeline / 1000000).toFixed(1)}M</span>
+                  </div>
+                  <div className="flex items-center gap-3 mb-1.5">
+                    <span className="text-xs text-[#6b7280]"><span className="font-semibold text-[#6b7280]">{leads}</span> leads</span>
+                    <span className="text-xs text-[#00a8a8]"><span className="font-semibold">{prospectos}</span> prospectos</span>
+                    <span className="text-[10px] text-[#6b7280]">({memberProspectos.length} total)</span>
                   </div>
                   <div className="w-full h-3 bg-[#e5e7eb] rounded-full overflow-hidden flex">
                     {KANBAN_STAGES.map((stage, idx) => {
@@ -5594,17 +5619,28 @@ const InnovativeDemo = () => {
               </div>
             );
           }).filter(Boolean)}
-          <div className="flex justify-between items-center text-xs text-[#6b7280] pt-2 border-t border-[#e5e7eb]">
-            <span>Total: {kanbanProspectos.length} prospectos • ${(kanbanProspectos.reduce((s, p) => s + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0) / 1000000).toFixed(1)}M</span>
-            <div className="flex gap-2">
-              {KANBAN_STAGES.map(s => (
-                <div key={s.id} className="flex items-center gap-1 text-[9px]">
-                  <div className="w-2 h-2 rounded-sm" style={{ backgroundColor: s.color }}></div>
-                  {s.label}
+          {(() => {
+            const totalLeads = kanbanProspectos.filter(p => ['Lead nuevo', 'Reunión agendada'].includes(p.status)).length;
+            const totalProspectos = kanbanProspectos.filter(p => !['Lead nuevo', 'Reunión agendada', 'Propuesta Rechazada'].includes(p.status)).length;
+            return (
+              <div className="flex justify-between items-center text-xs pt-3 border-t border-[#e5e7eb]">
+                <div className="flex items-center gap-4">
+                  <span className="text-[#6b7280]">Total: <span className="font-bold text-[#1c2c4a]">{kanbanProspectos.length}</span></span>
+                  <span className="text-[#6b7280]">Leads: <span className="font-bold text-[#6b7280]">{totalLeads}</span></span>
+                  <span className="text-[#00a8a8]">Prospectos: <span className="font-bold">{totalProspectos}</span></span>
+                  <span className="text-[#0D47A1] font-bold">${(kanbanProspectos.reduce((s, p) => s + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0) / 1000000).toFixed(1)}M</span>
                 </div>
-              ))}
-            </div>
-          </div>
+                <div className="flex gap-2">
+                  {KANBAN_STAGES.map(s => (
+                    <div key={s.id} className="flex items-center gap-1 text-[9px]">
+                      <div className="w-2 h-2 rounded-sm" style={{ backgroundColor: s.color }}></div>
+                      {s.label}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
         </div>
       </div>
 
