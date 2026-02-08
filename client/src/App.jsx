@@ -4218,6 +4218,9 @@ const InnovativeDemo = () => {
   const [activeKanbanId, setActiveKanbanId] = useState(null);
   const [showStageGateModal, setShowStageGateModal] = useState(false);
   const [pendingMove, setPendingMove] = useState(null); // {prospecto, fromStage, toStage}
+  const [filterServicio, setFilterServicio] = useState('todos');
+  const [filterEjecutivo, setFilterEjecutivo] = useState('todos');
+  const [filterEtapa, setFilterEtapa] = useState('todos');
 
   // Kanban stages definition
   const KANBAN_STAGES = [
@@ -6316,13 +6319,86 @@ const InnovativeDemo = () => {
 
       {/* FUNNEL VIEW */}
       {/* TABLE VIEW */}
-      {pipelineViewMode === 'tabla' && (
-        <div className="mt-6 bg-white rounded-xl border border-[#e5e7eb] shadow-sm overflow-hidden">
+      {pipelineViewMode === 'tabla' && (() => {
+        const filteredProspectos = kanbanProspectos
+          .filter(p => p.status !== 'Propuesta Rechazada')
+          .filter(p => filterServicio === 'todos' || (p.servicios || [])[0] === filterServicio)
+          .filter(p => filterEjecutivo === 'todos' || p.ejecutivo === filterEjecutivo)
+          .filter(p => filterEtapa === 'todos' || p.status === filterEtapa)
+          .sort((a, b) => {
+            const stageOrder = KANBAN_STAGES.map(s => s.id);
+            return stageOrder.indexOf(b.status) - stageOrder.indexOf(a.status);
+          });
+        const activeFilters = [filterServicio, filterEjecutivo, filterEtapa].filter(f => f !== 'todos').length;
+
+        return (
+        <div className="mt-6 space-y-3">
+          {/* Filter bar */}
+          <div className="flex items-center gap-3 flex-wrap">
+            <div className="flex items-center gap-1.5 text-xs font-medium text-[#6b7280]">
+              <Filter size={14} />
+              Filtros
+            </div>
+            {/* Servicio filter */}
+            <select
+              value={filterServicio}
+              onChange={e => setFilterServicio(e.target.value)}
+              className="text-xs border border-[#e5e7eb] rounded-lg px-3 py-1.5 bg-white text-[#1c2c4a] focus:outline-none focus:ring-2 focus:ring-[#00a8a8]/30 focus:border-[#00a8a8]"
+            >
+              <option value="todos">Todos los servicios</option>
+              {SERVICIOS_INNOVATIVE.map(s => {
+                const count = kanbanProspectos.filter(p => (p.servicios || [])[0] === s.id).length;
+                if (count === 0) return null;
+                return <option key={s.id} value={s.id}>{s.nombre} ({count})</option>;
+              })}
+            </select>
+            {/* Ejecutivo filter */}
+            <select
+              value={filterEjecutivo}
+              onChange={e => setFilterEjecutivo(e.target.value)}
+              className="text-xs border border-[#e5e7eb] rounded-lg px-3 py-1.5 bg-white text-[#1c2c4a] focus:outline-none focus:ring-2 focus:ring-[#00a8a8]/30 focus:border-[#00a8a8]"
+            >
+              <option value="todos">Todos los ejecutivos</option>
+              {salesTeamData.map(m => {
+                const count = kanbanProspectos.filter(p => p.ejecutivo === m.codigo).length;
+                if (count === 0) return null;
+                return <option key={m.codigo} value={m.codigo}>{m.name.split(' ').slice(0, 2).join(' ')} ({count})</option>;
+              })}
+            </select>
+            {/* Etapa filter */}
+            <select
+              value={filterEtapa}
+              onChange={e => setFilterEtapa(e.target.value)}
+              className="text-xs border border-[#e5e7eb] rounded-lg px-3 py-1.5 bg-white text-[#1c2c4a] focus:outline-none focus:ring-2 focus:ring-[#00a8a8]/30 focus:border-[#00a8a8]"
+            >
+              <option value="todos">Todas las etapas</option>
+              {KANBAN_STAGES.map(s => {
+                const count = kanbanProspectos.filter(p => p.status === s.id).length;
+                if (count === 0) return null;
+                return <option key={s.id} value={s.id}>{s.label} ({count})</option>;
+              })}
+            </select>
+            {/* Clear filters */}
+            {activeFilters > 0 && (
+              <button
+                onClick={() => { setFilterServicio('todos'); setFilterEjecutivo('todos'); setFilterEtapa('todos'); }}
+                className="text-xs text-[#00a8a8] hover:text-[#008080] font-medium flex items-center gap-1"
+              >
+                <X size={12} />
+                Limpiar ({activeFilters})
+              </button>
+            )}
+            <span className="text-[11px] text-[#9ca3af] ml-auto">{filteredProspectos.length} resultados</span>
+          </div>
+
+          {/* Table */}
+          <div className="bg-white rounded-xl border border-[#e5e7eb] shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-[#f3f4f6] border-b border-[#e5e7eb]">
                 <tr>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-[#6b7280]">Empresa</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6b7280]">Servicio</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-[#6b7280]">Industria</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-[#6b7280]">Stage</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-[#6b7280]">Ejecutivo</th>
@@ -6333,25 +6409,36 @@ const InnovativeDemo = () => {
                 </tr>
               </thead>
               <tbody>
-                {kanbanProspectos
-                  .filter(p => p.status !== 'Propuesta Rechazada')
-                  .sort((a, b) => {
-                    const stageOrder = KANBAN_STAGES.map(s => s.id);
-                    return stageOrder.indexOf(b.status) - stageOrder.indexOf(a.status);
-                  })
-                  .map(p => {
+                {filteredProspectos.map(p => {
                     const valor = p.propuesta?.ventaTotal || p.facturacionEstimada || 0;
                     const prob = STAGE_PROBABILITY[p.status] || 0.05;
                     const ponderado = valor * prob;
                     const stage = KANBAN_STAGES.find(s => s.id === p.status);
                     const ejecutivo = salesTeamData.find(e => e.codigo === p.ejecutivo);
+                    const primaryService = (p.servicios || [])[0] || 'rme';
+                    const svc = SERVICE_COLORS[primaryService] || SERVICE_COLORS.rme;
 
                     return (
-                      <tr key={p.id} className="border-b border-[#e5e7eb] hover:bg-[#f3f4f6] cursor-pointer"
+                      <tr key={p.id}
+                        className="border-b border-[#e5e7eb] hover:brightness-95 cursor-pointer transition-colors"
+                        style={{ backgroundColor: svc.bg }}
                         onClick={() => { setSelectedProspecto(p); setMostrarDetallesProspecto(true); }}>
                         <td className="px-4 py-3">
-                          <div className="text-sm font-semibold text-[#1c2c4a]">{p.empresa}</div>
-                          {p.planta && <div className="text-xs text-[#6b7280]">{p.planta}</div>}
+                          <div className="flex items-center gap-2">
+                            <div className="w-0.5 h-8 rounded-full flex-shrink-0" style={{ backgroundColor: svc.border }}></div>
+                            <div>
+                              <div className="text-sm font-semibold text-[#1c2c4a]">{p.empresa}</div>
+                              {p.planta && <div className="text-[11px] text-[#9ca3af]">{p.planta}</div>}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span
+                            className="text-[10px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap"
+                            style={{ backgroundColor: `${svc.border}18`, color: svc.text }}
+                          >
+                            {svc.label}
+                          </span>
                         </td>
                         <td className="px-4 py-3 text-xs text-[#6b7280]">{p.industria}</td>
                         <td className="px-4 py-3">
@@ -6378,23 +6465,25 @@ const InnovativeDemo = () => {
               </tbody>
               <tfoot className="bg-[#f3f4f6] border-t-2 border-[#e5e7eb]">
                 <tr>
-                  <td className="px-4 py-3 text-sm font-bold text-[#1c2c4a]" colSpan={4}>
-                    Total ({kanbanProspectos.filter(p => p.status !== 'Propuesta Rechazada').length} oportunidades)
+                  <td className="px-4 py-3 text-sm font-bold text-[#1c2c4a]" colSpan={5}>
+                    Total ({filteredProspectos.length} oportunidades)
                   </td>
                   <td className="px-4 py-3 text-sm font-bold text-[#0D47A1] text-right">
-                    ${(kanbanProspectos.filter(p => p.status !== 'Propuesta Rechazada').reduce((s, p) => s + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0) / 1000000).toFixed(1)}M
+                    ${(filteredProspectos.reduce((s, p) => s + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0) / 1000000).toFixed(1)}M
                   </td>
                   <td className="px-4 py-3"></td>
                   <td className="px-4 py-3 text-sm font-bold text-[#00a8a8] text-right">
-                    ${(calcularWeightedPipeline(kanbanProspectos.filter(p => p.status !== 'Propuesta Rechazada')) / 1000000).toFixed(1)}M
+                    ${(calcularWeightedPipeline(filteredProspectos) / 1000000).toFixed(1)}M
                   </td>
                   <td className="px-4 py-3"></td>
                 </tr>
               </tfoot>
             </table>
           </div>
+          </div>
         </div>
-      )}
+        );
+      })()}
 
       </div>{/* close max-w-[1400px] */}
 
