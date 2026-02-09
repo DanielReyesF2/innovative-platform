@@ -3329,36 +3329,6 @@ const salesTeamData = [
     ]
   },
   {
-    id: 5,
-    codigo: 'LS',
-    name: 'Laura Sobrino',
-    role: 'Ejecutiva',
-    ubicacion: 'CDMX',
-    zona: 'CDMX / Internacional',
-    leads: 5,
-    levantamientos: 0,
-    propuestasEnviadas: 0,
-    reuniones: 2,
-    cierres: 0,
-    tasaConversion: 0,
-    presupuestoAnual2026: 9125000,
-    presupuestoMensual: 760000,
-    ventasReales: 0,
-    cumplimientoPresupuesto: 0,
-    tiempoRespuesta: '6.0 hrs',
-    satisfaccionCliente: 3.8,
-    activitiesSemanal: 8,
-    eficienciaGlobal: 20,
-    avatar: '👩‍💼',
-    ultimaActividad: 'Capacitación interna',
-    notas: 'En desarrollo. Prospectos internacionales (Guatemala, Costa Rica).',
-    kpisSemanales: [
-      { semana: 31, leadsNuevos: 0, reunionesAgendadas: 0, levantamientos: 0, propuestasEnviadas: 0, propuestasRechazadas: 0 },
-      { semana: 32, leadsNuevos: 2, reunionesAgendadas: 1, levantamientos: 0, propuestasEnviadas: 0, propuestasRechazadas: 0 },
-      { semana: 33, leadsNuevos: 3, reunionesAgendadas: 1, levantamientos: 0, propuestasEnviadas: 0, propuestasRechazadas: 0 }
-    ]
-  },
-  {
     id: 6,
     codigo: 'CS',
     name: 'Cristina Sescosse',
@@ -3631,7 +3601,7 @@ const levantamientosActivos = [
     cliente: 'Liverpool Insurgentes',
     fecha: '2025-11-11',
     fechaCompletado: null,
-    ejecutivo: 'Laura Sobrino',
+    ejecutivo: 'Laura Mesa',
     tipo: 'Levantamiento',
     status: 'En proceso',
     tieneReporte: false,
@@ -6115,7 +6085,7 @@ const InnovativeDemo = () => {
       <SectionHeader color="#00a8a8" icon={Users} label="Equipo" linkLabel="Ver Dashboard" onLinkClick={() => setCurrentView('dashboard')} />
 
       {/* Presupuesto por Ejecutivo (grid) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
         {salesTeamData.filter(m => m.codigo !== 'VA').sort((a, b) => b.presupuestoAnual2026 - a.presupuestoAnual2026).map(member => {
           const pct = member.cumplimientoPresupuesto || 0;
           const barColor = pct >= 80 ? '#2E7D32' : pct >= 40 ? '#F57C00' : '#ef4444';
