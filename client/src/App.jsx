@@ -3329,36 +3329,6 @@ const salesTeamData = [
     ]
   },
   {
-    id: 5,
-    codigo: 'LS',
-    name: 'Laura Sobrino',
-    role: 'Ejecutiva',
-    ubicacion: 'CDMX',
-    zona: 'CDMX / Internacional',
-    leads: 5,
-    levantamientos: 0,
-    propuestasEnviadas: 0,
-    reuniones: 2,
-    cierres: 0,
-    tasaConversion: 0,
-    presupuestoAnual2026: 9125000,
-    presupuestoMensual: 760000,
-    ventasReales: 0,
-    cumplimientoPresupuesto: 0,
-    tiempoRespuesta: '6.0 hrs',
-    satisfaccionCliente: 3.8,
-    activitiesSemanal: 8,
-    eficienciaGlobal: 20,
-    avatar: '👩‍💼',
-    ultimaActividad: 'Capacitación interna',
-    notas: 'En desarrollo. Prospectos internacionales (Guatemala, Costa Rica).',
-    kpisSemanales: [
-      { semana: 31, leadsNuevos: 0, reunionesAgendadas: 0, levantamientos: 0, propuestasEnviadas: 0, propuestasRechazadas: 0 },
-      { semana: 32, leadsNuevos: 2, reunionesAgendadas: 1, levantamientos: 0, propuestasEnviadas: 0, propuestasRechazadas: 0 },
-      { semana: 33, leadsNuevos: 3, reunionesAgendadas: 1, levantamientos: 0, propuestasEnviadas: 0, propuestasRechazadas: 0 }
-    ]
-  },
-  {
     id: 6,
     codigo: 'CS',
     name: 'Cristina Sescosse',
@@ -3631,7 +3601,7 @@ const levantamientosActivos = [
     cliente: 'Liverpool Insurgentes',
     fecha: '2025-11-11',
     fechaCompletado: null,
-    ejecutivo: 'Laura Sobrino',
+    ejecutivo: 'Laura Mesa',
     tipo: 'Levantamiento',
     status: 'En proceso',
     tieneReporte: false,
@@ -5426,7 +5396,7 @@ const InnovativeDemo = () => {
                         <div className="flex items-center gap-2">
                           <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#00a8a8] to-[#0D47A1] flex items-center justify-center text-white text-[10px] font-bold shadow-sm">{member.codigo}</div>
                           <div>
-                            <div className="font-semibold text-[#1c2c4a]">{member.name.split(' ')[0]}</div>
+                            <div className="font-semibold text-[#1c2c4a]">{member.name.split(' ').slice(0, 2).join(' ')}</div>
                             <div className="text-[10px] text-[#6b7280]">{member.zona}</div>
                           </div>
                         </div>
@@ -5830,7 +5800,7 @@ const InnovativeDemo = () => {
           ) : (
             <div className="bg-white rounded-xl border border-[#e5e7eb] p-8 text-center">
               <MessageSquare size={32} className="text-[#d1d5db] mx-auto mb-2" />
-              <p className="text-sm text-[#6b7280]">Sin notas aún. Escribe la primera nota para {member.name.split(' ')[0]}.</p>
+              <p className="text-sm text-[#6b7280]">Sin notas aún. Escribe la primera nota para {member.name.split(' ').slice(0, 2).join(' ')}.</p>
             </div>
           )}
         </div>
@@ -5881,7 +5851,7 @@ const InnovativeDemo = () => {
           ) : (
             <div className="bg-white rounded-xl border border-[#e5e7eb] p-8 text-center">
               <Paperclip size={32} className="text-[#d1d5db] mx-auto mb-2" />
-              <p className="text-sm text-[#6b7280]">Sin archivos. Sube PDFs, fotos o Excel para {member.name.split(' ')[0]}.</p>
+              <p className="text-sm text-[#6b7280]">Sin archivos. Sube PDFs, fotos o Excel para {member.name.split(' ').slice(0, 2).join(' ')}.</p>
             </div>
           )}
         </div>
@@ -6115,8 +6085,8 @@ const InnovativeDemo = () => {
       <SectionHeader color="#00a8a8" icon={Users} label="Equipo" linkLabel="Ver Dashboard" onLinkClick={() => setCurrentView('dashboard')} />
 
       {/* Presupuesto por Ejecutivo (grid) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-        {salesTeamData.filter(m => m.presupuestoAnual2026 > 0 && m.codigo !== 'VA').sort((a, b) => b.presupuestoAnual2026 - a.presupuestoAnual2026).map(member => {
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
+        {salesTeamData.filter(m => m.codigo !== 'VA').sort((a, b) => b.presupuestoAnual2026 - a.presupuestoAnual2026).map(member => {
           const pct = member.cumplimientoPresupuesto || 0;
           const barColor = pct >= 80 ? '#2E7D32' : pct >= 40 ? '#F57C00' : '#ef4444';
           const memberProspectos = kanbanProspectos.filter(p => p.ejecutivo === member.codigo);
@@ -6127,7 +6097,7 @@ const InnovativeDemo = () => {
               <div className="flex items-center gap-3 mb-3">
                 <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#00a8a8] to-[#0D47A1] flex items-center justify-center text-white text-xs font-bold flex-shrink-0 shadow-sm">{member.codigo}</div>
                 <div className="min-w-0">
-                  <div className="text-sm font-semibold text-[#1c2c4a] truncate">{member.name.split(' ')[0]}</div>
+                  <div className="text-sm font-semibold text-[#1c2c4a] truncate">{member.name.split(' ').slice(0, 2).join(' ')}</div>
                   <div className="text-[10px] text-[#6b7280]">{member.zona || member.role}</div>
                 </div>
               </div>
@@ -6165,7 +6135,7 @@ const InnovativeDemo = () => {
                 <div className="w-9 h-9 rounded-full bg-[#00a8a8] flex items-center justify-center text-white text-xs font-bold flex-shrink-0">{member.codigo}</div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm font-semibold text-[#1c2c4a]">{member.name.split(' ')[0]}</span>
+                    <span className="text-sm font-semibold text-[#1c2c4a]">{member.name.split(' ').slice(0, 2).join(' ')}</span>
                     <span className="text-sm font-bold text-[#0D47A1]">${(memberPipeline / 1000000).toFixed(1)}M</span>
                   </div>
                   <div className="flex items-center gap-3 mb-1.5">
@@ -7227,7 +7197,7 @@ const InnovativeDemo = () => {
     // Ejecutivo lookup
     const getEjecutivoNombre = (codigo) => {
       const m = salesTeamData.find(s => s.codigo === codigo);
-      return m ? m.name.split(' ')[0] : codigo;
+      return m ? m.name.split(' ').slice(0, 2).join(' ') : codigo;
     };
 
     return (
