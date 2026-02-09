@@ -12,7 +12,7 @@ import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, us
 import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import html2canvas from 'html2canvas';
-import { Home, TrendingUp, Package, Users, FileText, Settings, ChevronRight, Download, Search, Filter, Bell, LogOut, Menu, X, DollarSign, Target, PhoneCall, Award, Calendar, MapPin, Truck, Leaf, Briefcase, ClipboardList, CheckSquare, AlertCircle, Send, Eye, Recycle, Trash2, BarChart3, TrendingDown, ChevronDown, ChevronUp, Save, FileImage, RotateCcw, Building2, GripVertical, Lock, Unlock, ArrowRight, Plus, ArrowLeft, Upload, Paperclip, MessageSquare, Clock, Image } from 'lucide-react';
+import { Home, TrendingUp, Package, Users, FileText, Settings, ChevronRight, Download, Search, Filter, Bell, LogOut, Menu, X, DollarSign, Target, PhoneCall, Award, Calendar, MapPin, Truck, Leaf, Briefcase, ClipboardList, CheckSquare, AlertCircle, Send, Eye, Recycle, Trash2, BarChart3, TrendingDown, ChevronDown, ChevronUp, Save, FileImage, RotateCcw, Building2, GripVertical, Lock, Unlock, ArrowRight, Plus, ArrowLeft, Upload, Paperclip, MessageSquare, Clock, Image, Phone, Mail, ExternalLink, Copy, Check } from 'lucide-react';
 
 // SERVICIOS INNOVATIVE
 const SERVICIOS_INNOVATIVE = [
@@ -5467,6 +5467,13 @@ const InnovativeDemo = () => {
     const archivos = hubArchivos[member.codigo] || [];
     const fileInputRef = React.createRef();
 
+    // Interactive state
+    const [hubSearch, setHubSearch] = React.useState('');
+    const [hubFilterStage, setHubFilterStage] = React.useState('todos');
+    const [collapsedStages, setCollapsedStages] = React.useState({});
+    const [selectedProspecto, setSelectedProspecto] = React.useState(null);
+    const [copiedField, setCopiedField] = React.useState(null);
+
     const handleFileUpload = (e) => {
       const files = Array.from(e.target.files || []);
       if (files.length === 0) return;
@@ -5539,6 +5546,270 @@ const InnovativeDemo = () => {
       { id: 'notas', label: 'Notas', icon: MessageSquare, count: notas.length },
       { id: 'archivos', label: 'Archivos', icon: Paperclip, count: archivos.length },
     ];
+
+    // Copy to clipboard helper
+    const copyToClipboard = (text, fieldName) => {
+      navigator.clipboard.writeText(text);
+      setCopiedField(fieldName);
+      setTimeout(() => setCopiedField(null), 2000);
+    };
+
+    // Filter prospects by search + stage
+    const filteredProspectos = memberProspectos.filter(p => {
+      const matchSearch = !hubSearch ||
+        p.empresa?.toLowerCase().includes(hubSearch.toLowerCase()) ||
+        p.contacto?.nombre?.toLowerCase().includes(hubSearch.toLowerCase()) ||
+        p.ciudad?.toLowerCase().includes(hubSearch.toLowerCase()) ||
+        p.industria?.toLowerCase().includes(hubSearch.toLowerCase());
+      const matchStage = hubFilterStage === 'todos' || p.status === hubFilterStage;
+      return matchSearch && matchStage;
+    });
+
+    // Toggle stage collapse
+    const toggleStageCollapse = (stageId) => {
+      setCollapsedStages(prev => ({ ...prev, [stageId]: !prev[stageId] }));
+    };
+
+    // Change prospect stage
+    const changeProspectoStage = (prospectoId, newStage) => {
+      setKanbanProspectos(prev => prev.map(p => p.id === prospectoId ? { ...p, status: newStage } : p));
+      // Update selected prospecto too
+      setSelectedProspecto(prev => prev ? { ...prev, status: newStage } : null);
+    };
+
+    // Calculate days since a date
+    const diasDesde = (fecha) => {
+      if (!fecha) return null;
+      const diff = Math.floor((new Date() - new Date(fecha)) / (1000 * 60 * 60 * 24));
+      return diff;
+    };
+
+    // --- PROSPECT DETAIL DRAWER ---
+    const ProspectoDrawer = ({ prospecto, onClose }) => {
+      if (!prospecto) return null;
+      const p = prospecto;
+      const stageInfo = KANBAN_STAGES.find(s => s.id === p.status);
+      const dias = diasDesde(p.fecha);
+      const valor = p.propuesta?.ventaTotal || p.facturacionEstimada || 0;
+      const sc = p.servicios?.map(s => {
+        const svc = SERVICIOS_INNOVATIVE.find(si => si.id === s);
+        const col = SERVICE_COLORS[s] || { bg: '#f3f4f6', text: '#6b7280', label: s };
+        return { ...col, nombre: svc?.nombre || s, id: s };
+      }) || [];
+
+      return (
+        <>
+          {/* Backdrop */}
+          <div className="fixed inset-0 bg-black/30 z-40 transition-opacity" onClick={onClose} />
+          {/* Drawer */}
+          <div className="fixed inset-y-0 right-0 w-full max-w-lg bg-white shadow-2xl z-50 overflow-y-auto animate-in slide-in-from-right" style={{ animation: 'slideInRight 0.25s ease-out' }}>
+            {/* Header */}
+            <div className="sticky top-0 bg-white border-b border-[#e5e7eb] px-5 py-4 z-10">
+              <div className="flex items-center justify-between mb-2">
+                <button onClick={onClose} className="flex items-center gap-1.5 text-sm text-[#6b7280] hover:text-[#1c2c4a] transition-colors">
+                  <ArrowLeft size={16} /> Volver
+                </button>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: stageInfo?.color || '#6b7280' }} />
+                  <span className="text-xs font-semibold" style={{ color: stageInfo?.color }}>{stageInfo?.label || p.status}</span>
+                </div>
+              </div>
+              <h2 className="text-lg font-bold text-[#1c2c4a]">{p.empresa}{p.planta ? ` — ${p.planta}` : ''}</h2>
+              {p.ciudad && <p className="text-sm text-[#6b7280] flex items-center gap-1 mt-0.5"><MapPin size={12} /> {p.ciudad}{p.industria ? ` · ${p.industria}` : ''}</p>}
+            </div>
+
+            <div className="p-5 space-y-5">
+              {/* Value + date row */}
+              <div className="flex items-center gap-3">
+                <div className="flex-1 bg-[#EFF6FF] rounded-xl p-3 text-center">
+                  <div className="text-xs text-[#6b7280] mb-0.5">Valor estimado</div>
+                  <div className="text-xl font-bold text-[#0D47A1]">{valor > 0 ? `$${(valor / 1000).toFixed(0)}K` : '—'}</div>
+                </div>
+                <div className="flex-1 bg-[#f3f4f6] rounded-xl p-3 text-center">
+                  <div className="text-xs text-[#6b7280] mb-0.5">Días en pipeline</div>
+                  <div className="text-xl font-bold text-[#1c2c4a]">{dias !== null ? dias : '—'}</div>
+                </div>
+                {p.propuesta?.status && (
+                  <div className={`flex-1 rounded-xl p-3 text-center ${
+                    p.propuesta.status === 'Aceptada' ? 'bg-green-50' : p.propuesta.status === 'Rechazada' ? 'bg-red-50' : 'bg-gray-50'
+                  }`}>
+                    <div className="text-xs text-[#6b7280] mb-0.5">Propuesta</div>
+                    <div className={`text-sm font-bold ${
+                      p.propuesta.status === 'Aceptada' ? 'text-green-700' : p.propuesta.status === 'Rechazada' ? 'text-red-600' : 'text-gray-600'
+                    }`}>{p.propuesta.status}</div>
+                  </div>
+                )}
+              </div>
+
+              {/* Contact section */}
+              {p.contacto?.nombre && (
+                <div className="bg-white rounded-xl border border-[#e5e7eb] overflow-hidden">
+                  <div className="px-4 py-3 bg-[#f9fafb] border-b border-[#e5e7eb]">
+                    <h3 className="text-sm font-semibold text-[#1c2c4a] flex items-center gap-2"><Users size={14} /> Contacto</h3>
+                  </div>
+                  <div className="p-4 space-y-3">
+                    <div>
+                      <div className="text-sm font-semibold text-[#1c2c4a]">{p.contacto.nombre}</div>
+                      {p.contacto.puesto && <div className="text-xs text-[#6b7280]">{p.contacto.puesto}</div>}
+                    </div>
+                    {/* Quick actions */}
+                    <div className="flex flex-wrap gap-2">
+                      {p.contacto.telefono && (
+                        <a href={`tel:${p.contacto.telefono}`} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-50 text-green-700 text-xs font-medium hover:bg-green-100 transition-colors">
+                          <Phone size={12} /> Llamar
+                        </a>
+                      )}
+                      {p.contacto.telefono && (
+                        <a href={`https://wa.me/52${p.contacto.telefono.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-50 text-green-700 text-xs font-medium hover:bg-green-100 transition-colors">
+                          <MessageSquare size={12} /> WhatsApp
+                        </a>
+                      )}
+                      {p.contacto.correo && (
+                        <a href={`mailto:${p.contacto.correo}`} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 text-xs font-medium hover:bg-blue-100 transition-colors">
+                          <Mail size={12} /> Email
+                        </a>
+                      )}
+                    </div>
+                    {/* Contact details with copy */}
+                    {p.contacto.correo && (
+                      <div className="flex items-center justify-between group">
+                        <div className="flex items-center gap-2 text-sm text-[#6b7280]">
+                          <Mail size={13} className="text-[#9ca3af]" />
+                          <span>{p.contacto.correo}</span>
+                        </div>
+                        <button onClick={() => copyToClipboard(p.contacto.correo, 'correo')} className="opacity-0 group-hover:opacity-100 text-[#9ca3af] hover:text-[#00a8a8] transition-all p-1">
+                          {copiedField === 'correo' ? <Check size={13} className="text-green-500" /> : <Copy size={13} />}
+                        </button>
+                      </div>
+                    )}
+                    {p.contacto.telefono && (
+                      <div className="flex items-center justify-between group">
+                        <div className="flex items-center gap-2 text-sm text-[#6b7280]">
+                          <Phone size={13} className="text-[#9ca3af]" />
+                          <span>{p.contacto.telefono}</span>
+                        </div>
+                        <button onClick={() => copyToClipboard(p.contacto.telefono, 'telefono')} className="opacity-0 group-hover:opacity-100 text-[#9ca3af] hover:text-[#00a8a8] transition-all p-1">
+                          {copiedField === 'telefono' ? <Check size={13} className="text-green-500" /> : <Copy size={13} />}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Services */}
+              {sc.length > 0 && (
+                <div className="bg-white rounded-xl border border-[#e5e7eb] overflow-hidden">
+                  <div className="px-4 py-3 bg-[#f9fafb] border-b border-[#e5e7eb]">
+                    <h3 className="text-sm font-semibold text-[#1c2c4a] flex items-center gap-2"><Package size={14} /> Servicios</h3>
+                  </div>
+                  <div className="p-4 flex flex-wrap gap-2">
+                    {sc.map(s => (
+                      <span key={s.id} className="px-3 py-1.5 rounded-lg text-xs font-semibold" style={{ backgroundColor: s.bg, color: s.text, border: `1px solid ${s.border || s.text}20` }}>
+                        {s.nombre}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Stage change */}
+              <div className="bg-white rounded-xl border border-[#e5e7eb] overflow-hidden">
+                <div className="px-4 py-3 bg-[#f9fafb] border-b border-[#e5e7eb]">
+                  <h3 className="text-sm font-semibold text-[#1c2c4a] flex items-center gap-2"><Target size={14} /> Cambiar Etapa</h3>
+                </div>
+                <div className="p-4">
+                  <div className="flex flex-wrap gap-2">
+                    {KANBAN_STAGES.map(stage => (
+                      <button
+                        key={stage.id}
+                        onClick={() => changeProspectoStage(p.id, stage.id)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
+                          p.status === stage.id
+                            ? 'ring-2 ring-offset-1 shadow-sm'
+                            : 'opacity-60 hover:opacity-100'
+                        }`}
+                        style={{
+                          backgroundColor: p.status === stage.id ? stage.color + '15' : '#f9fafb',
+                          borderColor: p.status === stage.id ? stage.color : '#e5e7eb',
+                          color: p.status === stage.id ? stage.color : '#6b7280',
+                          ringColor: p.status === stage.id ? stage.color : undefined,
+                        }}
+                      >
+                        {stage.label}
+                      </button>
+                    ))}
+                    <button
+                      onClick={() => changeProspectoStage(p.id, 'Propuesta Rechazada')}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
+                        p.status === 'Propuesta Rechazada'
+                          ? 'bg-red-50 border-red-300 text-red-600 ring-2 ring-red-200 ring-offset-1 shadow-sm'
+                          : 'bg-[#f9fafb] border-[#e5e7eb] text-[#6b7280] opacity-60 hover:opacity-100'
+                      }`}
+                    >
+                      Rechazada
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Additional info */}
+              {(p.volumenEstimado || p.siguientePaso || p.motivoRechazo || p.propuesta) && (
+                <div className="bg-white rounded-xl border border-[#e5e7eb] overflow-hidden">
+                  <div className="px-4 py-3 bg-[#f9fafb] border-b border-[#e5e7eb]">
+                    <h3 className="text-sm font-semibold text-[#1c2c4a] flex items-center gap-2"><ClipboardList size={14} /> Detalles</h3>
+                  </div>
+                  <div className="p-4 space-y-2.5">
+                    {p.volumenEstimado && (
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-[#6b7280]">Volumen estimado</span>
+                        <span className="font-medium text-[#1c2c4a]">{p.volumenEstimado}</span>
+                      </div>
+                    )}
+                    {p.propuesta?.ventaMensual && (
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-[#6b7280]">Venta mensual</span>
+                        <span className="font-medium text-[#1c2c4a]">${(p.propuesta.ventaMensual / 1000).toFixed(0)}K</span>
+                      </div>
+                    )}
+                    {p.propuesta?.ventaTotal && (
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-[#6b7280]">Venta total (contrato)</span>
+                        <span className="font-bold text-[#0D47A1]">${(p.propuesta.ventaTotal / 1000).toFixed(0)}K</span>
+                      </div>
+                    )}
+                    {p.siguientePaso && (
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-[#6b7280]">Siguiente paso</span>
+                        <span className="font-medium text-[#00a8a8]">{p.siguientePaso}</span>
+                      </div>
+                    )}
+                    {p.motivoRechazo && (
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-[#6b7280]">Motivo rechazo</span>
+                        <span className="font-medium text-red-600">{p.motivoRechazo}</span>
+                      </div>
+                    )}
+                    {p.fecha && (
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-[#6b7280]">Fecha</span>
+                        <span className="font-medium text-[#1c2c4a]">{p.fecha}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+          <style>{`
+            @keyframes slideInRight {
+              from { transform: translateX(100%); }
+              to { transform: translateX(0); }
+            }
+          `}</style>
+        </>
+      );
+    };
 
     return (
     <div className="p-4 md:p-6 lg:p-8 bg-[#faf7f2] min-h-screen">
@@ -5628,19 +5899,57 @@ const InnovativeDemo = () => {
       {/* TAB: PIPELINE */}
       {hubTab === 'pipeline' && (
         <div className="space-y-4">
-          {/* Stage summary */}
+          {/* Search + filter bar */}
+          <div className="flex items-center gap-3">
+            <div className="flex-1 relative">
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9ca3af]" />
+              <input
+                type="text"
+                placeholder="Buscar prospecto, contacto, ciudad..."
+                value={hubSearch}
+                onChange={(e) => setHubSearch(e.target.value)}
+                className="w-full pl-9 pr-3 py-2.5 bg-white border border-[#e5e7eb] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#00a8a8]/30 focus:border-[#00a8a8] transition-all"
+              />
+              {hubSearch && (
+                <button onClick={() => setHubSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9ca3af] hover:text-[#6b7280]">
+                  <X size={14} />
+                </button>
+              )}
+            </div>
+            <select
+              value={hubFilterStage}
+              onChange={(e) => setHubFilterStage(e.target.value)}
+              className="bg-white border border-[#e5e7eb] rounded-xl px-3 py-2.5 text-sm text-[#1c2c4a] focus:outline-none focus:ring-2 focus:ring-[#00a8a8]/30 focus:border-[#00a8a8]"
+            >
+              <option value="todos">Todas las etapas</option>
+              {KANBAN_STAGES.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
+              {memberRechazados.length > 0 && <option value="Propuesta Rechazada">Rechazadas</option>}
+            </select>
+            {(hubSearch || hubFilterStage !== 'todos') && (
+              <span className="text-xs text-[#6b7280] whitespace-nowrap">{filteredProspectos.length} resultado{filteredProspectos.length !== 1 ? 's' : ''}</span>
+            )}
+          </div>
+
+          {/* Stage summary — clickable */}
           <div className="bg-white rounded-xl border border-[#e5e7eb] p-5">
             <h3 className="text-sm font-semibold text-[#1c2c4a] mb-3">Distribución por Etapa</h3>
             <div className="space-y-2">
               {KANBAN_STAGES.map(stage => {
                 const items = memberProspectos.filter(p => p.status === stage.id);
                 const valor = items.reduce((s, p) => s + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0);
+                const isActive = hubFilterStage === stage.id;
                 return (
-                  <div key={stage.id} className="flex items-center gap-3">
+                  <div
+                    key={stage.id}
+                    className={`flex items-center gap-3 cursor-pointer rounded-lg px-2 py-1 -mx-2 transition-all ${
+                      isActive ? 'bg-[#f3f4f6] ring-1 ring-[#e5e7eb]' : 'hover:bg-[#f9fafb]'
+                    }`}
+                    onClick={() => setHubFilterStage(isActive ? 'todos' : stage.id)}
+                  >
                     <div className="w-3 h-3 rounded-sm flex-shrink-0" style={{ backgroundColor: stage.color }} />
                     <span className="text-sm text-[#1c2c4a] w-28 flex-shrink-0">{stage.label}</span>
                     <div className="flex-1 h-2.5 bg-[#e5e7eb] rounded-full overflow-hidden">
-                      <div className="h-full rounded-full" style={{
+                      <div className="h-full rounded-full transition-all" style={{
                         width: memberProspectos.length > 0 ? `${(items.length / memberProspectos.length) * 100}%` : '0%',
                         backgroundColor: stage.color,
                       }} />
@@ -5651,7 +5960,12 @@ const InnovativeDemo = () => {
                 );
               })}
               {memberRechazados.length > 0 && (
-                <div className="flex items-center gap-3">
+                <div
+                  className={`flex items-center gap-3 cursor-pointer rounded-lg px-2 py-1 -mx-2 transition-all ${
+                    hubFilterStage === 'Propuesta Rechazada' ? 'bg-[#f3f4f6] ring-1 ring-[#e5e7eb]' : 'hover:bg-[#f9fafb]'
+                  }`}
+                  onClick={() => setHubFilterStage(hubFilterStage === 'Propuesta Rechazada' ? 'todos' : 'Propuesta Rechazada')}
+                >
                   <div className="w-3 h-3 rounded-sm flex-shrink-0 bg-red-500" />
                   <span className="text-sm text-[#1c2c4a] w-28 flex-shrink-0">Rechazadas</span>
                   <div className="flex-1" />
@@ -5662,78 +5976,104 @@ const InnovativeDemo = () => {
             </div>
           </div>
 
-          {/* Prospectos cards by stage */}
-          {KANBAN_STAGES.map(stage => {
-            const items = memberProspectos.filter(p => p.status === stage.id);
+          {/* Prospectos cards by stage — collapsible */}
+          {[...KANBAN_STAGES, { id: 'Propuesta Rechazada', label: 'Rechazadas', color: '#DC2626', prob: '' }].map(stage => {
+            const items = filteredProspectos.filter(p => p.status === stage.id);
             if (items.length === 0) return null;
+            const isCollapsed = collapsedStages[stage.id];
+            const stageValor = items.reduce((s, p) => s + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0);
+            const isRechazada = stage.id === 'Propuesta Rechazada';
             return (
-              <div key={stage.id} className="bg-white rounded-xl border border-[#e5e7eb] p-5">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: stage.color }} />
+              <div key={stage.id} className={`bg-white rounded-xl border ${isRechazada ? 'border-red-200' : 'border-[#e5e7eb]'} overflow-hidden`}>
+                {/* Collapsible header */}
+                <button
+                  onClick={() => toggleStageCollapse(stage.id)}
+                  className="w-full flex items-center gap-2 px-5 py-3 hover:bg-[#f9fafb] transition-colors text-left"
+                >
+                  <div className="w-3 h-3 rounded-sm flex-shrink-0" style={{ backgroundColor: stage.color }} />
                   <h3 className="text-sm font-semibold text-[#1c2c4a]">{stage.label}</h3>
-                  <span className="text-xs text-[#6b7280] ml-1">({items.length})</span>
-                  <span className="text-xs text-[#6b7280] ml-auto">{stage.prob}</span>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {items.map(p => (
-                    <div key={p.id} className="border border-[#e5e7eb] rounded-lg p-3 hover:shadow-md transition-shadow bg-[#faf7f2]">
-                      <div className="flex items-start justify-between mb-1.5">
-                        <div className="font-semibold text-sm text-[#1c2c4a] truncate flex-1">{p.empresa}{p.planta ? ` — ${p.planta}` : ''}</div>
-                      </div>
-                      {p.contacto?.nombre && (
-                        <div className="text-xs text-[#6b7280] mb-1 flex items-center gap-1">
-                          <Users size={11} /> {p.contacto.nombre} {p.contacto.puesto ? `— ${p.contacto.puesto}` : ''}
+                  <span className="text-xs text-[#6b7280]">({items.length})</span>
+                  {stageValor > 0 && <span className="text-xs font-semibold text-[#0D47A1] ml-1">${(stageValor / 1000000).toFixed(1)}M</span>}
+                  {stage.prob && <span className="text-xs text-[#6b7280] ml-auto mr-2">{stage.prob}</span>}
+                  <ChevronDown size={16} className={`text-[#9ca3af] transition-transform ${isCollapsed ? '-rotate-90' : ''}`} />
+                </button>
+                {/* Cards */}
+                {!isCollapsed && (
+                  <div className={`px-5 pb-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3`}>
+                    {items.map(p => {
+                      const svcColor = p.servicios?.[0] ? (SERVICE_COLORS[p.servicios[0]] || {}) : {};
+                      return (
+                        <div
+                          key={p.id}
+                          onClick={() => setSelectedProspecto(p)}
+                          className={`border rounded-lg p-3 cursor-pointer transition-all hover:shadow-lg hover:-translate-y-0.5 group relative ${
+                            isRechazada ? 'border-red-200 bg-red-50/30' : 'border-[#e5e7eb] bg-[#faf7f2]'
+                          }`}
+                          style={!isRechazada && svcColor.border ? { borderLeftWidth: '3px', borderLeftColor: svcColor.border } : {}}
+                        >
+                          {/* Card content */}
+                          <div className="flex items-start justify-between mb-1.5">
+                            <div className="font-semibold text-sm text-[#1c2c4a] truncate flex-1">{p.empresa}{p.planta ? ` — ${p.planta}` : ''}</div>
+                            <ChevronRight size={14} className="text-[#d1d5db] group-hover:text-[#00a8a8] transition-colors flex-shrink-0 ml-1" />
+                          </div>
+                          {p.contacto?.nombre && (
+                            <div className="text-xs text-[#6b7280] mb-1 flex items-center gap-1">
+                              <Users size={11} /> {p.contacto.nombre} {p.contacto.puesto ? `— ${p.contacto.puesto}` : ''}
+                            </div>
+                          )}
+                          <div className="flex items-center gap-2 text-xs text-[#6b7280] mb-1.5">
+                            {p.ciudad && <span className="flex items-center gap-0.5"><MapPin size={11} /> {p.ciudad}</span>}
+                            {p.industria && <span>· {p.industria}</span>}
+                          </div>
+                          {p.servicios && p.servicios.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mb-1.5">
+                              {p.servicios.map(s => {
+                                const sc = SERVICE_COLORS[s] || {};
+                                const serv = SERVICIOS_INNOVATIVE.find(si => si.id === s);
+                                return <span key={s} className="text-[10px] px-1.5 py-0.5 rounded-full font-medium" style={{ backgroundColor: sc.bg || '#f3f4f6', color: sc.text || '#6b7280' }}>{serv?.nombre || s}</span>;
+                              })}
+                            </div>
+                          )}
+                          <div className="flex items-center justify-between mt-2 pt-2 border-t border-[#e5e7eb]">
+                            <span className="text-sm font-bold text-[#0D47A1]">
+                              {(p.propuesta?.ventaTotal || p.facturacionEstimada) ? `$${((p.propuesta?.ventaTotal || p.facturacionEstimada) / 1000).toFixed(0)}K` : '—'}
+                            </span>
+                            {/* Quick contact buttons */}
+                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              {p.contacto?.telefono && (
+                                <a href={`tel:${p.contacto.telefono}`} onClick={(e) => e.stopPropagation()} className="w-6 h-6 rounded-md bg-green-50 flex items-center justify-center hover:bg-green-100 transition-colors" title="Llamar">
+                                  <Phone size={11} className="text-green-600" />
+                                </a>
+                              )}
+                              {p.contacto?.correo && (
+                                <a href={`mailto:${p.contacto.correo}`} onClick={(e) => e.stopPropagation()} className="w-6 h-6 rounded-md bg-blue-50 flex items-center justify-center hover:bg-blue-100 transition-colors" title="Email">
+                                  <Mail size={11} className="text-blue-600" />
+                                </a>
+                              )}
+                              {p.contacto?.telefono && (
+                                <a href={`https://wa.me/52${p.contacto.telefono.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="w-6 h-6 rounded-md bg-green-50 flex items-center justify-center hover:bg-green-100 transition-colors" title="WhatsApp">
+                                  <MessageSquare size={11} className="text-green-600" />
+                                </a>
+                              )}
+                            </div>
+                            {p.motivoRechazo && <span className="text-xs text-red-600 truncate max-w-[150px]">{p.motivoRechazo}</span>}
+                            {!p.motivoRechazo && p.fecha && <span className="text-[10px] text-[#6b7280]">{p.fecha}</span>}
+                          </div>
                         </div>
-                      )}
-                      <div className="flex items-center gap-2 text-xs text-[#6b7280] mb-1.5">
-                        {p.ciudad && <span className="flex items-center gap-0.5"><MapPin size={11} /> {p.ciudad}</span>}
-                        {p.industria && <span>· {p.industria}</span>}
-                      </div>
-                      {p.servicios && p.servicios.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mb-1.5">
-                          {p.servicios.map(s => {
-                            const serv = SERVICIOS_INNOVATIVE.find(si => si.id === s);
-                            return <span key={s} className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#00a8a8]/10 text-[#00a8a8] font-medium">{serv?.nombre || s}</span>;
-                          })}
-                        </div>
-                      )}
-                      <div className="flex items-center justify-between mt-2 pt-2 border-t border-[#e5e7eb]">
-                        <span className="text-sm font-bold text-[#0D47A1]">
-                          {(p.propuesta?.ventaTotal || p.facturacionEstimada) ? `$${((p.propuesta?.ventaTotal || p.facturacionEstimada) / 1000).toFixed(0)}K` : '—'}
-                        </span>
-                        {p.propuesta?.status && (
-                          <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
-                            p.propuesta.status === 'Aceptada' ? 'bg-green-100 text-green-700' :
-                            p.propuesta.status === 'Rechazada' ? 'bg-red-100 text-red-700' :
-                            'bg-gray-100 text-gray-600'
-                          }`}>{p.propuesta.status}</span>
-                        )}
-                        {p.fecha && <span className="text-[10px] text-[#6b7280]">{p.fecha}</span>}
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             );
           })}
 
-          {/* Rechazados */}
-          {memberRechazados.length > 0 && (
-            <div className="bg-white rounded-xl border border-[#e5e7eb] p-5">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-3 h-3 rounded-sm bg-red-500" />
-                <h3 className="text-sm font-semibold text-[#1c2c4a]">Rechazadas</h3>
-                <span className="text-xs text-[#6b7280]">({memberRechazados.length})</span>
-              </div>
-              <div className="space-y-2">
-                {memberRechazados.map(p => (
-                  <div key={p.id} className="flex items-center gap-3 text-sm border border-red-100 bg-red-50/50 rounded-lg px-3 py-2">
-                    <span className="font-medium text-[#1c2c4a] truncate flex-1">{p.empresa}</span>
-                    {p.motivoRechazo && <span className="text-xs text-red-600">{p.motivoRechazo}</span>}
-                    <span className="text-xs text-[#6b7280]">{p.ciudad}</span>
-                  </div>
-                ))}
-              </div>
+          {/* Empty state when filtering */}
+          {filteredProspectos.length === 0 && (hubSearch || hubFilterStage !== 'todos') && (
+            <div className="bg-white rounded-xl border border-[#e5e7eb] p-8 text-center">
+              <Search size={32} className="text-[#d1d5db] mx-auto mb-2" />
+              <p className="text-sm text-[#6b7280]">No se encontraron prospectos con esos filtros.</p>
+              <button onClick={() => { setHubSearch(''); setHubFilterStage('todos'); }} className="text-xs text-[#00a8a8] hover:underline mt-2">Limpiar filtros</button>
             </div>
           )}
         </div>
@@ -5856,6 +6196,9 @@ const InnovativeDemo = () => {
           )}
         </div>
       )}
+
+      {/* PROSPECT DETAIL DRAWER */}
+      {selectedProspecto && <ProspectoDrawer prospecto={selectedProspecto} onClose={() => setSelectedProspecto(null)} />}
 
       </div>
     </div>
