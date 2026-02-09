@@ -51,11 +51,81 @@ const INDUSTRIAS = [
 
 // KPIs METAS SEMANALES POR EJECUTIVO
 const KPI_METAS = {
-  leadsNuevos: { meta: 5, frecuencia: 'semanal', label: 'Leads Nuevos' },
-  reunionesAgendadas: { meta: 2, frecuencia: 'semanal', label: 'Reuniones Agendadas' },
-  levantamientos: { meta: 2, frecuencia: 'mensual', label: 'Levantamientos' },
-  propuestasEnviadas: { meta: 0, frecuencia: 'semanal', label: 'Propuestas Enviadas' },
-  propuestasRechazadas: { meta: 0, frecuencia: 'semanal', label: 'Propuestas Rechazadas' }
+  leadsNuevos: { meta: 5, frecuencia: 'semanal', label: 'Leads Nuevos', peso: 0.20 },
+  reunionesAgendadas: { meta: 2, frecuencia: 'semanal', label: 'Reuniones Agendadas', peso: 0.25 },
+  levantamientos: { meta: 2, frecuencia: 'mensual', label: 'Levantamientos', peso: 0.30 },
+  propuestasEnviadas: { meta: 0, frecuencia: 'semanal', label: 'Propuestas Enviadas', peso: 0.25 },
+  propuestasRechazadas: { meta: 0, frecuencia: 'semanal', label: 'Propuestas Rechazadas', peso: 0 }
+};
+
+// 4-tier RAG color system for KPI scores
+const getScoreColor = (score) => {
+  if (score >= 110) return { bg: '#1B5E20', bgLight: 'rgba(27,94,32,0.10)', text: '#1B5E20', label: 'Destacado' };
+  if (score >= 90) return { bg: '#2E7D32', bgLight: 'rgba(46,125,50,0.10)', text: '#2E7D32', label: 'En Meta' };
+  if (score >= 70) return { bg: '#F57C00', bgLight: 'rgba(245,124,0,0.10)', text: '#F57C00', label: 'En Riesgo' };
+  return { bg: '#EF4444', bgLight: 'rgba(239,68,68,0.10)', text: '#EF4444', label: 'Fuera de Meta' };
+};
+
+const getBarColor = (pct) => {
+  if (pct >= 110) return '#1B5E20';
+  if (pct >= 90) return '#2E7D32';
+  if (pct >= 70) return '#F57C00';
+  return '#EF4444';
+};
+
+// Weighted score calculation
+const calcularScorePonderado = (ultimaSemana) => {
+  if (!ultimaSemana) return 0;
+  const kpiKeys = Object.keys(KPI_METAS);
+  let totalPeso = 0;
+  let scorePonderado = 0;
+  kpiKeys.forEach(k => {
+    if (KPI_METAS[k].meta > 0) {
+      const real = ultimaSemana[k] || 0;
+      const cumplimiento = Math.min((real / KPI_METAS[k].meta) * 100, 150); // cap 150%
+      scorePonderado += cumplimiento * KPI_METAS[k].peso;
+      totalPeso += KPI_METAS[k].peso;
+    }
+  });
+  return totalPeso > 0 ? scorePonderado / totalPeso : 0;
+};
+
+// SVG Sparkline component (zero dependencies)
+const Sparkline = ({ data, width = 80, height = 24, color = '#00a8a8' }) => {
+  if (!data || data.length < 2) return <span className="text-[10px] text-[#9ca3af]">Sin datos</span>;
+  const max = Math.max(...data);
+  const min = Math.min(...data);
+  const range = max - min || 1;
+  const points = data.map((v, i) =>
+    `${(i / (data.length - 1)) * width},${height - 2 - ((v - min) / range) * (height - 4)}`
+  ).join(' ');
+  const lastY = height - 2 - ((data[data.length - 1] - min) / range) * (height - 4);
+  const areaPoints = `0,${height} ${points} ${width},${height}`;
+  return (
+    <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
+      <polygon points={areaPoints} fill={`${color}15`} />
+      <polyline points={points} fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx={width} cy={lastY} r="2.5" fill={color} />
+    </svg>
+  );
+};
+
+// Pace calculation: ahead/behind based on time elapsed
+const calcularPace = (real, meta, frecuencia) => {
+  if (meta <= 0) return null;
+  const now = new Date();
+  let expected;
+  if (frecuencia === 'mensual') {
+    const day = now.getDate();
+    const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+    expected = (day / daysInMonth) * meta;
+  } else {
+    // semanal: lun=1 ... vie=5
+    const dow = now.getDay();
+    const businessDays = dow === 0 ? 5 : dow === 6 ? 5 : dow; // sat/sun = full week
+    expected = (businessDays / 5) * meta;
+  }
+  return real - expected;
 };
 
 // PROBABILIDADES POR STAGE (mejores prácticas CRM B2B)
@@ -8559,9 +8629,9 @@ const InnovativeDemo = () => {
                 </div>
               </div>
 
-              {/* Resumen Rápido */}
+              {/* Resumen Rápido — KPIs + Velocity + Win Rate */}
               <div className="px-6 py-4 bg-[#faf7f2] border-b border-[#e5e7eb]">
-                <div className="grid grid-cols-5 gap-3">
+                <div className="grid grid-cols-4 lg:grid-cols-7 gap-3">
                   {kpiKeys.map(kpiKey => {
                     const kpi = KPI_METAS[kpiKey];
                     const totalReal = salesTeamData.reduce((sum, m) => {
@@ -8569,70 +8639,96 @@ const InnovativeDemo = () => {
                       return sum + (ultimaSemana?.[kpiKey] || 0);
                     }, 0);
                     const totalMeta = kpi.meta > 0 ? kpi.meta * salesTeamData.length : 0;
+                    const pct = totalMeta > 0 ? (totalReal / totalMeta) * 100 : 0;
                     return (
                       <div key={kpiKey} className="bg-white rounded-lg border border-[#e5e7eb] p-3 text-center">
-                        <div className="text-xs text-[#6b7280] mb-1">{kpi.label}</div>
-                        <div className="text-lg font-bold text-[#1c2c4a]">{totalReal}</div>
+                        <div className="text-[11px] text-[#6b7280] mb-1">{kpi.label}</div>
+                        <div className="text-xl font-bold text-[#1c2c4a]">{totalReal}</div>
                         {totalMeta > 0 && (
-                          <div className={`text-xs font-medium mt-0.5 ${totalReal >= totalMeta ? 'text-[#2E7D32]' : totalReal >= totalMeta * 0.7 ? 'text-[#F57C00]' : 'text-red-500'}`}>
-                            meta: {totalMeta} ({totalMeta > 0 ? ((totalReal / totalMeta) * 100).toFixed(0) : 0}%)
-                          </div>
+                          <>
+                            <div className="w-full h-1.5 bg-[#e5e7eb] rounded-full overflow-hidden mt-1.5 relative">
+                              <div className="h-full rounded-full transition-all" style={{ width: `${Math.min(pct, 100)}%`, backgroundColor: getBarColor(pct) }} />
+                            </div>
+                            <div className={`text-[11px] font-semibold mt-1`} style={{ color: getBarColor(pct) }}>
+                              {pct.toFixed(0)}% de meta
+                            </div>
+                          </>
                         )}
                       </div>
                     );
                   })}
+                  {/* Pipeline Velocity */}
+                  <div className="bg-white rounded-lg border border-[#e5e7eb] p-3 text-center">
+                    <div className="text-[11px] text-[#6b7280] mb-1">Velocidad Pipeline</div>
+                    <div className="text-xl font-bold text-[#0D47A1]">${(calcularPipelineVelocity(kanbanProspectos) / 1000).toFixed(0)}K</div>
+                    <div className="text-[11px] text-[#6b7280] mt-1">MXN/dia</div>
+                  </div>
+                  {/* Win Rate */}
+                  <div className="bg-white rounded-lg border border-[#e5e7eb] p-3 text-center">
+                    <div className="text-[11px] text-[#6b7280] mb-1">Win Rate</div>
+                    <div className="text-xl font-bold" style={{ color: calcularWinRate(kanbanProspectos) >= 30 ? '#2E7D32' : '#F57C00' }}>{calcularWinRate(kanbanProspectos).toFixed(0)}%</div>
+                    <div className="text-[11px] text-[#6b7280] mt-1">ganadas/total</div>
+                  </div>
                 </div>
               </div>
 
-              {/* Tabla de KPIs por Ejecutivo */}
+              {/* Tabla de KPIs por Ejecutivo — Ranked Leaderboard */}
               <div className="px-6 py-4">
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead>
                       <tr className="border-b-2 border-[#e5e7eb]">
-                        <th className="px-4 py-3 text-left text-xs font-semibold text-[#6b7280] uppercase tracking-wider">Ejecutivo</th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-[#6b7280] uppercase tracking-wider w-[200px]">Ejecutivo</th>
                         {kpiKeys.map(kpiKey => (
-                          <th key={kpiKey} className="px-3 py-3 text-center text-xs font-semibold text-[#6b7280] uppercase tracking-wider">
+                          <th key={kpiKey} className="px-2 py-3 text-center text-xs font-semibold text-[#6b7280] uppercase tracking-wider">
                             {KPI_METAS[kpiKey].label}
                             {KPI_METAS[kpiKey].meta > 0 && (
-                              <div className="text-[10px] font-normal text-[#6b7280]/70 mt-0.5">Meta: {KPI_METAS[kpiKey].meta}/{KPI_METAS[kpiKey].frecuencia === 'mensual' ? 'mes' : 'sem'}</div>
+                              <div className="text-[10px] font-normal text-[#9ca3af] mt-0.5">Meta: {KPI_METAS[kpiKey].meta}/{KPI_METAS[kpiKey].frecuencia === 'mensual' ? 'mes' : 'sem'}</div>
                             )}
                           </th>
                         ))}
-                        <th className="px-3 py-3 text-center text-xs font-semibold text-[#6b7280] uppercase tracking-wider">Tendencia</th>
-                        <th className="px-3 py-3 text-center text-xs font-semibold text-[#6b7280] uppercase tracking-wider">Score</th>
+                        <th className="px-2 py-3 text-center text-xs font-semibold text-[#6b7280] uppercase tracking-wider">Tendencia</th>
+                        <th className="px-2 py-3 text-center text-xs font-semibold text-[#6b7280] uppercase tracking-wider">Score</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {salesTeamData.map(member => {
-                        const ultimaSemana = member.kpisSemanales?.[member.kpisSemanales.length - 1];
-                        const penultimaSemana = member.kpisSemanales?.[member.kpisSemanales.length - 2];
-
-                        // Calcular score global (promedio de cumplimiento vs metas con meta > 0)
-                        let totalCumplimiento = 0;
-                        let metasConMeta = 0;
-                        kpiKeys.forEach(k => {
-                          if (KPI_METAS[k].meta > 0) {
-                            const real = ultimaSemana?.[k] || 0;
-                            totalCumplimiento += (real / KPI_METAS[k].meta) * 100;
-                            metasConMeta++;
-                          }
-                        });
-                        const score = metasConMeta > 0 ? totalCumplimiento / metasConMeta : 0;
+                      {salesTeamData
+                        .map(member => ({
+                          ...member,
+                          _ultimaSemana: member.kpisSemanales?.[member.kpisSemanales.length - 1],
+                          _penultimaSemana: member.kpisSemanales?.[member.kpisSemanales.length - 2],
+                          _score: calcularScorePonderado(member.kpisSemanales?.[member.kpisSemanales.length - 1]),
+                        }))
+                        .sort((a, b) => b._score - a._score)
+                        .map((member, rankIdx) => {
+                        const ultimaSemana = member._ultimaSemana;
+                        const penultimaSemana = member._penultimaSemana;
+                        const score = member._score;
+                        const scoreColor = score > 0 ? getScoreColor(score) : null;
+                        const rank = rankIdx + 1;
 
                         return (
                           <React.Fragment key={member.id}>
                           <tr className="border-b border-[#e5e7eb] hover:bg-[#f3f4f6]/50 transition-colors cursor-pointer" onClick={() => setKpiSelectedEjecutivo(kpiSelectedEjecutivo?.id === member.id ? null : member)}>
                             <td className="px-4 py-3">
-                              <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold" style={{ backgroundColor: config.color }}>
+                              <div className="flex items-center gap-2.5">
+                                {/* Rank badge */}
+                                <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0 ${
+                                  rank === 1 ? 'bg-amber-400 text-white' :
+                                  rank === 2 ? 'bg-gray-300 text-white' :
+                                  rank === 3 ? 'bg-amber-600 text-white' :
+                                  'bg-[#f3f4f6] text-[#9ca3af]'
+                                }`}>
+                                  {rank}
+                                </div>
+                                <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0" style={{ backgroundColor: config.color }}>
                                   {member.codigo}
                                 </div>
-                                <div>
-                                  <div className="text-sm font-semibold text-[#1c2c4a] flex items-center gap-1.5">{member.name.split(' ').slice(0, 2).join(' ')}
-                                    <ChevronRight size={12} className={`text-[#6b7280] transition-transform ${kpiSelectedEjecutivo?.id === member.id ? 'rotate-90' : ''}`} />
+                                <div className="min-w-0">
+                                  <div className="text-sm font-semibold text-[#1c2c4a] flex items-center gap-1.5 truncate">{member.name.split(' ').slice(0, 2).join(' ')}
+                                    <ChevronRight size={12} className={`text-[#6b7280] transition-transform flex-shrink-0 ${kpiSelectedEjecutivo?.id === member.id ? 'rotate-90' : ''}`} />
                                   </div>
-                                  <div className="text-xs text-[#6b7280]">{member.zona}</div>
+                                  <div className="text-[11px] text-[#9ca3af]">{member.zona}</div>
                                 </div>
                               </div>
                             </td>
@@ -8642,72 +8738,70 @@ const InnovativeDemo = () => {
                               const meta = KPI_METAS[kpiKey].meta;
                               const pct = meta > 0 ? (real / meta) * 100 : 0;
                               const diff = real - prevReal;
+                              const pace = calcularPace(real, meta, KPI_METAS[kpiKey].frecuencia);
 
                               return (
-                                <td key={kpiKey} className="px-3 py-3 text-center">
+                                <td key={kpiKey} className="px-2 py-3 text-center">
                                   <div className="flex flex-col items-center gap-0.5">
                                     <span className={`text-sm font-bold ${
-                                      meta === 0 ? 'text-[#1c2c4a]' :
-                                      pct >= 100 ? 'text-[#2E7D32]' :
-                                      pct >= 70 ? 'text-[#F57C00]' :
-                                      'text-red-500'
-                                    }`}>
+                                      meta === 0 ? 'text-[#1c2c4a]' : ''
+                                    }`} style={meta > 0 ? { color: getBarColor(pct) } : undefined}>
                                       {real}{meta > 0 ? `/${meta}` : ''}
                                     </span>
+                                    {/* Bullet-chart progress bar */}
                                     {meta > 0 && (
-                                      <div className="w-12 h-1.5 bg-[#e5e7eb] rounded-full overflow-hidden">
+                                      <div className="w-20 h-2 bg-[#e5e7eb] rounded-full overflow-hidden relative">
                                         <div
                                           className="h-full rounded-full transition-all"
-                                          style={{
-                                            width: `${Math.min(pct, 100)}%`,
-                                            backgroundColor: pct >= 100 ? '#2E7D32' : pct >= 70 ? '#F57C00' : '#ef4444'
-                                          }}
+                                          style={{ width: `${Math.min(pct, 100)}%`, backgroundColor: getBarColor(pct) }}
                                         />
+                                        {/* 100% target marker */}
+                                        <div className="absolute top-0 h-full w-0.5 bg-[#1c2c4a]/30 rounded" style={{ left: '100%', transform: 'translateX(-1px)' }} />
                                       </div>
                                     )}
-                                    {diff !== 0 && penultimaSemana && (
-                                      <span className={`text-[10px] font-medium ${diff > 0 ? 'text-[#2E7D32]' : 'text-red-500'}`}>
-                                        {diff > 0 ? '+' : ''}{diff}
-                                      </span>
-                                    )}
+                                    {/* Pace indicator + diff */}
+                                    <div className="flex items-center gap-1.5">
+                                      {pace !== null && (
+                                        <span className={`text-[10px] font-medium ${pace >= 0 ? 'text-[#2E7D32]' : 'text-[#EF4444]'}`}>
+                                          {pace >= 0 ? 'adelante' : 'atras'}
+                                        </span>
+                                      )}
+                                      {diff !== 0 && penultimaSemana && (
+                                        <span className={`text-[10px] font-semibold ${diff > 0 ? 'text-[#2E7D32]' : 'text-[#EF4444]'}`}>
+                                          {diff > 0 ? '+' : ''}{diff}
+                                        </span>
+                                      )}
+                                    </div>
                                   </div>
                                 </td>
                               );
                             })}
-                            {/* Sparkline (mini trend) */}
-                            <td className="px-3 py-3">
-                              <div className="flex items-end gap-[2px] justify-center h-6">
-                                {(member.kpisSemanales || []).slice(-6).map((sem, idx) => {
-                                  const val = sem.leadsNuevos + sem.reunionesAgendadas;
-                                  const maxVal = Math.max(...(member.kpisSemanales || []).slice(-6).map(s => s.leadsNuevos + s.reunionesAgendadas), 1);
-                                  const height = Math.max((val / maxVal) * 24, 3);
-                                  return (
-                                    <div
-                                      key={idx}
-                                      className="rounded-sm transition-all"
-                                      style={{
-                                        width: 4,
-                                        height: `${height}px`,
-                                        backgroundColor: idx === (member.kpisSemanales || []).slice(-6).length - 1 ? config.color : '#e5e7eb'
-                                      }}
-                                    />
-                                  );
-                                })}
-                                {(!member.kpisSemanales || member.kpisSemanales.length === 0) && (
-                                  <span className="text-[10px] text-[#6b7280]">Sin datos</span>
-                                )}
+                            {/* SVG Sparkline trend */}
+                            <td className="px-2 py-3">
+                              <div className="flex justify-center">
+                                <Sparkline
+                                  data={(member.kpisSemanales || []).slice(-8).map(s => (s.leadsNuevos || 0) + (s.reunionesAgendadas || 0) + (s.levantamientos || 0))}
+                                  width={80}
+                                  height={28}
+                                  color={config.color}
+                                />
                               </div>
                             </td>
-                            {/* Score */}
-                            <td className="px-3 py-3 text-center">
-                              <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold ${
-                                score >= 100 ? 'bg-[#2E7D32]/10 text-[#2E7D32]' :
-                                score >= 70 ? 'bg-[#F57C00]/10 text-[#F57C00]' :
-                                score > 0 ? 'bg-red-50 text-red-600' :
-                                'bg-[#f3f4f6] text-[#6b7280]'
-                              }`}>
-                                {score > 0 ? `${score.toFixed(0)}%` : '—'}
-                              </div>
+                            {/* Weighted Score with 4-tier colors */}
+                            <td className="px-2 py-3 text-center">
+                              {score > 0 ? (
+                                <div className="flex flex-col items-center gap-1">
+                                  <div
+                                    className="inline-flex items-center px-2.5 py-1 rounded-full text-sm font-bold"
+                                    style={{ backgroundColor: scoreColor.bgLight, color: scoreColor.text }}
+                                  >
+                                    {score.toFixed(0)}%
+                                  </div>
+                                  <span className="text-[9px] font-medium" style={{ color: scoreColor.text }}>{scoreColor.label}</span>
+                                </div>
+                              ) : (
+                                <span className="text-xs text-[#9ca3af]">—</span>
+                              )}
                             </td>
                           </tr>
                           {/* Expandible: Leads y Prospectos del Ejecutivo */}
@@ -8883,26 +8977,27 @@ const InnovativeDemo = () => {
                 </div>
               </div>
 
-              {/* Footer - Resumen Junta */}
+              {/* Footer - Resumen Junta with score distribution */}
               <div className="px-6 py-4 bg-[#f3f4f6] border-t border-[#e5e7eb] rounded-b-xl">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-5">
                     {(() => {
-                      const conDatos = salesTeamData.filter(m => m.kpisSemanales && m.kpisSemanales.length > 0);
-                      const enMeta = conDatos.filter(m => {
-                        const ultima = m.kpisSemanales[m.kpisSemanales.length - 1];
-                        return ultima && ultima.leadsNuevos >= KPI_METAS.leadsNuevos.meta;
-                      }).length;
+                      const scores = salesTeamData.map(m => calcularScorePonderado(m.kpisSemanales?.[m.kpisSemanales.length - 1])).filter(s => s > 0);
+                      const destacados = scores.filter(s => s >= 110).length;
+                      const enMeta = scores.filter(s => s >= 90 && s < 110).length;
+                      const enRiesgo = scores.filter(s => s >= 70 && s < 90).length;
+                      const fueraDeMeta = scores.filter(s => s < 70).length;
+                      const avgScore = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
                       return (
                         <>
-                          <span className="text-sm text-[#1c2c4a] font-medium">
-                            <span className="font-bold" style={{ color: config.color }}>{enMeta}</span> de {conDatos.length} ejecutivos en meta esta semana
-                          </span>
+                          <div className="flex items-center gap-3">
+                            <span className="text-sm font-medium text-[#1c2c4a]">Score promedio: <span className="font-bold" style={{ color: getScoreColor(avgScore).text }}>{avgScore.toFixed(0)}%</span></span>
+                          </div>
                           <div className="flex items-center gap-2">
-                            <div className="w-20 h-2 bg-[#e5e7eb] rounded-full overflow-hidden">
-                              <div className="h-full rounded-full" style={{ width: `${conDatos.length > 0 ? (enMeta / conDatos.length) * 100 : 0}%`, backgroundColor: config.color }}></div>
-                            </div>
-                            <span className="text-xs font-medium text-[#6b7280]">{conDatos.length > 0 ? ((enMeta / conDatos.length) * 100).toFixed(0) : 0}%</span>
+                            {destacados > 0 && <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full" style={{ backgroundColor: 'rgba(27,94,32,0.10)', color: '#1B5E20' }}>{destacados} Destacado{destacados > 1 ? 's' : ''}</span>}
+                            {enMeta > 0 && <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full" style={{ backgroundColor: 'rgba(46,125,50,0.10)', color: '#2E7D32' }}>{enMeta} En Meta</span>}
+                            {enRiesgo > 0 && <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full" style={{ backgroundColor: 'rgba(245,124,0,0.10)', color: '#F57C00' }}>{enRiesgo} En Riesgo</span>}
+                            {fueraDeMeta > 0 && <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full" style={{ backgroundColor: 'rgba(239,68,68,0.10)', color: '#EF4444' }}>{fueraDeMeta} Fuera</span>}
                           </div>
                         </>
                       );
