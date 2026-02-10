@@ -6110,49 +6110,41 @@ const InnovativeDemo = () => {
                   {stage.prob && <span className="text-xs text-[#6b7280] ml-auto mr-2">{stage.prob}</span>}
                   <ChevronDown size={16} className={`text-[#9ca3af] transition-transform ${isCollapsed ? '-rotate-90' : ''}`} />
                 </button>
-                {/* Cards */}
+                {/* Compact row-based list */}
                 {!isCollapsed && (
-                  <div className={`px-5 pb-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3`}>
-                    {items.map(p => {
-                      const svcColor = p.servicios?.[0] ? (SERVICE_COLORS[p.servicios[0]] || {}) : {};
-                      return (
-                        <div
-                          key={p.id}
-                          onClick={() => setSelectedProspecto(p)}
-                          className={`border rounded-lg p-3 cursor-pointer transition-all hover:shadow-lg hover:-translate-y-0.5 group relative ${
-                            isRechazada ? 'border-red-200 bg-red-50/30' : 'border-[#e5e7eb] bg-[#faf7f2]'
-                          }`}
-                          style={!isRechazada && svcColor.border ? { borderLeftWidth: '3px', borderLeftColor: svcColor.border } : {}}
-                        >
-                          {/* Card content */}
-                          <div className="flex items-start justify-between mb-1.5">
-                            <div className="font-semibold text-sm text-[#1c2c4a] truncate flex-1">{p.empresa}{p.planta ? ` — ${p.planta}` : ''}</div>
-                            <ChevronRight size={14} className="text-[#d1d5db] group-hover:text-[#00a8a8] transition-colors flex-shrink-0 ml-1" />
-                          </div>
-                          {p.contacto?.nombre && (
-                            <div className="text-xs text-[#6b7280] mb-1 flex items-center gap-1">
-                              <Users size={11} /> {p.contacto.nombre} {p.contacto.puesto ? `— ${p.contacto.puesto}` : ''}
+                  <div className="px-3 pb-3">
+                    <div className="divide-y divide-[#e5e7eb]">
+                      {items.map(p => {
+                        const svcColor = p.servicios?.[0] ? (SERVICE_COLORS[p.servicios[0]] || {}) : {};
+                        const serv = p.servicios?.[0] ? SERVICIOS_INNOVATIVE.find(si => si.id === p.servicios[0]) : null;
+                        return (
+                          <div
+                            key={p.id}
+                            onClick={() => setSelectedProspecto(p)}
+                            className={`flex items-center gap-3 py-2 px-2 cursor-pointer transition-all hover:bg-[#f3f4f6] rounded group ${
+                              isRechazada ? 'hover:bg-red-50' : ''
+                            }`}
+                          >
+                            {/* Service color indicator */}
+                            <div className="w-1 h-8 rounded-full flex-shrink-0" style={{ backgroundColor: svcColor.border || '#e5e7eb' }} />
+                            {/* Company + contact */}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <span className="text-[13px] font-semibold text-[#1c2c4a] truncate">{p.empresa}{p.planta ? ` — ${p.planta}` : ''}</span>
+                                <span className="text-[9px] font-bold px-1.5 py-px rounded-full whitespace-nowrap flex-shrink-0" style={{ backgroundColor: svcColor.bg || '#f3f4f6', color: svcColor.text || '#6b7280' }}>{serv?.nombre || p.servicios?.[0] || ''}</span>
+                              </div>
+                              <div className="flex items-center gap-3 text-[11px] text-[#9ca3af]">
+                                {p.contacto?.nombre && <span className="truncate max-w-[200px]">{p.contacto.nombre}</span>}
+                                {p.ciudad && <span className="flex-shrink-0">{p.ciudad.split(',')[0]}</span>}
+                                {p.motivoRechazo && <span className="text-red-500 truncate max-w-[200px]">{p.motivoRechazo}</span>}
+                              </div>
                             </div>
-                          )}
-                          <div className="flex items-center gap-2 text-xs text-[#6b7280] mb-1.5">
-                            {p.ciudad && <span className="flex items-center gap-0.5"><MapPin size={11} /> {p.ciudad}</span>}
-                            {p.industria && <span>· {p.industria}</span>}
-                          </div>
-                          {p.servicios && p.servicios.length > 0 && (
-                            <div className="flex flex-wrap gap-1 mb-1.5">
-                              {p.servicios.map(s => {
-                                const sc = SERVICE_COLORS[s] || {};
-                                const serv = SERVICIOS_INNOVATIVE.find(si => si.id === s);
-                                return <span key={s} className="text-[10px] px-1.5 py-0.5 rounded-full font-medium" style={{ backgroundColor: sc.bg || '#f3f4f6', color: sc.text || '#6b7280' }}>{serv?.nombre || s}</span>;
-                              })}
-                            </div>
-                          )}
-                          <div className="flex items-center justify-between mt-2 pt-2 border-t border-[#e5e7eb]">
-                            <span className="text-sm font-bold text-[#0D47A1]">
+                            {/* Value */}
+                            <span className="text-xs font-bold text-[#0D47A1] flex-shrink-0 w-14 text-right">
                               {(p.propuesta?.ventaTotal || p.facturacionEstimada) ? `$${((p.propuesta?.ventaTotal || p.facturacionEstimada) / 1000).toFixed(0)}K` : '—'}
                             </span>
-                            {/* Quick contact buttons */}
-                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            {/* Quick actions on hover */}
+                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
                               {p.contacto?.telefono && (
                                 <a href={`tel:${p.contacto.telefono}`} onClick={(e) => e.stopPropagation()} className="w-6 h-6 rounded-md bg-green-50 flex items-center justify-center hover:bg-green-100 transition-colors" title="Llamar">
                                   <Phone size={11} className="text-green-600" />
@@ -6169,12 +6161,11 @@ const InnovativeDemo = () => {
                                 </a>
                               )}
                             </div>
-                            {p.motivoRechazo && <span className="text-xs text-red-600 truncate max-w-[150px]">{p.motivoRechazo}</span>}
-                            {!p.motivoRechazo && p.fecha && <span className="text-[10px] text-[#6b7280]">{p.fecha}</span>}
+                            <ChevronRight size={14} className="text-[#d1d5db] group-hover:text-[#00a8a8] transition-colors flex-shrink-0" />
                           </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
+                    </div>
                   </div>
                 )}
               </div>
