@@ -4364,10 +4364,9 @@ const InnovativeDemo = () => {
 
   // Ejecutivo Hub states
   const [hubEjecutivo, setHubEjecutivo] = useState(null); // salesTeamData member
-  const [hubTab, setHubTab] = useState('pipeline'); // 'pipeline' | 'notas' | 'archivos'
-  const [hubNotas, setHubNotas] = useState({}); // { codigoEjecutivo: [{text, date, id}] }
-  const [hubNuevaNota, setHubNuevaNota] = useState('');
-  const [hubArchivos, setHubArchivos] = useState({}); // { codigoEjecutivo: [{name, type, size, date, id}] }
+  const [prospectoNotas, setProspectoNotas] = useState({}); // { prospectoId: [{text, date, id}] }
+  const [prospectoNuevaNota, setProspectoNuevaNota] = useState('');
+  const [prospectoArchivos, setProspectoArchivos] = useState({}); // { prospectoId: [{name, type, size, date, id}] }
 
   // Pipeline view states
   const [pipelineViewMode, setPipelineViewMode] = useState('kanban'); // 'kanban' | 'funnel' | 'tabla'
@@ -5627,10 +5626,8 @@ const InnovativeDemo = () => {
     const memberProspectosActivos = memberProspectos.filter(p => !['Lead nuevo', 'Reunión agendada', 'Propuesta Rechazada'].includes(p.status));
     const memberRechazados = memberProspectos.filter(p => p.status === 'Propuesta Rechazada');
     const memberGanados = memberProspectos.filter(p => p.status === 'Inicio de operación');
+    const memberPropuestas = memberProspectos.filter(p => ['Propuesta enviada', 'Negociación'].includes(p.status));
     const totalPipeline = memberProspectos.reduce((s, p) => s + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0);
-    const notas = hubNotas[member.codigo] || [];
-    const archivos = hubArchivos[member.codigo] || [];
-    const fileInputRef = React.createRef();
 
     // Interactive state
     const [selectedProspecto, setSelectedProspecto] = React.useState(null);
@@ -5638,6 +5635,7 @@ const InnovativeDemo = () => {
     const [hubActiveKanbanId, setHubActiveKanbanId] = React.useState(null);
 
     const handleFileUpload = (e) => {
+      if (!selectedProspecto) return;
       const files = Array.from(e.target.files || []);
       if (files.length === 0) return;
       const nuevosArchivos = files.map((f, idx) => ({
@@ -5647,37 +5645,39 @@ const InnovativeDemo = () => {
         size: f.size,
         date: new Date().toISOString().split('T')[0],
       }));
-      setHubArchivos(prev => ({
+      setProspectoArchivos(prev => ({
         ...prev,
-        [member.codigo]: [...(prev[member.codigo] || []), ...nuevosArchivos]
+        [selectedProspecto.id]: [...(prev[selectedProspecto.id] || []), ...nuevosArchivos]
       }));
       e.target.value = '';
     };
 
     const agregarNota = () => {
-      if (!hubNuevaNota.trim()) return;
-      setHubNotas(prev => ({
+      if (!prospectoNuevaNota.trim() || !selectedProspecto) return;
+      setProspectoNotas(prev => ({
         ...prev,
-        [member.codigo]: [...(prev[member.codigo] || []), {
+        [selectedProspecto.id]: [...(prev[selectedProspecto.id] || []), {
           id: Date.now(),
-          text: hubNuevaNota.trim(),
+          text: prospectoNuevaNota.trim(),
           date: new Date().toISOString(),
         }]
       }));
-      setHubNuevaNota('');
+      setProspectoNuevaNota('');
     };
 
     const eliminarNota = (notaId) => {
-      setHubNotas(prev => ({
+      if (!selectedProspecto) return;
+      setProspectoNotas(prev => ({
         ...prev,
-        [member.codigo]: (prev[member.codigo] || []).filter(n => n.id !== notaId)
+        [selectedProspecto.id]: (prev[selectedProspecto.id] || []).filter(n => n.id !== notaId)
       }));
     };
 
     const eliminarArchivo = (archivoId) => {
-      setHubArchivos(prev => ({
+      if (!selectedProspecto) return;
+      setProspectoArchivos(prev => ({
         ...prev,
-        [member.codigo]: (prev[member.codigo] || []).filter(a => a.id !== archivoId)
+        [selectedProspecto.id]: (prev[selectedProspecto.id] || []).filter(a => a.id !== archivoId)
       }));
     };
 
@@ -5704,11 +5704,6 @@ const InnovativeDemo = () => {
       'Propuesta Rechazada': '#DC2626',
     };
 
-    const tabs = [
-      { id: 'pipeline', label: 'Pipeline', icon: Target },
-      { id: 'notas', label: 'Notas', icon: MessageSquare, count: notas.length },
-      { id: 'archivos', label: 'Archivos', icon: Paperclip, count: archivos.length },
-    ];
 
     // Copy to clipboard helper
     const copyToClipboard = (text, fieldName) => {
@@ -5973,6 +5968,121 @@ const InnovativeDemo = () => {
                   </div>
                 </div>
               )}
+
+              {/* NOTAS per-prospecto */}
+              <div className="bg-white rounded-xl border border-[#e5e7eb] overflow-hidden">
+                <div className="px-4 py-3 bg-[#f9fafb] border-b border-[#e5e7eb]">
+                  <h3 className="text-sm font-semibold text-[#1c2c4a] flex items-center gap-2">
+                    <MessageSquare size={14} /> Notas
+                    {(prospectoNotas[p.id]?.length > 0) && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#e5e7eb] text-[#6b7280]">{prospectoNotas[p.id].length}</span>
+                    )}
+                  </h3>
+                </div>
+                <div className="p-4 space-y-3">
+                  {/* Input nueva nota */}
+                  <div className="flex gap-2">
+                    <textarea
+                      value={prospectoNuevaNota}
+                      onChange={(e) => setProspectoNuevaNota(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); agregarNota(); }}}
+                      placeholder="Escribe una nota... (Enter para guardar)"
+                      className="flex-1 border border-[#e5e7eb] rounded-lg px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#00a8a8]/30 focus:border-[#00a8a8]"
+                      rows={1}
+                    />
+                    <button
+                      onClick={agregarNota}
+                      disabled={!prospectoNuevaNota.trim()}
+                      className="self-end px-3 py-2 bg-[#00a8a8] hover:bg-[#008080] disabled:opacity-40 text-white rounded-lg text-sm font-medium transition-colors"
+                    >
+                      <Send size={14} />
+                    </button>
+                  </div>
+                  {/* Lista de notas */}
+                  {(prospectoNotas[p.id]?.length > 0) ? (
+                    <div className="space-y-2 max-h-48 overflow-y-auto">
+                      {[...(prospectoNotas[p.id] || [])].reverse().map(nota => (
+                        <div key={nota.id} className="bg-[#f9fafb] rounded-lg p-3 group">
+                          <div className="flex items-start justify-between gap-2">
+                            <p className="text-sm text-[#1c2c4a] flex-1 whitespace-pre-wrap">{nota.text}</p>
+                            <button
+                              onClick={() => eliminarNota(nota.id)}
+                              className="opacity-0 group-hover:opacity-100 text-[#6b7280] hover:text-red-500 transition-all flex-shrink-0 mt-0.5"
+                            >
+                              <Trash2 size={12} />
+                            </button>
+                          </div>
+                          <div className="flex items-center gap-1 mt-1.5 text-[10px] text-[#9ca3af]">
+                            <Clock size={9} />
+                            {timeAgo(nota.date) || 'ahora'}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-[#9ca3af] text-center py-2">Agrega una nota...</p>
+                  )}
+                </div>
+              </div>
+
+              {/* ARCHIVOS per-prospecto */}
+              {(() => {
+                const drawerFileRef = React.createRef();
+                return (
+                  <div className="bg-white rounded-xl border border-[#e5e7eb] overflow-hidden">
+                    <div className="px-4 py-3 bg-[#f9fafb] border-b border-[#e5e7eb]">
+                      <h3 className="text-sm font-semibold text-[#1c2c4a] flex items-center gap-2">
+                        <Paperclip size={14} /> Archivos
+                        {(prospectoArchivos[p.id]?.length > 0) && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#e5e7eb] text-[#6b7280]">{prospectoArchivos[p.id].length}</span>
+                        )}
+                      </h3>
+                    </div>
+                    <div className="p-4 space-y-3">
+                      {/* Upload zone */}
+                      <div
+                        className="border border-dashed border-[#d1d5db] hover:border-[#00a8a8] rounded-lg p-3 text-center transition-colors cursor-pointer"
+                        onClick={() => drawerFileRef.current?.click()}
+                      >
+                        <input
+                          type="file"
+                          ref={drawerFileRef}
+                          className="hidden"
+                          multiple
+                          accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,.xlsx,.xls,.csv,.doc,.docx"
+                          onChange={handleFileUpload}
+                        />
+                        <Upload size={16} className="text-[#d1d5db] mx-auto mb-1" />
+                        <p className="text-xs text-[#6b7280]">Click para subir archivos</p>
+                      </div>
+                      {/* File list */}
+                      {(prospectoArchivos[p.id]?.length > 0) ? (
+                        <div className="space-y-1.5 max-h-40 overflow-y-auto">
+                          {[...(prospectoArchivos[p.id] || [])].reverse().map(archivo => (
+                            <div key={archivo.id} className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-[#f9fafb] group transition-colors">
+                              <div className="w-7 h-7 rounded-md bg-[#f3f4f6] flex items-center justify-center flex-shrink-0">
+                                {getFileIcon(archivo.type)}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="text-xs font-medium text-[#1c2c4a] truncate">{archivo.name}</div>
+                                <div className="text-[10px] text-[#9ca3af]">{formatFileSize(archivo.size)} · {archivo.date}</div>
+                              </div>
+                              <button
+                                onClick={() => eliminarArchivo(archivo.id)}
+                                className="opacity-0 group-hover:opacity-100 text-[#6b7280] hover:text-red-500 transition-all"
+                              >
+                                <Trash2 size={12} />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-[#9ca3af] text-center py-2">Sube un archivo...</p>
+                      )}
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           </div>
           <style>{`
@@ -6008,70 +6118,41 @@ const InnovativeDemo = () => {
         </div>
       </div>
 
-      {/* KPI ROW */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
-        <div className="bg-white rounded-xl border border-[#e5e7eb] p-4 text-center">
-          <div className="text-2xl font-bold text-[#1c2c4a]">{memberProspectos.length}</div>
-          <div className="text-xs text-[#6b7280] mt-0.5">Total Prospectos</div>
-        </div>
-        <div className="bg-white rounded-xl border border-[#e5e7eb] p-4 text-center">
+      {/* KPI ROW — funnel de conversión */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-5">
+        <div className="bg-white rounded-xl border border-[#e5e7eb] p-3 text-center">
           <div className="text-2xl font-bold text-[#6b7280]">{memberLeads.length}</div>
           <div className="text-xs text-[#6b7280] mt-0.5">Leads</div>
         </div>
-        <div className="bg-white rounded-xl border border-[#e5e7eb] p-4 text-center">
+        <div className="bg-white rounded-xl border border-[#e5e7eb] p-3 text-center">
           <div className="text-2xl font-bold text-[#00a8a8]">{memberProspectosActivos.length}</div>
-          <div className="text-xs text-[#6b7280] mt-0.5">Prospectos Activos</div>
+          <div className="text-xs text-[#6b7280] mt-0.5">Prospectos</div>
         </div>
-        <div className="bg-white rounded-xl border border-[#e5e7eb] p-4 text-center">
+        <div className="bg-white rounded-xl border border-[#e5e7eb] p-3 text-center">
+          <div className="text-2xl font-bold text-[#7C3AED]">{memberPropuestas.length}</div>
+          <div className="text-xs text-[#6b7280] mt-0.5">Propuestas</div>
+        </div>
+        <div className="bg-white rounded-xl border border-[#e5e7eb] p-3 text-center">
           <div className="text-2xl font-bold text-[#2E7D32]">{memberGanados.length}</div>
-          <div className="text-xs text-[#6b7280] mt-0.5">Ganados</div>
+          <div className="text-xs text-[#6b7280] mt-0.5">Cierres</div>
         </div>
+        {member.presupuestoAnual2026 > 0 && (
+          <div className="bg-white rounded-xl border border-[#e5e7eb] p-3 text-center">
+            <div className="text-2xl font-bold" style={{ color: member.cumplimientoPresupuesto >= 70 ? '#2E7D32' : member.cumplimientoPresupuesto >= 40 ? '#F57C00' : '#DC2626' }}>
+              {member.cumplimientoPresupuesto}%
+            </div>
+            <div className="text-xs text-[#6b7280] mt-0.5">Presupuesto</div>
+            <div className="w-full h-1.5 bg-[#e5e7eb] rounded-full overflow-hidden mt-1.5">
+              <div className="h-full rounded-full transition-all duration-500" style={{
+                width: `${Math.min(member.cumplimientoPresupuesto, 100)}%`,
+                backgroundColor: member.cumplimientoPresupuesto >= 70 ? '#2E7D32' : member.cumplimientoPresupuesto >= 40 ? '#F57C00' : '#DC2626',
+              }} />
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* PRESUPUESTO BAR */}
-      {member.presupuestoAnual2026 > 0 && (
-        <div className="bg-white rounded-xl border border-[#e5e7eb] p-4 mb-5">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-semibold text-[#1c2c4a]">Presupuesto</span>
-            <span className="text-xs text-[#6b7280]">
-              ${(member.ventasReales / 1000000).toFixed(1)}M de ${(member.presupuestoMensual / 1000000).toFixed(1)}M/mes
-              <span className="ml-2 font-bold" style={{ color: member.cumplimientoPresupuesto >= 70 ? '#2E7D32' : member.cumplimientoPresupuesto >= 40 ? '#F57C00' : '#DC2626' }}>
-                {member.cumplimientoPresupuesto}%
-              </span>
-            </span>
-          </div>
-          <div className="w-full h-3 bg-[#e5e7eb] rounded-full overflow-hidden">
-            <div className="h-full rounded-full transition-all duration-500" style={{
-              width: `${Math.min(member.cumplimientoPresupuesto, 100)}%`,
-              backgroundColor: member.cumplimientoPresupuesto >= 70 ? '#2E7D32' : member.cumplimientoPresupuesto >= 40 ? '#F57C00' : '#DC2626',
-            }} />
-          </div>
-        </div>
-      )}
-
-      {/* TABS */}
-      <div className="flex items-center gap-1 bg-white rounded-xl border border-[#e5e7eb] p-1 mb-5">
-        {tabs.map(tab => (
-          <button
-            key={tab.id}
-            onClick={() => setHubTab(tab.id)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all flex-1 justify-center ${
-              hubTab === tab.id
-                ? 'bg-[#1c2c4a] text-white shadow-sm'
-                : 'text-[#6b7280] hover:bg-[#f3f4f6]'
-            }`}
-          >
-            <tab.icon size={16} />
-            {tab.label}
-            {tab.count > 0 && (
-              <span className={`text-xs px-1.5 py-0.5 rounded-full ${hubTab === tab.id ? 'bg-white/20' : 'bg-[#e5e7eb]'}`}>{tab.count}</span>
-            )}
-          </button>
-        ))}
-      </div>
-
-      {/* TAB: PIPELINE — Kanban personal del ejecutivo */}
-      {hubTab === 'pipeline' && (
+      {/* PIPELINE — Kanban personal del ejecutivo */}
         <div className="space-y-4">
           {/* Quick summary bar */}
           <div className="flex items-center gap-4 text-xs">
@@ -6167,6 +6248,10 @@ const InnovativeDemo = () => {
                                               {timeAgo(fechaRef)}
                                             </span>
                                           </div>
+                                          <div className="flex items-center gap-1 flex-shrink-0">
+                                            {(prospectoNotas[prospecto.id]?.length > 0) && <span className="flex items-center gap-0.5 text-[#9ca3af]"><MessageSquare size={8} />{prospectoNotas[prospecto.id].length}</span>}
+                                            {(prospectoArchivos[prospecto.id]?.length > 0) && <span className="flex items-center gap-0.5 text-[#9ca3af]"><Paperclip size={8} />{prospectoArchivos[prospecto.id].length}</span>}
+                                          </div>
                                           {valor > 0 && <span className="font-bold text-[#0D47A1]">${(valor / 1000000).toFixed(1)}M</span>}
                                         </div>
                                       );
@@ -6241,125 +6326,6 @@ const InnovativeDemo = () => {
             </div>
           )}
         </div>
-      )}
-
-      {/* TAB: NOTAS */}
-      {hubTab === 'notas' && (
-        <div className="space-y-4">
-          {/* Nota del sistema (la que viene en salesTeamData) */}
-          {member.notas && (
-            <div className="bg-[#FFFBEB] rounded-xl border border-[#FDE68A] p-4">
-              <div className="flex items-center gap-2 mb-1">
-                <AlertCircle size={14} className="text-[#D97706]" />
-                <span className="text-xs font-semibold text-[#92400E]">Nota del perfil</span>
-              </div>
-              <p className="text-sm text-[#92400E]">{member.notas}</p>
-            </div>
-          )}
-
-          {/* Input nueva nota */}
-          <div className="bg-white rounded-xl border border-[#e5e7eb] p-4">
-            <div className="flex gap-3">
-              <div className="flex-1">
-                <textarea
-                  value={hubNuevaNota}
-                  onChange={(e) => setHubNuevaNota(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); agregarNota(); }}}
-                  placeholder="Escribe una nota... (Enter para guardar)"
-                  className="w-full border border-[#e5e7eb] rounded-lg px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#00a8a8]/30 focus:border-[#00a8a8]"
-                  rows={2}
-                />
-              </div>
-              <button
-                onClick={agregarNota}
-                disabled={!hubNuevaNota.trim()}
-                className="self-end px-4 py-2 bg-[#00a8a8] hover:bg-[#008080] disabled:opacity-40 text-white rounded-lg text-sm font-medium transition-colors"
-              >
-                <Send size={16} />
-              </button>
-            </div>
-          </div>
-
-          {/* Lista de notas */}
-          {notas.length > 0 ? (
-            <div className="space-y-2">
-              {[...notas].reverse().map(nota => (
-                <div key={nota.id} className="bg-white rounded-xl border border-[#e5e7eb] p-4 group">
-                  <div className="flex items-start justify-between gap-3">
-                    <p className="text-sm text-[#1c2c4a] flex-1 whitespace-pre-wrap">{nota.text}</p>
-                    <button
-                      onClick={() => eliminarNota(nota.id)}
-                      className="opacity-0 group-hover:opacity-100 text-[#6b7280] hover:text-red-500 transition-all flex-shrink-0"
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-                  <div className="flex items-center gap-1.5 mt-2 text-xs text-[#6b7280]">
-                    <Clock size={11} />
-                    {new Date(nota.date).toLocaleString('es-MX', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="bg-white rounded-xl border border-[#e5e7eb] p-8 text-center">
-              <MessageSquare size={32} className="text-[#d1d5db] mx-auto mb-2" />
-              <p className="text-sm text-[#6b7280]">Sin notas aún. Escribe la primera nota para {member.name.split(' ').slice(0, 2).join(' ')}.</p>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* TAB: ARCHIVOS */}
-      {hubTab === 'archivos' && (
-        <div className="space-y-4">
-          {/* Upload area */}
-          <div
-            className="bg-white rounded-xl border-2 border-dashed border-[#d1d5db] hover:border-[#00a8a8] p-8 text-center transition-colors cursor-pointer"
-            onClick={() => fileInputRef.current?.click()}
-          >
-            <input
-              type="file"
-              ref={fileInputRef}
-              className="hidden"
-              multiple
-              accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,.xlsx,.xls,.csv,.doc,.docx"
-              onChange={handleFileUpload}
-            />
-            <Upload size={32} className="text-[#d1d5db] mx-auto mb-2" />
-            <p className="text-sm font-medium text-[#6b7280]">Click para subir archivos</p>
-            <p className="text-xs text-[#9ca3af] mt-1">PDF, fotos, Excel, Word</p>
-          </div>
-
-          {/* File list */}
-          {archivos.length > 0 ? (
-            <div className="bg-white rounded-xl border border-[#e5e7eb] divide-y divide-[#e5e7eb]">
-              {[...archivos].reverse().map(archivo => (
-                <div key={archivo.id} className="flex items-center gap-3 px-4 py-3 group hover:bg-[#f9fafb] transition-colors">
-                  <div className="w-9 h-9 rounded-lg bg-[#f3f4f6] flex items-center justify-center flex-shrink-0">
-                    {getFileIcon(archivo.type)}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium text-[#1c2c4a] truncate">{archivo.name}</div>
-                    <div className="text-xs text-[#6b7280]">{formatFileSize(archivo.size)} · {archivo.date}</div>
-                  </div>
-                  <button
-                    onClick={() => eliminarArchivo(archivo.id)}
-                    className="opacity-0 group-hover:opacity-100 text-[#6b7280] hover:text-red-500 transition-all"
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="bg-white rounded-xl border border-[#e5e7eb] p-8 text-center">
-              <Paperclip size={32} className="text-[#d1d5db] mx-auto mb-2" />
-              <p className="text-sm text-[#6b7280]">Sin archivos. Sube PDFs, fotos o Excel para {member.name.split(' ').slice(0, 2).join(' ')}.</p>
-            </div>
-          )}
-        </div>
-      )}
 
       {/* PROSPECT DETAIL DRAWER */}
       {selectedProspecto && <ProspectoDrawer prospecto={selectedProspecto} onClose={() => setSelectedProspecto(null)} />}
@@ -6458,6 +6424,10 @@ const InnovativeDemo = () => {
                   <span className="font-semibold px-1 py-px rounded text-[8px]" style={{ color: urgencyColor(fechaRef), backgroundColor: `${urgencyColor(fechaRef)}12` }}>
                     {timeAgo(fechaRef)}
                   </span>
+                </div>
+                <div className="flex items-center gap-1 flex-shrink-0">
+                  {(prospectoNotas[prospecto.id]?.length > 0) && <span className="flex items-center gap-0.5"><MessageSquare size={8} />{prospectoNotas[prospecto.id].length}</span>}
+                  {(prospectoArchivos[prospecto.id]?.length > 0) && <span className="flex items-center gap-0.5"><Paperclip size={8} />{prospectoArchivos[prospecto.id].length}</span>}
                 </div>
                 {prospecto.ciudad && <span className="truncate max-w-[80px]">{prospecto.ciudad.split(',')[0]}</span>}
               </div>
