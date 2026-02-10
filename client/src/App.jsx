@@ -4347,6 +4347,16 @@ const InnovativeDemo = () => {
     { id: 'Inicio de operación', label: 'Ganada', color: '#2E7D32', prob: '100%' },
   ];
 
+  // Etapas del Kanban personal en Hub Ejecutivo (labels personalizados)
+  const HUB_KANBAN_STAGES = [
+    { id: 'Lead nuevo', label: 'Lead', color: '#6b7280' },
+    { id: 'Reunión agendada', label: 'Prospecto', color: '#0D47A1' },
+    { id: 'Levantamiento', label: 'Reunión', color: '#F57C00' },
+    { id: 'Propuesta enviada', label: 'Levantamiento', color: '#00a8a8' },
+    { id: 'Negociación', label: 'Propuesta', color: '#7C3AED' },
+    { id: 'Inicio de operación', label: 'Cliente Nuevo', color: '#2E7D32' },
+  ];
+
   // Stage gate validation rules
   const STAGE_GATES = {
     'Reunión agendada': {
@@ -5581,11 +5591,9 @@ const InnovativeDemo = () => {
     const fileInputRef = React.createRef();
 
     // Interactive state
-    const [hubSearch, setHubSearch] = React.useState('');
-    const [hubFilterStage, setHubFilterStage] = React.useState('todos');
-    const [collapsedStages, setCollapsedStages] = React.useState({});
     const [selectedProspecto, setSelectedProspecto] = React.useState(null);
     const [copiedField, setCopiedField] = React.useState(null);
+    const [hubActiveKanbanId, setHubActiveKanbanId] = React.useState(null);
 
     const handleFileUpload = (e) => {
       const files = Array.from(e.target.files || []);
@@ -5667,21 +5675,32 @@ const InnovativeDemo = () => {
       setTimeout(() => setCopiedField(null), 2000);
     };
 
-    // Filter prospects by search + stage
-    const filteredProspectos = memberProspectos.filter(p => {
-      const matchSearch = !hubSearch ||
-        p.empresa?.toLowerCase().includes(hubSearch.toLowerCase()) ||
-        p.contacto?.nombre?.toLowerCase().includes(hubSearch.toLowerCase()) ||
-        p.ciudad?.toLowerCase().includes(hubSearch.toLowerCase()) ||
-        p.industria?.toLowerCase().includes(hubSearch.toLowerCase());
-      const matchStage = hubFilterStage === 'todos' || p.status === hubFilterStage;
-      return matchSearch && matchStage;
-    });
+    // Hub Kanban drag handlers
+    const hubHandleDragStart = React.useCallback((event) => {
+      setHubActiveKanbanId(event.active.id);
+    }, []);
 
-    // Toggle stage collapse
-    const toggleStageCollapse = (stageId) => {
-      setCollapsedStages(prev => ({ ...prev, [stageId]: !prev[stageId] }));
-    };
+    const hubHandleDragEnd = React.useCallback((event) => {
+      setHubActiveKanbanId(null);
+      const { active, over } = event;
+      if (!over || !active) return;
+      const prospecto = memberProspectos.find(p => p.id === active.id);
+      if (!prospecto) return;
+      const overId = String(over.id);
+      const targetStage = over.data?.current?.type === 'card'
+        ? memberProspectos.find(p => p.id === over.id)?.status
+        : overId.startsWith('hub-') ? overId.replace('hub-', '') : overId;
+      if (!targetStage || targetStage === prospecto.status) return;
+      const gate = STAGE_GATES[targetStage];
+      if (gate && !gate.validate(prospecto)) {
+        setShowStageGateModal(true);
+        setPendingMove({ prospecto, fromStage: prospecto.status, toStage: targetStage });
+        return;
+      }
+      setKanbanProspectos(prev => prev.map(p => p.id === prospecto.id ? { ...p, status: targetStage } : p));
+    }, [memberProspectos]);
+
+    const hubActiveCard = hubActiveKanbanId ? memberProspectos.find(p => p.id === hubActiveKanbanId) : null;
 
     // Change prospect stage
     const changeProspectoStage = (prospectoId, newStage) => {
@@ -6009,175 +6028,164 @@ const InnovativeDemo = () => {
         ))}
       </div>
 
-      {/* TAB: PIPELINE */}
+      {/* TAB: PIPELINE — Kanban personal del ejecutivo */}
       {hubTab === 'pipeline' && (
         <div className="space-y-4">
-          {/* Search + filter bar */}
-          <div className="flex items-center gap-3">
-            <div className="flex-1 relative">
-              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9ca3af]" />
-              <input
-                type="text"
-                placeholder="Buscar prospecto, contacto, ciudad..."
-                value={hubSearch}
-                onChange={(e) => setHubSearch(e.target.value)}
-                className="w-full pl-9 pr-3 py-2.5 bg-white border border-[#e5e7eb] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#00a8a8]/30 focus:border-[#00a8a8] transition-all"
-              />
-              {hubSearch && (
-                <button onClick={() => setHubSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9ca3af] hover:text-[#6b7280]">
-                  <X size={14} />
-                </button>
-              )}
+          {/* Quick summary bar */}
+          <div className="flex items-center gap-4 text-xs">
+            <span className="text-[#6b7280]"><strong className="text-[#1c2c4a]">{memberProspectos.filter(p => p.status !== 'Propuesta Rechazada').length}</strong> prospectos</span>
+            <span className="text-[#6b7280]"><strong className="text-[#0D47A1]">${(totalPipeline / 1000000).toFixed(1)}M</strong> pipeline</span>
+            {memberRechazados.length > 0 && <span className="text-red-500"><strong>{memberRechazados.length}</strong> rechazadas</span>}
+            <div className="flex items-center gap-2 ml-auto">
+              {HUB_KANBAN_STAGES.map(s => {
+                const c = memberProspectos.filter(p => p.status === s.id).length;
+                return c > 0 ? (
+                  <div key={s.id} className="flex items-center gap-1 text-[10px]">
+                    <div className="w-2 h-2 rounded-sm" style={{ backgroundColor: s.color }} />
+                    <span className="text-[#6b7280]">{s.label}</span>
+                    <span className="font-bold text-[#1c2c4a]">{c}</span>
+                  </div>
+                ) : null;
+              })}
             </div>
-            <select
-              value={hubFilterStage}
-              onChange={(e) => setHubFilterStage(e.target.value)}
-              className="bg-white border border-[#e5e7eb] rounded-xl px-3 py-2.5 text-sm text-[#1c2c4a] focus:outline-none focus:ring-2 focus:ring-[#00a8a8]/30 focus:border-[#00a8a8]"
-            >
-              <option value="todos">Todas las etapas</option>
-              {KANBAN_STAGES.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
-              {memberRechazados.length > 0 && <option value="Propuesta Rechazada">Rechazadas</option>}
-            </select>
-            {(hubSearch || hubFilterStage !== 'todos') && (
-              <span className="text-xs text-[#6b7280] whitespace-nowrap">{filteredProspectos.length} resultado{filteredProspectos.length !== 1 ? 's' : ''}</span>
-            )}
           </div>
 
-          {/* Stage summary — clickable */}
-          <div className="bg-white rounded-xl border border-[#e5e7eb] p-5">
-            <h3 className="text-sm font-semibold text-[#1c2c4a] mb-3">Distribución por Etapa</h3>
-            <div className="space-y-2">
-              {KANBAN_STAGES.map(stage => {
-                const items = memberProspectos.filter(p => p.status === stage.id);
-                const valor = items.reduce((s, p) => s + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0);
-                const isActive = hubFilterStage === stage.id;
+          {/* KANBAN GRID */}
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragStart={hubHandleDragStart}
+            onDragEnd={hubHandleDragEnd}
+          >
+            <div className="grid grid-cols-6 gap-2">
+              {HUB_KANBAN_STAGES.map(stage => {
+                const stageItems = memberProspectos.filter(p => p.status === stage.id);
+                const stageValue = stageItems.reduce((s, p) => s + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0);
+                const gate = STAGE_GATES[stage.id];
+
                 return (
-                  <div
-                    key={stage.id}
-                    className={`flex items-center gap-3 cursor-pointer rounded-lg px-2 py-1 -mx-2 transition-all ${
-                      isActive ? 'bg-[#f3f4f6] ring-1 ring-[#e5e7eb]' : 'hover:bg-[#f9fafb]'
-                    }`}
-                    onClick={() => setHubFilterStage(isActive ? 'todos' : stage.id)}
-                  >
-                    <div className="w-3 h-3 rounded-sm flex-shrink-0" style={{ backgroundColor: stage.color }} />
-                    <span className="text-sm text-[#1c2c4a] w-28 flex-shrink-0">{stage.label}</span>
-                    <div className="flex-1 h-2.5 bg-[#e5e7eb] rounded-full overflow-hidden">
-                      <div className="h-full rounded-full transition-all" style={{
-                        width: memberProspectos.length > 0 ? `${(items.length / memberProspectos.length) * 100}%` : '0%',
-                        backgroundColor: stage.color,
-                      }} />
+                  <div key={stage.id} className="flex flex-col">
+                    {/* Column Header */}
+                    <div className="rounded-t-lg p-2.5 mb-1.5" style={{ borderTop: `3px solid ${stage.color}` }}>
+                      <div className="flex items-center justify-between mb-0.5">
+                        <div className="flex items-center gap-1.5">
+                          <h3 className="text-xs font-semibold text-[#1c2c4a]">{stage.label}</h3>
+                          <span className="text-[10px] bg-[#f3f4f6] text-[#6b7280] px-1.5 py-0.5 rounded-full font-medium">{stageItems.length}</span>
+                        </div>
+                        {gate && <Lock size={10} className="text-[#9ca3af]" />}
+                      </div>
+                      {stageValue > 0 && <div className="text-[10px] text-[#6b7280]">${(stageValue / 1000000).toFixed(1)}M</div>}
                     </div>
-                    <span className="text-sm font-bold text-[#1c2c4a] w-8 text-right">{items.length}</span>
-                    <span className="text-xs text-[#6b7280] w-20 text-right">${(valor / 1000000).toFixed(1)}M</span>
+
+                    {/* Droppable Area */}
+                    {(() => {
+                      const { isOver, setNodeRef } = useDroppable({ id: `hub-${stage.id}`, data: { stageId: stage.id } });
+                      return (
+                        <div
+                          ref={setNodeRef}
+                          className={`min-h-[120px] transition-colors rounded-lg flex-1 ${isOver ? 'bg-[#00a8a8]/5 ring-2 ring-[#00a8a8]/30' : ''}`}
+                        >
+                          <SortableContext items={stageItems.map(p => p.id)} strategy={verticalListSortingStrategy}>
+                            <div className="space-y-0">
+                              {stageItems.map(prospecto => {
+                                const { attributes, listeners, setNodeRef: cardRef, transform, transition, isDragging } = useSortable({
+                                  id: prospecto.id,
+                                  data: { type: 'card', prospecto },
+                                });
+                                const valor = prospecto.propuesta?.ventaTotal || prospecto.facturacionEstimada || 0;
+                                const primaryService = (prospecto.servicios || [])[0] || 'rme';
+                                const svc = SERVICE_COLORS[primaryService] || SERVICE_COLORS.rme;
+                                return (
+                                  <div
+                                    key={prospecto.id}
+                                    ref={cardRef}
+                                    style={{
+                                      transform: CSS.Transform.toString(transform),
+                                      transition,
+                                      opacity: isDragging ? 0.5 : 1,
+                                      backgroundColor: svc.bg,
+                                      borderLeft: `3px solid ${svc.border}`,
+                                    }}
+                                    {...attributes}
+                                    {...listeners}
+                                    className="rounded-lg p-1.5 mb-1 cursor-grab active:cursor-grabbing hover:shadow-md transition-all"
+                                    onClick={(e) => { if (!isDragging) { e.stopPropagation(); setSelectedProspecto(prospecto); setMostrarDetallesProspecto(true); } }}
+                                  >
+                                    <div className="flex items-center justify-between gap-1 mb-0.5">
+                                      <h4 className="text-[12px] font-semibold text-[#1c2c4a] truncate leading-tight flex-1 min-w-0">{prospecto.empresa}</h4>
+                                      <span className="text-[8px] font-bold px-1 py-px rounded-full whitespace-nowrap flex-shrink-0" style={{ backgroundColor: `${svc.border}18`, color: svc.text }}>{svc.label}</span>
+                                    </div>
+                                    <div className="flex items-center justify-between text-[10px] text-[#9ca3af]">
+                                      {prospecto.ciudad && <span className="truncate max-w-[80px]">{prospecto.ciudad.split(',')[0]}</span>}
+                                      {valor > 0 && <span className="font-bold text-[#0D47A1]">${(valor / 1000000).toFixed(1)}M</span>}
+                                    </div>
+                                    {(() => {
+                                      const campos = calcularCamposCompletos(prospecto);
+                                      const completos = campos.filter(c => c.ok).length;
+                                      const total = campos.length;
+                                      const pct = (completos / total) * 100;
+                                      const barColor = completos === total ? '#2E7D32' : pct >= 60 ? '#F57C00' : '#ef4444';
+                                      return (
+                                        <div className="mt-1">
+                                          <div className="w-full h-[2px] bg-black/[0.04] rounded-full overflow-hidden">
+                                            <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: barColor }} />
+                                          </div>
+                                        </div>
+                                      );
+                                    })()}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </SortableContext>
+                          {stageItems.length === 0 && (
+                            <div className="flex items-center justify-center h-16 border-2 border-dashed border-[#e5e7eb] rounded-lg text-[10px] text-[#9ca3af]">
+                              Arrastra aquí
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </div>
                 );
               })}
-              {memberRechazados.length > 0 && (
-                <div
-                  className={`flex items-center gap-3 cursor-pointer rounded-lg px-2 py-1 -mx-2 transition-all ${
-                    hubFilterStage === 'Propuesta Rechazada' ? 'bg-[#f3f4f6] ring-1 ring-[#e5e7eb]' : 'hover:bg-[#f9fafb]'
-                  }`}
-                  onClick={() => setHubFilterStage(hubFilterStage === 'Propuesta Rechazada' ? 'todos' : 'Propuesta Rechazada')}
-                >
-                  <div className="w-3 h-3 rounded-sm flex-shrink-0 bg-red-500" />
-                  <span className="text-sm text-[#1c2c4a] w-28 flex-shrink-0">Rechazadas</span>
-                  <div className="flex-1" />
-                  <span className="text-sm font-bold text-red-500 w-8 text-right">{memberRechazados.length}</span>
-                  <span className="text-xs text-[#6b7280] w-20 text-right"></span>
+            </div>
+
+            {/* Drag Overlay */}
+            <DragOverlay>
+              {hubActiveCard && (
+                <div className="bg-white rounded-lg border-2 border-[#00a8a8] p-2 shadow-xl w-[160px] rotate-2">
+                  <h4 className="text-xs font-semibold text-[#1c2c4a] truncate">{hubActiveCard.empresa}</h4>
+                  <div className="text-[10px] text-[#6b7280] mt-0.5">{hubActiveCard.ciudad?.split(',')[0]}</div>
                 </div>
               )}
-            </div>
-          </div>
+            </DragOverlay>
+          </DndContext>
 
-          {/* Prospectos cards by stage — collapsible */}
-          {[...KANBAN_STAGES, { id: 'Propuesta Rechazada', label: 'Rechazadas', color: '#DC2626', prob: '' }].map(stage => {
-            const items = filteredProspectos.filter(p => p.status === stage.id);
-            if (items.length === 0) return null;
-            const isCollapsed = collapsedStages[stage.id];
-            const stageValor = items.reduce((s, p) => s + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0);
-            const isRechazada = stage.id === 'Propuesta Rechazada';
-            return (
-              <div key={stage.id} className={`bg-white rounded-xl border ${isRechazada ? 'border-red-200' : 'border-[#e5e7eb]'} overflow-hidden`}>
-                {/* Collapsible header */}
-                <button
-                  onClick={() => toggleStageCollapse(stage.id)}
-                  className="w-full flex items-center gap-2 px-5 py-3 hover:bg-[#f9fafb] transition-colors text-left"
-                >
-                  <div className="w-3 h-3 rounded-sm flex-shrink-0" style={{ backgroundColor: stage.color }} />
-                  <h3 className="text-sm font-semibold text-[#1c2c4a]">{stage.label}</h3>
-                  <span className="text-xs text-[#6b7280]">({items.length})</span>
-                  {stageValor > 0 && <span className="text-xs font-semibold text-[#0D47A1] ml-1">${(stageValor / 1000000).toFixed(1)}M</span>}
-                  {stage.prob && <span className="text-xs text-[#6b7280] ml-auto mr-2">{stage.prob}</span>}
-                  <ChevronDown size={16} className={`text-[#9ca3af] transition-transform ${isCollapsed ? '-rotate-90' : ''}`} />
-                </button>
-                {/* Compact row-based list */}
-                {!isCollapsed && (
-                  <div className="px-3 pb-3">
-                    <div className="divide-y divide-[#e5e7eb]">
-                      {items.map(p => {
-                        const svcColor = p.servicios?.[0] ? (SERVICE_COLORS[p.servicios[0]] || {}) : {};
-                        const serv = p.servicios?.[0] ? SERVICIOS_INNOVATIVE.find(si => si.id === p.servicios[0]) : null;
-                        return (
-                          <div
-                            key={p.id}
-                            onClick={() => setSelectedProspecto(p)}
-                            className={`flex items-center gap-3 py-2 px-2 cursor-pointer transition-all hover:bg-[#f3f4f6] rounded group ${
-                              isRechazada ? 'hover:bg-red-50' : ''
-                            }`}
-                          >
-                            {/* Service color indicator */}
-                            <div className="w-1 h-8 rounded-full flex-shrink-0" style={{ backgroundColor: svcColor.border || '#e5e7eb' }} />
-                            {/* Company + contact */}
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2">
-                                <span className="text-[13px] font-semibold text-[#1c2c4a] truncate">{p.empresa}{p.planta ? ` — ${p.planta}` : ''}</span>
-                                <span className="text-[9px] font-bold px-1.5 py-px rounded-full whitespace-nowrap flex-shrink-0" style={{ backgroundColor: svcColor.bg || '#f3f4f6', color: svcColor.text || '#6b7280' }}>{serv?.nombre || p.servicios?.[0] || ''}</span>
-                              </div>
-                              <div className="flex items-center gap-3 text-[11px] text-[#9ca3af]">
-                                {p.contacto?.nombre && <span className="truncate max-w-[200px]">{p.contacto.nombre}</span>}
-                                {p.ciudad && <span className="flex-shrink-0">{p.ciudad.split(',')[0]}</span>}
-                                {p.motivoRechazo && <span className="text-red-500 truncate max-w-[200px]">{p.motivoRechazo}</span>}
-                              </div>
-                            </div>
-                            {/* Value */}
-                            <span className="text-xs font-bold text-[#0D47A1] flex-shrink-0 w-14 text-right">
-                              {(p.propuesta?.ventaTotal || p.facturacionEstimada) ? `$${((p.propuesta?.ventaTotal || p.facturacionEstimada) / 1000).toFixed(0)}K` : '—'}
-                            </span>
-                            {/* Quick actions on hover */}
-                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
-                              {p.contacto?.telefono && (
-                                <a href={`tel:${p.contacto.telefono}`} onClick={(e) => e.stopPropagation()} className="w-6 h-6 rounded-md bg-green-50 flex items-center justify-center hover:bg-green-100 transition-colors" title="Llamar">
-                                  <Phone size={11} className="text-green-600" />
-                                </a>
-                              )}
-                              {p.contacto?.correo && (
-                                <a href={`mailto:${p.contacto.correo}`} onClick={(e) => e.stopPropagation()} className="w-6 h-6 rounded-md bg-blue-50 flex items-center justify-center hover:bg-blue-100 transition-colors" title="Email">
-                                  <Mail size={11} className="text-blue-600" />
-                                </a>
-                              )}
-                              {p.contacto?.telefono && (
-                                <a href={`https://wa.me/52${p.contacto.telefono.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="w-6 h-6 rounded-md bg-green-50 flex items-center justify-center hover:bg-green-100 transition-colors" title="WhatsApp">
-                                  <MessageSquare size={11} className="text-green-600" />
-                                </a>
-                              )}
-                            </div>
-                            <ChevronRight size={14} className="text-[#d1d5db] group-hover:text-[#00a8a8] transition-colors flex-shrink-0" />
-                          </div>
-                        );
-                      })}
-                    </div>
+          {/* Rejected section */}
+          {memberRechazados.length > 0 && (
+            <div className="bg-red-50/50 rounded-lg border border-red-200 p-3">
+              <h4 className="text-xs font-semibold text-red-700 mb-2 flex items-center gap-1.5">
+                <AlertCircle size={12} />
+                Rechazadas ({memberRechazados.length})
+              </h4>
+              <div className="flex flex-wrap gap-1.5">
+                {memberRechazados.map(p => (
+                  <div key={p.id} className="bg-white rounded-md border border-red-200 px-2.5 py-1.5 text-[11px] cursor-pointer hover:shadow-sm"
+                    onClick={() => { setSelectedProspecto(p); setMostrarDetallesProspecto(true); }}>
+                    <span className="font-medium text-[#1c2c4a]">{p.empresa}</span>
+                    <span className="text-red-500 ml-1.5">{p.motivoRechazo || 'Sin motivo'}</span>
                   </div>
-                )}
+                ))}
               </div>
-            );
-          })}
+            </div>
+          )}
 
-          {/* Empty state when filtering */}
-          {filteredProspectos.length === 0 && (hubSearch || hubFilterStage !== 'todos') && (
+          {/* Empty state */}
+          {memberProspectos.length === 0 && (
             <div className="bg-white rounded-xl border border-[#e5e7eb] p-8 text-center">
-              <Search size={32} className="text-[#d1d5db] mx-auto mb-2" />
-              <p className="text-sm text-[#6b7280]">No se encontraron prospectos con esos filtros.</p>
-              <button onClick={() => { setHubSearch(''); setHubFilterStage('todos'); }} className="text-xs text-[#00a8a8] hover:underline mt-2">Limpiar filtros</button>
+              <Target size={32} className="text-[#d1d5db] mx-auto mb-2" />
+              <p className="text-sm text-[#6b7280]">Este ejecutivo aún no tiene prospectos asignados.</p>
             </div>
           )}
         </div>
