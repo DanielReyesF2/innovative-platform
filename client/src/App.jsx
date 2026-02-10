@@ -28,6 +28,48 @@ const SERVICIOS_INNOVATIVE = [
   { id: 'limpieza', nombre: 'Limpieza Especializada', descripcion: 'Servicios de limpieza industrial' }
 ];
 
+// Antigüedad helper — calcula "hace X días/sem/meses" desde una fecha
+const timeAgo = (dateStr) => {
+  if (!dateStr) return null;
+  const now = new Date();
+  const date = new Date(dateStr);
+  const diffMs = now - date;
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  if (diffDays < 0) return 'hoy';
+  if (diffDays === 0) return 'hoy';
+  if (diffDays === 1) return '1d';
+  if (diffDays < 7) return `${diffDays}d`;
+  if (diffDays < 30) return `${Math.floor(diffDays / 7)}sem`;
+  if (diffDays < 365) return `${Math.floor(diffDays / 30)}m`;
+  return `${Math.floor(diffDays / 365)}a`;
+};
+
+// Color de urgencia basado en días sin actividad
+const urgencyColor = (dateStr) => {
+  if (!dateStr) return '#9ca3af';
+  const diffDays = Math.floor((new Date() - new Date(dateStr)) / (1000 * 60 * 60 * 24));
+  if (diffDays <= 7) return '#22C55E'; // verde — reciente
+  if (diffDays <= 21) return '#F59E0B'; // amarillo — hay que dar seguimiento
+  if (diffDays <= 45) return '#F97316'; // naranja — atención
+  return '#EF4444'; // rojo — urgente, mucho tiempo sin tocar
+};
+
+// Fecha estimada para prospectos sin fecha — basada en patrones conocidos de captación
+const estimarFechaProspecto = (p) => {
+  if (p.fecha) return p.fecha;
+  // Carmen (CR) leads nuevos captados progresivamente sep 2025 - feb 2026
+  if (p.ejecutivo === 'CR') {
+    if (p.id <= 110) return '2025-09-15';
+    if (p.id <= 120) return '2025-10-15';
+    if (p.id <= 131) return '2025-11-15';
+    return '2025-12-15';
+  }
+  // Otros ejecutivos — leads viejos creados jul-ago 2025
+  if (p.status === 'Lead nuevo') return '2025-08-01';
+  if (p.status === 'Reunión agendada') return '2025-09-01';
+  return '2025-10-01';
+};
+
 // Color mapping for service types — subtle backgrounds + accents for Kanban cards
 const SERVICE_COLORS = {
   rme:            { bg: '#EFF6FF', border: '#3B82F6', text: '#2563EB', label: 'RME' },
@@ -6115,10 +6157,20 @@ const InnovativeDemo = () => {
                                       <h4 className="text-[12px] font-semibold text-[#1c2c4a] truncate leading-tight flex-1 min-w-0">{prospecto.empresa}</h4>
                                       <span className="text-[8px] font-bold px-1 py-px rounded-full whitespace-nowrap flex-shrink-0" style={{ backgroundColor: `${svc.border}18`, color: svc.text }}>{svc.label}</span>
                                     </div>
-                                    <div className="flex items-center justify-between text-[10px] text-[#9ca3af]">
-                                      {prospecto.ciudad && <span className="truncate max-w-[80px]">{prospecto.ciudad.split(',')[0]}</span>}
-                                      {valor > 0 && <span className="font-bold text-[#0D47A1]">${(valor / 1000000).toFixed(1)}M</span>}
-                                    </div>
+                                    {(() => {
+                                      const fechaRef = estimarFechaProspecto(prospecto);
+                                      return (
+                                        <div className="flex items-center justify-between text-[10px] text-[#9ca3af]">
+                                          <div className="flex items-center gap-1">
+                                            {prospecto.ciudad && <span className="truncate max-w-[50px]">{prospecto.ciudad.split(',')[0]}</span>}
+                                            <span className="font-semibold px-1 py-px rounded text-[8px]" style={{ color: urgencyColor(fechaRef), backgroundColor: `${urgencyColor(fechaRef)}12` }}>
+                                              {timeAgo(fechaRef)}
+                                            </span>
+                                          </div>
+                                          {valor > 0 && <span className="font-bold text-[#0D47A1]">${(valor / 1000000).toFixed(1)}M</span>}
+                                        </div>
+                                      );
+                                    })()}
                                     {(() => {
                                       const campos = calcularCamposCompletos(prospecto);
                                       const completos = campos.filter(c => c.ok).length;
@@ -6396,11 +6448,21 @@ const InnovativeDemo = () => {
               </span>
             </div>
           </div>
-          {/* Row 2: Ejecutivo code + city */}
-          <div className="flex items-center justify-between text-[10px] text-[#9ca3af]">
-            <span className="font-medium">{prospecto.ejecutivo}</span>
-            {prospecto.ciudad && <span className="truncate max-w-[80px]">{prospecto.ciudad.split(',')[0]}</span>}
-          </div>
+          {/* Row 2: Ejecutivo code + time indicator + city */}
+          {(() => {
+            const fechaRef = estimarFechaProspecto(prospecto);
+            return (
+              <div className="flex items-center justify-between text-[10px] text-[#9ca3af]">
+                <div className="flex items-center gap-1.5">
+                  <span className="font-medium">{prospecto.ejecutivo}</span>
+                  <span className="font-semibold px-1 py-px rounded text-[8px]" style={{ color: urgencyColor(fechaRef), backgroundColor: `${urgencyColor(fechaRef)}12` }}>
+                    {timeAgo(fechaRef)}
+                  </span>
+                </div>
+                {prospecto.ciudad && <span className="truncate max-w-[80px]">{prospecto.ciudad.split(',')[0]}</span>}
+              </div>
+            );
+          })()}
           {/* Progress micro-bar */}
           {(() => {
             const campos = calcularCamposCompletos(prospecto);
