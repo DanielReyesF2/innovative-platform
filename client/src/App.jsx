@@ -6359,7 +6359,6 @@ const InnovativeDemo = () => {
         data: { type: 'card', prospecto },
       });
       const valor = prospecto.propuesta?.ventaTotal || prospecto.facturacionEstimada || 0;
-      const ejecutivo = salesTeamData.find(e => e.codigo === prospecto.ejecutivo);
       const primaryService = (prospecto.servicios || [])[0] || 'rme';
       const svc = SERVICE_COLORS[primaryService] || SERVICE_COLORS.rme;
       const cardStyle = {
@@ -6376,7 +6375,7 @@ const InnovativeDemo = () => {
           style={cardStyle}
           {...attributes}
           {...listeners}
-          className="rounded-lg p-2.5 mb-2 cursor-grab active:cursor-grabbing hover:shadow-md transition-all group"
+          className="rounded-lg p-1.5 mb-1 cursor-grab active:cursor-grabbing hover:shadow-md transition-all group"
           onClick={(e) => {
             if (!isDragging) {
               e.stopPropagation();
@@ -6385,26 +6384,23 @@ const InnovativeDemo = () => {
             }
           }}
         >
-          {/* Row 1: Company name + service badge */}
-          <div className="flex items-start justify-between gap-1.5 mb-1">
-            <h4 className="text-[13px] font-semibold text-[#1c2c4a] truncate leading-tight flex-1 min-w-0">{prospecto.empresa}</h4>
-            <span
-              className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full flex-shrink-0 whitespace-nowrap"
-              style={{ backgroundColor: `${svc.border}18`, color: svc.text }}
-            >
-              {svc.label}
-            </span>
+          {/* Row 1: Company + value + badge */}
+          <div className="flex items-center justify-between gap-1 mb-0.5">
+            <h4 className="text-[12px] font-semibold text-[#1c2c4a] truncate leading-tight flex-1 min-w-0">{prospecto.empresa}</h4>
+            <div className="flex items-center gap-1 flex-shrink-0">
+              {valor > 0 && <span className="text-[10px] font-bold text-[#0D47A1]">${(valor / 1000000).toFixed(1)}M</span>}
+              <span
+                className="text-[8px] font-bold px-1 py-px rounded-full whitespace-nowrap"
+                style={{ backgroundColor: `${svc.border}18`, color: svc.text }}
+              >
+                {svc.label}
+              </span>
+            </div>
           </div>
-          {prospecto.planta && <p className="text-[11px] text-[#9ca3af] truncate -mt-0.5 mb-1">{prospecto.planta}</p>}
-          {/* Row 2: Industry + Value */}
-          <div className="flex items-center justify-between mb-1.5">
-            <span className="text-[10px] text-[#9ca3af]">{prospecto.industria}</span>
-            {valor > 0 && <span className="text-xs font-bold text-[#0D47A1]">${(valor / 1000000).toFixed(2)}M</span>}
-          </div>
-          {/* Row 3: Ejecutivo + City */}
-          <div className="flex items-center justify-between text-[11px] text-[#9ca3af]">
-            <span>{ejecutivo?.name?.split(' ')[0] || prospecto.ejecutivo}</span>
-            {prospecto.ciudad && <span className="flex items-center gap-0.5"><MapPin size={9} />{prospecto.ciudad.split(',')[0]}</span>}
+          {/* Row 2: Ejecutivo code + city */}
+          <div className="flex items-center justify-between text-[10px] text-[#9ca3af]">
+            <span className="font-medium">{prospecto.ejecutivo}</span>
+            {prospecto.ciudad && <span className="truncate max-w-[80px]">{prospecto.ciudad.split(',')[0]}</span>}
           </div>
           {/* Progress micro-bar */}
           {(() => {
@@ -6414,8 +6410,8 @@ const InnovativeDemo = () => {
             const pct = (completos / total) * 100;
             const barColor = completos === total ? '#2E7D32' : pct >= 60 ? '#F57C00' : '#ef4444';
             return (
-              <div className="mt-1.5">
-                <div className="w-full h-[3px] bg-black/[0.04] rounded-full overflow-hidden">
+              <div className="mt-1">
+                <div className="w-full h-[2px] bg-black/[0.04] rounded-full overflow-hidden">
                   <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: barColor }}></div>
                 </div>
               </div>
@@ -6653,7 +6649,7 @@ const InnovativeDemo = () => {
           ].map(view => (
             <button
               key={view.id}
-              onClick={() => setPipelineViewMode(view.id)}
+              onClick={() => { setPipelineViewMode(view.id); if (view.id === 'kanban') setFilterEtapa('todos'); }}
               className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
                 pipelineViewMode === view.id
                   ? 'bg-[#00a8a8] text-white shadow-sm'
@@ -6694,9 +6690,78 @@ const InnovativeDemo = () => {
         </div>
       </div>
 
+      {/* Shared Filter Bar — visible in kanban and tabla */}
+      {(() => {
+        const activeFilters = [filterServicio, filterEjecutivo].filter(f => f !== 'todos').length
+          + (pipelineViewMode === 'tabla' && filterEtapa !== 'todos' ? 1 : 0);
+        const totalFiltered = kanbanProspectos
+          .filter(p => p.status !== 'Propuesta Rechazada')
+          .filter(p => filterServicio === 'todos' || (p.servicios || [])[0] === filterServicio)
+          .filter(p => filterEjecutivo === 'todos' || p.ejecutivo === filterEjecutivo)
+          .filter(p => pipelineViewMode !== 'tabla' || filterEtapa === 'todos' || p.status === filterEtapa)
+          .length;
+
+        return (
+          <div className="flex items-center gap-3 flex-wrap mt-4">
+            <div className="flex items-center gap-1.5 text-xs font-medium text-[#6b7280]">
+              <Filter size={14} />
+              Filtros
+            </div>
+            <select
+              value={filterServicio}
+              onChange={e => setFilterServicio(e.target.value)}
+              className="text-xs border border-[#e5e7eb] rounded-lg px-3 py-1.5 bg-white text-[#1c2c4a] focus:outline-none focus:ring-2 focus:ring-[#00a8a8]/30 focus:border-[#00a8a8]"
+            >
+              <option value="todos">Todos los servicios</option>
+              {SERVICIOS_INNOVATIVE.map(s => {
+                const count = kanbanProspectos.filter(p => (p.servicios || [])[0] === s.id).length;
+                if (count === 0) return null;
+                return <option key={s.id} value={s.id}>{s.nombre} ({count})</option>;
+              })}
+            </select>
+            <select
+              value={filterEjecutivo}
+              onChange={e => setFilterEjecutivo(e.target.value)}
+              className="text-xs border border-[#e5e7eb] rounded-lg px-3 py-1.5 bg-white text-[#1c2c4a] focus:outline-none focus:ring-2 focus:ring-[#00a8a8]/30 focus:border-[#00a8a8]"
+            >
+              <option value="todos">Todos los ejecutivos</option>
+              {salesTeamData.map(m => {
+                const count = kanbanProspectos.filter(p => p.ejecutivo === m.codigo).length;
+                if (count === 0) return null;
+                return <option key={m.codigo} value={m.codigo}>{m.name.split(' ').slice(0, 2).join(' ')} ({count})</option>;
+              })}
+            </select>
+            {pipelineViewMode === 'tabla' && (
+              <select
+                value={filterEtapa}
+                onChange={e => setFilterEtapa(e.target.value)}
+                className="text-xs border border-[#e5e7eb] rounded-lg px-3 py-1.5 bg-white text-[#1c2c4a] focus:outline-none focus:ring-2 focus:ring-[#00a8a8]/30 focus:border-[#00a8a8]"
+              >
+                <option value="todos">Todas las etapas</option>
+                {KANBAN_STAGES.map(s => {
+                  const count = kanbanProspectos.filter(p => p.status === s.id).length;
+                  if (count === 0) return null;
+                  return <option key={s.id} value={s.id}>{s.label} ({count})</option>;
+                })}
+              </select>
+            )}
+            {activeFilters > 0 && (
+              <button
+                onClick={() => { setFilterServicio('todos'); setFilterEjecutivo('todos'); setFilterEtapa('todos'); }}
+                className="text-xs text-[#00a8a8] hover:text-[#008080] font-medium flex items-center gap-1"
+              >
+                <X size={12} />
+                Limpiar ({activeFilters})
+              </button>
+            )}
+            <span className="text-[11px] text-[#9ca3af] ml-auto">{totalFiltered} prospectos</span>
+          </div>
+        );
+      })()}
+
       {/* KANBAN VIEW */}
       {pipelineViewMode === 'kanban' && (
-        <div className="mt-6">
+        <div className="mt-4">
           {/* Area labels row */}
           <div className="grid grid-cols-6 gap-3 mb-1">
             <div className="col-span-2 flex items-center gap-1.5">
@@ -6723,7 +6788,10 @@ const InnovativeDemo = () => {
           >
             <div className="grid grid-cols-6 gap-3">
               {KANBAN_STAGES.map(stage => {
-                const stageItems = kanbanProspectos.filter(p => p.status === stage.id);
+                const stageItems = kanbanProspectos
+                  .filter(p => p.status === stage.id)
+                  .filter(p => filterServicio === 'todos' || (p.servicios || [])[0] === filterServicio)
+                  .filter(p => filterEjecutivo === 'todos' || p.ejecutivo === filterEjecutivo);
                 const stageValue = stageItems.reduce((s, p) => s + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0);
                 const gate = STAGE_GATES[stage.id];
 
@@ -6752,19 +6820,19 @@ const InnovativeDemo = () => {
 
                     {/* Droppable Area */}
                     <DroppableColumn stageId={stage.id}>
-                      <SortableContext items={stageItems.slice(0, 10).map(p => p.id)} strategy={verticalListSortingStrategy}>
+                      <SortableContext items={stageItems.slice(0, 20).map(p => p.id)} strategy={verticalListSortingStrategy}>
                         <div className="space-y-0">
-                          {stageItems.slice(0, 10).map(prospecto => (
+                          {stageItems.slice(0, 20).map(prospecto => (
                             <DraggableCard key={prospecto.id} prospecto={prospecto} />
                           ))}
                         </div>
                       </SortableContext>
-                      {stageItems.length > 10 && (
+                      {stageItems.length > 20 && (
                         <button
                           onClick={() => { setPipelineViewMode('tabla'); }}
                           className="w-full mt-2 py-2 text-xs font-medium text-[#00a8a8] hover:text-[#008080] bg-[#00a8a8]/5 hover:bg-[#00a8a8]/10 rounded-lg transition-colors flex items-center justify-center gap-1"
                         >
-                          Ver {stageItems.length - 10} más <ChevronDown size={12} />
+                          Ver {stageItems.length - 20} más <ChevronDown size={12} />
                         </button>
                       )}
                       {stageItems.length === 0 && (
@@ -6781,35 +6849,42 @@ const InnovativeDemo = () => {
             {/* Drag Overlay */}
             <DragOverlay>
               {activeCard && (
-                <div className="bg-white rounded-lg border-2 border-[#00a8a8] p-3 shadow-xl w-[200px] rotate-2">
-                  <h4 className="text-sm font-semibold text-[#1c2c4a] truncate">{activeCard.empresa}</h4>
-                  <p className="text-xs text-[#6b7280]">{activeCard.industria}</p>
-                  <div className="text-sm font-bold text-[#0D47A1] mt-1">
-                    ${((activeCard.propuesta?.ventaTotal || activeCard.facturacionEstimada || 0) / 1000000).toFixed(2)}M
+                <div className="bg-white rounded-lg border-2 border-[#00a8a8] p-2 shadow-xl w-[180px] rotate-2">
+                  <h4 className="text-xs font-semibold text-[#1c2c4a] truncate">{activeCard.empresa}</h4>
+                  <div className="flex items-center justify-between text-[10px] text-[#6b7280] mt-0.5">
+                    <span>{activeCard.ejecutivo}</span>
+                    <span className="font-bold text-[#0D47A1]">${((activeCard.propuesta?.ventaTotal || activeCard.facturacionEstimada || 0) / 1000000).toFixed(1)}M</span>
                   </div>
                 </div>
               )}
             </DragOverlay>
           </DndContext>
 
-          {/* Rejected pipeline (separate section) */}
-          {kanbanProspectos.filter(p => p.status === 'Propuesta Rechazada').length > 0 && (
-            <div className="mt-6 bg-red-50/50 rounded-lg border border-red-200 p-4">
-              <h4 className="text-sm font-semibold text-red-700 mb-3 flex items-center gap-2">
-                <AlertCircle size={14} />
-                Propuestas Rechazadas ({kanbanProspectos.filter(p => p.status === 'Propuesta Rechazada').length})
-              </h4>
-              <div className="flex flex-wrap gap-2">
-                {kanbanProspectos.filter(p => p.status === 'Propuesta Rechazada').map(p => (
-                  <div key={p.id} className="bg-white rounded-md border border-red-200 px-3 py-2 text-xs cursor-pointer hover:shadow-sm"
-                    onClick={() => { setSelectedProspecto(p); setMostrarDetallesProspecto(true); }}>
-                    <span className="font-medium text-[#1c2c4a]">{p.empresa}</span>
-                    <span className="text-red-500 ml-2">{p.motivoRechazo || 'Sin motivo'}</span>
-                  </div>
-                ))}
+          {/* Rejected pipeline (separate section, respects filters) */}
+          {(() => {
+            const filteredRejected = kanbanProspectos
+              .filter(p => p.status === 'Propuesta Rechazada')
+              .filter(p => filterServicio === 'todos' || (p.servicios || [])[0] === filterServicio)
+              .filter(p => filterEjecutivo === 'todos' || p.ejecutivo === filterEjecutivo);
+            if (filteredRejected.length === 0) return null;
+            return (
+              <div className="mt-6 bg-red-50/50 rounded-lg border border-red-200 p-4">
+                <h4 className="text-sm font-semibold text-red-700 mb-3 flex items-center gap-2">
+                  <AlertCircle size={14} />
+                  Propuestas Rechazadas ({filteredRejected.length})
+                </h4>
+                <div className="flex flex-wrap gap-2">
+                  {filteredRejected.map(p => (
+                    <div key={p.id} className="bg-white rounded-md border border-red-200 px-3 py-2 text-xs cursor-pointer hover:shadow-sm"
+                      onClick={() => { setSelectedProspecto(p); setMostrarDetallesProspecto(true); }}>
+                      <span className="font-medium text-[#1c2c4a]">{p.empresa}</span>
+                      <span className="text-red-500 ml-2">{p.motivoRechazo || 'Sin motivo'}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
         </div>
       )}
 
@@ -6825,69 +6900,10 @@ const InnovativeDemo = () => {
             const stageOrder = KANBAN_STAGES.map(s => s.id);
             return stageOrder.indexOf(b.status) - stageOrder.indexOf(a.status);
           });
-        const activeFilters = [filterServicio, filterEjecutivo, filterEtapa].filter(f => f !== 'todos').length;
 
         return (
-        <div className="mt-6 space-y-3">
-          {/* Filter bar */}
-          <div className="flex items-center gap-3 flex-wrap">
-            <div className="flex items-center gap-1.5 text-xs font-medium text-[#6b7280]">
-              <Filter size={14} />
-              Filtros
-            </div>
-            {/* Servicio filter */}
-            <select
-              value={filterServicio}
-              onChange={e => setFilterServicio(e.target.value)}
-              className="text-xs border border-[#e5e7eb] rounded-lg px-3 py-1.5 bg-white text-[#1c2c4a] focus:outline-none focus:ring-2 focus:ring-[#00a8a8]/30 focus:border-[#00a8a8]"
-            >
-              <option value="todos">Todos los servicios</option>
-              {SERVICIOS_INNOVATIVE.map(s => {
-                const count = kanbanProspectos.filter(p => (p.servicios || [])[0] === s.id).length;
-                if (count === 0) return null;
-                return <option key={s.id} value={s.id}>{s.nombre} ({count})</option>;
-              })}
-            </select>
-            {/* Ejecutivo filter */}
-            <select
-              value={filterEjecutivo}
-              onChange={e => setFilterEjecutivo(e.target.value)}
-              className="text-xs border border-[#e5e7eb] rounded-lg px-3 py-1.5 bg-white text-[#1c2c4a] focus:outline-none focus:ring-2 focus:ring-[#00a8a8]/30 focus:border-[#00a8a8]"
-            >
-              <option value="todos">Todos los ejecutivos</option>
-              {salesTeamData.map(m => {
-                const count = kanbanProspectos.filter(p => p.ejecutivo === m.codigo).length;
-                if (count === 0) return null;
-                return <option key={m.codigo} value={m.codigo}>{m.name.split(' ').slice(0, 2).join(' ')} ({count})</option>;
-              })}
-            </select>
-            {/* Etapa filter */}
-            <select
-              value={filterEtapa}
-              onChange={e => setFilterEtapa(e.target.value)}
-              className="text-xs border border-[#e5e7eb] rounded-lg px-3 py-1.5 bg-white text-[#1c2c4a] focus:outline-none focus:ring-2 focus:ring-[#00a8a8]/30 focus:border-[#00a8a8]"
-            >
-              <option value="todos">Todas las etapas</option>
-              {KANBAN_STAGES.map(s => {
-                const count = kanbanProspectos.filter(p => p.status === s.id).length;
-                if (count === 0) return null;
-                return <option key={s.id} value={s.id}>{s.label} ({count})</option>;
-              })}
-            </select>
-            {/* Clear filters */}
-            {activeFilters > 0 && (
-              <button
-                onClick={() => { setFilterServicio('todos'); setFilterEjecutivo('todos'); setFilterEtapa('todos'); }}
-                className="text-xs text-[#00a8a8] hover:text-[#008080] font-medium flex items-center gap-1"
-              >
-                <X size={12} />
-                Limpiar ({activeFilters})
-              </button>
-            )}
-            <span className="text-[11px] text-[#9ca3af] ml-auto">{filteredProspectos.length} resultados</span>
-          </div>
-
-          {/* Table */}
+        <div className="mt-4 space-y-3">
+          {/* Table — filters are now shared above */}
           <div className="bg-white rounded-xl border border-[#e5e7eb] shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
