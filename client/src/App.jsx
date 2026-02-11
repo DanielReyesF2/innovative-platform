@@ -5555,7 +5555,7 @@ const InnovativeDemo = () => {
                   return (
                     <tr key={member.id}
                       className="border-b border-[#f3f4f6] hover:bg-[#f9fafb] cursor-pointer transition-colors"
-                      onClick={() => { setHubEjecutivo(member); setHubTab('pipeline'); setCurrentView('hub-ejecutivo'); }}>
+                      onClick={() => { setHubEjecutivo(member);setCurrentView('hub-ejecutivo'); }}>
                       <td className="py-2.5">
                         <div className="flex items-center gap-2">
                           <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#00a8a8] to-[#0D47A1] flex items-center justify-center text-white text-[10px] font-bold shadow-sm">{member.codigo}</div>
@@ -6574,7 +6574,7 @@ const InnovativeDemo = () => {
           const barColor = pct >= 80 ? '#2E7D32' : pct >= 40 ? '#F57C00' : '#ef4444';
           const memberProspectos = kanbanProspectos.filter(p => p.ejecutivo === member.codigo);
           return (
-            <div key={member.codigo} onClick={() => { setHubEjecutivo(member); setHubTab('pipeline'); setCurrentView('hub-ejecutivo'); }}
+            <div key={member.codigo} onClick={() => { setHubEjecutivo(member);setCurrentView('hub-ejecutivo'); }}
               className="bg-white rounded-xl border border-[#e5e7eb] p-4 cursor-pointer hover:shadow-lg hover:border-[#00a8a8]/40 transition-all group relative overflow-hidden">
               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#00a8a8] to-[#0D47A1] opacity-60 group-hover:opacity-100 transition-opacity" />
               <div className="flex items-center gap-3 mb-3">
@@ -6614,7 +6614,7 @@ const InnovativeDemo = () => {
             const porEtapa = KANBAN_STAGES.map(s => memberProspectos.filter(p => p.status === s.id).length);
             if (memberProspectos.length === 0) return null;
             return (
-              <div key={member.codigo} onClick={() => { setHubEjecutivo(member); setHubTab('pipeline'); setCurrentView('hub-ejecutivo'); }} className="flex items-center gap-3 cursor-pointer hover:bg-[#f3f4f6] rounded-lg p-2 -mx-2 transition-colors">
+              <div key={member.codigo} onClick={() => { setHubEjecutivo(member);setCurrentView('hub-ejecutivo'); }} className="flex items-center gap-3 cursor-pointer hover:bg-[#f3f4f6] rounded-lg p-2 -mx-2 transition-colors">
                 <div className="w-9 h-9 rounded-full bg-[#00a8a8] flex items-center justify-center text-white text-xs font-bold flex-shrink-0">{member.codigo}</div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-1">
