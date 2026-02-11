@@ -4288,6 +4288,63 @@ const MOTIVOS_RECHAZO = [
   { id: 8, motivo: 'Otro (especificar)', categoria: 'Otro' }
 ];
 
+// CLASIFICACIÓN DE RECHAZOS — categorías con acciones sugeridas
+const RECHAZO_CATEGORIES = {
+  pricing: {
+    id: 'pricing', label: 'Precios', color: '#F59E0B', bgColor: '#FFFBEB', borderColor: '#F59E0B',
+    recoverable: true, defaultFollowUpDays: 180,
+    suggestedActions: [
+      'Investigar fecha de vencimiento de contrato actual',
+      'Preparar contrapropuesta con precios revisados',
+      'Solicitar desglose de precios del competidor',
+      'Agendar re-contacto al cierre de su ejercicio fiscal',
+    ],
+    followUpQuestion: 'Cuando vence el contrato actual del cliente?',
+  },
+  proposal: {
+    id: 'proposal', label: 'Propuesta', color: '#3B82F6', bgColor: '#EFF6FF', borderColor: '#3B82F6',
+    recoverable: true, defaultFollowUpDays: 90,
+    suggestedActions: [
+      'Solicitar retroalimentacion detallada sobre propuesta',
+      'Rediseñar propuesta con enfoque diferente',
+      'Identificar que ofrecia el competidor ganador',
+      'Re-contactar con nueva propuesta de valor',
+    ],
+    followUpQuestion: 'Que mejorarias de la propuesta para re-intentar?',
+  },
+  operational: {
+    id: 'operational', label: 'Operativo', color: '#6b7280', bgColor: '#f3f4f6', borderColor: '#6b7280',
+    recoverable: false, defaultFollowUpDays: 365,
+    suggestedActions: [
+      'Verificar si ya se tiene proveeduria en la zona',
+      'Evaluar viabilidad con nuevas rutas o alianzas',
+      'Monitorear expansion de cobertura propia',
+    ],
+    followUpQuestion: 'Ya se tiene cobertura o proveeduria en esa zona?',
+  },
+};
+
+const classifyRechazo = (motivoRechazo) => {
+  if (!motivoRechazo) return RECHAZO_CATEGORIES.operational;
+  const lower = motivoRechazo.toLowerCase();
+  if (lower.includes('precio') || lower.includes('competitivo') || lower.includes('costo') || lower.includes('elevado')) return RECHAZO_CATEGORIES.pricing;
+  if (lower.includes('propuesta') || lower.includes('expectativa') || lower.includes('demora') || lower.includes('eligieron') || lower.includes('suficientemente')) return RECHAZO_CATEGORIES.proposal;
+  if (lower.includes('proveedur') || lower.includes('zona') || lower.includes('viable') || lower.includes('declinamos')) return RECHAZO_CATEGORIES.operational;
+  return RECHAZO_CATEGORIES.operational;
+};
+
+const getSeguimientoUrgency = (seg) => {
+  if (!seg?.fechaSeguimiento) return null;
+  const today = new Date();
+  const target = new Date(seg.fechaSeguimiento);
+  const diffDays = Math.floor((target - today) / (1000 * 60 * 60 * 24));
+  if (diffDays < 0) return { label: `Vencido ${Math.abs(diffDays)}d`, color: '#EF4444', bg: '#FEF2F2', overdue: true, days: Math.abs(diffDays) };
+  if (diffDays === 0) return { label: 'Hoy', color: '#EF4444', bg: '#FEF2F2', overdue: false, days: 0 };
+  if (diffDays <= 7) return { label: `${diffDays}d`, color: '#F59E0B', bg: '#FFFBEB', overdue: false, days: diffDays };
+  if (diffDays <= 30) return { label: `${Math.floor(diffDays / 7)}sem`, color: '#22C55E', bg: '#F0FDF4', overdue: false, days: diffDays };
+  return { label: `${Math.floor(diffDays / 30)}m`, color: '#6b7280', bg: '#f3f4f6', overdue: false, days: diffDays };
+};
+
 // FUNCIONES DE CÁLCULO DE DÍAS
 const calcularDiasSinRespuesta = (fechaEnvio) => {
   if (!fechaEnvio) return 0;
@@ -4367,6 +4424,7 @@ const InnovativeDemo = () => {
   const [prospectoNotas, setProspectoNotas] = useState({}); // { prospectoId: [{text, date, id}] }
   const [prospectoNuevaNota, setProspectoNuevaNota] = useState('');
   const [prospectoArchivos, setProspectoArchivos] = useState({}); // { prospectoId: [{name, type, size, date, id}] }
+  const [prospectoSeguimiento, setProspectoSeguimiento] = useState({}); // { prospectoId: { fechaSeguimiento, accion, notas, fechaCreacion } }
 
   // Pipeline view states
   const [pipelineViewMode, setPipelineViewMode] = useState('kanban'); // 'kanban' | 'funnel' | 'tabla'
@@ -4541,8 +4599,27 @@ const InnovativeDemo = () => {
       });
     });
 
+    // Seguimiento de rechazadas con fecha próxima o vencida
+    topProspectos.filter(p => p.status === 'Propuesta Rechazada').forEach(p => {
+      const seg = prospectoSeguimiento[p.id];
+      if (!seg?.fechaSeguimiento) return;
+      const urgency = getSeguimientoUrgency(seg);
+      if (!urgency) return;
+      if (urgency.overdue || urgency.days <= 7) {
+        nuevasAlertas.push({
+          tipo: 'seguimiento_rechazada',
+          mensaje: urgency.overdue
+            ? `Seguimiento vencido: ${p.empresa} — ${seg.accion || 'Dar seguimiento'} (hace ${urgency.days}d)`
+            : `Seguimiento proximo: ${p.empresa} — ${seg.accion || 'Dar seguimiento'} (en ${urgency.days}d)`,
+          prioridad: urgency.overdue ? 'alta' : 'media',
+          prospecto: p,
+          accion: seg.accion || 'Dar seguimiento',
+        });
+      }
+    });
+
     setAlertas(nuevasAlertas);
-  }, [leadsConAsignacion, documentos]);
+  }, [leadsConAsignacion, documentos, prospectoSeguimiento]);
 
   // Componente Panel de Notificaciones
   const NotificationsPanel = ({ alertas, onClose, onAction }) => (
@@ -5681,6 +5758,17 @@ const InnovativeDemo = () => {
       }));
     };
 
+    const guardarSeguimiento = (prospectoId, data) => {
+      setProspectoSeguimiento(prev => ({
+        ...prev,
+        [prospectoId]: {
+          ...prev[prospectoId],
+          ...data,
+          fechaCreacion: prev[prospectoId]?.fechaCreacion || new Date().toISOString().split('T')[0],
+        }
+      }));
+    };
+
     const getFileIcon = (type) => {
       if (type?.includes('pdf')) return <FileText size={16} className="text-red-500" />;
       if (type?.includes('image')) return <Image size={16} className="text-blue-500" />;
@@ -5786,6 +5874,77 @@ const InnovativeDemo = () => {
               <h2 className="text-lg font-bold text-[#1c2c4a]">{p.empresa}{p.planta ? ` — ${p.planta}` : ''}</h2>
               {p.ciudad && <p className="text-sm text-[#6b7280] flex items-center gap-1 mt-0.5"><MapPin size={12} /> {p.ciudad}{p.industria ? ` · ${p.industria}` : ''}</p>}
             </div>
+
+            {/* REJECTION BANNER + FOLLOW-UP FORM */}
+            {p.status === 'Propuesta Rechazada' && (() => {
+              const cat = classifyRechazo(p.motivoRechazo);
+              const seg = prospectoSeguimiento[p.id];
+              const urgency = getSeguimientoUrgency(seg);
+              return (
+                <div className="mx-5 mt-4 rounded-xl border-2 overflow-hidden" style={{ borderColor: cat?.color || '#EF4444' }}>
+                  {/* Category Header */}
+                  <div className="px-4 py-3 flex items-center justify-between" style={{ backgroundColor: cat?.bgColor || '#FEF2F2' }}>
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: `${cat?.color}20` }}>
+                        <XCircle size={16} style={{ color: cat?.color }} />
+                      </div>
+                      <div>
+                        <div className="text-xs font-bold" style={{ color: cat?.color }}>{cat?.label || 'Rechazada'}</div>
+                        <div className="text-[11px] text-[#6b7280] line-clamp-1">{p.motivoRechazo}</div>
+                      </div>
+                    </div>
+                    {cat?.recoverable && (
+                      <span className="text-[10px] font-bold text-green-700 bg-green-100 px-2 py-1 rounded-full flex-shrink-0">Recuperable</span>
+                    )}
+                  </div>
+
+                  {/* Follow-up Form */}
+                  <div className="px-4 py-3 bg-white space-y-3">
+                    <div>
+                      <label className="block text-[11px] font-semibold text-[#1c2c4a] mb-1">{cat?.followUpQuestion || 'Fecha de seguimiento'}</label>
+                      <input type="date" value={seg?.fechaSeguimiento || ''}
+                        onChange={(e) => guardarSeguimiento(p.id, { fechaSeguimiento: e.target.value })}
+                        className="w-full px-3 py-2 border border-[#e5e7eb] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#00a8a8]/30 focus:border-[#00a8a8]"
+                        min={new Date().toISOString().split('T')[0]}
+                      />
+                      {urgency && (
+                        <div className="mt-1 text-[10px] font-semibold" style={{ color: urgency.color }}>
+                          {urgency.overdue ? `Vencido hace ${urgency.days} dias` : `Faltan ${urgency.days} dias`}
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold text-[#1c2c4a] mb-1">Accion de seguimiento</label>
+                      <input type="text" value={seg?.accion || ''}
+                        onChange={(e) => guardarSeguimiento(p.id, { accion: e.target.value })}
+                        placeholder="Ej: Revisar precios al vencer contrato"
+                        className="w-full px-3 py-2 border border-[#e5e7eb] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#00a8a8]/30 focus:border-[#00a8a8]"
+                      />
+                    </div>
+                    {cat?.suggestedActions && (
+                      <div>
+                        <div className="text-[11px] font-semibold text-[#1c2c4a] mb-1.5">Acciones sugeridas</div>
+                        <div className="space-y-1">
+                          {cat.suggestedActions.map((accion, idx) => (
+                            <button key={idx}
+                              onClick={() => guardarSeguimiento(p.id, { accion })}
+                              className="w-full text-left px-2.5 py-1.5 rounded-lg text-[11px] border border-[#e5e7eb] hover:border-[#00a8a8] hover:bg-[#00a8a8]/5 transition-all flex items-center gap-2"
+                            >
+                              <ChevronRight size={10} className="text-[#00a8a8] flex-shrink-0" />
+                              <span className="text-[#1c2c4a]">{accion}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    <button onClick={() => changeProspectoStage(p.id, 'Lead nuevo')}
+                      className="w-full mt-1 px-4 py-2.5 rounded-lg bg-[#00a8a8] text-white text-sm font-semibold hover:bg-[#008080] transition-colors flex items-center justify-center gap-2">
+                      <RotateCcw size={14} /> Reactivar en Pipeline
+                    </button>
+                  </div>
+                </div>
+              );
+            })()}
 
             <div className="p-5 space-y-5">
               {/* Value + date row */}
@@ -5953,12 +6112,18 @@ const InnovativeDemo = () => {
                         <span className="font-medium text-[#00a8a8]">{p.siguientePaso}</span>
                       </div>
                     )}
-                    {p.motivoRechazo && (
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-[#6b7280]">Motivo rechazo</span>
-                        <span className="font-medium text-red-600">{p.motivoRechazo}</span>
-                      </div>
-                    )}
+                    {p.motivoRechazo && (() => {
+                      const cat = classifyRechazo(p.motivoRechazo);
+                      return (
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-[#6b7280]">Motivo rechazo</span>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full" style={{ backgroundColor: `${cat?.color}15`, color: cat?.color }}>{cat?.label}</span>
+                            <span className="font-medium text-sm truncate max-w-[200px]" style={{ color: cat?.color }}>{p.motivoRechazo}</span>
+                          </div>
+                        </div>
+                      );
+                    })()}
                     {p.fecha && (
                       <div className="flex items-center justify-between text-sm">
                         <span className="text-[#6b7280]">Fecha</span>
@@ -6119,7 +6284,7 @@ const InnovativeDemo = () => {
       </div>
 
       {/* KPI ROW — funnel de conversión */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-5">
+      <div className="grid grid-cols-3 md:grid-cols-6 gap-3 mb-5">
         <div className="bg-white rounded-xl border border-[#e5e7eb] p-3 text-center">
           <div className="text-2xl font-bold text-[#6b7280]">{memberLeads.length}</div>
           <div className="text-xs text-[#6b7280] mt-0.5">Leads</div>
@@ -6136,6 +6301,20 @@ const InnovativeDemo = () => {
           <div className="text-2xl font-bold text-[#2E7D32]">{memberGanados.length}</div>
           <div className="text-xs text-[#6b7280] mt-0.5">Cierres</div>
         </div>
+        {memberRechazados.length > 0 && (() => {
+          const vencidos = memberRechazados.filter(p => getSeguimientoUrgency(prospectoSeguimiento[p.id])?.overdue).length;
+          const conSeg = memberRechazados.filter(p => prospectoSeguimiento[p.id]?.fechaSeguimiento).length;
+          return (
+            <div className={`bg-white rounded-xl border p-3 text-center ${vencidos > 0 ? 'border-red-300' : 'border-[#e5e7eb]'}`}>
+              <div className="flex items-center justify-center gap-1">
+                <div className="text-2xl font-bold" style={{ color: vencidos > 0 ? '#EF4444' : '#F59E0B' }}>{memberRechazados.length}</div>
+                {vencidos > 0 && <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />}
+              </div>
+              <div className="text-xs text-[#6b7280] mt-0.5">Rechazadas</div>
+              <div className="text-[9px] text-[#9ca3af] mt-0.5">{conSeg} con seguimiento</div>
+            </div>
+          );
+        })()}
         {member.presupuestoAnual2026 > 0 && (
           <div className="bg-white rounded-xl border border-[#e5e7eb] p-3 text-center">
             <div className="text-2xl font-bold" style={{ color: member.cumplimientoPresupuesto >= 70 ? '#2E7D32' : member.cumplimientoPresupuesto >= 40 ? '#F57C00' : '#DC2626' }}>
@@ -6299,21 +6478,57 @@ const InnovativeDemo = () => {
             </DragOverlay>
           </DndContext>
 
-          {/* Rejected section */}
+          {/* Rejected section — Call to Action */}
           {memberRechazados.length > 0 && (
-            <div className="bg-red-50/50 rounded-lg border border-red-200 p-3">
-              <h4 className="text-xs font-semibold text-red-700 mb-2 flex items-center gap-1.5">
-                <AlertCircle size={12} />
-                Rechazadas ({memberRechazados.length})
-              </h4>
-              <div className="flex flex-wrap gap-1.5">
-                {memberRechazados.map(p => (
-                  <div key={p.id} className="bg-white rounded-md border border-red-200 px-2.5 py-1.5 text-[11px] cursor-pointer hover:shadow-sm"
-                    onClick={() => { setSelectedProspecto(p); setMostrarDetallesProspecto(true); }}>
-                    <span className="font-medium text-[#1c2c4a]">{p.empresa}</span>
-                    <span className="text-red-500 ml-1.5">{p.motivoRechazo || 'Sin motivo'}</span>
-                  </div>
-                ))}
+            <div className="bg-white rounded-lg border border-[#e5e7eb] p-3">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="text-xs font-semibold text-[#1c2c4a] flex items-center gap-1.5">
+                  <AlertCircle size={12} className="text-[#F59E0B]" />
+                  Oportunidades Rechazadas ({memberRechazados.length})
+                </h4>
+                {(() => {
+                  const conSeg = memberRechazados.filter(p => prospectoSeguimiento[p.id]?.fechaSeguimiento).length;
+                  const vencidos = memberRechazados.filter(p => getSeguimientoUrgency(prospectoSeguimiento[p.id])?.overdue).length;
+                  return (
+                    <div className="flex items-center gap-2 text-[10px]">
+                      {vencidos > 0 && <span className="px-1.5 py-0.5 bg-red-100 text-red-700 rounded-full font-bold animate-pulse">{vencidos} vencido{vencidos > 1 ? 's' : ''}</span>}
+                      <span className="text-[#6b7280]">{conSeg}/{memberRechazados.length} con seguimiento</span>
+                    </div>
+                  );
+                })()}
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {memberRechazados.map(p => {
+                  const cat = classifyRechazo(p.motivoRechazo);
+                  const seg = prospectoSeguimiento[p.id];
+                  const urgency = getSeguimientoUrgency(seg);
+                  return (
+                    <div key={p.id}
+                      className="rounded-lg p-2.5 cursor-pointer hover:shadow-md transition-all border"
+                      style={{ backgroundColor: cat?.bgColor || '#f3f4f6', borderColor: `${cat?.color}30` || '#e5e7eb', borderLeft: `3px solid ${cat?.color || '#6b7280'}` }}
+                      onClick={() => { setSelectedProspecto(p); setMostrarDetallesProspecto(true); }}
+                    >
+                      <div className="flex items-center justify-between gap-1 mb-0.5">
+                        <h4 className="text-[11px] font-semibold text-[#1c2c4a] truncate flex-1">{p.empresa}</h4>
+                        <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap" style={{ backgroundColor: `${cat?.color}18`, color: cat?.color }}>{cat?.label}</span>
+                      </div>
+                      <div className="text-[10px] text-[#6b7280] truncate mb-1.5">{p.motivoRechazo || 'Sin motivo'}</div>
+                      <div className="flex items-center justify-between">
+                        {seg?.fechaSeguimiento ? (
+                          <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full flex items-center gap-1" style={{ backgroundColor: urgency?.bg, color: urgency?.color }}>
+                            <Calendar size={8} />
+                            {urgency?.overdue ? `Vencido ${urgency.days}d` : urgency?.label}
+                          </span>
+                        ) : (
+                          <span className="text-[9px] text-[#F59E0B] font-medium flex items-center gap-1 opacity-70">
+                            <Bell size={8} /> Sin seguimiento
+                          </span>
+                        )}
+                        {cat?.recoverable && <span className="text-[8px] text-green-600 font-medium bg-green-50 px-1 py-0.5 rounded">Recuperable</span>}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -6891,27 +7106,56 @@ const InnovativeDemo = () => {
             </DragOverlay>
           </DndContext>
 
-          {/* Rejected pipeline (separate section, respects filters) */}
+          {/* Rejected pipeline — Call to Action (respects filters) */}
           {(() => {
             const filteredRejected = kanbanProspectos
               .filter(p => p.status === 'Propuesta Rechazada')
               .filter(p => filterServicio === 'todos' || (p.servicios || [])[0] === filterServicio)
               .filter(p => filterEjecutivo === 'todos' || p.ejecutivo === filterEjecutivo);
             if (filteredRejected.length === 0) return null;
+            const byCat = { pricing: 0, proposal: 0, operational: 0 };
+            filteredRejected.forEach(p => { const cat = classifyRechazo(p.motivoRechazo); if (cat && byCat[cat.id] !== undefined) byCat[cat.id]++; });
             return (
-              <div className="mt-6 bg-red-50/50 rounded-lg border border-red-200 p-4">
-                <h4 className="text-sm font-semibold text-red-700 mb-3 flex items-center gap-2">
-                  <AlertCircle size={14} />
-                  Propuestas Rechazadas ({filteredRejected.length})
-                </h4>
-                <div className="flex flex-wrap gap-2">
-                  {filteredRejected.map(p => (
-                    <div key={p.id} className="bg-white rounded-md border border-red-200 px-3 py-2 text-xs cursor-pointer hover:shadow-sm"
-                      onClick={() => { setSelectedProspecto(p); setMostrarDetallesProspecto(true); }}>
-                      <span className="font-medium text-[#1c2c4a]">{p.empresa}</span>
-                      <span className="text-red-500 ml-2">{p.motivoRechazo || 'Sin motivo'}</span>
-                    </div>
-                  ))}
+              <div className="mt-6 bg-white rounded-lg border border-[#e5e7eb] p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-sm font-semibold text-[#1c2c4a] flex items-center gap-2">
+                    <AlertCircle size={14} className="text-[#F59E0B]" />
+                    Oportunidades Rechazadas ({filteredRejected.length})
+                  </h4>
+                  <div className="flex items-center gap-2 text-[10px]">
+                    {Object.entries(byCat).filter(([, v]) => v > 0).map(([catId, count]) => {
+                      const cat = RECHAZO_CATEGORIES[catId];
+                      return <span key={catId} className="px-1.5 py-0.5 rounded-full font-medium" style={{ backgroundColor: `${cat.color}15`, color: cat.color }}>{count} {cat.label}</span>;
+                    })}
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                  {filteredRejected.map(p => {
+                    const cat = classifyRechazo(p.motivoRechazo);
+                    const seg = prospectoSeguimiento[p.id];
+                    const urgency = getSeguimientoUrgency(seg);
+                    return (
+                      <div key={p.id} className="rounded-lg p-2.5 cursor-pointer hover:shadow-md transition-all border"
+                        style={{ backgroundColor: cat?.bgColor || '#f3f4f6', borderColor: `${cat?.color}30`, borderLeft: `3px solid ${cat?.color || '#6b7280'}` }}
+                        onClick={() => { setSelectedProspecto(p); setMostrarDetallesProspecto(true); }}>
+                        <div className="flex items-center justify-between gap-1 mb-0.5">
+                          <h4 className="text-[11px] font-semibold text-[#1c2c4a] truncate flex-1">{p.empresa}</h4>
+                          <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap" style={{ backgroundColor: `${cat?.color}18`, color: cat?.color }}>{cat?.label}</span>
+                        </div>
+                        <div className="text-[10px] text-[#6b7280] truncate mb-1.5">{p.motivoRechazo || 'Sin motivo'}</div>
+                        <div className="flex items-center justify-between">
+                          {seg?.fechaSeguimiento ? (
+                            <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full flex items-center gap-1" style={{ backgroundColor: urgency?.bg, color: urgency?.color }}>
+                              <Calendar size={8} /> {urgency?.overdue ? `Vencido ${urgency.days}d` : urgency?.label}
+                            </span>
+                          ) : (
+                            <span className="text-[9px] text-[#F59E0B] font-medium flex items-center gap-1 opacity-70"><Bell size={8} /> Sin seguimiento</span>
+                          )}
+                          {cat?.recoverable && <span className="text-[8px] text-green-600 font-medium bg-green-50 px-1 py-0.5 rounded">Recuperable</span>}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             );
