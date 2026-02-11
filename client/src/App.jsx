@@ -5327,7 +5327,7 @@ const InnovativeDemo = () => {
       {/* ═══════ SECTION A: COMERCIAL ═══════ */}
       <SectionHeader color="#00a8a8" icon={TrendingUp} label="Comercial" linkLabel="Ver Pipeline" onLinkClick={() => setCurrentView('comercial')} />
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
         <div className="bg-white rounded-xl border border-[#e5e7eb] p-4">
           <div className="text-xs text-[#6b7280] mb-1">Oportunidades</div>
           <div className="text-xl font-bold text-[#1c2c4a]">{leadsActivos.length}</div>
@@ -5342,11 +5342,6 @@ const InnovativeDemo = () => {
           <div className="text-xs text-[#6b7280] mb-1">Propuestas Pendientes</div>
           <div className="text-xl font-bold text-[#1c2c4a]">{propuestasEnviadas.length}</div>
           <div className="text-[10px] text-[#00a8a8]">${(propuestasEnviadas.reduce((s, p) => s + (p.propuesta?.ventaTotal || 0), 0) / 1000000).toFixed(1)}M</div>
-        </div>
-        <div className="bg-white rounded-xl border border-[#e5e7eb] p-4">
-          <div className="text-xs text-[#6b7280] mb-1">Presupuesto</div>
-          <div className="text-xl font-bold text-[#1c2c4a]">{presupuestoTotal > 0 ? Math.round(ventasTotal / presupuestoTotal * 100) : 0}%</div>
-          <div className="text-[10px] text-[#6b7280]">${(ventasTotal / 1000000).toFixed(1)}M de ${(presupuestoTotal / 1000000).toFixed(0)}M</div>
         </div>
       </div>
 
@@ -5418,36 +5413,6 @@ const InnovativeDemo = () => {
               })}
             </div>
           </div>
-        </div>
-      </div>
-
-      {/* Presupuesto Mensual 2026 — Gráfica de Barras */}
-      <div className="mt-4 bg-white rounded-xl border border-[#e5e7eb] p-4">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-semibold text-[#1c2c4a]">Presupuesto Mensual 2026 vs Real</h3>
-          <div className="flex items-center gap-3 text-[10px] text-[#6b7280]">
-            <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded bg-[#e5e7eb] inline-block"></span> Presupuesto</span>
-            <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded bg-[#00a8a8] inline-block"></span> Real</span>
-          </div>
-        </div>
-        <ResponsiveContainer width="100%" height={200}>
-          <BarChart data={presupuestoEvolution} barGap={2}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" vertical={false} />
-            <XAxis dataKey="mes" tick={{ fontSize: 10, fill: '#6b7280' }} axisLine={false} tickLine={false} />
-            <YAxis tick={{ fontSize: 9, fill: '#6b7280' }} axisLine={false} tickLine={false} tickFormatter={(v) => `$${(v / 1000000).toFixed(0)}M`} />
-            <Tooltip
-              contentStyle={{ fontSize: 11, borderRadius: 8, border: '1px solid #e5e7eb' }}
-              formatter={(value) => [`$${(value / 1000000).toFixed(1)}M`, '']}
-              labelStyle={{ fontWeight: 600, color: '#1c2c4a' }}
-            />
-            <Bar dataKey="presupuesto" name="Presupuesto" fill="#e5e7eb" radius={[3, 3, 0, 0]} />
-            <Bar dataKey="real" name="Real" fill="#00a8a8" radius={[3, 3, 0, 0]} />
-          </BarChart>
-        </ResponsiveContainer>
-        <div className="mt-2 pt-2 border-t border-[#e5e7eb] flex items-center justify-between text-[10px] text-[#6b7280]">
-          <span>Total presupuesto: <span className="font-semibold text-[#1c2c4a]">$130.1M</span></span>
-          <span>Acumulado real: <span className="font-semibold text-[#00a8a8]">$0M</span></span>
-          <span>% Avance: <span className="font-semibold text-[#F57C00]">0%</span></span>
         </div>
       </div>
 
@@ -6571,6 +6536,29 @@ const InnovativeDemo = () => {
     const biodigestoresPropuesta = biodigestores.filter(p => ['Propuesta enviada', 'Negociación'].includes(p.status));
     const montoBiodigestores = biodigestores.reduce((s, p) => s + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0);
 
+    // Tracking de Materiales (Cartón y Playo)
+    const materialData = kanbanProspectos
+      .filter(p => p.propuesta?.carton || p.propuesta?.playo)
+      .map(p => ({
+        empresa: p.empresa,
+        ejecutivo: p.ejecutivo,
+        status: p.status,
+        carton: p.propuesta?.carton || 0,
+        playo: p.propuesta?.playo || 0,
+        total: (p.propuesta?.carton || 0) + (p.propuesta?.playo || 0),
+      }));
+    const totalCarton = materialData.reduce((s, m) => s + m.carton, 0);
+    const totalPlayo = materialData.reduce((s, m) => s + m.playo, 0);
+    const materialByStage = Object.entries(
+      materialData.reduce((acc, m) => {
+        const st = m.status || 'Sin etapa';
+        acc[st] = acc[st] || { carton: 0, playo: 0 };
+        acc[st].carton += m.carton;
+        acc[st].playo += m.playo;
+        return acc;
+      }, {})
+    ).map(([stage, vals]) => ({ stage: stage.length > 15 ? stage.slice(0, 14) + '…' : stage, ...vals }));
+
     // Droppable Column component
     const DroppableColumn = ({ stageId, children }) => {
       const { isOver, setNodeRef } = useDroppable({ id: stageId });
@@ -6779,6 +6767,172 @@ const InnovativeDemo = () => {
           </div>
         </div>
       </div>
+
+      {/* ═══════ PRESUPUESTO MENSUAL 2026 vs REAL ═══════ */}
+      <div className="mt-6 bg-white rounded-xl border border-[#e5e7eb] p-5">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-semibold text-[#1c2c4a] flex items-center gap-2">
+            <DollarSign size={16} className="text-[#00a8a8]" />
+            Presupuesto Mensual 2026 vs Real
+          </h3>
+          <div className="flex items-center gap-3 text-[10px] text-[#6b7280]">
+            <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded bg-[#e5e7eb] inline-block"></span> Presupuesto</span>
+            <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded bg-[#00a8a8] inline-block"></span> Real</span>
+          </div>
+        </div>
+        <ResponsiveContainer width="100%" height={220}>
+          <BarChart data={presupuestoEvolution} barGap={2}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" vertical={false} />
+            <XAxis dataKey="mes" tick={{ fontSize: 10, fill: '#6b7280' }} axisLine={false} tickLine={false} />
+            <YAxis tick={{ fontSize: 9, fill: '#6b7280' }} axisLine={false} tickLine={false} tickFormatter={(v) => `$${(v / 1000000).toFixed(0)}M`} />
+            <Tooltip
+              contentStyle={{ fontSize: 11, borderRadius: 8, border: '1px solid #e5e7eb' }}
+              formatter={(value) => [`$${(value / 1000000).toFixed(1)}M`, '']}
+              labelStyle={{ fontWeight: 600, color: '#1c2c4a' }}
+            />
+            <Bar dataKey="presupuesto" name="Presupuesto" fill="#e5e7eb" radius={[3, 3, 0, 0]} />
+            <Bar dataKey="real" name="Real" fill="#00a8a8" radius={[3, 3, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
+        <div className="mt-3 pt-3 border-t border-[#e5e7eb] grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="text-center">
+            <div className="text-[10px] text-[#6b7280]">Presupuesto Anual</div>
+            <div className="text-sm font-bold text-[#1c2c4a]">${(presupuestoTotal / 1000000).toFixed(0)}M</div>
+          </div>
+          <div className="text-center">
+            <div className="text-[10px] text-[#6b7280]">Ventas Reales</div>
+            <div className="text-sm font-bold text-[#00a8a8]">${(ventasReales / 1000000).toFixed(1)}M</div>
+          </div>
+          <div className="text-center">
+            <div className="text-[10px] text-[#6b7280]">% Avance</div>
+            <div className={`text-sm font-bold ${presupuestoTotal > 0 && (ventasReales / presupuestoTotal) >= 0.5 ? 'text-[#2E7D32]' : 'text-[#F57C00]'}`}>
+              {presupuestoTotal > 0 ? Math.round(ventasReales / presupuestoTotal * 100) : 0}%
+            </div>
+          </div>
+          <div className="text-center">
+            <div className="text-[10px] text-[#6b7280]">Presupuesto Mes</div>
+            <div className="text-sm font-bold text-[#1c2c4a]">${(presupuestoMesEquipo / 1000000).toFixed(1)}M</div>
+          </div>
+        </div>
+      </div>
+
+      {/* ═══════ VOLUMEN POR MATERIAL (CARTÓN / PLAYO) ═══════ */}
+      <SectionHeader color="#F59E0B" icon={Package} label="Volumen por Material" />
+
+      {materialData.length > 0 ? (
+        <>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            <div className="bg-white rounded-xl border border-[#F59E0B]/20 p-4" style={{ backgroundColor: 'rgba(245,158,11,0.04)' }}>
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-[13px] font-medium text-[#6b7280] mb-1">Total Cartón</div>
+                  <div className="text-2xl font-bold text-[#1c2c4a]">{totalCarton >= 1000 ? `${(totalCarton / 1000).toFixed(0)}k` : totalCarton.toLocaleString()}</div>
+                  <div className="text-[10px] text-[#6b7280]">kg en pipeline</div>
+                </div>
+                <div className="w-10 h-10 rounded-xl bg-[#F59E0B]/10 flex items-center justify-center">
+                  <Package className="text-[#F59E0B]" size={20} />
+                </div>
+              </div>
+            </div>
+            <div className="bg-white rounded-xl border border-[#3B82F6]/20 p-4" style={{ backgroundColor: 'rgba(59,130,246,0.04)' }}>
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-[13px] font-medium text-[#6b7280] mb-1">Total Playo</div>
+                  <div className="text-2xl font-bold text-[#1c2c4a]">{totalPlayo >= 1000 ? `${(totalPlayo / 1000).toFixed(0)}k` : totalPlayo.toLocaleString()}</div>
+                  <div className="text-[10px] text-[#6b7280]">kg en pipeline</div>
+                </div>
+                <div className="w-10 h-10 rounded-xl bg-[#3B82F6]/10 flex items-center justify-center">
+                  <Package className="text-[#3B82F6]" size={20} />
+                </div>
+              </div>
+            </div>
+            <div className="bg-white rounded-xl border border-[#e5e7eb] p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-[13px] font-medium text-[#6b7280] mb-1">Prospectos c/Material</div>
+                  <div className="text-2xl font-bold text-[#1c2c4a]">{materialData.length}</div>
+                  <div className="text-[10px] text-[#6b7280]">de {kanbanProspectos.length} totales</div>
+                </div>
+                <div className="w-10 h-10 rounded-xl bg-[#6b7280]/10 flex items-center justify-center">
+                  <BarChart3 className="text-[#6b7280]" size={20} />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Gráfica de barras agrupadas por etapa */}
+          <div className="mt-4 bg-white rounded-xl border border-[#e5e7eb] p-5">
+            <h4 className="text-sm font-semibold text-[#1c2c4a] mb-3">Volumen por Etapa del Pipeline</h4>
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={materialByStage} barGap={4}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" vertical={false} />
+                <XAxis dataKey="stage" tick={{ fontSize: 9, fill: '#6b7280' }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 9, fill: '#6b7280' }} axisLine={false} tickLine={false} tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v} />
+                <Tooltip
+                  contentStyle={{ fontSize: 11, borderRadius: 8, border: '1px solid #e5e7eb' }}
+                  formatter={(value) => [value >= 1000 ? `${(value / 1000).toFixed(1)}k kg` : `${value} kg`, '']}
+                  labelStyle={{ fontWeight: 600, color: '#1c2c4a' }}
+                />
+                <Bar dataKey="carton" name="Cartón" fill="#F59E0B" radius={[3, 3, 0, 0]} />
+                <Bar dataKey="playo" name="Playo" fill="#3B82F6" radius={[3, 3, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+            <div className="flex items-center justify-center gap-4 mt-2 text-[10px] text-[#6b7280]">
+              <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded bg-[#F59E0B] inline-block"></span> Cartón</span>
+              <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded bg-[#3B82F6] inline-block"></span> Playo</span>
+            </div>
+          </div>
+
+          {/* Tabla de detalle */}
+          <div className="mt-4 bg-white rounded-xl border border-[#e5e7eb] overflow-hidden">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="bg-[#f9fafb] border-b border-[#e5e7eb]">
+                  <th className="text-left px-4 py-2.5 font-semibold text-[#1c2c4a]">Empresa</th>
+                  <th className="text-left px-4 py-2.5 font-semibold text-[#1c2c4a]">Ejecutivo</th>
+                  <th className="text-left px-4 py-2.5 font-semibold text-[#1c2c4a]">Etapa</th>
+                  <th className="text-right px-4 py-2.5 font-semibold text-[#F59E0B]">Cartón (kg)</th>
+                  <th className="text-right px-4 py-2.5 font-semibold text-[#3B82F6]">Playo (kg)</th>
+                  <th className="text-right px-4 py-2.5 font-semibold text-[#1c2c4a]">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {materialData.sort((a, b) => b.total - a.total).map((m, i) => {
+                  const exec = salesTeamData.find(s => s.codigo === m.ejecutivo);
+                  return (
+                    <tr key={i} className="border-b border-[#f3f4f6] hover:bg-[#f9fafb] transition-colors">
+                      <td className="px-4 py-2.5 font-medium text-[#1c2c4a]">{m.empresa}</td>
+                      <td className="px-4 py-2.5">
+                        <span className="inline-flex items-center gap-1">
+                          <span className="w-2 h-2 rounded-full" style={{ backgroundColor: exec?.color || '#6b7280' }}></span>
+                          {exec?.nombre?.split(' ')[0] || m.ejecutivo}
+                        </span>
+                      </td>
+                      <td className="px-4 py-2.5 text-[#6b7280]">{m.status}</td>
+                      <td className="px-4 py-2.5 text-right font-medium">{m.carton > 0 ? m.carton.toLocaleString() : '—'}</td>
+                      <td className="px-4 py-2.5 text-right font-medium">{m.playo > 0 ? m.playo.toLocaleString() : '—'}</td>
+                      <td className="px-4 py-2.5 text-right font-bold text-[#1c2c4a]">{m.total.toLocaleString()}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+              <tfoot>
+                <tr className="bg-[#f9fafb] border-t border-[#e5e7eb] font-semibold">
+                  <td className="px-4 py-2.5 text-[#1c2c4a]" colSpan={3}>Totales</td>
+                  <td className="px-4 py-2.5 text-right text-[#F59E0B]">{totalCarton.toLocaleString()}</td>
+                  <td className="px-4 py-2.5 text-right text-[#3B82F6]">{totalPlayo.toLocaleString()}</td>
+                  <td className="px-4 py-2.5 text-right text-[#1c2c4a]">{(totalCarton + totalPlayo).toLocaleString()}</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </>
+      ) : (
+        <div className="bg-white rounded-xl border border-[#e5e7eb] p-8 text-center">
+          <Package className="mx-auto text-[#d1d5db] mb-2" size={32} />
+          <p className="text-sm text-[#6b7280]">Sin datos de volumen por material en propuestas actuales</p>
+        </div>
+      )}
 
       <SectionHeader color="#00a8a8" icon={Users} label="Equipo" linkLabel="Ver Dashboard" onLinkClick={() => setCurrentView('dashboard')} />
 
