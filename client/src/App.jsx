@@ -14,6 +14,39 @@ import { CSS } from '@dnd-kit/utilities';
 import html2canvas from 'html2canvas';
 import { Home, TrendingUp, Package, Users, FileText, Settings, ChevronRight, Download, Search, Filter, Bell, LogOut, Menu, X, DollarSign, Target, PhoneCall, Award, Calendar, MapPin, Truck, Leaf, Briefcase, ClipboardList, CheckSquare, AlertCircle, Send, Eye, Recycle, Trash2, BarChart3, TrendingDown, ChevronDown, ChevronUp, Save, FileImage, RotateCcw, Building2, GripVertical, Lock, Unlock, ArrowRight, Plus, ArrowLeft, Upload, Paperclip, MessageSquare, Clock, Image, Phone, Mail, ExternalLink, Copy, Check, XCircle } from 'lucide-react';
 
+// AVATAR COMPONENT — muestra foto del ejecutivo con fallback a iniciales
+const ExecutiveAvatar = ({ codigo, name, size = 'md', className = '' }) => {
+  const [imgError, setImgError] = React.useState(false);
+  const src = `/avatars/${codigo.toLowerCase()}.jpg`;
+  const sizeClasses = {
+    xs: 'w-7 h-7 text-[10px]',
+    sm: 'w-8 h-8 text-xs',
+    md: 'w-9 h-9 text-xs',
+    lg: 'w-10 h-10 text-xs',
+    xl: 'w-12 h-12 text-lg',
+    '2xl': 'w-16 h-16 text-2xl',
+  };
+  const s = sizeClasses[size] || sizeClasses.md;
+  const fallback = name ? name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : codigo;
+
+  if (imgError) {
+    return (
+      <div className={`${s} rounded-full bg-gradient-to-br from-[#00a8a8] to-[#0D47A1] flex items-center justify-center text-white font-bold flex-shrink-0 shadow-sm ${className}`}>
+        {fallback}
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={src}
+      alt={name || codigo}
+      onError={() => setImgError(true)}
+      className={`${s} rounded-full object-cover flex-shrink-0 shadow-sm ${className}`}
+    />
+  );
+};
+
 // SERVICIOS INNOVATIVE
 const SERVICIOS_INNOVATIVE = [
   { id: 'rme', nombre: 'RME', descripcion: 'Residuos de Manejo Especial' },
@@ -5600,7 +5633,7 @@ const InnovativeDemo = () => {
                       onClick={() => { setHubEjecutivo(member);setCurrentView('hub-ejecutivo'); }}>
                       <td className="py-2.5">
                         <div className="flex items-center gap-2">
-                          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#00a8a8] to-[#0D47A1] flex items-center justify-center text-white text-[10px] font-bold shadow-sm">{member.codigo}</div>
+                          <ExecutiveAvatar codigo={member.codigo} name={member.name} size="xs" />
                           <div>
                             <div className="font-semibold text-[#1c2c4a]">{member.name.split(' ').slice(0, 2).join(' ')}</div>
                             <div className="text-[10px] text-[#6b7280]">{member.zona}</div>
@@ -6237,7 +6270,7 @@ const InnovativeDemo = () => {
         >
           <ArrowLeft size={18} className="text-[#6b7280]" />
         </button>
-        <div className="w-12 h-12 rounded-full bg-[#00a8a8] flex items-center justify-center text-white text-lg font-bold flex-shrink-0">{member.codigo}</div>
+        <ExecutiveAvatar codigo={member.codigo} name={member.name} size="xl" />
         <div className="flex-1 min-w-0">
           <h1 className="text-xl font-bold text-[#1c2c4a]">{member.name}</h1>
           <p className="text-sm text-[#6b7280]">{member.role} — {member.zona}</p>
@@ -6947,7 +6980,7 @@ const InnovativeDemo = () => {
               className="bg-white rounded-xl border border-[#e5e7eb] p-4 cursor-pointer hover:shadow-lg hover:border-[#00a8a8]/40 transition-all group relative overflow-hidden">
               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#00a8a8] to-[#0D47A1] opacity-60 group-hover:opacity-100 transition-opacity" />
               <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#00a8a8] to-[#0D47A1] flex items-center justify-center text-white text-xs font-bold flex-shrink-0 shadow-sm">{member.codigo}</div>
+                <ExecutiveAvatar codigo={member.codigo} name={member.name} size="lg" />
                 <div className="min-w-0">
                   <div className="text-sm font-semibold text-[#1c2c4a] truncate">{member.name.split(' ').slice(0, 2).join(' ')}</div>
                   <div className="text-[10px] text-[#6b7280]">{member.zona || member.role}</div>
@@ -6984,7 +7017,7 @@ const InnovativeDemo = () => {
             if (memberProspectos.length === 0) return null;
             return (
               <div key={member.codigo} onClick={() => { setHubEjecutivo(member);setCurrentView('hub-ejecutivo'); }} className="flex items-center gap-3 cursor-pointer hover:bg-[#f3f4f6] rounded-lg p-2 -mx-2 transition-colors">
-                <div className="w-9 h-9 rounded-full bg-[#00a8a8] flex items-center justify-center text-white text-xs font-bold flex-shrink-0">{member.codigo}</div>
+                <ExecutiveAvatar codigo={member.codigo} name={member.name} size="md" />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-sm font-semibold text-[#1c2c4a]">{member.name.split(' ').slice(0, 2).join(' ')}</span>
@@ -9231,9 +9264,7 @@ const InnovativeDemo = () => {
             {salesTeamData.map(member => (
               <div key={member.id} className="flex items-center justify-between p-3 bg-[#f3f4f6] rounded-lg border border-[#e5e7eb]">
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-[#00a8a8] flex items-center justify-center text-white text-xs font-bold">
-                    {member.codigo}
-                  </div>
+                  <ExecutiveAvatar codigo={member.codigo} name={member.name} size="md" />
                   <div>
                     <div className="text-sm font-semibold text-[#1c2c4a]">{member.name}</div>
                     <div className="text-xs text-[#6b7280]">{member.role} • {member.zona}</div>
@@ -9327,9 +9358,7 @@ const InnovativeDemo = () => {
         <div className="bg-[#00a8a8] p-6 text-white rounded-t-lg">
           <div className="flex justify-between items-start">
             <div className="flex items-center gap-4">
-              <div className="w-16 h-16 rounded-full bg-[#00a8a8] flex items-center justify-center text-white text-2xl font-semibold">
-                {selectedTeamMember.name.split(' ').map(n => n[0]).join('').substring(0, 2)}
-              </div>
+              <ExecutiveAvatar codigo={selectedTeamMember.codigo} name={selectedTeamMember.name} size="2xl" className="border-2 border-white/30" />
               <div>
                 <h2 className="text-2xl font-semibold">{selectedTeamMember.name}</h2>
                 <p className="text-[#00b3b3] font-medium text-sm mt-1">{selectedTeamMember.role}</p>
@@ -9592,9 +9621,7 @@ const InnovativeDemo = () => {
                                 }`}>
                                   {rank}
                                 </div>
-                                <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0" style={{ backgroundColor: config.color }}>
-                                  {member.codigo}
-                                </div>
+                                <ExecutiveAvatar codigo={member.codigo} name={member.name} size="sm" />
                                 <div className="min-w-0">
                                   <div className="text-sm font-semibold text-[#1c2c4a] flex items-center gap-1.5 truncate">{member.name.split(' ').slice(0, 2).join(' ')}
                                     <ChevronRight size={12} className={`text-[#6b7280] transition-transform flex-shrink-0 ${kpiSelectedEjecutivo?.id === member.id ? 'rotate-90' : ''}`} />
