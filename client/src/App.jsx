@@ -4357,6 +4357,21 @@ const RECHAZO_CATEGORIES = {
   },
 };
 
+// Recovery states for rejected opportunities
+const RECOVERY_STATES = {
+  sin_seguimiento: { id: 'sin_seguimiento', label: 'Sin seguimiento', color: '#EF4444', bg: '#FEF2F2', icon: 'AlertCircle', order: 0 },
+  en_seguimiento: { id: 'en_seguimiento', label: 'En seguimiento', color: '#F59E0B', bg: '#FFFBEB', icon: 'Clock', order: 1 },
+  re_contactada: { id: 're_contactada', label: 'Re-contactada', color: '#3B82F6', bg: '#EFF6FF', icon: 'PhoneCall', order: 2 },
+  recuperada: { id: 'recuperada', label: 'Recuperada', color: '#22C55E', bg: '#F0FDF4', icon: 'CheckCircle', order: 3 },
+};
+
+const getRecoveryState = (seg) => {
+  if (!seg) return RECOVERY_STATES.sin_seguimiento;
+  if (seg.recoveryStatus === 're_contactada') return RECOVERY_STATES.re_contactada;
+  if (seg.fechaSeguimiento) return RECOVERY_STATES.en_seguimiento;
+  return RECOVERY_STATES.sin_seguimiento;
+};
+
 const classifyRechazo = (motivoRechazo) => {
   if (!motivoRechazo) return RECHAZO_CATEGORIES.operational;
   const lower = motivoRechazo.toLowerCase();
@@ -5935,10 +5950,31 @@ const InnovativeDemo = () => {
                         </div>
                       </div>
                     )}
-                    <button onClick={() => changeProspectoStage(p.id, 'Lead nuevo')}
-                      className="w-full mt-1 px-4 py-2.5 rounded-lg bg-[#00a8a8] text-white text-sm font-semibold hover:bg-[#008080] transition-colors flex items-center justify-center gap-2">
-                      <RotateCcw size={14} /> Reactivar en Pipeline
-                    </button>
+                    {/* Recovery state actions */}
+                    {(() => {
+                      const recovery = getRecoveryState(prospectoSeguimiento[p.id]);
+                      return (
+                        <div className="space-y-2 pt-1 border-t border-[#f3f4f6]">
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] text-[#6b7280]">Estado:</span>
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: recovery.bg, color: recovery.color }}>{recovery.label}</span>
+                          </div>
+                          <div className="grid grid-cols-2 gap-2">
+                            {recovery.id === 'sin_seguimiento' && seg?.fechaSeguimiento && null}
+                            {recovery.id !== 're_contactada' && (
+                              <button onClick={() => guardarSeguimiento(p.id, { recoveryStatus: 're_contactada' })}
+                                className="px-3 py-2 rounded-lg bg-[#3B82F6]/10 text-[#3B82F6] text-xs font-semibold hover:bg-[#3B82F6]/20 transition-colors flex items-center justify-center gap-1.5 border border-[#3B82F6]/20">
+                                <PhoneCall size={12} /> Marcar Re-contactada
+                              </button>
+                            )}
+                            <button onClick={() => { changeProspectoStage(p.id, 'Lead nuevo'); guardarSeguimiento(p.id, { recoveryStatus: null, fechaSeguimiento: null }); }}
+                              className="px-3 py-2 rounded-lg bg-[#00a8a8] text-white text-xs font-semibold hover:bg-[#008080] transition-colors flex items-center justify-center gap-1.5">
+                              <RotateCcw size={12} /> Reactivar en Pipeline
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </div>
                 </div>
               );
@@ -6886,123 +6922,34 @@ const InnovativeDemo = () => {
         </div>
       </div>
 
-      {/* ═══════ VOLUMEN POR MATERIAL (CARTÓN / PLAYO) ═══════ */}
-      <SectionHeader color="#F59E0B" icon={Package} label="Volumen por Material" />
-
-      {materialData.length > 0 ? (
-        <>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            <div className="bg-white rounded-xl border border-[#F59E0B]/20 p-4" style={{ backgroundColor: 'rgba(245,158,11,0.04)' }}>
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="text-[13px] font-medium text-[#6b7280] mb-1">Total Cartón</div>
-                  <div className="text-2xl font-bold text-[#1c2c4a]">{totalCarton >= 1000 ? `${(totalCarton / 1000).toFixed(0)}k` : totalCarton.toLocaleString()}</div>
-                  <div className="text-[10px] text-[#6b7280]">kg en pipeline</div>
-                </div>
-                <div className="w-10 h-10 rounded-xl bg-[#F59E0B]/10 flex items-center justify-center">
-                  <Package className="text-[#F59E0B]" size={20} />
-                </div>
-              </div>
-            </div>
-            <div className="bg-white rounded-xl border border-[#3B82F6]/20 p-4" style={{ backgroundColor: 'rgba(59,130,246,0.04)' }}>
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="text-[13px] font-medium text-[#6b7280] mb-1">Total Playo</div>
-                  <div className="text-2xl font-bold text-[#1c2c4a]">{totalPlayo >= 1000 ? `${(totalPlayo / 1000).toFixed(0)}k` : totalPlayo.toLocaleString()}</div>
-                  <div className="text-[10px] text-[#6b7280]">kg en pipeline</div>
-                </div>
-                <div className="w-10 h-10 rounded-xl bg-[#3B82F6]/10 flex items-center justify-center">
-                  <Package className="text-[#3B82F6]" size={20} />
-                </div>
-              </div>
-            </div>
-            <div className="bg-white rounded-xl border border-[#e5e7eb] p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="text-[13px] font-medium text-[#6b7280] mb-1">Prospectos c/Material</div>
-                  <div className="text-2xl font-bold text-[#1c2c4a]">{materialData.length}</div>
-                  <div className="text-[10px] text-[#6b7280]">de {kanbanProspectos.length} totales</div>
-                </div>
-                <div className="w-10 h-10 rounded-xl bg-[#6b7280]/10 flex items-center justify-center">
-                  <BarChart3 className="text-[#6b7280]" size={20} />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Gráfica de barras agrupadas por etapa */}
-          <div className="mt-4 bg-white rounded-xl border border-[#e5e7eb] p-5">
-            <h4 className="text-sm font-semibold text-[#1c2c4a] mb-3">Volumen por Etapa del Pipeline</h4>
-            <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={materialByStage} barGap={4}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" vertical={false} />
-                <XAxis dataKey="stage" tick={{ fontSize: 9, fill: '#6b7280' }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 9, fill: '#6b7280' }} axisLine={false} tickLine={false} tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v} />
-                <Tooltip
-                  contentStyle={{ fontSize: 11, borderRadius: 8, border: '1px solid #e5e7eb' }}
-                  formatter={(value) => [value >= 1000 ? `${(value / 1000).toFixed(1)}k kg` : `${value} kg`, '']}
-                  labelStyle={{ fontWeight: 600, color: '#1c2c4a' }}
-                />
-                <Bar dataKey="carton" name="Cartón" fill="#F59E0B" radius={[3, 3, 0, 0]} />
-                <Bar dataKey="playo" name="Playo" fill="#3B82F6" radius={[3, 3, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-            <div className="flex items-center justify-center gap-4 mt-2 text-[10px] text-[#6b7280]">
-              <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded bg-[#F59E0B] inline-block"></span> Cartón</span>
-              <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded bg-[#3B82F6] inline-block"></span> Playo</span>
-            </div>
-          </div>
-
-          {/* Tabla de detalle */}
-          <div className="mt-4 bg-white rounded-xl border border-[#e5e7eb] overflow-hidden">
-            <table className="w-full text-xs">
-              <thead>
-                <tr className="bg-[#f9fafb] border-b border-[#e5e7eb]">
-                  <th className="text-left px-4 py-2.5 font-semibold text-[#1c2c4a]">Empresa</th>
-                  <th className="text-left px-4 py-2.5 font-semibold text-[#1c2c4a]">Ejecutivo</th>
-                  <th className="text-left px-4 py-2.5 font-semibold text-[#1c2c4a]">Etapa</th>
-                  <th className="text-right px-4 py-2.5 font-semibold text-[#F59E0B]">Cartón (kg)</th>
-                  <th className="text-right px-4 py-2.5 font-semibold text-[#3B82F6]">Playo (kg)</th>
-                  <th className="text-right px-4 py-2.5 font-semibold text-[#1c2c4a]">Total</th>
-                </tr>
-              </thead>
-              <tbody>
-                {materialData.sort((a, b) => b.total - a.total).map((m, i) => {
-                  const exec = salesTeamData.find(s => s.codigo === m.ejecutivo);
-                  return (
-                    <tr key={i} className="border-b border-[#f3f4f6] hover:bg-[#f9fafb] transition-colors">
-                      <td className="px-4 py-2.5 font-medium text-[#1c2c4a]">{m.empresa}</td>
-                      <td className="px-4 py-2.5">
-                        <span className="inline-flex items-center gap-1">
-                          <span className="w-2 h-2 rounded-full" style={{ backgroundColor: exec?.color || '#6b7280' }}></span>
-                          {exec?.nombre?.split(' ')[0] || m.ejecutivo}
-                        </span>
-                      </td>
-                      <td className="px-4 py-2.5 text-[#6b7280]">{m.status}</td>
-                      <td className="px-4 py-2.5 text-right font-medium">{m.carton > 0 ? m.carton.toLocaleString() : '—'}</td>
-                      <td className="px-4 py-2.5 text-right font-medium">{m.playo > 0 ? m.playo.toLocaleString() : '—'}</td>
-                      <td className="px-4 py-2.5 text-right font-bold text-[#1c2c4a]">{m.total.toLocaleString()}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-              <tfoot>
-                <tr className="bg-[#f9fafb] border-t border-[#e5e7eb] font-semibold">
-                  <td className="px-4 py-2.5 text-[#1c2c4a]" colSpan={3}>Totales</td>
-                  <td className="px-4 py-2.5 text-right text-[#F59E0B]">{totalCarton.toLocaleString()}</td>
-                  <td className="px-4 py-2.5 text-right text-[#3B82F6]">{totalPlayo.toLocaleString()}</td>
-                  <td className="px-4 py-2.5 text-right text-[#1c2c4a]">{(totalCarton + totalPlayo).toLocaleString()}</td>
-                </tr>
-              </tfoot>
-            </table>
-          </div>
-        </>
-      ) : (
-        <div className="bg-white rounded-xl border border-[#e5e7eb] p-8 text-center">
-          <Package className="mx-auto text-[#d1d5db] mb-2" size={32} />
-          <p className="text-sm text-[#6b7280]">Sin datos de volumen por material en propuestas actuales</p>
+      {/* ═══════ VOLUMEN POR MATERIAL (CARTÓN / PLAYO) — Compacto ═══════ */}
+      <div className="mt-4 bg-white rounded-xl border border-[#e5e7eb] p-4">
+        <div className="flex items-center gap-2 mb-3">
+          <Package size={14} className="text-[#F59E0B]" />
+          <h4 className="text-xs font-semibold text-[#1c2c4a] uppercase tracking-wide">Volumen por Material</h4>
+          <span className="text-[10px] text-[#6b7280] ml-auto">{materialData.length} prospectos</span>
         </div>
-      )}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="flex items-center gap-3 bg-[#F59E0B]/5 rounded-lg px-3 py-2.5 border border-[#F59E0B]/15">
+            <div className="w-8 h-8 rounded-lg bg-[#F59E0B]/10 flex items-center justify-center flex-shrink-0">
+              <Package className="text-[#F59E0B]" size={16} />
+            </div>
+            <div className="min-w-0">
+              <div className="text-[10px] text-[#6b7280]">Cartón</div>
+              <div className="text-base font-bold text-[#1c2c4a]">{totalCarton >= 1000 ? `${(totalCarton / 1000).toFixed(0)}k` : totalCarton.toLocaleString()} <span className="text-[10px] font-normal text-[#6b7280]">kg</span></div>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 bg-[#3B82F6]/5 rounded-lg px-3 py-2.5 border border-[#3B82F6]/15">
+            <div className="w-8 h-8 rounded-lg bg-[#3B82F6]/10 flex items-center justify-center flex-shrink-0">
+              <Package className="text-[#3B82F6]" size={16} />
+            </div>
+            <div className="min-w-0">
+              <div className="text-[10px] text-[#6b7280]">Playo</div>
+              <div className="text-base font-bold text-[#1c2c4a]">{totalPlayo >= 1000 ? `${(totalPlayo / 1000).toFixed(0)}k` : totalPlayo.toLocaleString()} <span className="text-[10px] font-normal text-[#6b7280]">kg</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Distribución de Pipeline por Ejecutivo — Barras apiladas por etapa */}
       <div className="mt-4 bg-white rounded-xl border border-[#e5e7eb] card-modern p-5">
@@ -7293,56 +7240,118 @@ const InnovativeDemo = () => {
             </DragOverlay>
           </DndContext>
 
-          {/* Rejected pipeline — Call to Action (respects filters) */}
+          {/* Rejected pipeline — Recovery Funnel (compact) */}
           {(() => {
             const filteredRejected = kanbanProspectos
               .filter(p => p.status === 'Propuesta Rechazada')
               .filter(p => filterServicio === 'todos' || (p.servicios || [])[0] === filterServicio)
               .filter(p => filterEjecutivo === 'todos' || p.ejecutivo === filterEjecutivo);
             if (filteredRejected.length === 0) return null;
-            const byCat = { pricing: 0, proposal: 0, operational: 0 };
-            filteredRejected.forEach(p => { const cat = classifyRechazo(p.motivoRechazo); if (cat && byCat[cat.id] !== undefined) byCat[cat.id]++; });
+
+            // Classify by recovery state
+            const byRecovery = { sin_seguimiento: [], en_seguimiento: [], re_contactada: [] };
+            filteredRejected.forEach(p => {
+              const seg = prospectoSeguimiento[p.id];
+              const state = getRecoveryState(seg);
+              if (byRecovery[state.id]) byRecovery[state.id].push(p);
+            });
+            const overdue = filteredRejected.filter(p => getSeguimientoUrgency(prospectoSeguimiento[p.id])?.overdue);
+            const recoverable = filteredRejected.filter(p => classifyRechazo(p.motivoRechazo)?.recoverable);
+            const totalValue = filteredRejected.reduce((s, p) => s + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0);
+
             return (
-              <div className="mt-6 bg-white rounded-lg border border-[#e5e7eb] p-4">
+              <div className="mt-6 bg-white rounded-xl border border-[#e5e7eb] p-4">
+                {/* Header */}
                 <div className="flex items-center justify-between mb-3">
-                  <h4 className="text-sm font-semibold text-[#1c2c4a] flex items-center gap-2">
-                    <AlertCircle size={14} className="text-[#F59E0B]" />
-                    Oportunidades Rechazadas ({filteredRejected.length})
-                  </h4>
-                  <div className="flex items-center gap-2 text-[10px]">
-                    {Object.entries(byCat).filter(([, v]) => v > 0).map(([catId, count]) => {
-                      const cat = RECHAZO_CATEGORIES[catId];
-                      return <span key={catId} className="px-1.5 py-0.5 rounded-full font-medium" style={{ backgroundColor: `${cat.color}15`, color: cat.color }}>{count} {cat.label}</span>;
-                    })}
+                  <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 rounded-lg bg-[#F59E0B]/10 flex items-center justify-center">
+                      <RotateCcw size={14} className="text-[#F59E0B]" />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-semibold text-[#1c2c4a]">Recuperacion de Oportunidades</h4>
+                      <span className="text-[10px] text-[#6b7280]">{filteredRejected.length} rechazadas · ${(totalValue / 1000000).toFixed(1)}M en valor</span>
+                    </div>
                   </div>
+                  {overdue.length > 0 && (
+                    <span className="text-[10px] font-bold text-red-600 bg-red-50 px-2 py-1 rounded-full flex items-center gap-1">
+                      <AlertCircle size={10} /> {overdue.length} vencidas
+                    </span>
+                  )}
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                  {filteredRejected.map(p => {
-                    const cat = classifyRechazo(p.motivoRechazo);
-                    const seg = prospectoSeguimiento[p.id];
-                    const urgency = getSeguimientoUrgency(seg);
+
+                {/* Recovery funnel — mini pipeline */}
+                <div className="grid grid-cols-3 gap-2 mb-3">
+                  {Object.entries(byRecovery).map(([stateId, items]) => {
+                    const state = RECOVERY_STATES[stateId];
                     return (
-                      <div key={p.id} className="rounded-lg p-2.5 cursor-pointer hover:shadow-md transition-all border"
-                        style={{ backgroundColor: cat?.bgColor || '#f3f4f6', borderColor: `${cat?.color}30`, borderLeft: `3px solid ${cat?.color || '#6b7280'}` }}
-                        onClick={() => { setSelectedProspecto(p); setMostrarDetallesProspecto(true); }}>
-                        <div className="flex items-center justify-between gap-1 mb-0.5">
-                          <h4 className="text-[11px] font-semibold text-[#1c2c4a] truncate flex-1">{p.empresa}</h4>
-                          <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap" style={{ backgroundColor: `${cat?.color}18`, color: cat?.color }}>{cat?.label}</span>
+                      <div key={stateId} className="rounded-lg px-3 py-2 border" style={{ backgroundColor: state.bg, borderColor: `${state.color}20` }}>
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-[10px] font-semibold" style={{ color: state.color }}>{state.label}</span>
+                          <span className="text-sm font-bold" style={{ color: state.color }}>{items.length}</span>
                         </div>
-                        <div className="text-[10px] text-[#6b7280] truncate mb-1.5">{p.motivoRechazo || 'Sin motivo'}</div>
-                        <div className="flex items-center justify-between">
-                          {seg?.fechaSeguimiento ? (
-                            <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full flex items-center gap-1" style={{ backgroundColor: urgency?.bg, color: urgency?.color }}>
-                              <Calendar size={8} /> {urgency?.overdue ? `Vencido ${urgency.days}d` : urgency?.label}
-                            </span>
-                          ) : (
-                            <span className="text-[9px] text-[#F59E0B] font-medium flex items-center gap-1 opacity-70"><Bell size={8} /> Sin seguimiento</span>
-                          )}
-                          {cat?.recoverable && <span className="text-[8px] text-green-600 font-medium bg-green-50 px-1 py-0.5 rounded">Recuperable</span>}
+                        <div className="w-full h-1 bg-white/60 rounded-full overflow-hidden">
+                          <div className="h-full rounded-full transition-all" style={{ width: `${filteredRejected.length ? (items.length / filteredRejected.length) * 100 : 0}%`, backgroundColor: state.color }} />
                         </div>
                       </div>
                     );
                   })}
+                </div>
+
+                {/* Recoverable highlight + list */}
+                {recoverable.length > 0 && (
+                  <div className="text-[10px] text-[#6b7280] mb-2 flex items-center gap-1">
+                    <CheckCircle size={10} className="text-green-500" />
+                    <span><strong className="text-green-600">{recoverable.length}</strong> recuperables por precio o propuesta</span>
+                  </div>
+                )}
+
+                {/* Compact list of rejected — sorted by urgency */}
+                <div className="space-y-1">
+                  {filteredRejected
+                    .sort((a, b) => {
+                      const ua = getSeguimientoUrgency(prospectoSeguimiento[a.id]);
+                      const ub = getSeguimientoUrgency(prospectoSeguimiento[b.id]);
+                      if (ua?.overdue && !ub?.overdue) return -1;
+                      if (!ua?.overdue && ub?.overdue) return 1;
+                      if (!ua && ub) return -1;
+                      return 0;
+                    })
+                    .map(p => {
+                      const cat = classifyRechazo(p.motivoRechazo);
+                      const seg = prospectoSeguimiento[p.id];
+                      const urgency = getSeguimientoUrgency(seg);
+                      const recovery = getRecoveryState(seg);
+                      return (
+                        <div key={p.id}
+                          className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg cursor-pointer hover:bg-[#f9fafb] transition-colors group"
+                          onClick={() => { setSelectedProspecto(p); setMostrarDetallesProspecto(true); }}>
+                          <div className="w-1 h-6 rounded-full flex-shrink-0" style={{ backgroundColor: cat?.color || '#6b7280' }} />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-[11px] font-semibold text-[#1c2c4a] truncate">{p.empresa}</span>
+                              <span className="text-[8px] font-bold px-1 py-0.5 rounded whitespace-nowrap" style={{ backgroundColor: `${cat?.color}12`, color: cat?.color }}>{cat?.label}</span>
+                            </div>
+                            <div className="text-[10px] text-[#9ca3af] truncate">{p.motivoRechazo || 'Sin motivo'}</div>
+                          </div>
+                          <div className="flex items-center gap-1.5 flex-shrink-0">
+                            <span className="text-[9px] font-medium px-1.5 py-0.5 rounded-full" style={{ backgroundColor: recovery.bg, color: recovery.color }}>{recovery.label}</span>
+                            {urgency?.overdue && (
+                              <span className="text-[9px] font-bold text-red-500 flex items-center gap-0.5">
+                                <AlertCircle size={8} /> {urgency.days}d
+                              </span>
+                            )}
+                            {!seg?.fechaSeguimiento && cat?.recoverable && (
+                              <button
+                                onClick={(e) => { e.stopPropagation(); guardarSeguimiento(p.id, { fechaSeguimiento: new Date(Date.now() + cat.defaultFollowUpDays * 86400000).toISOString().split('T')[0] }); }}
+                                className="text-[9px] font-semibold text-[#00a8a8] bg-[#00a8a8]/8 px-1.5 py-0.5 rounded hover:bg-[#00a8a8]/15 transition-colors opacity-0 group-hover:opacity-100"
+                                title="Agendar seguimiento">
+                                <Calendar size={9} />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
                 </div>
               </div>
             );
