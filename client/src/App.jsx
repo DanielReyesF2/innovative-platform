@@ -12,7 +12,7 @@ import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, us
 import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import html2canvas from 'html2canvas';
-import { Home, TrendingUp, Package, Users, FileText, Settings, ChevronRight, Download, Search, Filter, Bell, LogOut, Menu, X, DollarSign, Target, PhoneCall, Award, Calendar, MapPin, Truck, Leaf, Briefcase, ClipboardList, CheckSquare, AlertCircle, Send, Eye, Recycle, Trash2, BarChart3, TrendingDown, ChevronDown, ChevronUp, Save, FileImage, RotateCcw, Building2, GripVertical, Lock, Unlock, ArrowRight, Plus, ArrowLeft, Upload, Paperclip, MessageSquare, Clock, Image, Phone, Mail, ExternalLink, Copy, Check, XCircle } from 'lucide-react';
+import { Home, TrendingUp, Package, Users, FileText, Settings, ChevronRight, Download, Search, Filter, Bell, LogOut, Menu, X, DollarSign, Target, PhoneCall, Award, Calendar, MapPin, Truck, Leaf, Briefcase, ClipboardList, CheckSquare, AlertCircle, Send, Eye, Recycle, Trash2, BarChart3, TrendingDown, ChevronDown, ChevronUp, Save, FileImage, RotateCcw, Building2, GripVertical, Lock, Unlock, ArrowRight, Plus, ArrowLeft, Upload, Paperclip, MessageSquare, Clock, Image, Phone, Mail, ExternalLink, Copy, Check, XCircle, CheckCircle } from 'lucide-react';
 
 // AVATAR COMPONENT — muestra foto del ejecutivo con fallback a iniciales
 const ExecutiveAvatar = ({ codigo, name, size = 'md', className = '' }) => {
