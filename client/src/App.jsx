@@ -6801,6 +6801,43 @@ const InnovativeDemo = () => {
         </div>
       </div>
 
+      <SectionHeader color="#00a8a8" icon={Users} label="Equipo" linkLabel="Ver Dashboard" onLinkClick={() => setCurrentView('dashboard')} />
+
+      {/* Presupuesto por Ejecutivo (grid) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
+        {salesTeamData.filter(m => m.codigo !== 'VA').sort((a, b) => b.presupuestoAnual2026 - a.presupuestoAnual2026).map(member => {
+          const pct = member.cumplimientoPresupuesto || 0;
+          const barColor = pct >= 80 ? '#2E7D32' : pct >= 40 ? '#F57C00' : '#ef4444';
+          const memberProspectos = kanbanProspectos.filter(p => p.ejecutivo === member.codigo);
+          return (
+            <div key={member.codigo} onClick={() => { setHubEjecutivo(member);setCurrentView('hub-ejecutivo'); }}
+              className="bg-white rounded-xl border border-[#e5e7eb] p-4 cursor-pointer hover:shadow-lg hover:border-[#00a8a8]/40 transition-all group relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#00a8a8] to-[#0D47A1] opacity-60 group-hover:opacity-100 transition-opacity" />
+              <div className="flex items-center gap-3 mb-3">
+                <ExecutiveAvatar codigo={member.codigo} name={member.name} size="lg" />
+                <div className="min-w-0">
+                  <div className="text-sm font-semibold text-[#1c2c4a] truncate">{member.name.split(' ').slice(0, 2).join(' ')}</div>
+                  <div className="text-[10px] text-[#6b7280]">{member.zona || member.role}</div>
+                </div>
+              </div>
+              <div className="text-lg font-bold text-[#1c2c4a]">${(member.presupuestoMensual / 1000000).toFixed(1)}M<span className="text-xs font-normal text-[#6b7280] ml-0.5">/mes</span></div>
+              <div className="flex items-center justify-between mt-1 mb-2">
+                <span className="text-[10px] text-[#6b7280]">Anual: ${(member.presupuestoAnual2026 / 1000000).toFixed(1)}M</span>
+                <span className="text-[10px] font-semibold" style={{ color: barColor }}>{pct}%</span>
+              </div>
+              <div className="w-full h-1.5 bg-[#f3f4f6] rounded-full overflow-hidden">
+                <div className="h-full rounded-full transition-all" style={{ width: `${Math.min(pct, 100)}%`, backgroundColor: barColor }} />
+              </div>
+              <div className="flex items-center gap-2 mt-2.5 pt-2 border-t border-[#f3f4f6]">
+                <span className="text-[10px] text-[#6b7280]">{memberProspectos.length} opps</span>
+                <span className="text-[10px] text-[#6b7280]">·</span>
+                <span className="text-[10px] text-[#6b7280]">${((memberProspectos.reduce((s, p) => s + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0)) / 1000000).toFixed(1)}M pipeline</span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
       {/* ═══════ PRESUPUESTO MENSUAL 2026 vs REAL ═══════ */}
       <div className="mt-6 bg-white rounded-xl border border-[#e5e7eb] p-5">
         <div className="flex items-center justify-between mb-3">
@@ -6966,43 +7003,6 @@ const InnovativeDemo = () => {
           <p className="text-sm text-[#6b7280]">Sin datos de volumen por material en propuestas actuales</p>
         </div>
       )}
-
-      <SectionHeader color="#00a8a8" icon={Users} label="Equipo" linkLabel="Ver Dashboard" onLinkClick={() => setCurrentView('dashboard')} />
-
-      {/* Presupuesto por Ejecutivo (grid) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
-        {salesTeamData.filter(m => m.codigo !== 'VA').sort((a, b) => b.presupuestoAnual2026 - a.presupuestoAnual2026).map(member => {
-          const pct = member.cumplimientoPresupuesto || 0;
-          const barColor = pct >= 80 ? '#2E7D32' : pct >= 40 ? '#F57C00' : '#ef4444';
-          const memberProspectos = kanbanProspectos.filter(p => p.ejecutivo === member.codigo);
-          return (
-            <div key={member.codigo} onClick={() => { setHubEjecutivo(member);setCurrentView('hub-ejecutivo'); }}
-              className="bg-white rounded-xl border border-[#e5e7eb] p-4 cursor-pointer hover:shadow-lg hover:border-[#00a8a8]/40 transition-all group relative overflow-hidden">
-              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#00a8a8] to-[#0D47A1] opacity-60 group-hover:opacity-100 transition-opacity" />
-              <div className="flex items-center gap-3 mb-3">
-                <ExecutiveAvatar codigo={member.codigo} name={member.name} size="lg" />
-                <div className="min-w-0">
-                  <div className="text-sm font-semibold text-[#1c2c4a] truncate">{member.name.split(' ').slice(0, 2).join(' ')}</div>
-                  <div className="text-[10px] text-[#6b7280]">{member.zona || member.role}</div>
-                </div>
-              </div>
-              <div className="text-lg font-bold text-[#1c2c4a]">${(member.presupuestoMensual / 1000000).toFixed(1)}M<span className="text-xs font-normal text-[#6b7280] ml-0.5">/mes</span></div>
-              <div className="flex items-center justify-between mt-1 mb-2">
-                <span className="text-[10px] text-[#6b7280]">Anual: ${(member.presupuestoAnual2026 / 1000000).toFixed(1)}M</span>
-                <span className="text-[10px] font-semibold" style={{ color: barColor }}>{pct}%</span>
-              </div>
-              <div className="w-full h-1.5 bg-[#f3f4f6] rounded-full overflow-hidden">
-                <div className="h-full rounded-full transition-all" style={{ width: `${Math.min(pct, 100)}%`, backgroundColor: barColor }} />
-              </div>
-              <div className="flex items-center gap-2 mt-2.5 pt-2 border-t border-[#f3f4f6]">
-                <span className="text-[10px] text-[#6b7280]">{memberProspectos.length} opps</span>
-                <span className="text-[10px] text-[#6b7280]">·</span>
-                <span className="text-[10px] text-[#6b7280]">${((memberProspectos.reduce((s, p) => s + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0)) / 1000000).toFixed(1)}M pipeline</span>
-              </div>
-            </div>
-          );
-        })}
-      </div>
 
       {/* Distribución de Pipeline por Ejecutivo — Barras apiladas por etapa */}
       <div className="mt-4 bg-white rounded-xl border border-[#e5e7eb] card-modern p-5">

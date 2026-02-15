@@ -17,15 +17,22 @@
       "password": "Innovative2026!"
     },
     {
-      "name": "Cristina Silva",
+      "name": "Cristina Sescosse",
       "email": "cristina@innovative-la.com",
       "role": "comercial",
       "area": "Comercial",
       "password": "Innovative2026!"
     },
     {
-      "name": "Laura Mesa",
+      "name": "Laura Mesa Caballero",
       "email": "laura.mesa@innovative-la.com",
+      "role": "comercial",
+      "area": "Comercial",
+      "password": "Innovative2026!"
+    },
+    {
+      "name": "Marian Olmos",
+      "email": "marian@innovative-la.com",
       "role": "comercial",
       "area": "Comercial",
       "password": "Innovative2026!"
