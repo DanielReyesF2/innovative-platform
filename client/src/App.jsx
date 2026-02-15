@@ -4476,6 +4476,7 @@ const InnovativeDemo = () => {
 
   // Pipeline view states
   const [pipelineViewMode, setPipelineViewMode] = useState('kanban'); // 'kanban' | 'funnel' | 'tabla'
+  const [comercialTab, setComercialTab] = useState('pipeline'); // 'pipeline' | 'presupuesto' | 'rechazadas'
   const [kanbanProspectos, setKanbanProspectos] = useState(topProspectos);
   const [activeKanbanId, setActiveKanbanId] = useState(null);
   const [showStageGateModal, setShowStageGateModal] = useState(false);
@@ -6874,6 +6875,26 @@ const InnovativeDemo = () => {
         })}
       </div>
 
+      {/* ═══════ TAB BAR ═══════ */}
+      <div className="mt-5 flex items-center gap-1 bg-white rounded-xl border border-[#e5e7eb] p-1">
+        {[
+          { id: 'pipeline', label: 'Pipeline', icon: ClipboardList },
+          { id: 'presupuesto', label: 'Presupuesto', icon: DollarSign },
+          { id: 'rechazadas', label: 'Rechazadas', icon: RotateCcw, badge: kanbanProspectos.filter(p => p.status === 'Propuesta Rechazada').length },
+        ].map(tab => (
+          <button key={tab.id} onClick={() => setComercialTab(tab.id)}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all flex-1 justify-center ${comercialTab === tab.id ? 'bg-[#1c2c4a] text-white shadow-sm' : 'text-[#6b7280] hover:bg-[#f3f4f6]'}`}>
+            <tab.icon size={15} />
+            {tab.label}
+            {tab.badge > 0 && (
+              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${comercialTab === tab.id ? 'bg-white/20 text-white' : 'bg-[#F59E0B]/10 text-[#F59E0B]'}`}>{tab.badge}</span>
+            )}
+          </button>
+        ))}
+      </div>
+
+      {/* ═══════ TAB: PRESUPUESTO ═══════ */}
+      {comercialTab === 'presupuesto' && (<>
       {/* ═══════ PRESUPUESTO MENSUAL 2026 vs REAL ═══════ */}
       <div className="mt-6 bg-white rounded-xl border border-[#e5e7eb] p-5">
         <div className="flex items-center justify-between mb-3">
@@ -6950,7 +6971,10 @@ const InnovativeDemo = () => {
           </div>
         </div>
       </div>
+      </>)}
 
+      {/* ═══════ TAB: PIPELINE ═══════ */}
+      {comercialTab === 'pipeline' && (<>
       {/* Distribución de Pipeline por Ejecutivo — Barras apiladas por etapa */}
       <div className="mt-4 bg-white rounded-xl border border-[#e5e7eb] card-modern p-5">
         <h3 className="text-sm font-semibold text-[#1c2c4a] mb-3">Pipeline por Ejecutivo</h3>
@@ -7239,123 +7263,6 @@ const InnovativeDemo = () => {
               )}
             </DragOverlay>
           </DndContext>
-
-          {/* Rejected pipeline — Recovery Funnel (compact) */}
-          {(() => {
-            const filteredRejected = kanbanProspectos
-              .filter(p => p.status === 'Propuesta Rechazada')
-              .filter(p => filterServicio === 'todos' || (p.servicios || [])[0] === filterServicio)
-              .filter(p => filterEjecutivo === 'todos' || p.ejecutivo === filterEjecutivo);
-            if (filteredRejected.length === 0) return null;
-
-            // Classify by recovery state
-            const byRecovery = { sin_seguimiento: [], en_seguimiento: [], re_contactada: [] };
-            filteredRejected.forEach(p => {
-              const seg = prospectoSeguimiento[p.id];
-              const state = getRecoveryState(seg);
-              if (byRecovery[state.id]) byRecovery[state.id].push(p);
-            });
-            const overdue = filteredRejected.filter(p => getSeguimientoUrgency(prospectoSeguimiento[p.id])?.overdue);
-            const recoverable = filteredRejected.filter(p => classifyRechazo(p.motivoRechazo)?.recoverable);
-            const totalValue = filteredRejected.reduce((s, p) => s + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0);
-
-            return (
-              <div className="mt-6 bg-white rounded-xl border border-[#e5e7eb] p-4">
-                {/* Header */}
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-lg bg-[#F59E0B]/10 flex items-center justify-center">
-                      <RotateCcw size={14} className="text-[#F59E0B]" />
-                    </div>
-                    <div>
-                      <h4 className="text-xs font-semibold text-[#1c2c4a]">Recuperacion de Oportunidades</h4>
-                      <span className="text-[10px] text-[#6b7280]">{filteredRejected.length} rechazadas · ${(totalValue / 1000000).toFixed(1)}M en valor</span>
-                    </div>
-                  </div>
-                  {overdue.length > 0 && (
-                    <span className="text-[10px] font-bold text-red-600 bg-red-50 px-2 py-1 rounded-full flex items-center gap-1">
-                      <AlertCircle size={10} /> {overdue.length} vencidas
-                    </span>
-                  )}
-                </div>
-
-                {/* Recovery funnel — mini pipeline */}
-                <div className="grid grid-cols-3 gap-2 mb-3">
-                  {Object.entries(byRecovery).map(([stateId, items]) => {
-                    const state = RECOVERY_STATES[stateId];
-                    return (
-                      <div key={stateId} className="rounded-lg px-3 py-2 border" style={{ backgroundColor: state.bg, borderColor: `${state.color}20` }}>
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-[10px] font-semibold" style={{ color: state.color }}>{state.label}</span>
-                          <span className="text-sm font-bold" style={{ color: state.color }}>{items.length}</span>
-                        </div>
-                        <div className="w-full h-1 bg-white/60 rounded-full overflow-hidden">
-                          <div className="h-full rounded-full transition-all" style={{ width: `${filteredRejected.length ? (items.length / filteredRejected.length) * 100 : 0}%`, backgroundColor: state.color }} />
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* Recoverable highlight + list */}
-                {recoverable.length > 0 && (
-                  <div className="text-[10px] text-[#6b7280] mb-2 flex items-center gap-1">
-                    <CheckCircle size={10} className="text-green-500" />
-                    <span><strong className="text-green-600">{recoverable.length}</strong> recuperables por precio o propuesta</span>
-                  </div>
-                )}
-
-                {/* Compact list of rejected — sorted by urgency */}
-                <div className="space-y-1">
-                  {filteredRejected
-                    .sort((a, b) => {
-                      const ua = getSeguimientoUrgency(prospectoSeguimiento[a.id]);
-                      const ub = getSeguimientoUrgency(prospectoSeguimiento[b.id]);
-                      if (ua?.overdue && !ub?.overdue) return -1;
-                      if (!ua?.overdue && ub?.overdue) return 1;
-                      if (!ua && ub) return -1;
-                      return 0;
-                    })
-                    .map(p => {
-                      const cat = classifyRechazo(p.motivoRechazo);
-                      const seg = prospectoSeguimiento[p.id];
-                      const urgency = getSeguimientoUrgency(seg);
-                      const recovery = getRecoveryState(seg);
-                      return (
-                        <div key={p.id}
-                          className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg cursor-pointer hover:bg-[#f9fafb] transition-colors group"
-                          onClick={() => { setSelectedProspecto(p); setMostrarDetallesProspecto(true); }}>
-                          <div className="w-1 h-6 rounded-full flex-shrink-0" style={{ backgroundColor: cat?.color || '#6b7280' }} />
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-1.5">
-                              <span className="text-[11px] font-semibold text-[#1c2c4a] truncate">{p.empresa}</span>
-                              <span className="text-[8px] font-bold px-1 py-0.5 rounded whitespace-nowrap" style={{ backgroundColor: `${cat?.color}12`, color: cat?.color }}>{cat?.label}</span>
-                            </div>
-                            <div className="text-[10px] text-[#9ca3af] truncate">{p.motivoRechazo || 'Sin motivo'}</div>
-                          </div>
-                          <div className="flex items-center gap-1.5 flex-shrink-0">
-                            <span className="text-[9px] font-medium px-1.5 py-0.5 rounded-full" style={{ backgroundColor: recovery.bg, color: recovery.color }}>{recovery.label}</span>
-                            {urgency?.overdue && (
-                              <span className="text-[9px] font-bold text-red-500 flex items-center gap-0.5">
-                                <AlertCircle size={8} /> {urgency.days}d
-                              </span>
-                            )}
-                            {!seg?.fechaSeguimiento && cat?.recoverable && (
-                              <button
-                                onClick={(e) => { e.stopPropagation(); guardarSeguimiento(p.id, { fechaSeguimiento: new Date(Date.now() + cat.defaultFollowUpDays * 86400000).toISOString().split('T')[0] }); }}
-                                className="text-[9px] font-semibold text-[#00a8a8] bg-[#00a8a8]/8 px-1.5 py-0.5 rounded hover:bg-[#00a8a8]/15 transition-colors opacity-0 group-hover:opacity-100"
-                                title="Agendar seguimiento">
-                                <Calendar size={9} />
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
-                </div>
-              </div>
-            );
-          })()}
         </div>
       )}
 
@@ -7447,6 +7354,129 @@ const InnovativeDemo = () => {
           </div>
           </div>
         </div>
+        );
+      })()}
+
+      </>)}
+
+      {/* ═══════ TAB: RECHAZADAS ═══════ */}
+      {comercialTab === 'rechazadas' && (() => {
+        const allRejected = kanbanProspectos.filter(p => p.status === 'Propuesta Rechazada');
+        if (allRejected.length === 0) return (
+          <div className="mt-4 bg-white rounded-xl border border-[#e5e7eb] p-12 text-center">
+            <CheckCircle className="mx-auto text-green-400 mb-3" size={40} />
+            <h3 className="text-sm font-semibold text-[#1c2c4a] mb-1">Sin oportunidades rechazadas</h3>
+            <p className="text-xs text-[#6b7280]">Todas las oportunidades estan activas en el pipeline</p>
+          </div>
+        );
+
+        const byRecovery = { sin_seguimiento: [], en_seguimiento: [], re_contactada: [] };
+        allRejected.forEach(p => {
+          const seg = prospectoSeguimiento[p.id];
+          const state = getRecoveryState(seg);
+          if (byRecovery[state.id]) byRecovery[state.id].push(p);
+        });
+        const overdue = allRejected.filter(p => getSeguimientoUrgency(prospectoSeguimiento[p.id])?.overdue);
+        const recoverable = allRejected.filter(p => classifyRechazo(p.motivoRechazo)?.recoverable);
+        const totalValue = allRejected.reduce((s, p) => s + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0);
+        const byCat = { pricing: [], proposal: [], operational: [] };
+        allRejected.forEach(p => { const cat = classifyRechazo(p.motivoRechazo); if (byCat[cat.id]) byCat[cat.id].push(p); });
+
+        return (
+          <div className="mt-4 space-y-4">
+            {/* Summary cards */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="bg-white rounded-xl border border-[#e5e7eb] p-4">
+                <div className="text-[10px] text-[#6b7280] mb-1">Total Rechazadas</div>
+                <div className="text-2xl font-bold text-[#1c2c4a]">{allRejected.length}</div>
+                <div className="text-[10px] text-[#6b7280]">${(totalValue / 1000000).toFixed(1)}M en valor</div>
+              </div>
+              <div className="bg-white rounded-xl border border-[#e5e7eb] p-4">
+                <div className="text-[10px] text-[#6b7280] mb-1">Recuperables</div>
+                <div className="text-2xl font-bold text-green-600">{recoverable.length}</div>
+                <div className="text-[10px] text-[#6b7280]">por precio o propuesta</div>
+              </div>
+              <div className="bg-white rounded-xl border border-[#e5e7eb] p-4">
+                <div className="text-[10px] text-[#6b7280] mb-1">En Seguimiento</div>
+                <div className="text-2xl font-bold text-[#F59E0B]">{byRecovery.en_seguimiento.length + byRecovery.re_contactada.length}</div>
+                <div className="text-[10px] text-[#6b7280]">con fecha programada</div>
+              </div>
+              <div className="bg-white rounded-xl border border-[#e5e7eb] p-4">
+                <div className="text-[10px] text-[#6b7280] mb-1">Vencidas</div>
+                <div className="text-2xl font-bold text-red-500">{overdue.length}</div>
+                <div className="text-[10px] text-[#6b7280]">requieren atencion</div>
+              </div>
+            </div>
+
+            {/* Recovery funnel */}
+            <div className="bg-white rounded-xl border border-[#e5e7eb] p-4">
+              <h4 className="text-xs font-semibold text-[#1c2c4a] mb-3 flex items-center gap-2">
+                <RotateCcw size={14} className="text-[#F59E0B]" /> Funnel de Recuperacion
+              </h4>
+              <div className="grid grid-cols-3 gap-3">
+                {Object.entries(byRecovery).map(([stateId, items]) => {
+                  const state = RECOVERY_STATES[stateId];
+                  return (
+                    <div key={stateId} className="rounded-xl p-4 border" style={{ backgroundColor: state.bg, borderColor: `${state.color}25` }}>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs font-semibold" style={{ color: state.color }}>{state.label}</span>
+                        <span className="text-xl font-bold" style={{ color: state.color }}>{items.length}</span>
+                      </div>
+                      <div className="w-full h-2 bg-white/60 rounded-full overflow-hidden">
+                        <div className="h-full rounded-full transition-all" style={{ width: `${allRejected.length ? (items.length / allRejected.length) * 100 : 0}%`, backgroundColor: state.color }} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* By category + detailed list */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+              {Object.entries(byCat).map(([catId, items]) => {
+                const cat = RECHAZO_CATEGORIES[catId];
+                if (items.length === 0) return null;
+                return (
+                  <div key={catId} className="bg-white rounded-xl border border-[#e5e7eb] overflow-hidden">
+                    <div className="px-4 py-3 border-b border-[#e5e7eb] flex items-center justify-between" style={{ backgroundColor: `${cat.color}08` }}>
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: cat.color }} />
+                        <span className="text-xs font-semibold" style={{ color: cat.color }}>{cat.label}</span>
+                      </div>
+                      <span className="text-xs font-bold" style={{ color: cat.color }}>{items.length}</span>
+                    </div>
+                    <div className="divide-y divide-[#f3f4f6]">
+                      {items.map(p => {
+                        const seg = prospectoSeguimiento[p.id];
+                        const urgency = getSeguimientoUrgency(seg);
+                        const recovery = getRecoveryState(seg);
+                        return (
+                          <div key={p.id} className="px-4 py-2.5 cursor-pointer hover:bg-[#f9fafb] transition-colors"
+                            onClick={() => { setSelectedProspecto(p); setMostrarDetallesProspecto(true); }}>
+                            <div className="flex items-center justify-between mb-0.5">
+                              <span className="text-[11px] font-semibold text-[#1c2c4a] truncate">{p.empresa}</span>
+                              <span className="text-[9px] font-medium px-1.5 py-0.5 rounded-full flex-shrink-0" style={{ backgroundColor: recovery.bg, color: recovery.color }}>{recovery.label}</span>
+                            </div>
+                            <div className="text-[10px] text-[#9ca3af] truncate mb-1">{p.motivoRechazo || 'Sin motivo'}</div>
+                            <div className="flex items-center justify-between">
+                              <span className="text-[10px] text-[#6b7280]">{p.ejecutivo} · ${((p.propuesta?.ventaTotal || p.facturacionEstimada || 0) / 1000000).toFixed(1)}M</span>
+                              {urgency?.overdue && <span className="text-[9px] font-bold text-red-500"><AlertCircle size={8} className="inline" /> Vencido {urgency.days}d</span>}
+                              {!seg?.fechaSeguimiento && cat.recoverable && (
+                                <button onClick={(e) => { e.stopPropagation(); guardarSeguimiento(p.id, { fechaSeguimiento: new Date(Date.now() + cat.defaultFollowUpDays * 86400000).toISOString().split('T')[0] }); }}
+                                  className="text-[9px] font-semibold text-[#00a8a8] hover:underline flex items-center gap-0.5">
+                                  <Calendar size={8} /> Agendar
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         );
       })()}
 
