@@ -4438,6 +4438,7 @@ const InnovativeDemo = () => {
   const [mostrarLevantamiento, setMostrarLevantamiento] = useState(false);
   const [mostrarPropuesta, setMostrarPropuesta] = useState(false);
   const [mostrarDetallesProspecto, setMostrarDetallesProspecto] = useState(false);
+  const [detallesProspectoTab, setDetallesProspectoTab] = useState('info');
   const [mostrarLeads, setMostrarLeads] = useState(false);
   const [showNuevoLead, setShowNuevoLead] = useState(false);
   const [nuevoLeadForm, setNuevoLeadForm] = useState({
@@ -6350,13 +6351,14 @@ const InnovativeDemo = () => {
               })()}
             </div>
           </>)}
+            </div>
+            <style>{`
+              @keyframes slideInRight {
+                from { transform: translateX(100%); }
+                to { transform: translateX(0); }
+              }
+            `}</style>
           </div>
-          <style>{`
-            @keyframes slideInRight {
-              from { transform: translateX(100%); }
-              to { transform: translateX(0); }
-            }
-          `}</style>
         </>
       );
     };
@@ -10529,11 +10531,64 @@ const InnovativeDemo = () => {
                 <h2 className="text-xl font-semibold">{selectedProspecto.empresa}</h2>
                 <p className="text-sm text-white/90 mt-1">{selectedProspecto.industria}</p>
               </div>
-              <button onClick={() => setMostrarDetallesProspecto(false)} className="text-white hover:text-white/80">
+              <button onClick={() => { setMostrarDetallesProspecto(false); setDetallesProspectoTab('info'); }} className="text-white hover:text-white/80">
                 <X size={24} />
               </button>
             </div>
-            
+
+            {/* CRM Tabs */}
+            <div className="flex gap-1 px-6 py-3 bg-[#f9fafb] border-b border-[#e5e7eb] overflow-x-auto">
+              {[
+                { id: 'info', label: 'Info', icon: ClipboardList },
+                { id: 'timeline', label: 'Timeline', icon: Clock },
+                { id: 'notas', label: 'Notas', icon: MessageSquare },
+                { id: 'reuniones', label: 'Reuniones', icon: Users },
+                { id: 'docs', label: 'Docs', icon: FileText },
+                { id: 'propuestas', label: 'Propuestas', icon: Send },
+              ].map(tab => (
+                <button
+                  key={tab.id}
+                  onClick={() => setDetallesProspectoTab(tab.id)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
+                    detallesProspectoTab === tab.id
+                      ? 'bg-[#00a8a8] text-white'
+                      : 'bg-white text-[#6b7280] hover:bg-[#e5e7eb] border border-[#e5e7eb]'
+                  }`}
+                >
+                  <tab.icon size={14} />
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+
+            {/* CRM Components */}
+            {detallesProspectoTab === 'timeline' && (
+              <div className="p-6">
+                <ProspectTimeline prospectId={selectedProspecto.id} />
+              </div>
+            )}
+            {detallesProspectoTab === 'notas' && (
+              <div className="p-6">
+                <ProspectNotes prospectId={selectedProspecto.id} />
+              </div>
+            )}
+            {detallesProspectoTab === 'reuniones' && (
+              <div className="p-6">
+                <ProspectMeetings prospectId={selectedProspecto.id} />
+              </div>
+            )}
+            {detallesProspectoTab === 'docs' && (
+              <div className="p-6">
+                <ProspectDocuments prospectId={selectedProspecto.id} />
+              </div>
+            )}
+            {detallesProspectoTab === 'propuestas' && (
+              <div className="p-6">
+                <ProspectProposals prospectId={selectedProspecto.id} />
+              </div>
+            )}
+
+            {detallesProspectoTab === 'info' && (
             <div className="p-6">
               {/* INFORMACIÓN BÁSICA */}
               <div className="grid grid-cols-2 gap-4 mb-6">
@@ -10674,6 +10729,7 @@ const InnovativeDemo = () => {
                 )}
               </div>
             </div>
+            )}
           </div>
         </div>
       )}
