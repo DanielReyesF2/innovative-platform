@@ -1,4 +1,8 @@
 import { Router } from "express";
+import multer from "multer";
+import path from "path";
+import fs from "fs";
+import { fileURLToPath } from "url";
 import { requireAuth, requireRole } from "../../middleware/auth";
 import {
   getProspects,
@@ -44,10 +48,67 @@ import {
   getSalesForecast,
   getWinLossAnalysis,
   getCompetitorAnalysis,
+  // Post-reunion Vero
+  getVentasReales,
+  getVentasRealesByUser,
+  createOrUpdateVentaReal,
+  getKpisMensuales,
+  getKpisMensualesByUser,
+  createOrUpdateKpiMensual,
+  getRechazadasConVencimiento,
+  getRechazadasProximasAVencer,
 } from "./storage";
-import { insertProspectSchema, insertLeadSchema } from "../../../shared/schema/comercial";
+import { insertProspectSchema, insertLeadSchema, insertVentaRealSchema, insertKpiMensualSchema } from "../../../shared/schema/comercial";
 
 export const router = Router();
+
+// Configure multer for document uploads
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const uploadsDir = path.resolve(__dirname, "../../../dist/uploads/comercial");
+
+// Ensure uploads directory exists
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+const storage = multer.diskStorage({
+  destination: (req, _file, cb) => {
+    const prospectId = req.params.id;
+    const prospectDir = path.join(uploadsDir, prospectId);
+    if (!fs.existsSync(prospectDir)) {
+      fs.mkdirSync(prospectDir, { recursive: true });
+    }
+    cb(null, prospectDir);
+  },
+  filename: (_req, file, cb) => {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    const ext = path.extname(file.originalname);
+    cb(null, `${uniqueSuffix}${ext}`);
+  },
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB max
+  fileFilter: (_req, file, cb) => {
+    const allowedTypes = [
+      "application/pdf",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "application/vnd.ms-excel",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "image/jpeg",
+      "image/png",
+      "image/gif",
+    ];
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error("Tipo de archivo no permitido"));
+    }
+  },
+});
 
 router.use(requireAuth);
 
@@ -550,6 +611,157 @@ router.get("/reports/competitors", async (_req, res) => {
     res.json(analysis);
   } catch (error) {
     console.error("[comercial] Competitor analysis error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+// === POST-REUNION VERO ROUTES (Feb 2026) ===
+
+// --- Ventas Reales ---
+
+router.get("/ventas-reales", async (req, res) => {
+  try {
+    const año = req.query.año ? Number(req.query.año) : undefined;
+    const ventas = await getVentasReales(año);
+    res.json(ventas);
+  } catch (error) {
+    console.error("[comercial] Get ventas reales error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+router.get("/ventas-reales/user/:userId", async (req, res) => {
+  try {
+    const userId = Number(req.params.userId);
+    const año = req.query.año ? Number(req.query.año) : undefined;
+    const ventas = await getVentasRealesByUser(userId, año);
+    res.json(ventas);
+  } catch (error) {
+    console.error("[comercial] Get user ventas reales error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+router.post("/ventas-reales", async (req, res) => {
+  try {
+    const parsed = insertVentaRealSchema.parse(req.body);
+    const venta = await createOrUpdateVentaReal(parsed);
+    res.status(201).json(venta);
+  } catch (error) {
+    console.error("[comercial] Create venta real error:", error);
+    res.status(400).json({ message: "Datos invalidos" });
+  }
+});
+
+// --- KPIs Mensuales ---
+
+router.get("/kpis-mensuales", async (req, res) => {
+  try {
+    const año = req.query.año ? Number(req.query.año) : undefined;
+    const kpis = await getKpisMensuales(año);
+    res.json(kpis);
+  } catch (error) {
+    console.error("[comercial] Get kpis mensuales error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+router.get("/kpis-mensuales/user/:userId", async (req, res) => {
+  try {
+    const userId = Number(req.params.userId);
+    const año = req.query.año ? Number(req.query.año) : undefined;
+    const kpis = await getKpisMensualesByUser(userId, año);
+    res.json(kpis);
+  } catch (error) {
+    console.error("[comercial] Get user kpis mensuales error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+router.post("/kpis-mensuales", requireRole("admin"), async (req, res) => {
+  try {
+    const parsed = insertKpiMensualSchema.parse(req.body);
+    const kpi = await createOrUpdateKpiMensual(parsed);
+    res.status(201).json(kpi);
+  } catch (error) {
+    console.error("[comercial] Create kpi mensual error:", error);
+    res.status(400).json({ message: "Datos invalidos" });
+  }
+});
+
+// --- Rechazadas con Vencimiento de Contrato ---
+
+router.get("/rechazadas/con-vencimiento", async (_req, res) => {
+  try {
+    const rechazadas = await getRechazadasConVencimiento();
+    res.json(rechazadas);
+  } catch (error) {
+    console.error("[comercial] Get rechazadas con vencimiento error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+router.get("/rechazadas/proximas-a-vencer", async (req, res) => {
+  try {
+    const dias = req.query.dias ? Number(req.query.dias) : 30;
+    const rechazadas = await getRechazadasProximasAVencer(dias);
+    res.json(rechazadas);
+  } catch (error) {
+    console.error("[comercial] Get rechazadas proximas a vencer error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+// --- Document Upload ---
+
+router.post("/prospects/:id/documents/upload", upload.single("file"), async (req, res) => {
+  try {
+    const file = req.file;
+    if (!file) {
+      return res.status(400).json({ message: "Archivo requerido" });
+    }
+
+    const prospectId = Number(req.params.id);
+    const tipo = (req.body.tipo as string) || "otro";
+    const markAsClosed = req.body.markAsClosed === "true";
+
+    // Create document record
+    const relativePath = `/uploads/comercial/${prospectId}/${file.filename}`;
+    const document = await createDocument({
+      prospectId,
+      name: file.originalname,
+      type: tipo,
+      url: relativePath,
+      fileSize: file.size,
+      mimeType: file.mimetype,
+      uploadedById: (req as any).user.id,
+    });
+
+    // If it's an OC and user wants to mark as closed
+    if (tipo === "orden_compra" && markAsClosed) {
+      await updateProspect(prospectId, { stage: "cierre" });
+    }
+
+    res.status(201).json(document);
+  } catch (error) {
+    console.error("[comercial] Upload document error:", error);
+    res.status(500).json({ message: "Error al subir archivo" });
+  }
+});
+
+// Serve uploaded files
+router.get("/uploads/:prospectId/:filename", async (req, res) => {
+  try {
+    const { prospectId, filename } = req.params;
+    const filePath = path.join(uploadsDir, prospectId, filename);
+
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ message: "Archivo no encontrado" });
+    }
+
+    res.sendFile(filePath);
+  } catch (error) {
+    console.error("[comercial] Serve file error:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 });

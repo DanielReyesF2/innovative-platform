@@ -115,6 +115,8 @@ export const prospects = pgTable("prospects", {
   lastContactAt: timestamp("last_contact_at"),
   nextFollowUpAt: timestamp("next_follow_up_at"),
   competitors: text("competitors").array(),
+  // Rejected prospects: contract expiration date for follow-up
+  fechaVencimientoContrato: timestamp("fecha_vencimiento_contrato"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -309,6 +311,46 @@ export const insertAlertSchema = createInsertSchema(followUpAlerts, {
   title: z.string().min(1).max(200),
 }).omit({ id: true, createdAt: true });
 
+// === POST-REUNION VERO TABLES (Feb 2026) ===
+
+// Ventas Reales por Ejecutivo (monthly actual sales)
+export const ventasReales = pgTable("ventas_reales", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  mes: integer("mes").notNull(), // 1-12
+  año: integer("año").notNull(),
+  monto: numeric("monto", { precision: 14, scale: 2 }).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// KPIs Mensuales (historical data structure for year-over-year comparisons)
+export const kpisMensuales = pgTable("kpis_mensuales", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  año: integer("año").notNull(),
+  mes: integer("mes").notNull(), // 1-12
+  leads: integer("leads").default(0),
+  prospectos: integer("prospectos").default(0),
+  reuniones: integer("reuniones").default(0),
+  levantamientos: integer("levantamientos").default(0),
+  propuestas: integer("propuestas").default(0),
+  cierres: integer("cierres").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Validators for new tables
+export const insertVentaRealSchema = createInsertSchema(ventasReales, {
+  mes: z.number().min(1).max(12),
+  año: z.number().min(2020).max(2100),
+  monto: z.string().or(z.number()),
+}).omit({ id: true, createdAt: true, updatedAt: true });
+
+export const insertKpiMensualSchema = createInsertSchema(kpisMensuales, {
+  mes: z.number().min(1).max(12),
+  año: z.number().min(2020).max(2100),
+}).omit({ id: true, createdAt: true });
+
 // Types
 export type Prospect = typeof prospects.$inferSelect;
 export type InsertProspect = z.infer<typeof insertProspectSchema>;
@@ -331,3 +373,9 @@ export type ProposalVersion = typeof proposalVersions.$inferSelect;
 export type InsertProposal = z.infer<typeof insertProposalSchema>;
 export type FollowUpAlert = typeof followUpAlerts.$inferSelect;
 export type InsertAlert = z.infer<typeof insertAlertSchema>;
+
+// Post-reunion types
+export type VentaReal = typeof ventasReales.$inferSelect;
+export type InsertVentaReal = z.infer<typeof insertVentaRealSchema>;
+export type KpiMensual = typeof kpisMensuales.$inferSelect;
+export type InsertKpiMensual = z.infer<typeof insertKpiMensualSchema>;

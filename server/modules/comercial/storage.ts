@@ -12,6 +12,8 @@ import {
   prospectDocuments,
   proposalVersions,
   followUpAlerts,
+  ventasReales,
+  kpisMensuales,
   type InsertProspect,
   type InsertLead,
   type InsertActivity,
@@ -20,6 +22,8 @@ import {
   type InsertProspectDocument,
   type InsertProposal,
   type InsertAlert,
+  type InsertVentaReal,
+  type InsertKpiMensual,
 } from "../../../shared/schema/comercial";
 import {
   surveys,
@@ -693,4 +697,143 @@ export async function getCompetitorAnalysis() {
       ? (stats.wins / (stats.wins + stats.losses)) * 100
       : 0,
   }));
+}
+
+// === POST-REUNION VERO FUNCTIONS (Feb 2026) ===
+
+// --- Ventas Reales ---
+
+export async function getVentasReales(año?: number) {
+  if (año) {
+    return db.query.ventasReales.findMany({
+      where: eq(ventasReales.año, año),
+      orderBy: [desc(ventasReales.mes)],
+    });
+  }
+  return db.query.ventasReales.findMany({
+    orderBy: [desc(ventasReales.año), desc(ventasReales.mes)],
+  });
+}
+
+export async function getVentasRealesByUser(userId: number, año?: number) {
+  const conditions = [eq(ventasReales.userId, userId)];
+  if (año) conditions.push(eq(ventasReales.año, año));
+
+  return db.query.ventasReales.findMany({
+    where: and(...conditions),
+    orderBy: [desc(ventasReales.año), desc(ventasReales.mes)],
+  });
+}
+
+export async function getVentaReal(userId: number, mes: number, año: number) {
+  return db.query.ventasReales.findFirst({
+    where: and(
+      eq(ventasReales.userId, userId),
+      eq(ventasReales.mes, mes),
+      eq(ventasReales.año, año)
+    ),
+  });
+}
+
+export async function createOrUpdateVentaReal(data: InsertVentaReal) {
+  // Check if exists
+  const existing = await getVentaReal(data.userId, data.mes, data.año);
+
+  if (existing) {
+    const [updated] = await db
+      .update(ventasReales)
+      .set({ monto: String(data.monto), updatedAt: new Date() })
+      .where(eq(ventasReales.id, existing.id))
+      .returning();
+    return updated;
+  }
+
+  const [created] = await db
+    .insert(ventasReales)
+    .values({ ...data, monto: String(data.monto) })
+    .returning();
+  return created;
+}
+
+// --- KPIs Mensuales ---
+
+export async function getKpisMensuales(año?: number) {
+  if (año) {
+    return db.query.kpisMensuales.findMany({
+      where: eq(kpisMensuales.año, año),
+      orderBy: [desc(kpisMensuales.mes)],
+    });
+  }
+  return db.query.kpisMensuales.findMany({
+    orderBy: [desc(kpisMensuales.año), desc(kpisMensuales.mes)],
+  });
+}
+
+export async function getKpisMensualesByUser(userId: number, año?: number) {
+  const conditions = [eq(kpisMensuales.userId, userId)];
+  if (año) conditions.push(eq(kpisMensuales.año, año));
+
+  return db.query.kpisMensuales.findMany({
+    where: and(...conditions),
+    orderBy: [desc(kpisMensuales.año), desc(kpisMensuales.mes)],
+  });
+}
+
+export async function getKpiMensual(userId: number, mes: number, año: number) {
+  return db.query.kpisMensuales.findFirst({
+    where: and(
+      eq(kpisMensuales.userId, userId),
+      eq(kpisMensuales.mes, mes),
+      eq(kpisMensuales.año, año)
+    ),
+  });
+}
+
+export async function createOrUpdateKpiMensual(data: InsertKpiMensual) {
+  const existing = await getKpiMensual(data.userId, data.mes, data.año);
+
+  if (existing) {
+    const [updated] = await db
+      .update(kpisMensuales)
+      .set({
+        leads: data.leads,
+        prospectos: data.prospectos,
+        reuniones: data.reuniones,
+        levantamientos: data.levantamientos,
+        propuestas: data.propuestas,
+        cierres: data.cierres,
+      })
+      .where(eq(kpisMensuales.id, existing.id))
+      .returning();
+    return updated;
+  }
+
+  const [created] = await db.insert(kpisMensuales).values(data).returning();
+  return created;
+}
+
+// --- Rejected Prospects with Contract Expiration ---
+
+export async function getRechazadasConVencimiento() {
+  return db.query.prospects.findMany({
+    where: and(
+      eq(prospects.stage, "rechazada"),
+      sql`${prospects.fechaVencimientoContrato} is not null`
+    ),
+    orderBy: [prospects.fechaVencimientoContrato],
+  });
+}
+
+export async function getRechazadasProximasAVencer(diasAnticipacion: number = 30) {
+  const fechaLimite = new Date();
+  fechaLimite.setDate(fechaLimite.getDate() + diasAnticipacion);
+
+  return db.query.prospects.findMany({
+    where: and(
+      eq(prospects.stage, "rechazada"),
+      sql`${prospects.fechaVencimientoContrato} is not null`,
+      lte(prospects.fechaVencimientoContrato, fechaLimite)
+    ),
+    orderBy: [prospects.fechaVencimientoContrato],
+  });
 }

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
@@ -35,15 +35,19 @@ import {
   FileSpreadsheet,
   FileImage,
   Presentation,
+  Upload,
 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useProspectDocuments, useCreateDocument, useDeleteDocument } from "../api";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 interface ProspectDocumentsProps {
   prospectId: number;
 }
 
 const documentTypeLabels: Record<string, string> = {
+  propuesta: "Propuesta",
+  orden_compra: "Orden de Compra",
   contrato: "Contrato",
   cotizacion: "Cotizacion",
   presentacion: "Presentacion",
@@ -51,8 +55,10 @@ const documentTypeLabels: Record<string, string> = {
 };
 
 const documentTypeColors: Record<string, string> = {
+  propuesta: "bg-blue-100 text-blue-700",
+  orden_compra: "bg-green-100 text-green-700",
   contrato: "bg-red-100 text-red-700",
-  cotizacion: "bg-green-100 text-green-700",
+  cotizacion: "bg-teal-100 text-teal-700",
   presentacion: "bg-purple-100 text-purple-700",
   otro: "bg-gray-100 text-gray-700",
 };
@@ -83,7 +89,13 @@ const formatFileSize = (bytes?: number) => {
 
 export function ProspectDocuments({ prospectId }: ProspectDocumentsProps) {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [uploadType, setUploadType] = useState("otro");
+  const [markAsClosed, setMarkAsClosed] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [newDoc, setNewDoc] = useState({
     name: "",
     type: "otro",
@@ -94,6 +106,82 @@ export function ProspectDocuments({ prospectId }: ProspectDocumentsProps) {
   const { data: documents = [], isLoading } = useProspectDocuments(prospectId);
   const createDocument = useCreateDocument();
   const deleteDocument = useDeleteDocument();
+
+  // File upload mutation
+  const uploadMutation = useMutation({
+    mutationFn: async ({ file, tipo, markAsClosed }: { file: File; tipo: string; markAsClosed: boolean }) => {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("tipo", tipo);
+      formData.append("markAsClosed", markAsClosed.toString());
+
+      const response = await fetch(`/api/comercial/prospects/${prospectId}/documents/upload`, {
+        method: "POST",
+        body: formData,
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Error al subir archivo");
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/comercial/prospects/${prospectId}/documents`] });
+      toast({ title: "Documento subido correctamente" });
+      setUploadType("otro");
+      setMarkAsClosed(false);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Handle file upload
+  const handleFileUpload = useCallback(async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+
+    setUploading(true);
+    for (const file of Array.from(files)) {
+      try {
+        await uploadMutation.mutateAsync({ file, tipo: uploadType, markAsClosed });
+      } catch {
+        // Error handled by mutation
+      }
+    }
+    setUploading(false);
+  }, [uploadMutation, uploadType, markAsClosed]);
+
+  // Drag and drop handlers
+  const handleDragEnter = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    handleFileUpload(e.dataTransfer.files);
+  }, [handleFileUpload]);
 
   const handleCreateDocument = async () => {
     if (!newDoc.name.trim() || !newDoc.url.trim()) {
@@ -152,14 +240,14 @@ export function ProspectDocuments({ prospectId }: ProspectDocumentsProps) {
         <h4 className="font-medium">Documentos</h4>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button size="sm">
+            <Button size="sm" variant="outline">
               <Plus className="h-4 w-4 mr-1" />
-              Agregar
+              Link externo
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Agregar Documento</DialogTitle>
+              <DialogTitle>Agregar Documento (Link)</DialogTitle>
             </DialogHeader>
             <div className="space-y-4 mt-4">
               <div>
@@ -181,6 +269,8 @@ export function ProspectDocuments({ prospectId }: ProspectDocumentsProps) {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="propuesta">Propuesta</SelectItem>
+                    <SelectItem value="orden_compra">Orden de Compra</SelectItem>
                     <SelectItem value="contrato">Contrato</SelectItem>
                     <SelectItem value="cotizacion">Cotizacion</SelectItem>
                     <SelectItem value="presentacion">Presentacion</SelectItem>
@@ -221,6 +311,88 @@ export function ProspectDocuments({ prospectId }: ProspectDocumentsProps) {
             </div>
           </DialogContent>
         </Dialog>
+      </div>
+
+      {/* Drag & Drop Upload Zone */}
+      <div
+        className={`border-2 border-dashed rounded-lg p-6 mb-4 transition-all ${
+          isDragging
+            ? "border-primary bg-primary/5"
+            : "border-muted-foreground/25 hover:border-primary/50"
+        }`}
+        onDragEnter={handleDragEnter}
+        onDragLeave={handleDragLeave}
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
+      >
+        <input
+          ref={fileInputRef}
+          type="file"
+          className="hidden"
+          multiple
+          accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.gif"
+          onChange={(e) => handleFileUpload(e.target.files)}
+        />
+
+        <div className="text-center">
+          {uploading ? (
+            <div className="flex flex-col items-center gap-2">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+              <p className="text-sm text-muted-foreground">Subiendo archivo...</p>
+            </div>
+          ) : (
+            <>
+              <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+              <p className="text-sm font-medium mb-1">
+                Arrastra archivos aqui o{" "}
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="text-primary hover:underline"
+                >
+                  selecciona
+                </button>
+              </p>
+              <p className="text-xs text-muted-foreground">
+                PDF, Word, Excel, imagenes (max 10MB)
+              </p>
+            </>
+          )}
+        </div>
+
+        {/* Upload options */}
+        <div className="mt-4 flex flex-wrap items-center gap-4 justify-center">
+          <div className="flex items-center gap-2">
+            <label className="text-xs font-medium">Tipo:</label>
+            <Select value={uploadType} onValueChange={setUploadType}>
+              <SelectTrigger className="w-[140px] h-8 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="propuesta">Propuesta</SelectItem>
+                <SelectItem value="orden_compra">Orden de Compra</SelectItem>
+                <SelectItem value="contrato">Contrato</SelectItem>
+                <SelectItem value="cotizacion">Cotizacion</SelectItem>
+                <SelectItem value="presentacion">Presentacion</SelectItem>
+                <SelectItem value="otro">Otro</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {uploadType === "orden_compra" && (
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="markAsClosed"
+                checked={markAsClosed}
+                onChange={(e) => setMarkAsClosed(e.target.checked)}
+                className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
+              />
+              <label htmlFor="markAsClosed" className="text-xs cursor-pointer">
+                Marcar prospecto como cerrado
+              </label>
+            </div>
+          )}
+        </div>
       </div>
 
       {isLoading ? (

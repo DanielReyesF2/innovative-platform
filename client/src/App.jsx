@@ -18,7 +18,7 @@ import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, us
 import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import html2canvas from 'html2canvas';
-import { Home, TrendingUp, Package, Users, FileText, Settings, ChevronRight, Download, Search, Filter, Bell, LogOut, Menu, X, DollarSign, Target, PhoneCall, Award, Calendar, MapPin, Truck, Leaf, Briefcase, ClipboardList, CheckSquare, AlertCircle, Send, Eye, Recycle, Trash2, BarChart3, TrendingDown, ChevronDown, ChevronUp, Save, FileImage, RotateCcw, Building2, GripVertical, Lock, Unlock, ArrowRight, Plus, ArrowLeft, Upload, Paperclip, MessageSquare, Clock, Image, Phone, Mail, ExternalLink, Copy, Check, XCircle, CheckCircle } from 'lucide-react';
+import { Home, TrendingUp, Package, Users, FileText, Settings, ChevronRight, Download, Search, Filter, Bell, LogOut, Menu, X, DollarSign, Target, PhoneCall, Award, Calendar, MapPin, Truck, Leaf, Briefcase, ClipboardList, CheckSquare, AlertCircle, Send, Eye, Recycle, Trash2, BarChart3, TrendingDown, ChevronDown, ChevronUp, Save, FileImage, RotateCcw, Building2, GripVertical, Lock, Unlock, ArrowRight, Plus, ArrowLeft, Upload, Paperclip, MessageSquare, Clock, Image, Phone, Mail, ExternalLink, Copy, Check, XCircle, CheckCircle, Edit3, CalendarClock } from 'lucide-react';
 
 // AVATAR COMPONENT — muestra foto del ejecutivo con fallback a iniciales
 const ExecutiveAvatar = ({ codigo, name, size = 'md', className = '' }) => {
@@ -4494,6 +4494,12 @@ const InnovativeDemo = () => {
   const [prospectoArchivos, setProspectoArchivos] = useState({}); // { prospectoId: [{name, type, size, date, id}] }
   const [prospectoSeguimiento, setProspectoSeguimiento] = useState({}); // { prospectoId: { fechaSeguimiento, accion, notas, fechaCreacion } }
 
+  // Ventas Reales Modal states (Post-reunion Vero Feb 2026)
+  const [showVentasRealesModal, setShowVentasRealesModal] = useState(false);
+  const [ventaRealMonto, setVentaRealMonto] = useState('');
+  const [ventaRealMes, setVentaRealMes] = useState(new Date().getMonth() + 1);
+  const [ventaRealAño, setVentaRealAño] = useState(new Date().getFullYear());
+
   // Pipeline view states
   const [pipelineViewMode, setPipelineViewMode] = useState('kanban'); // 'kanban' | 'funnel' | 'tabla'
   const [comercialTab, setComercialTab] = useState('pipeline'); // 'pipeline' | 'presupuesto' | 'rechazadas'
@@ -5744,6 +5750,10 @@ const InnovativeDemo = () => {
     const [selectedProspecto, setSelectedProspecto] = React.useState(null);
     const [copiedField, setCopiedField] = React.useState(null);
     const [hubActiveKanbanId, setHubActiveKanbanId] = React.useState(null);
+    const [showHistorial, setShowHistorial] = React.useState(false);
+    const [historialMesExpandido, setHistorialMesExpandido] = React.useState(null);
+    const [showRechazadasModal, setShowRechazadasModal] = React.useState(false);
+    const [expandedColumns, setExpandedColumns] = React.useState({});
 
     const handleFileUpload = (e) => {
       if (!selectedProspecto) return;
@@ -6037,6 +6047,36 @@ const InnovativeDemo = () => {
                         placeholder="Ej: Revisar precios al vencer contrato"
                         className="w-full px-3 py-2 border border-[#e5e7eb] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#00a8a8]/30 focus:border-[#00a8a8]"
                       />
+                    </div>
+                    {/* Fecha de vencimiento de contrato (Post-reunion Vero Feb 2026) */}
+                    <div>
+                      <label className="block text-[11px] font-semibold text-[#1c2c4a] mb-1 flex items-center gap-1">
+                        <CalendarClock size={12} className="text-[#00a8a8]" />
+                        Vencimiento de contrato actual
+                      </label>
+                      <input type="date" value={seg?.fechaVencimientoContrato || ''}
+                        onChange={(e) => guardarSeguimiento(p.id, { fechaVencimientoContrato: e.target.value })}
+                        className="w-full px-3 py-2 border border-[#e5e7eb] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#00a8a8]/30 focus:border-[#00a8a8]"
+                      />
+                      {seg?.fechaVencimientoContrato && (() => {
+                        const venceEn = Math.floor((new Date(seg.fechaVencimientoContrato) - new Date()) / (1000 * 60 * 60 * 24));
+                        const estaVencido = venceEn < 0;
+                        const vencePronto = venceEn >= 0 && venceEn <= 30;
+                        return (
+                          <div className="mt-1 text-[10px] font-semibold flex items-center gap-1" style={{
+                            color: estaVencido ? '#EF4444' : vencePronto ? '#F59E0B' : '#6b7280'
+                          }}>
+                            {estaVencido ? (
+                              <><AlertCircle size={10} /> Contrato vencido hace {Math.abs(venceEn)} días - URGENTE</>
+                            ) : vencePronto ? (
+                              <><Bell size={10} /> Vence pronto: {venceEn} días</>
+                            ) : (
+                              <><CheckCircle size={10} /> Vence en {venceEn} días</>
+                            )}
+                          </div>
+                        );
+                      })()}
+                      <p className="text-[9px] text-[#9ca3af] mt-0.5">Si rechazaron por contrato vigente, indica cuando vence para hacer seguimiento</p>
                     </div>
                     {cat?.suggestedActions && (
                       <div>
@@ -6401,7 +6441,7 @@ const InnovativeDemo = () => {
       {/* BACK + HEADER */}
       <div className="flex items-center gap-3 mb-6">
         <button
-          onClick={() => { setHubEjecutivo(null); setCurrentView('dashboard'); }}
+          onClick={() => { setHubEjecutivo(null); setCurrentView('comercial'); }}
           className="flex items-center justify-center w-9 h-9 rounded-lg bg-white border border-[#e5e7eb] hover:bg-[#f3f4f6] transition-colors"
         >
           <ArrowLeft size={18} className="text-[#6b7280]" />
@@ -6439,18 +6479,24 @@ const InnovativeDemo = () => {
           const vencidos = memberRechazados.filter(p => getSeguimientoUrgency(prospectoSeguimiento[p.id])?.overdue).length;
           const conSeg = memberRechazados.filter(p => prospectoSeguimiento[p.id]?.fechaSeguimiento).length;
           return (
-            <div className={`bg-white rounded-xl border p-3 text-center ${vencidos > 0 ? 'border-red-300' : 'border-[#e5e7eb]'}`}>
+            <button
+              onClick={() => setShowRechazadasModal(true)}
+              className={`bg-white rounded-xl border p-3 text-center hover:shadow-md transition-all ${vencidos > 0 ? 'border-red-300' : 'border-[#e5e7eb]'}`}
+            >
               <div className="flex items-center justify-center gap-1">
                 <div className="text-2xl font-bold" style={{ color: vencidos > 0 ? '#EF4444' : '#F59E0B' }}>{memberRechazados.length}</div>
                 {vencidos > 0 && <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />}
               </div>
               <div className="text-xs text-[#6b7280] mt-0.5">Rechazadas</div>
               <div className="text-[9px] text-[#9ca3af] mt-0.5">{conSeg} con seguimiento</div>
-            </div>
+            </button>
           );
         })()}
         {member.presupuestoAnual2026 > 0 && (
-          <div className="bg-white rounded-xl border border-[#e5e7eb] p-3 text-center">
+          <button
+            onClick={() => setShowVentasRealesModal(true)}
+            className="bg-white rounded-xl border border-[#e5e7eb] p-3 text-center hover:shadow-md hover:border-[#00a8a8]/50 transition-all cursor-pointer"
+          >
             <div className="text-2xl font-bold" style={{ color: member.cumplimientoPresupuesto >= 70 ? '#2E7D32' : member.cumplimientoPresupuesto >= 40 ? '#F57C00' : '#DC2626' }}>
               {member.cumplimientoPresupuesto}%
             </div>
@@ -6461,9 +6507,226 @@ const InnovativeDemo = () => {
                 backgroundColor: member.cumplimientoPresupuesto >= 70 ? '#2E7D32' : member.cumplimientoPresupuesto >= 40 ? '#F57C00' : '#DC2626',
               }} />
             </div>
-          </div>
+            <div className="text-[9px] text-[#00a8a8] mt-1 flex items-center justify-center gap-0.5">
+              <Edit3 size={8} /> Editar venta real
+            </div>
+          </button>
         )}
       </div>
+
+      {/* DETAILED KPIs ROW — con progress bars */}
+      {(() => {
+        const ultimaSemana = member.kpisSemanales?.[member.kpisSemanales.length - 1];
+        const penultimaSemana = member.kpisSemanales?.[member.kpisSemanales.length - 2];
+        const score = calcularScorePonderado(ultimaSemana);
+        const scoreColor = score > 0 ? getScoreColor(score) : null;
+        const kpiKeys = Object.keys(KPI_METAS);
+
+        return ultimaSemana ? (
+          <div className="bg-white rounded-xl border border-[#e5e7eb] p-4 mb-5">
+            <div className="grid grid-cols-3 md:grid-cols-7 gap-3">
+              {kpiKeys.map(kpiKey => {
+                const real = ultimaSemana?.[kpiKey] || 0;
+                const prevReal = penultimaSemana?.[kpiKey] || 0;
+                const meta = KPI_METAS[kpiKey].meta;
+                const pct = meta > 0 ? (real / meta) * 100 : 0;
+                const diff = real - prevReal;
+                const pace = calcularPace(real, meta, KPI_METAS[kpiKey].frecuencia);
+
+                return (
+                  <div key={kpiKey} className="text-center">
+                    <div className="text-[10px] text-[#6b7280] uppercase tracking-wide mb-1">{KPI_METAS[kpiKey].label}</div>
+                    <div className={`text-lg font-bold ${meta === 0 ? 'text-[#1c2c4a]' : ''}`} style={meta > 0 ? { color: getBarColor(pct) } : undefined}>
+                      {real}{meta > 0 ? `/${meta}` : ''}
+                    </div>
+                    {meta > 0 && (
+                      <div className="w-full h-1.5 bg-[#e5e7eb] rounded-full overflow-hidden mt-1">
+                        <div className="h-full rounded-full transition-all" style={{ width: `${Math.min(pct, 100)}%`, backgroundColor: getBarColor(pct) }} />
+                      </div>
+                    )}
+                    <div className="flex items-center justify-center gap-1 mt-1">
+                      {pace !== null && (
+                        <span className={`text-[10px] font-medium ${pace >= 0 ? 'text-[#2E7D32]' : 'text-[#EF4444]'}`}>
+                          {pace >= 0 ? 'adelante' : 'atras'}
+                        </span>
+                      )}
+                      {diff !== 0 && penultimaSemana && (
+                        <span className={`text-[10px] font-semibold ${diff > 0 ? 'text-[#2E7D32]' : 'text-[#EF4444]'}`}>
+                          {diff > 0 ? '+' : ''}{diff}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+              {/* Tendencia */}
+              <div className="text-center">
+                <div className="text-[10px] text-[#6b7280] uppercase tracking-wide mb-1">Tendencia</div>
+                <div className="flex justify-center">
+                  <Sparkline
+                    data={(member.kpisSemanales || []).slice(-8).map(s => (s.leadsNuevos || 0) + (s.reunionesAgendadas || 0) + (s.levantamientos || 0))}
+                    width={60}
+                    height={24}
+                    color="#00a8a8"
+                  />
+                </div>
+              </div>
+              {/* Score */}
+              <div className="text-center">
+                <div className="text-[10px] text-[#6b7280] uppercase tracking-wide mb-1">Score</div>
+                {score > 0 ? (
+                  <div className="flex flex-col items-center">
+                    <div className="inline-flex items-center px-2 py-0.5 rounded-full text-sm font-bold" style={{ backgroundColor: scoreColor.bgLight, color: scoreColor.text }}>
+                      {score.toFixed(0)}%
+                    </div>
+                    <span className="text-[9px] font-medium mt-0.5" style={{ color: scoreColor.text }}>{scoreColor.label}</span>
+                  </div>
+                ) : (
+                  <span className="text-xs text-[#9ca3af]">—</span>
+                )}
+              </div>
+            </div>
+          </div>
+        ) : null;
+      })()}
+
+      {/* HISTORIAL DE DESEMPEÑO — Timeline limpio */}
+      {(() => {
+        const kpiData = member.kpisSemanales || [];
+        if (kpiData.length === 0) return null;
+
+        // Agrupar semanas por mes
+        const weekToMonth = (semana) => {
+          const baseWeek = 31;
+          const monthOffset = Math.floor((semana - baseWeek) / 4);
+          const months = ['Ago', 'Sep', 'Oct', 'Nov', 'Dic', 'Ene', 'Feb'];
+          return months[Math.min(Math.max(monthOffset, 0), months.length - 1)] || 'Feb';
+        };
+
+        const porMes = {};
+        kpiData.forEach(week => {
+          const mes = weekToMonth(week.semana);
+          if (!porMes[mes]) {
+            porMes[mes] = { semanas: [], totals: { leadsNuevos: 0, reunionesAgendadas: 0, levantamientos: 0, propuestasEnviadas: 0, propuestasRechazadas: 0 } };
+          }
+          porMes[mes].semanas.push(week);
+          porMes[mes].totals.leadsNuevos += week.leadsNuevos || 0;
+          porMes[mes].totals.reunionesAgendadas += week.reunionesAgendadas || 0;
+          porMes[mes].totals.levantamientos += week.levantamientos || 0;
+          porMes[mes].totals.propuestasEnviadas += week.propuestasEnviadas || 0;
+          porMes[mes].totals.propuestasRechazadas += week.propuestasRechazadas || 0;
+        });
+
+        const mesesOrden = ['Ago', 'Sep', 'Oct', 'Nov', 'Dic', 'Ene', 'Feb'];
+        const mesesData = mesesOrden.filter(m => porMes[m]).map(mes => {
+          const d = porMes[mes];
+          const numSemanas = d.semanas.length;
+          const metaLeads = KPI_METAS.leadsNuevos.meta * numSemanas;
+          const metaReuniones = KPI_METAS.reunionesAgendadas.meta * numSemanas;
+          const metaLevantamientos = KPI_METAS.levantamientos.meta;
+
+          let scorePonderado = 0;
+          let totalPeso = 0;
+          if (metaLeads > 0) {
+            scorePonderado += Math.min((d.totals.leadsNuevos / metaLeads) * 100, 150) * KPI_METAS.leadsNuevos.peso;
+            totalPeso += KPI_METAS.leadsNuevos.peso;
+          }
+          if (metaReuniones > 0) {
+            scorePonderado += Math.min((d.totals.reunionesAgendadas / metaReuniones) * 100, 150) * KPI_METAS.reunionesAgendadas.peso;
+            totalPeso += KPI_METAS.reunionesAgendadas.peso;
+          }
+          if (metaLevantamientos > 0) {
+            scorePonderado += Math.min((d.totals.levantamientos / metaLevantamientos) * 100, 150) * KPI_METAS.levantamientos.peso;
+            totalPeso += KPI_METAS.levantamientos.peso;
+          }
+          const score = totalPeso > 0 ? scorePonderado / totalPeso : 0;
+
+          return { mes, ...d.totals, numSemanas, score, semanas: d.semanas };
+        });
+
+        return (
+          <div className="bg-white rounded-xl border border-[#e5e7eb] p-4 mb-5">
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-sm font-semibold text-[#1c2c4a]">Historial</span>
+              <button
+                onClick={() => setShowHistorial(!showHistorial)}
+                className="text-xs text-[#0D47A1] hover:underline"
+              >
+                {showHistorial ? 'Ver menos' : 'Ver detalle'}
+              </button>
+            </div>
+
+            {/* Timeline horizontal de meses */}
+            <div className="flex items-stretch gap-2">
+              {mesesData.map((m, i) => {
+                const scoreColor = getScoreColor(m.score);
+                const isSelected = historialMesExpandido === m.mes;
+                return (
+                  <button
+                    key={i}
+                    onClick={() => setHistorialMesExpandido(isSelected ? null : m.mes)}
+                    className={`flex-1 p-3 rounded-lg border transition-all ${isSelected ? 'border-[#0D47A1] bg-[#0D47A1]/5' : 'border-[#e5e7eb] hover:border-[#d1d5db]'}`}
+                  >
+                    <div className="text-xs text-[#6b7280] mb-1">{m.mes}</div>
+                    <div className="text-lg font-bold" style={{ color: scoreColor.text }}>{m.score.toFixed(0)}%</div>
+                    <div className="w-full h-1 rounded-full bg-[#e5e7eb] mt-2 overflow-hidden">
+                      <div className="h-full rounded-full" style={{ width: `${Math.min(m.score, 100)}%`, backgroundColor: scoreColor.bg }} />
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Detalle del mes seleccionado */}
+            {historialMesExpandido && (() => {
+              const m = mesesData.find(x => x.mes === historialMesExpandido);
+              if (!m) return null;
+              const scoreColor = getScoreColor(m.score);
+              return (
+                <div className="mt-4 pt-4 border-t border-[#e5e7eb]">
+                  <div className="grid grid-cols-5 gap-4 text-center mb-4">
+                    <div>
+                      <div className="text-2xl font-bold text-[#1c2c4a]">{m.leadsNuevos}</div>
+                      <div className="text-[10px] text-[#6b7280]">Leads</div>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold text-[#1c2c4a]">{m.reunionesAgendadas}</div>
+                      <div className="text-[10px] text-[#6b7280]">Reuniones</div>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold text-[#1c2c4a]">{m.levantamientos}</div>
+                      <div className="text-[10px] text-[#6b7280]">Levantam.</div>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold text-[#1c2c4a]">{m.propuestasEnviadas}</div>
+                      <div className="text-[10px] text-[#6b7280]">Propuestas</div>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold" style={{ color: m.propuestasRechazadas > 0 ? '#EF4444' : '#9ca3af' }}>{m.propuestasRechazadas}</div>
+                      <div className="text-[10px] text-[#6b7280]">Rechazos</div>
+                    </div>
+                  </div>
+
+                  {/* Semanas del mes */}
+                  {showHistorial && (
+                    <div className="space-y-1">
+                      {m.semanas.map((sem, j) => (
+                        <div key={j} className="flex items-center gap-3 text-xs py-1.5 px-2 rounded bg-[#f9fafb]">
+                          <span className="text-[#9ca3af] w-12">Sem {sem.semana}</span>
+                          <span className="text-[#1c2c4a]">{sem.leadsNuevos} leads</span>
+                          <span className="text-[#1c2c4a]">{sem.reunionesAgendadas} reuniones</span>
+                          <span className="text-[#1c2c4a]">{sem.levantamientos} levant.</span>
+                          {sem.comentario && <span className="text-[#6b7280] italic ml-auto truncate max-w-[200px]">"{sem.comentario}"</span>}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+          </div>
+        );
+      })()}
 
       {/* PIPELINE — Kanban personal del ejecutivo */}
         <div className="space-y-4">
@@ -6522,71 +6785,93 @@ const InnovativeDemo = () => {
                           className={`min-h-[120px] transition-colors rounded-lg flex-1 ${isOver ? 'bg-[#00a8a8]/5 ring-2 ring-[#00a8a8]/30' : ''}`}
                         >
                           <SortableContext items={stageItems.map(p => p.id)} strategy={verticalListSortingStrategy}>
-                            <div className="space-y-0">
-                              {stageItems.map(prospecto => {
-                                const { attributes, listeners, setNodeRef: cardRef, transform, transition, isDragging } = useSortable({
-                                  id: prospecto.id,
-                                  data: { type: 'card', prospecto },
-                                });
-                                const valor = prospecto.propuesta?.ventaTotal || prospecto.facturacionEstimada || 0;
-                                const primaryService = (prospecto.servicios || [])[0] || 'rme';
-                                const svc = SERVICE_COLORS[primaryService] || SERVICE_COLORS.rme;
-                                return (
-                                  <div
-                                    key={prospecto.id}
-                                    ref={cardRef}
-                                    style={{
-                                      transform: CSS.Transform.toString(transform),
-                                      transition,
-                                      opacity: isDragging ? 0.5 : 1,
-                                      backgroundColor: svc.bg,
-                                      borderLeft: `3px solid ${svc.border}`,
-                                    }}
-                                    {...attributes}
-                                    {...listeners}
-                                    className="rounded-lg p-1.5 mb-1 cursor-grab active:cursor-grabbing hover:shadow-md transition-all"
-                                    onClick={(e) => { if (!isDragging) { e.stopPropagation(); setSelectedProspecto(prospecto); setMostrarDetallesProspecto(true); } }}
-                                  >
-                                    <div className="flex items-center justify-between gap-1 mb-0.5">
-                                      <h4 className="text-[12px] font-semibold text-[#1c2c4a] truncate leading-tight flex-1 min-w-0">{prospecto.empresa}</h4>
-                                      <span className="text-[8px] font-bold px-1 py-px rounded-full whitespace-nowrap flex-shrink-0" style={{ backgroundColor: `${svc.border}18`, color: svc.text }}>{svc.label}</span>
-                                    </div>
-                                    {(() => {
-                                      const fechaRef = estimarFechaProspecto(prospecto);
-                                      return (
-                                        <div className="flex items-center justify-between text-[10px] text-[#9ca3af]">
-                                          <div className="flex items-center gap-1">
-                                            {prospecto.ciudad && <span className="truncate max-w-[50px]">{prospecto.ciudad.split(',')[0]}</span>}
-                                            <span className="font-semibold px-1 py-px rounded text-[8px]" style={{ color: urgencyColor(fechaRef), backgroundColor: `${urgencyColor(fechaRef)}12` }}>
-                                              {timeAgo(fechaRef)}
-                                            </span>
-                                          </div>
-                                          <div className="flex items-center gap-1 flex-shrink-0">
-                                            {(prospectoNotas[prospecto.id]?.length > 0) && <span className="flex items-center gap-0.5 text-[#9ca3af]"><MessageSquare size={8} />{prospectoNotas[prospecto.id].length}</span>}
-                                            {(prospectoArchivos[prospecto.id]?.length > 0) && <span className="flex items-center gap-0.5 text-[#9ca3af]"><Paperclip size={8} />{prospectoArchivos[prospecto.id].length}</span>}
-                                          </div>
-                                          {valor > 0 && <span className="font-bold text-[#0D47A1]">${(valor / 1000000).toFixed(1)}M</span>}
+                            {(() => {
+                              const MAX_VISIBLE = 3;
+                              const isExpanded = expandedColumns[stage.id];
+                              const visibleItems = isExpanded ? stageItems : stageItems.slice(0, MAX_VISIBLE);
+                              const hiddenCount = stageItems.length - MAX_VISIBLE;
+
+                              return (
+                                <div className="space-y-0">
+                                  {visibleItems.map(prospecto => {
+                                    const { attributes, listeners, setNodeRef: cardRef, transform, transition, isDragging } = useSortable({
+                                      id: prospecto.id,
+                                      data: { type: 'card', prospecto },
+                                    });
+                                    const valor = prospecto.propuesta?.ventaTotal || prospecto.facturacionEstimada || 0;
+                                    const primaryService = (prospecto.servicios || [])[0] || 'rme';
+                                    const svc = SERVICE_COLORS[primaryService] || SERVICE_COLORS.rme;
+                                    return (
+                                      <div
+                                        key={prospecto.id}
+                                        ref={cardRef}
+                                        style={{
+                                          transform: CSS.Transform.toString(transform),
+                                          transition,
+                                          opacity: isDragging ? 0.5 : 1,
+                                          backgroundColor: svc.bg,
+                                          borderLeft: `3px solid ${svc.border}`,
+                                        }}
+                                        {...attributes}
+                                        {...listeners}
+                                        className="rounded-lg p-1.5 mb-1 cursor-grab active:cursor-grabbing hover:shadow-md transition-all"
+                                        onClick={(e) => { if (!isDragging) { e.stopPropagation(); setSelectedProspecto(prospecto); setMostrarDetallesProspecto(true); } }}
+                                      >
+                                        <div className="flex items-center justify-between gap-1 mb-0.5">
+                                          <h4 className="text-[12px] font-semibold text-[#1c2c4a] truncate leading-tight flex-1 min-w-0">{prospecto.empresa}</h4>
+                                          <span className="text-[8px] font-bold px-1 py-px rounded-full whitespace-nowrap flex-shrink-0" style={{ backgroundColor: `${svc.border}18`, color: svc.text }}>{svc.label}</span>
                                         </div>
-                                      );
-                                    })()}
-                                    {(() => {
-                                      const campos = calcularCamposCompletos(prospecto);
-                                      const completos = campos.filter(c => c.ok).length;
-                                      const total = campos.length;
-                                      const pct = (completos / total) * 100;
-                                      const barColor = completos === total ? '#2E7D32' : pct >= 60 ? '#F57C00' : '#ef4444';
-                                      return (
-                                        <div className="mt-1">
-                                          <div className="w-full h-[2px] bg-black/[0.04] rounded-full overflow-hidden">
-                                            <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: barColor }} />
-                                          </div>
-                                        </div>
-                                      );
-                                    })()}
-                                  </div>
-                                );
-                              })}
-                            </div>
+                                        {(() => {
+                                          const fechaRef = estimarFechaProspecto(prospecto);
+                                          return (
+                                            <div className="flex items-center justify-between text-[10px] text-[#9ca3af]">
+                                              <div className="flex items-center gap-1">
+                                                {prospecto.ciudad && <span className="truncate max-w-[50px]">{prospecto.ciudad.split(',')[0]}</span>}
+                                                <span className="font-semibold px-1 py-px rounded text-[8px]" style={{ color: urgencyColor(fechaRef), backgroundColor: `${urgencyColor(fechaRef)}12` }}>
+                                                  {timeAgo(fechaRef)}
+                                                </span>
+                                              </div>
+                                              <div className="flex items-center gap-1 flex-shrink-0">
+                                                {(prospectoNotas[prospecto.id]?.length > 0) && <span className="flex items-center gap-0.5 text-[#9ca3af]"><MessageSquare size={8} />{prospectoNotas[prospecto.id].length}</span>}
+                                                {(prospectoArchivos[prospecto.id]?.length > 0) && <span className="flex items-center gap-0.5 text-[#9ca3af]"><Paperclip size={8} />{prospectoArchivos[prospecto.id].length}</span>}
+                                              </div>
+                                              {valor > 0 && <span className="font-bold text-[#0D47A1]">${(valor / 1000000).toFixed(1)}M</span>}
+                                            </div>
+                                          );
+                                        })()}
+                                        {(() => {
+                                          const campos = calcularCamposCompletos(prospecto);
+                                          const completos = campos.filter(c => c.ok).length;
+                                          const total = campos.length;
+                                          const pct = (completos / total) * 100;
+                                          const barColor = completos === total ? '#2E7D32' : pct >= 60 ? '#F57C00' : '#ef4444';
+                                          return (
+                                            <div className="mt-1">
+                                              <div className="w-full h-[2px] bg-black/[0.04] rounded-full overflow-hidden">
+                                                <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: barColor }} />
+                                              </div>
+                                            </div>
+                                          );
+                                        })()}
+                                      </div>
+                                    );
+                                  })}
+                                  {/* Ver más / Ver menos button */}
+                                  {hiddenCount > 0 && (
+                                    <button
+                                      onClick={(e) => { e.stopPropagation(); setExpandedColumns(prev => ({ ...prev, [stage.id]: !isExpanded })); }}
+                                      className="w-full py-1.5 text-[10px] font-medium text-[#0D47A1] hover:bg-[#0D47A1]/5 rounded-lg transition-colors flex items-center justify-center gap-1"
+                                    >
+                                      {isExpanded ? (
+                                        <>Ver menos <ChevronUp size={12} /></>
+                                      ) : (
+                                        <>+{hiddenCount} más <ChevronDown size={12} /></>
+                                      )}
+                                    </button>
+                                  )}
+                                </div>
+                              );
+                            })()}
                           </SortableContext>
                           {stageItems.length === 0 && (
                             <div className="flex items-center justify-center h-16 border-2 border-dashed border-[#e5e7eb] rounded-lg text-[10px] text-[#9ca3af]">
@@ -6612,57 +6897,190 @@ const InnovativeDemo = () => {
             </DragOverlay>
           </DndContext>
 
-          {/* Rejected section — Call to Action */}
-          {memberRechazados.length > 0 && (
-            <div className="bg-white rounded-lg border border-[#e5e7eb] p-3">
-              <div className="flex items-center justify-between mb-3">
-                <h4 className="text-xs font-semibold text-[#1c2c4a] flex items-center gap-1.5">
-                  <AlertCircle size={12} className="text-[#F59E0B]" />
-                  Oportunidades Rechazadas ({memberRechazados.length})
-                </h4>
-                {(() => {
-                  const conSeg = memberRechazados.filter(p => prospectoSeguimiento[p.id]?.fechaSeguimiento).length;
-                  const vencidos = memberRechazados.filter(p => getSeguimientoUrgency(prospectoSeguimiento[p.id])?.overdue).length;
-                  return (
-                    <div className="flex items-center gap-2 text-[10px]">
-                      {vencidos > 0 && <span className="px-1.5 py-0.5 bg-red-100 text-red-700 rounded-full font-bold animate-pulse">{vencidos} vencido{vencidos > 1 ? 's' : ''}</span>}
-                      <span className="text-[#6b7280]">{conSeg}/{memberRechazados.length} con seguimiento</span>
+          {/* MODAL: Oportunidades Rechazadas */}
+          {showRechazadasModal && memberRechazados.length > 0 && (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setShowRechazadasModal(false)}>
+              <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[80vh] overflow-hidden" onClick={e => e.stopPropagation()}>
+                {/* Header */}
+                <div className="flex items-center justify-between p-4 border-b border-[#e5e7eb]">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-[#F59E0B]/10 flex items-center justify-center">
+                      <AlertCircle size={20} className="text-[#F59E0B]" />
                     </div>
-                  );
-                })()}
+                    <div>
+                      <h2 className="text-lg font-bold text-[#1c2c4a]">Oportunidades Rechazadas</h2>
+                      <p className="text-xs text-[#6b7280]">
+                        {memberRechazados.filter(p => prospectoSeguimiento[p.id]?.fechaSeguimiento).length}/{memberRechazados.length} con seguimiento
+                      </p>
+                    </div>
+                  </div>
+                  <button onClick={() => setShowRechazadasModal(false)} className="p-2 hover:bg-[#f3f4f6] rounded-lg transition-colors">
+                    <X size={20} className="text-[#6b7280]" />
+                  </button>
+                </div>
+
+                {/* Content */}
+                <div className="p-4 overflow-y-auto max-h-[calc(80vh-80px)]">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {memberRechazados.map(p => {
+                      const cat = classifyRechazo(p.motivoRechazo);
+                      const seg = prospectoSeguimiento[p.id];
+                      const urgency = getSeguimientoUrgency(seg);
+                      return (
+                        <div key={p.id}
+                          className="rounded-xl p-3 cursor-pointer hover:shadow-lg transition-all border"
+                          style={{ backgroundColor: cat?.bgColor || '#f3f4f6', borderColor: `${cat?.color}30` || '#e5e7eb', borderLeft: `4px solid ${cat?.color || '#6b7280'}` }}
+                          onClick={() => { setShowRechazadasModal(false); setSelectedProspecto(p); setMostrarDetallesProspecto(true); }}
+                        >
+                          <div className="flex items-center justify-between gap-2 mb-1">
+                            <h4 className="text-sm font-semibold text-[#1c2c4a] truncate flex-1">{p.empresa}</h4>
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap" style={{ backgroundColor: `${cat?.color}18`, color: cat?.color }}>{cat?.label}</span>
+                          </div>
+                          <div className="text-xs text-[#6b7280] mb-2">{p.motivoRechazo || 'Sin motivo'}</div>
+                          <div className="flex items-center justify-between">
+                            {seg?.fechaSeguimiento ? (
+                              <span className="text-[10px] font-semibold px-2 py-1 rounded-full flex items-center gap-1" style={{ backgroundColor: urgency?.bg, color: urgency?.color }}>
+                                <Calendar size={10} />
+                                {urgency?.overdue ? `Vencido ${urgency.days}d` : urgency?.label}
+                              </span>
+                            ) : (
+                              <span className="text-[10px] text-[#F59E0B] font-medium flex items-center gap-1 opacity-70">
+                                <Bell size={10} /> Sin seguimiento
+                              </span>
+                            )}
+                            {cat?.recoverable && <span className="text-[10px] text-green-600 font-medium bg-green-50 px-2 py-0.5 rounded">Recuperable</span>}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {memberRechazados.map(p => {
-                  const cat = classifyRechazo(p.motivoRechazo);
-                  const seg = prospectoSeguimiento[p.id];
-                  const urgency = getSeguimientoUrgency(seg);
-                  return (
-                    <div key={p.id}
-                      className="rounded-lg p-2.5 cursor-pointer hover:shadow-md transition-all border"
-                      style={{ backgroundColor: cat?.bgColor || '#f3f4f6', borderColor: `${cat?.color}30` || '#e5e7eb', borderLeft: `3px solid ${cat?.color || '#6b7280'}` }}
-                      onClick={() => { setSelectedProspecto(p); setMostrarDetallesProspecto(true); }}
-                    >
-                      <div className="flex items-center justify-between gap-1 mb-0.5">
-                        <h4 className="text-[11px] font-semibold text-[#1c2c4a] truncate flex-1">{p.empresa}</h4>
-                        <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap" style={{ backgroundColor: `${cat?.color}18`, color: cat?.color }}>{cat?.label}</span>
-                      </div>
-                      <div className="text-[10px] text-[#6b7280] truncate mb-1.5">{p.motivoRechazo || 'Sin motivo'}</div>
-                      <div className="flex items-center justify-between">
-                        {seg?.fechaSeguimiento ? (
-                          <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full flex items-center gap-1" style={{ backgroundColor: urgency?.bg, color: urgency?.color }}>
-                            <Calendar size={8} />
-                            {urgency?.overdue ? `Vencido ${urgency.days}d` : urgency?.label}
-                          </span>
-                        ) : (
-                          <span className="text-[9px] text-[#F59E0B] font-medium flex items-center gap-1 opacity-70">
-                            <Bell size={8} /> Sin seguimiento
-                          </span>
-                        )}
-                        {cat?.recoverable && <span className="text-[8px] text-green-600 font-medium bg-green-50 px-1 py-0.5 rounded">Recuperable</span>}
-                      </div>
+            </div>
+          )}
+
+          {/* MODAL: Registrar Venta Real */}
+          {showVentasRealesModal && (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setShowVentasRealesModal(false)}>
+              <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden" onClick={e => e.stopPropagation()}>
+                {/* Header */}
+                <div className="flex items-center justify-between p-4 border-b border-[#e5e7eb]">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-[#00a8a8]/10 flex items-center justify-center">
+                      <DollarSign size={20} className="text-[#00a8a8]" />
                     </div>
-                  );
-                })}
+                    <div>
+                      <h2 className="text-lg font-bold text-[#1c2c4a]">Registrar Venta Real</h2>
+                      <p className="text-xs text-[#6b7280]">{member.name}</p>
+                    </div>
+                  </div>
+                  <button onClick={() => setShowVentasRealesModal(false)} className="p-2 hover:bg-[#f3f4f6] rounded-lg transition-colors">
+                    <X size={20} className="text-[#6b7280]" />
+                  </button>
+                </div>
+
+                {/* Content */}
+                <div className="p-5 space-y-4">
+                  {/* Current budget info */}
+                  <div className="bg-[#f9fafb] rounded-lg p-3 flex items-center justify-between">
+                    <div>
+                      <div className="text-xs text-[#6b7280]">Presupuesto mensual</div>
+                      <div className="text-lg font-bold text-[#1c2c4a]">${(member.presupuestoMensual / 1000000).toFixed(2)}M</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-xs text-[#6b7280]">Venta registrada</div>
+                      <div className="text-lg font-bold text-[#00a8a8]">${(member.ventasReales / 1000000).toFixed(2)}M</div>
+                    </div>
+                  </div>
+
+                  {/* Month/Year selector */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-medium text-[#6b7280] mb-1">Mes</label>
+                      <select
+                        value={ventaRealMes}
+                        onChange={(e) => setVentaRealMes(Number(e.target.value))}
+                        className="w-full px-3 py-2 border border-[#e5e7eb] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#00a8a8]/30 focus:border-[#00a8a8]"
+                      >
+                        {['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'].map((m, i) => (
+                          <option key={i} value={i + 1}>{m}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-[#6b7280] mb-1">Año</label>
+                      <select
+                        value={ventaRealAño}
+                        onChange={(e) => setVentaRealAño(Number(e.target.value))}
+                        className="w-full px-3 py-2 border border-[#e5e7eb] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#00a8a8]/30 focus:border-[#00a8a8]"
+                      >
+                        {[2025, 2026, 2027].map(y => (
+                          <option key={y} value={y}>{y}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Amount input */}
+                  <div>
+                    <label className="block text-xs font-medium text-[#6b7280] mb-1">
+                      Venta Real {['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'][ventaRealMes - 1]} {ventaRealAño} (MXN)
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6b7280]">$</span>
+                      <input
+                        type="number"
+                        value={ventaRealMonto}
+                        onChange={(e) => setVentaRealMonto(e.target.value)}
+                        placeholder="0.00"
+                        className="w-full pl-7 pr-3 py-3 border border-[#e5e7eb] rounded-lg text-lg font-semibold focus:outline-none focus:ring-2 focus:ring-[#00a8a8]/30 focus:border-[#00a8a8]"
+                      />
+                    </div>
+                    <p className="text-[10px] text-[#9ca3af] mt-1">El porcentaje de cumplimiento se recalculará automáticamente</p>
+                  </div>
+                </div>
+
+                {/* Footer */}
+                <div className="p-4 border-t border-[#e5e7eb] flex gap-3">
+                  <button
+                    onClick={() => setShowVentasRealesModal(false)}
+                    className="flex-1 px-4 py-2.5 bg-[#f3f4f6] hover:bg-[#e5e7eb] text-[#1c2c4a] rounded-lg text-sm font-medium transition-colors"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={async () => {
+                      if (!ventaRealMonto) return;
+                      try {
+                        await fetch('/api/comercial/ventas-reales', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          credentials: 'include',
+                          body: JSON.stringify({
+                            userId: member.id,
+                            mes: ventaRealMes,
+                            año: ventaRealAño,
+                            monto: Number(ventaRealMonto)
+                          })
+                        });
+                        setShowVentasRealesModal(false);
+                        setVentaRealMonto('');
+                        // In real app, would refresh data here
+                      } catch (err) {
+                        console.error('Error saving venta real:', err);
+                      }
+                    }}
+                    disabled={!ventaRealMonto}
+                    className={`flex-1 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
+                      ventaRealMonto
+                        ? 'bg-[#00a8a8] hover:bg-[#008080] text-white'
+                        : 'bg-[#e5e7eb] text-[#9ca3af] cursor-not-allowed'
+                    }`}
+                  >
+                    <Save size={16} />
+                    Guardar
+                  </button>
+                </div>
               </div>
             </div>
           )}
