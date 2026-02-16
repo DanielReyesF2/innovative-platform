@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { QueryClientProvider } from '@tanstack/react-query';
-import { queryClient } from '@/lib/queryClient';
+import { QueryClientProvider, useQuery, useMutation } from '@tanstack/react-query';
+import { queryClient, apiRequest } from '@/lib/queryClient';
 import { AuthProvider, useAuth } from '@/lib/auth';
 import { Toaster } from '@/components/ui/toaster';
 import LoginPage from '@/features/auth/page';
@@ -4421,9 +4421,74 @@ const calcularDiasHabiles = (fechaInicio) => {
   return dias;
 };
 
+// Transform API prospect to App.jsx format
+const transformProspect = (p, users = []) => {
+  // Map API stage to App.jsx status
+  const stageMap = {
+    'lead': 'Lead nuevo',
+    'levantamiento': 'Levantamiento',
+    'propuesta': 'Propuesta enviada',
+    'negociacion': 'Negociación',
+    'cierre': 'Inicio de operación',
+    'rechazada': 'Propuesta Rechazada',
+  };
+
+  // Map user ID to ejecutivo code
+  const userToCode = {};
+  users.forEach(u => {
+    if (u.name?.includes('Veronica') || u.name?.includes('Vero')) userToCode[u.id] = 'VA';
+    else if (u.name?.includes('Carmen')) userToCode[u.id] = 'CR';
+    else if (u.name?.includes('Jose') || u.name?.includes('Armando')) userToCode[u.id] = 'JM';
+    else if (u.name?.includes('Rodrigo')) userToCode[u.id] = 'RP';
+    else if (u.name?.includes('Cristina')) userToCode[u.id] = 'CS';
+    else if (u.name?.includes('Laura')) userToCode[u.id] = 'LM';
+    else if (u.name?.includes('Marian')) userToCode[u.id] = 'MO';
+  });
+
+  return {
+    id: p.id,
+    empresa: p.name,
+    planta: null,
+    ciudad: p.location,
+    industria: p.industry,
+    ejecutivo: userToCode[p.assignedToId] || 'CR',
+    contacto: {
+      nombre: p.contactName || '',
+      puesto: p.contactRole || '',
+      correo: p.contactEmail || '',
+      telefono: p.contactPhone || '',
+    },
+    servicios: ['rme'], // Default service
+    status: stageMap[p.stage] || 'Lead nuevo',
+    semana: null,
+    fecha: p.createdAt,
+    propuesta: {
+      status: p.stage === 'propuesta' ? 'Enviada' : null,
+      ventaTotal: Number(p.estimatedValue) || 0,
+      utilidad: 0,
+      carton: null,
+      playo: null,
+    },
+    motivoRechazo: p.rejectionDetail || null,
+    comentarios: p.reason || '',
+    volumenEstimado: p.estimatedVolume,
+    facturacionEstimada: Number(p.estimatedValue) || 0,
+    probability: p.probability || 30,
+    priority: p.priority || 'media',
+    nextStep: p.nextStep,
+  };
+};
+
 const InnovativeDemo = () => {
-  // Auth is handled externally - always start with dashboard
-  // User is already authenticated when this component renders
+  // Fetch prospects from API
+  const { data: apiProspects = [], isLoading: prospectsLoading } = useQuery({
+    queryKey: ['/api/comercial/prospects'],
+  });
+
+  // Fetch users for mapping
+  const { data: apiUsers = [] } = useQuery({
+    queryKey: ['/api/settings/users'],
+  });
 
   const [currentView, setCurrentView] = useState('dashboard');
   const [loginEmail, setLoginEmail] = useState('');
@@ -4484,7 +4549,15 @@ const InnovativeDemo = () => {
   // Pipeline view states
   const [pipelineViewMode, setPipelineViewMode] = useState('kanban'); // 'kanban' | 'funnel' | 'tabla'
   const [comercialTab, setComercialTab] = useState('pipeline'); // 'pipeline' | 'presupuesto' | 'rechazadas'
-  const [kanbanProspectos, setKanbanProspectos] = useState(topProspectos);
+  const [kanbanProspectos, setKanbanProspectos] = useState([]);
+
+  // Sync API data to kanbanProspectos state
+  useEffect(() => {
+    if (apiProspects.length > 0) {
+      const transformed = apiProspects.map(p => transformProspect(p, apiUsers));
+      setKanbanProspectos(transformed);
+    }
+  }, [apiProspects, apiUsers]);
   const [activeKanbanId, setActiveKanbanId] = useState(null);
   const [showStageGateModal, setShowStageGateModal] = useState(false);
   const [pendingMove, setPendingMove] = useState(null); // {prospecto, fromStage, toStage}
