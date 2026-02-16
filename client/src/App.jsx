@@ -5886,42 +5886,37 @@ const InnovativeDemo = () => {
       ];
 
       return (
-        <>
-          {/* Backdrop */}
-          <div className="fixed inset-0 bg-black/30 z-40 transition-opacity" onClick={onClose} />
-          {/* Drawer */}
-          <div className="fixed inset-y-0 right-0 w-full max-w-lg bg-white shadow-2xl z-50 overflow-hidden flex flex-col animate-in slide-in-from-right" style={{ animation: 'slideInRight 0.25s ease-out' }}>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={onClose}>
+          <div className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-2xl flex flex-col" onClick={e => e.stopPropagation()}>
             {/* Header */}
-            <div className="bg-white border-b border-[#e5e7eb] px-5 py-4">
+            <div className="bg-[#00a8a8] text-white px-6 py-4 rounded-t-xl">
               <div className="flex items-center justify-between mb-2">
-                <button onClick={onClose} className="flex items-center gap-1.5 text-sm text-[#6b7280] hover:text-[#1c2c4a] transition-colors">
-                  <ArrowLeft size={16} /> Volver
-                </button>
-                <div className="flex items-center gap-1.5">
-                  <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: stageInfo?.color || '#6b7280' }} />
-                  <span className="text-xs font-semibold" style={{ color: stageInfo?.color }}>{stageInfo?.label || p.status}</span>
+                <div>
+                  <h2 className="text-xl font-bold">{p.empresa}{p.planta ? ` — ${p.planta}` : ''}</h2>
+                  {p.ciudad && <p className="text-sm text-white/80 flex items-center gap-1 mt-0.5"><MapPin size={12} /> {p.ciudad}{p.industria ? ` · ${p.industria}` : ''}</p>}
                 </div>
+                <button onClick={onClose} className="text-white hover:text-white/80 p-1">
+                  <X size={24} />
+                </button>
               </div>
-              <h2 className="text-lg font-bold text-[#1c2c4a]">{p.empresa}{p.planta ? ` — ${p.planta}` : ''}</h2>
-              {p.ciudad && <p className="text-sm text-[#6b7280] flex items-center gap-1 mt-0.5"><MapPin size={12} /> {p.ciudad}{p.industria ? ` · ${p.industria}` : ''}</p>}
+            </div>
 
-              {/* CRM Tabs */}
-              <div className="flex gap-1 mt-4 overflow-x-auto pb-1">
-                {CRM_TABS.map(tab => (
-                  <button
-                    key={tab.id}
-                    onClick={() => setDrawerTab(tab.id)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
-                      drawerTab === tab.id
-                        ? 'bg-[#00a8a8] text-white'
-                        : 'bg-[#f3f4f6] text-[#6b7280] hover:bg-[#e5e7eb]'
-                    }`}
-                  >
-                    <tab.icon size={14} />
-                    {tab.label}
-                  </button>
-                ))}
-              </div>
+            {/* CRM Tabs */}
+            <div className="flex gap-1 px-6 py-3 bg-[#f9fafb] border-b border-[#e5e7eb] overflow-x-auto">
+              {CRM_TABS.map(tab => (
+                <button
+                  key={tab.id}
+                  onClick={() => setDrawerTab(tab.id)}
+                  className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                    drawerTab === tab.id
+                      ? 'bg-[#00a8a8] text-white shadow-sm'
+                      : 'bg-white text-[#6b7280] hover:bg-[#e5e7eb] border border-[#e5e7eb]'
+                  }`}
+                >
+                  <tab.icon size={16} />
+                  {tab.label}
+                </button>
+              ))}
             </div>
 
             {/* CRM Components - shown based on tab */}
@@ -6352,14 +6347,8 @@ const InnovativeDemo = () => {
             </div>
           </>)}
             </div>
-            <style>{`
-              @keyframes slideInRight {
-                from { transform: translateX(100%); }
-                to { transform: translateX(0); }
-              }
-            `}</style>
           </div>
-        </>
+        </div>
       );
     };
 
