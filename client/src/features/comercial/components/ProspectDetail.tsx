@@ -15,9 +15,19 @@ import {
   Warehouse,
   Target,
   CheckCircle,
+  Clock,
+  StickyNote,
+  Users,
+  FileText,
+  FileCheck,
 } from "lucide-react";
 import { useUpdateProspect, useSendToOperaciones } from "../api";
 import { useToast } from "@/components/ui/use-toast";
+import { ProspectTimeline } from "./ProspectTimeline";
+import { ProspectNotes } from "./ProspectNotes";
+import { ProspectMeetings } from "./ProspectMeetings";
+import { ProspectDocuments } from "./ProspectDocuments";
+import { ProspectProposals } from "./ProspectProposals";
 
 const STAGE_LABELS: Record<string, string> = {
   lead: "Leads",
@@ -42,8 +52,10 @@ interface ProspectDetailProps {
   onClose: () => void;
 }
 
+type TabType = "info" | "levantamiento" | "timeline" | "notas" | "reuniones" | "documentos" | "propuestas";
+
 export function ProspectDetail({ prospect, onClose }: ProspectDetailProps) {
-  const [activeTab, setActiveTab] = useState<"info" | "levantamiento">("info");
+  const [activeTab, setActiveTab] = useState<TabType>("info");
   const [levData, setLevData] = useState<any>(prospect.levantamientoData || {});
   const [showConfirmSend, setShowConfirmSend] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -115,38 +127,41 @@ export function ProspectDetail({ prospect, onClose }: ProspectDetailProps) {
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-2 border-b px-6">
-          <button
-            onClick={() => setActiveTab("info")}
-            className={`px-4 py-2 text-sm font-medium transition-colors ${
-              activeTab === "info"
-                ? "border-b-2 border-primary text-primary"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            Informacion General
-          </button>
-          <button
-            onClick={() => setActiveTab("levantamiento")}
-            className={`px-4 py-2 text-sm font-medium transition-colors ${
-              activeTab === "levantamiento"
-                ? "border-b-2 border-primary text-primary"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            Datos de Levantamiento
-          </button>
+        <div className="flex gap-1 border-b px-6 overflow-x-auto">
+          {[
+            { id: "info", label: "Info", icon: Building2 },
+            { id: "timeline", label: "Timeline", icon: Clock },
+            { id: "notas", label: "Notas", icon: StickyNote },
+            { id: "reuniones", label: "Reuniones", icon: Users },
+            { id: "documentos", label: "Docs", icon: FileText },
+            { id: "propuestas", label: "Propuestas", icon: FileCheck },
+            { id: "levantamiento", label: "Levantamiento", icon: Target },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as TabType)}
+              className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-colors whitespace-nowrap ${
+                activeTab === tab.id
+                  ? "border-b-2 border-primary text-primary"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <tab.icon className="h-4 w-4" />
+              {tab.label}
+            </button>
+          ))}
         </div>
 
         {/* Content */}
         <div className="flex-1 overflow-auto p-6">
-          {activeTab === "info" ? (
-            <InfoTab prospect={prospect} />
-          ) : (
-            <LevantamientoTab
-              data={levData}
-              onChange={setLevData}
-            />
+          {activeTab === "info" && <InfoTab prospect={prospect} />}
+          {activeTab === "timeline" && <ProspectTimeline prospectId={prospect.id} />}
+          {activeTab === "notas" && <ProspectNotes prospectId={prospect.id} />}
+          {activeTab === "reuniones" && <ProspectMeetings prospectId={prospect.id} />}
+          {activeTab === "documentos" && <ProspectDocuments prospectId={prospect.id} />}
+          {activeTab === "propuestas" && <ProspectProposals prospectId={prospect.id} />}
+          {activeTab === "levantamiento" && (
+            <LevantamientoTab data={levData} onChange={setLevData} />
           )}
         </div>
 

@@ -13,10 +13,13 @@ import {
   ChevronRight,
   AlertCircle,
   BarChart3,
+  FileBarChart,
 } from "lucide-react";
 import { useProspects, usePipeline, useLeads } from "./api";
 import { KpiSection } from "@/features/kpis/components/KpiSection";
 import { ProspectDetail } from "./components/ProspectDetail";
+import { ComercialReports } from "./components/ComercialReports";
+import { AlertsDropdown } from "./components/AlertsDropdown";
 
 const STAGE_LABELS: Record<string, string> = {
   lead: "Leads",
@@ -45,16 +48,19 @@ const PRIORITY_COLORS: Record<string, string> = {
 
 export default function ComercialPage() {
   const { user } = useAuth();
-  const [mainTab, setMainTab] = useState<"pipeline" | "kpis">("pipeline");
+  const [mainTab, setMainTab] = useState<"pipeline" | "kpis" | "reportes">("pipeline");
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Pipeline Comercial</h1>
-        <p className="text-muted-foreground">
-          Gestión de prospectos, leads y embudo de ventas
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Pipeline Comercial</h1>
+          <p className="text-muted-foreground">
+            Gestión de prospectos, leads y embudo de ventas
+          </p>
+        </div>
+        <AlertsDropdown />
       </div>
 
       {/* Main tab selector */}
@@ -81,9 +87,22 @@ export default function ComercialPage() {
           <BarChart3 className="h-4 w-4" />
           KPIs
         </button>
+        <button
+          onClick={() => setMainTab("reportes")}
+          className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-t-md transition-colors ${
+            mainTab === "reportes"
+              ? "border-b-2 border-primary text-primary"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <FileBarChart className="h-4 w-4" />
+          Reportes
+        </button>
       </div>
 
-      {mainTab === "pipeline" ? <PipelineView /> : <KpiSection moduleSlug="comercial" compact />}
+      {mainTab === "pipeline" && <PipelineView />}
+      {mainTab === "kpis" && <KpiSection moduleSlug="comercial" compact />}
+      {mainTab === "reportes" && <ComercialReports />}
     </div>
   );
 }
