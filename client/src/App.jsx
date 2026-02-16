@@ -4,6 +4,12 @@ import { queryClient } from '@/lib/queryClient';
 import { AuthProvider, useAuth } from '@/lib/auth';
 import { Toaster } from '@/components/ui/toaster';
 import LoginPage from '@/features/auth/page';
+// CRM Components
+import { ProspectTimeline } from '@/features/comercial/components/ProspectTimeline';
+import { ProspectNotes } from '@/features/comercial/components/ProspectNotes';
+import { ProspectMeetings } from '@/features/comercial/components/ProspectMeetings';
+import { ProspectDocuments } from '@/features/comercial/components/ProspectDocuments';
+import { ProspectProposals } from '@/features/comercial/components/ProspectProposals';
 import { BarChart, Bar, LineChart, Line, AreaChart, Area, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ComposedChart, ReferenceLine, RadialBarChart, RadialBar } from 'recharts';
 import { ResponsiveSankey } from '@nivo/sankey';
 import { ResponsiveFunnel } from '@nivo/funnel';
@@ -5857,6 +5863,7 @@ const InnovativeDemo = () => {
 
     // --- PROSPECT DETAIL DRAWER ---
     const ProspectoDrawer = ({ prospecto, onClose }) => {
+      const [drawerTab, setDrawerTab] = React.useState('info');
       if (!prospecto) return null;
       const p = prospecto;
       const stageInfo = KANBAN_STAGES.find(s => s.id === p.status);
@@ -5868,14 +5875,23 @@ const InnovativeDemo = () => {
         return { ...col, nombre: svc?.nombre || s, id: s };
       }) || [];
 
+      const CRM_TABS = [
+        { id: 'info', label: 'Info', icon: ClipboardList },
+        { id: 'timeline', label: 'Timeline', icon: Clock },
+        { id: 'notas', label: 'Notas', icon: MessageSquare },
+        { id: 'reuniones', label: 'Reuniones', icon: Users },
+        { id: 'docs', label: 'Docs', icon: FileText },
+        { id: 'propuestas', label: 'Propuestas', icon: Send },
+      ];
+
       return (
         <>
           {/* Backdrop */}
           <div className="fixed inset-0 bg-black/30 z-40 transition-opacity" onClick={onClose} />
           {/* Drawer */}
-          <div className="fixed inset-y-0 right-0 w-full max-w-lg bg-white shadow-2xl z-50 overflow-y-auto animate-in slide-in-from-right" style={{ animation: 'slideInRight 0.25s ease-out' }}>
+          <div className="fixed inset-y-0 right-0 w-full max-w-lg bg-white shadow-2xl z-50 overflow-hidden flex flex-col animate-in slide-in-from-right" style={{ animation: 'slideInRight 0.25s ease-out' }}>
             {/* Header */}
-            <div className="sticky top-0 bg-white border-b border-[#e5e7eb] px-5 py-4 z-10">
+            <div className="bg-white border-b border-[#e5e7eb] px-5 py-4">
               <div className="flex items-center justify-between mb-2">
                 <button onClick={onClose} className="flex items-center gap-1.5 text-sm text-[#6b7280] hover:text-[#1c2c4a] transition-colors">
                   <ArrowLeft size={16} /> Volver
@@ -5887,10 +5903,59 @@ const InnovativeDemo = () => {
               </div>
               <h2 className="text-lg font-bold text-[#1c2c4a]">{p.empresa}{p.planta ? ` — ${p.planta}` : ''}</h2>
               {p.ciudad && <p className="text-sm text-[#6b7280] flex items-center gap-1 mt-0.5"><MapPin size={12} /> {p.ciudad}{p.industria ? ` · ${p.industria}` : ''}</p>}
+
+              {/* CRM Tabs */}
+              <div className="flex gap-1 mt-4 overflow-x-auto pb-1">
+                {CRM_TABS.map(tab => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setDrawerTab(tab.id)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
+                      drawerTab === tab.id
+                        ? 'bg-[#00a8a8] text-white'
+                        : 'bg-[#f3f4f6] text-[#6b7280] hover:bg-[#e5e7eb]'
+                    }`}
+                  >
+                    <tab.icon size={14} />
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
             </div>
 
-            {/* REJECTION BANNER + FOLLOW-UP FORM */}
-            {p.status === 'Propuesta Rechazada' && (() => {
+            {/* CRM Components - shown based on tab */}
+            <div className="flex-1 overflow-y-auto">
+              {drawerTab === 'timeline' && (
+                <div className="p-5">
+                  <ProspectTimeline prospectId={p.id} />
+                </div>
+              )}
+              {drawerTab === 'notas' && (
+                <div className="p-5">
+                  <ProspectNotes prospectId={p.id} />
+                </div>
+              )}
+              {drawerTab === 'reuniones' && (
+                <div className="p-5">
+                  <ProspectMeetings prospectId={p.id} />
+                </div>
+              )}
+              {drawerTab === 'docs' && (
+                <div className="p-5">
+                  <ProspectDocuments prospectId={p.id} />
+                </div>
+              )}
+              {drawerTab === 'propuestas' && (
+                <div className="p-5">
+                  <ProspectProposals prospectId={p.id} />
+                </div>
+              )}
+
+              {/* Info Tab - Original Content */}
+              {drawerTab === 'info' && (
+                <>
+                  {/* REJECTION BANNER + FOLLOW-UP FORM */}
+                  {p.status === 'Propuesta Rechazada' && (() => {
               const cat = classifyRechazo(p.motivoRechazo);
               const seg = prospectoSeguimiento[p.id];
               const urgency = getSeguimientoUrgency(seg);
@@ -6284,6 +6349,7 @@ const InnovativeDemo = () => {
                 );
               })()}
             </div>
+          </>)}
           </div>
           <style>{`
             @keyframes slideInRight {
