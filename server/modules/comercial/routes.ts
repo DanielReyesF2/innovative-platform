@@ -16,6 +16,34 @@ import {
   getSalesMetrics,
   getSalesMetricsByUser,
   sendProspectToOperaciones,
+  // CRM enhancements
+  getProspectActivities,
+  createActivity,
+  getProspectNotes,
+  createNote,
+  updateNote,
+  deleteNote,
+  toggleNotePin,
+  getProspectMeetings,
+  createMeeting,
+  completeMeeting,
+  cancelMeeting,
+  getProspectDocuments,
+  createDocument,
+  deleteDocument,
+  getProposalVersions,
+  createProposal,
+  sendProposal,
+  changeProposalStatus,
+  getAlerts,
+  getPendingAlertsCount,
+  acknowledgeAlert,
+  dismissAlert,
+  generateAlerts,
+  getLeadSourcesReport,
+  getSalesForecast,
+  getWinLossAnalysis,
+  getCompetitorAnalysis,
 } from "./storage";
 import { insertProspectSchema, insertLeadSchema } from "../../../shared/schema/comercial";
 
@@ -211,6 +239,317 @@ router.get("/sales-metrics/user/:userId", async (req, res) => {
     res.json(metrics);
   } catch (error) {
     console.error("[comercial] Get user sales metrics error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+// === CRM ENHANCEMENT ROUTES ===
+
+// --- Activities ---
+
+router.get("/prospects/:id/activities", async (req, res) => {
+  try {
+    const activities = await getProspectActivities(Number(req.params.id));
+    res.json(activities);
+  } catch (error) {
+    console.error("[comercial] Get activities error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+router.post("/prospects/:id/activities", async (req, res) => {
+  try {
+    const activity = await createActivity({
+      ...req.body,
+      prospectId: Number(req.params.id),
+      createdById: (req as any).user.id,
+    });
+    res.status(201).json(activity);
+  } catch (error) {
+    console.error("[comercial] Create activity error:", error);
+    res.status(400).json({ message: "Datos invalidos" });
+  }
+});
+
+// --- Notes ---
+
+router.get("/prospects/:id/notes", async (req, res) => {
+  try {
+    const notes = await getProspectNotes(Number(req.params.id));
+    res.json(notes);
+  } catch (error) {
+    console.error("[comercial] Get notes error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+router.post("/prospects/:id/notes", async (req, res) => {
+  try {
+    const { content } = req.body;
+    if (!content) return res.status(400).json({ message: "Contenido requerido" });
+    const note = await createNote(Number(req.params.id), content, (req as any).user.id);
+    res.status(201).json(note);
+  } catch (error) {
+    console.error("[comercial] Create note error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+router.patch("/prospects/:prospectId/notes/:noteId", async (req, res) => {
+  try {
+    const { content } = req.body;
+    if (!content) return res.status(400).json({ message: "Contenido requerido" });
+    const updated = await updateNote(Number(req.params.noteId), content);
+    res.json(updated);
+  } catch (error) {
+    console.error("[comercial] Update note error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+router.delete("/prospects/:prospectId/notes/:noteId", async (req, res) => {
+  try {
+    await deleteNote(Number(req.params.noteId));
+    res.json({ success: true });
+  } catch (error) {
+    console.error("[comercial] Delete note error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+router.post("/prospects/:prospectId/notes/:noteId/toggle-pin", async (req, res) => {
+  try {
+    const updated = await toggleNotePin(Number(req.params.noteId));
+    res.json(updated);
+  } catch (error) {
+    console.error("[comercial] Toggle pin error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+// --- Meetings ---
+
+router.get("/prospects/:id/meetings", async (req, res) => {
+  try {
+    const meetings = await getProspectMeetings(Number(req.params.id));
+    res.json(meetings);
+  } catch (error) {
+    console.error("[comercial] Get meetings error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+router.post("/prospects/:id/meetings", async (req, res) => {
+  try {
+    const meeting = await createMeeting({
+      ...req.body,
+      prospectId: Number(req.params.id),
+      createdById: (req as any).user.id,
+    });
+    res.status(201).json(meeting);
+  } catch (error) {
+    console.error("[comercial] Create meeting error:", error);
+    res.status(400).json({ message: "Datos invalidos" });
+  }
+});
+
+router.post("/prospects/:prospectId/meetings/:meetingId/complete", async (req, res) => {
+  try {
+    const { outcome } = req.body;
+    if (!outcome) return res.status(400).json({ message: "Resultado requerido" });
+    const updated = await completeMeeting(Number(req.params.meetingId), outcome);
+    res.json(updated);
+  } catch (error) {
+    console.error("[comercial] Complete meeting error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+router.post("/prospects/:prospectId/meetings/:meetingId/cancel", async (req, res) => {
+  try {
+    const updated = await cancelMeeting(Number(req.params.meetingId));
+    res.json(updated);
+  } catch (error) {
+    console.error("[comercial] Cancel meeting error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+// --- Documents ---
+
+router.get("/prospects/:id/documents", async (req, res) => {
+  try {
+    const documents = await getProspectDocuments(Number(req.params.id));
+    res.json(documents);
+  } catch (error) {
+    console.error("[comercial] Get documents error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+router.post("/prospects/:id/documents", async (req, res) => {
+  try {
+    const document = await createDocument({
+      ...req.body,
+      prospectId: Number(req.params.id),
+      uploadedById: (req as any).user.id,
+    });
+    res.status(201).json(document);
+  } catch (error) {
+    console.error("[comercial] Create document error:", error);
+    res.status(400).json({ message: "Datos invalidos" });
+  }
+});
+
+router.delete("/prospects/:prospectId/documents/:docId", async (req, res) => {
+  try {
+    await deleteDocument(Number(req.params.docId));
+    res.json({ success: true });
+  } catch (error) {
+    console.error("[comercial] Delete document error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+// --- Proposals ---
+
+router.get("/prospects/:id/proposals", async (req, res) => {
+  try {
+    const proposals = await getProposalVersions(Number(req.params.id));
+    res.json(proposals);
+  } catch (error) {
+    console.error("[comercial] Get proposals error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+router.post("/prospects/:id/proposals", async (req, res) => {
+  try {
+    const proposal = await createProposal({
+      ...req.body,
+      prospectId: Number(req.params.id),
+      createdById: (req as any).user.id,
+    });
+    res.status(201).json(proposal);
+  } catch (error) {
+    console.error("[comercial] Create proposal error:", error);
+    res.status(400).json({ message: "Datos invalidos" });
+  }
+});
+
+router.post("/prospects/:prospectId/proposals/:proposalId/send", async (req, res) => {
+  try {
+    const updated = await sendProposal(Number(req.params.proposalId), (req as any).user.id);
+    res.json(updated);
+  } catch (error) {
+    console.error("[comercial] Send proposal error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+router.post("/prospects/:prospectId/proposals/:proposalId/status", async (req, res) => {
+  try {
+    const { status } = req.body;
+    if (!status) return res.status(400).json({ message: "Status requerido" });
+    const updated = await changeProposalStatus(Number(req.params.proposalId), status);
+    res.json(updated);
+  } catch (error) {
+    console.error("[comercial] Change proposal status error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+// --- Alerts ---
+
+router.get("/alerts", async (req, res) => {
+  try {
+    const status = req.query.status as string | undefined;
+    const alerts = await getAlerts(status, (req as any).user.id);
+    res.json(alerts);
+  } catch (error) {
+    console.error("[comercial] Get alerts error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+router.get("/alerts/count", async (req, res) => {
+  try {
+    const count = await getPendingAlertsCount((req as any).user.id);
+    res.json({ count });
+  } catch (error) {
+    console.error("[comercial] Get alerts count error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+router.post("/alerts/:id/acknowledge", async (req, res) => {
+  try {
+    const updated = await acknowledgeAlert(Number(req.params.id), (req as any).user.id);
+    res.json(updated);
+  } catch (error) {
+    console.error("[comercial] Acknowledge alert error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+router.post("/alerts/:id/dismiss", async (req, res) => {
+  try {
+    const updated = await dismissAlert(Number(req.params.id));
+    res.json(updated);
+  } catch (error) {
+    console.error("[comercial] Dismiss alert error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+router.post("/alerts/generate", requireRole("admin"), async (_req, res) => {
+  try {
+    const result = await generateAlerts();
+    res.json(result);
+  } catch (error) {
+    console.error("[comercial] Generate alerts error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+// --- Reports ---
+
+router.get("/reports/lead-sources", async (_req, res) => {
+  try {
+    const report = await getLeadSourcesReport();
+    res.json(report);
+  } catch (error) {
+    console.error("[comercial] Lead sources report error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+router.get("/reports/forecast", async (_req, res) => {
+  try {
+    const forecast = await getSalesForecast();
+    res.json(forecast);
+  } catch (error) {
+    console.error("[comercial] Sales forecast error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+router.get("/reports/win-loss", async (_req, res) => {
+  try {
+    const analysis = await getWinLossAnalysis();
+    res.json(analysis);
+  } catch (error) {
+    console.error("[comercial] Win/loss analysis error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+router.get("/reports/competitors", async (_req, res) => {
+  try {
+    const analysis = await getCompetitorAnalysis();
+    res.json(analysis);
+  } catch (error) {
+    console.error("[comercial] Competitor analysis error:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 });

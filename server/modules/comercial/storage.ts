@@ -1,13 +1,25 @@
 import { db } from "../../db";
-import { eq, desc, and, sql } from "drizzle-orm";
+import { eq, desc, and, sql, gte, lte, isNull, or } from "drizzle-orm";
 import {
   prospects,
   leads,
   rejectionReasons,
   salesMetrics,
   pipelineSnapshots,
+  prospectActivities,
+  prospectNotes,
+  prospectMeetings,
+  prospectDocuments,
+  proposalVersions,
+  followUpAlerts,
   type InsertProspect,
   type InsertLead,
+  type InsertActivity,
+  type InsertNote,
+  type InsertMeeting,
+  type InsertProspectDocument,
+  type InsertProposal,
+  type InsertAlert,
 } from "../../../shared/schema/comercial";
 import {
   surveys,
@@ -258,4 +270,427 @@ export async function sendProspectToOperaciones(prospectId: number, sentById: nu
   });
 
   return result;
+}
+
+// === CRM ENHANCEMENT FUNCTIONS ===
+
+// --- Activities (Timeline) ---
+
+export async function getProspectActivities(prospectId: number) {
+  return db.query.prospectActivities.findMany({
+    where: eq(prospectActivities.prospectId, prospectId),
+    orderBy: [desc(prospectActivities.createdAt)],
+  });
+}
+
+export async function createActivity(data: InsertActivity) {
+  const [activity] = await db.insert(prospectActivities).values(data).returning();
+
+  // Update prospect's lastContactAt
+  if (["llamada", "email", "reunion"].includes(data.type)) {
+    await db
+      .update(prospects)
+      .set({ lastContactAt: new Date(), updatedAt: new Date() })
+      .where(eq(prospects.id, data.prospectId));
+  }
+
+  return activity;
+}
+
+// --- Notes ---
+
+export async function getProspectNotes(prospectId: number) {
+  return db.query.prospectNotes.findMany({
+    where: eq(prospectNotes.prospectId, prospectId),
+    orderBy: [desc(prospectNotes.isPinned), desc(prospectNotes.createdAt)],
+  });
+}
+
+export async function createNote(prospectId: number, content: string, createdById: number) {
+  const [note] = await db
+    .insert(prospectNotes)
+    .values({ prospectId, content, createdById })
+    .returning();
+
+  // Log activity
+  await createActivity({
+    prospectId,
+    type: "nota",
+    title: "Nota agregada",
+    description: content.substring(0, 100),
+    createdById,
+  });
+
+  return note;
+}
+
+export async function updateNote(id: number, content: string) {
+  const [updated] = await db
+    .update(prospectNotes)
+    .set({ content, updatedAt: new Date() })
+    .where(eq(prospectNotes.id, id))
+    .returning();
+  return updated;
+}
+
+export async function deleteNote(id: number) {
+  await db.delete(prospectNotes).where(eq(prospectNotes.id, id));
+}
+
+export async function toggleNotePin(id: number) {
+  const note = await db.query.prospectNotes.findFirst({ where: eq(prospectNotes.id, id) });
+  if (!note) return null;
+
+  const [updated] = await db
+    .update(prospectNotes)
+    .set({ isPinned: !note.isPinned })
+    .where(eq(prospectNotes.id, id))
+    .returning();
+  return updated;
+}
+
+// --- Meetings ---
+
+export async function getProspectMeetings(prospectId: number) {
+  return db.query.prospectMeetings.findMany({
+    where: eq(prospectMeetings.prospectId, prospectId),
+    orderBy: [desc(prospectMeetings.scheduledAt)],
+  });
+}
+
+export async function createMeeting(data: InsertMeeting) {
+  const [meeting] = await db.insert(prospectMeetings).values(data).returning();
+
+  // Log activity
+  await createActivity({
+    prospectId: data.prospectId,
+    type: "reunion",
+    title: `Reunion programada: ${data.title}`,
+    createdById: data.createdById,
+  });
+
+  return meeting;
+}
+
+export async function completeMeeting(id: number, outcome: string) {
+  const [updated] = await db
+    .update(prospectMeetings)
+    .set({ status: "completada", outcome, completedAt: new Date(), updatedAt: new Date() })
+    .where(eq(prospectMeetings.id, id))
+    .returning();
+  return updated;
+}
+
+export async function cancelMeeting(id: number) {
+  const [updated] = await db
+    .update(prospectMeetings)
+    .set({ status: "cancelada", updatedAt: new Date() })
+    .where(eq(prospectMeetings.id, id))
+    .returning();
+  return updated;
+}
+
+// --- Documents ---
+
+export async function getProspectDocuments(prospectId: number) {
+  return db.query.prospectDocuments.findMany({
+    where: eq(prospectDocuments.prospectId, prospectId),
+    orderBy: [desc(prospectDocuments.createdAt)],
+  });
+}
+
+export async function createDocument(data: InsertProspectDocument) {
+  const [doc] = await db.insert(prospectDocuments).values(data).returning();
+
+  // Log activity
+  await createActivity({
+    prospectId: data.prospectId,
+    type: "documento",
+    title: `Documento agregado: ${data.name}`,
+    createdById: data.uploadedById,
+  });
+
+  return doc;
+}
+
+export async function deleteDocument(id: number) {
+  await db.delete(prospectDocuments).where(eq(prospectDocuments.id, id));
+}
+
+// --- Proposals ---
+
+export async function getProposalVersions(prospectId: number) {
+  return db.query.proposalVersions.findMany({
+    where: eq(proposalVersions.prospectId, prospectId),
+    orderBy: [desc(proposalVersions.version)],
+  });
+}
+
+export async function createProposal(data: InsertProposal) {
+  // Get next version number
+  const existing = await db.query.proposalVersions.findMany({
+    where: eq(proposalVersions.prospectId, data.prospectId),
+  });
+  const nextVersion = existing.length + 1;
+
+  const [proposal] = await db
+    .insert(proposalVersions)
+    .values({ ...data, version: nextVersion })
+    .returning();
+
+  // Log activity
+  await createActivity({
+    prospectId: data.prospectId,
+    type: "propuesta",
+    title: `Propuesta v${nextVersion} creada`,
+    createdById: data.createdById,
+  });
+
+  return proposal;
+}
+
+export async function sendProposal(id: number, sentById: number) {
+  const [updated] = await db
+    .update(proposalVersions)
+    .set({ status: "enviada", sentAt: new Date(), sentById, updatedAt: new Date() })
+    .where(eq(proposalVersions.id, id))
+    .returning();
+  return updated;
+}
+
+export async function changeProposalStatus(id: number, status: string) {
+  const [updated] = await db
+    .update(proposalVersions)
+    .set({ status: status as any, updatedAt: new Date() })
+    .where(eq(proposalVersions.id, id))
+    .returning();
+  return updated;
+}
+
+// --- Alerts ---
+
+export async function getAlerts(status?: string, assignedToId?: number) {
+  const conditions = [];
+  if (status) conditions.push(eq(followUpAlerts.status, status as any));
+  if (assignedToId) conditions.push(eq(followUpAlerts.assignedToId, assignedToId));
+
+  return db.query.followUpAlerts.findMany({
+    where: conditions.length > 0 ? and(...conditions) : undefined,
+    orderBy: [desc(followUpAlerts.createdAt)],
+  });
+}
+
+export async function getPendingAlertsCount(assignedToId?: number) {
+  const conditions = [eq(followUpAlerts.status, "pending")];
+  if (assignedToId) conditions.push(eq(followUpAlerts.assignedToId, assignedToId));
+
+  const [result] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(followUpAlerts)
+    .where(and(...conditions));
+
+  return result.count;
+}
+
+export async function acknowledgeAlert(id: number, userId: number) {
+  const [updated] = await db
+    .update(followUpAlerts)
+    .set({ status: "acknowledged", acknowledgedAt: new Date(), acknowledgedById: userId })
+    .where(eq(followUpAlerts.id, id))
+    .returning();
+  return updated;
+}
+
+export async function dismissAlert(id: number) {
+  const [updated] = await db
+    .update(followUpAlerts)
+    .set({ status: "dismissed" })
+    .where(eq(followUpAlerts.id, id))
+    .returning();
+  return updated;
+}
+
+export async function generateAlerts() {
+  const alerts: InsertAlert[] = [];
+  const now = new Date();
+  const threeDaysAgo = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
+  const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+  // Find prospects with overdue follow-ups
+  const overdueProspects = await db.query.prospects.findMany({
+    where: and(
+      lte(prospects.nextFollowUpAt, now),
+      or(
+        eq(prospects.stage, "lead"),
+        eq(prospects.stage, "levantamiento"),
+        eq(prospects.stage, "propuesta"),
+        eq(prospects.stage, "negociacion")
+      )
+    ),
+  });
+
+  for (const p of overdueProspects) {
+    // Check if alert already exists
+    const existing = await db.query.followUpAlerts.findFirst({
+      where: and(
+        eq(followUpAlerts.prospectId, p.id),
+        eq(followUpAlerts.alertType, "overdue_follow_up"),
+        eq(followUpAlerts.status, "pending")
+      ),
+    });
+
+    if (!existing) {
+      alerts.push({
+        prospectId: p.id,
+        alertType: "overdue_follow_up",
+        title: `Seguimiento vencido: ${p.name}`,
+        message: `El seguimiento estaba programado para ${p.nextFollowUpAt?.toLocaleDateString()}`,
+        priority: "alta",
+        dueDate: p.nextFollowUpAt,
+        assignedToId: p.assignedToId,
+      });
+    }
+  }
+
+  // Find stale prospects (no contact in 7 days)
+  const staleProspects = await db.query.prospects.findMany({
+    where: and(
+      or(isNull(prospects.lastContactAt), lte(prospects.lastContactAt, sevenDaysAgo)),
+      or(
+        eq(prospects.stage, "lead"),
+        eq(prospects.stage, "levantamiento"),
+        eq(prospects.stage, "propuesta"),
+        eq(prospects.stage, "negociacion")
+      )
+    ),
+  });
+
+  for (const p of staleProspects) {
+    const existing = await db.query.followUpAlerts.findFirst({
+      where: and(
+        eq(followUpAlerts.prospectId, p.id),
+        eq(followUpAlerts.alertType, "stale_prospect"),
+        eq(followUpAlerts.status, "pending")
+      ),
+    });
+
+    if (!existing) {
+      alerts.push({
+        prospectId: p.id,
+        alertType: "stale_prospect",
+        title: `Prospecto sin actividad: ${p.name}`,
+        message: "No ha habido contacto en los ultimos 7 dias",
+        priority: "media",
+        assignedToId: p.assignedToId,
+      });
+    }
+  }
+
+  // Insert all new alerts
+  if (alerts.length > 0) {
+    await db.insert(followUpAlerts).values(alerts);
+  }
+
+  return { generated: alerts.length };
+}
+
+// --- Reports ---
+
+export async function getLeadSourcesReport() {
+  const results = await db
+    .select({
+      source: leads.source,
+      totalLeads: sql<number>`count(*)::int`,
+      convertedLeads: sql<number>`count(${leads.convertedToProspectId})::int`,
+    })
+    .from(leads)
+    .groupBy(leads.source);
+
+  return results.map((r) => ({
+    ...r,
+    conversionRate: r.totalLeads > 0 ? (r.convertedLeads / r.totalLeads) * 100 : 0,
+  }));
+}
+
+export async function getSalesForecast() {
+  const results = await db
+    .select({
+      month: sql<string>`to_char(${prospects.proposalDate}, 'YYYY-MM')`,
+      count: sql<number>`count(*)::int`,
+      totalValue: sql<string>`coalesce(sum(${prospects.estimatedValue}), 0)`,
+      weightedValue: sql<string>`coalesce(sum(${prospects.estimatedValue} * ${prospects.probability} / 100), 0)`,
+    })
+    .from(prospects)
+    .where(
+      and(
+        or(
+          eq(prospects.stage, "propuesta"),
+          eq(prospects.stage, "negociacion")
+        )
+      )
+    )
+    .groupBy(sql`to_char(${prospects.proposalDate}, 'YYYY-MM')`)
+    .orderBy(sql`to_char(${prospects.proposalDate}, 'YYYY-MM')`);
+
+  return results;
+}
+
+export async function getWinLossAnalysis() {
+  const wins = await db
+    .select({
+      reason: prospects.opportunity,
+      count: sql<number>`count(*)::int`,
+    })
+    .from(prospects)
+    .where(eq(prospects.stage, "cierre"))
+    .groupBy(prospects.opportunity);
+
+  const losses = await db
+    .select({
+      reason: rejectionReasons.reason,
+      count: sql<number>`count(*)::int`,
+    })
+    .from(prospects)
+    .leftJoin(rejectionReasons, eq(prospects.rejectionReasonId, rejectionReasons.id))
+    .where(eq(prospects.stage, "rechazada"))
+    .groupBy(rejectionReasons.reason);
+
+  const totalWins = wins.reduce((sum, w) => sum + w.count, 0);
+  const totalLosses = losses.reduce((sum, l) => sum + l.count, 0);
+  const total = totalWins + totalLosses;
+
+  return {
+    wins,
+    losses,
+    winRate: total > 0 ? (totalWins / total) * 100 : 0,
+  };
+}
+
+export async function getCompetitorAnalysis() {
+  // Get prospects with competitors
+  const prospectsWithCompetitors = await db.query.prospects.findMany({
+    where: sql`${prospects.competitors} is not null and array_length(${prospects.competitors}, 1) > 0`,
+  });
+
+  const competitorStats: Record<string, { mentions: number; wins: number; losses: number }> = {};
+
+  for (const p of prospectsWithCompetitors) {
+    const comps = p.competitors || [];
+    for (const comp of comps) {
+      if (!competitorStats[comp]) {
+        competitorStats[comp] = { mentions: 0, wins: 0, losses: 0 };
+      }
+      competitorStats[comp].mentions++;
+      if (p.stage === "cierre") competitorStats[comp].wins++;
+      if (p.stage === "rechazada") competitorStats[comp].losses++;
+    }
+  }
+
+  return Object.entries(competitorStats).map(([competitor, stats]) => ({
+    competitor,
+    ...stats,
+    winRate: stats.wins + stats.losses > 0
+      ? (stats.wins / (stats.wins + stats.losses)) * 100
+      : 0,
+  }));
 }

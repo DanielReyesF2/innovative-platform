@@ -29,6 +29,47 @@ export const leadSourceEnum = pgEnum("lead_source", [
   "otro",
 ]);
 
+// New enums for CRM enhancements
+export const activityTypeEnum = pgEnum("activity_type", [
+  "llamada",
+  "email",
+  "reunion",
+  "nota",
+  "cambio_etapa",
+  "documento",
+  "propuesta",
+  "otro",
+]);
+
+export const meetingStatusEnum = pgEnum("meeting_status", [
+  "programada",
+  "completada",
+  "cancelada",
+  "reprogramada",
+]);
+
+export const proposalStatusEnum = pgEnum("proposal_status", [
+  "borrador",
+  "enviada",
+  "revisada",
+  "aceptada",
+  "rechazada",
+]);
+
+export const alertStatusEnum = pgEnum("alert_status", [
+  "pending",
+  "acknowledged",
+  "dismissed",
+  "auto_resolved",
+]);
+
+export const alertTypeEnum = pgEnum("alert_type", [
+  "overdue_follow_up",
+  "stale_prospect",
+  "high_value_at_risk",
+  "scheduled_reminder",
+]);
+
 // Rejection reasons catalog
 export const rejectionReasons = pgTable("rejection_reasons", {
   id: serial("id").primaryKey(),
@@ -70,6 +111,10 @@ export const prospects = pgTable("prospects", {
   levantamientoData: jsonb("levantamiento_data"),
   sentToOpsAt: timestamp("sent_to_ops_at"),
   sentToOpsById: integer("sent_to_ops_by_id").references(() => users.id),
+  // CRM enhancements
+  lastContactAt: timestamp("last_contact_at"),
+  nextFollowUpAt: timestamp("next_follow_up_at"),
+  competitors: text("competitors").array(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -121,6 +166,98 @@ export const salesMetrics = pgTable("sales_metrics", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// === CRM ENHANCEMENT TABLES ===
+
+// Prospect Activities (Timeline)
+export const prospectActivities = pgTable("prospect_activities", {
+  id: serial("id").primaryKey(),
+  prospectId: integer("prospect_id").references(() => prospects.id).notNull(),
+  type: activityTypeEnum("type").notNull(),
+  title: text("title").notNull(),
+  description: text("description"),
+  metadata: jsonb("metadata"),
+  createdById: integer("created_by_id").references(() => users.id).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Prospect Notes
+export const prospectNotes = pgTable("prospect_notes", {
+  id: serial("id").primaryKey(),
+  prospectId: integer("prospect_id").references(() => prospects.id).notNull(),
+  content: text("content").notNull(),
+  isPinned: boolean("is_pinned").default(false),
+  createdById: integer("created_by_id").references(() => users.id).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Prospect Meetings
+export const prospectMeetings = pgTable("prospect_meetings", {
+  id: serial("id").primaryKey(),
+  prospectId: integer("prospect_id").references(() => prospects.id).notNull(),
+  title: text("title").notNull(),
+  description: text("description"),
+  scheduledAt: timestamp("scheduled_at").notNull(),
+  duration: integer("duration").default(60),
+  location: text("location"),
+  meetingUrl: text("meeting_url"),
+  status: meetingStatusEnum("status").default("programada"),
+  attendees: jsonb("attendees"),
+  outcome: text("outcome"),
+  completedAt: timestamp("completed_at"),
+  createdById: integer("created_by_id").references(() => users.id).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Prospect Documents
+export const prospectDocuments = pgTable("prospect_documents", {
+  id: serial("id").primaryKey(),
+  prospectId: integer("prospect_id").references(() => prospects.id).notNull(),
+  name: text("name").notNull(),
+  type: text("type").notNull(), // contrato, cotizacion, presentacion, otro
+  url: text("url").notNull(),
+  fileSize: integer("file_size"),
+  mimeType: text("mime_type"),
+  description: text("description"),
+  uploadedById: integer("uploaded_by_id").references(() => users.id).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Proposal Versions
+export const proposalVersions = pgTable("proposal_versions", {
+  id: serial("id").primaryKey(),
+  prospectId: integer("prospect_id").references(() => prospects.id).notNull(),
+  version: integer("version").notNull().default(1),
+  name: text("name").notNull(),
+  url: text("url").notNull(),
+  amount: numeric("amount", { precision: 14, scale: 2 }),
+  validUntil: timestamp("valid_until"),
+  status: proposalStatusEnum("status").default("borrador"),
+  notes: text("notes"),
+  sentAt: timestamp("sent_at"),
+  sentById: integer("sent_by_id").references(() => users.id),
+  createdById: integer("created_by_id").references(() => users.id).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Follow-up Alerts
+export const followUpAlerts = pgTable("follow_up_alerts", {
+  id: serial("id").primaryKey(),
+  prospectId: integer("prospect_id").references(() => prospects.id),
+  alertType: alertTypeEnum("alert_type").notNull(),
+  status: alertStatusEnum("status").default("pending"),
+  title: text("title").notNull(),
+  message: text("message"),
+  priority: priorityEnum("priority").default("media"),
+  dueDate: timestamp("due_date"),
+  acknowledgedAt: timestamp("acknowledged_at"),
+  acknowledgedById: integer("acknowledged_by_id").references(() => users.id),
+  assignedToId: integer("assigned_to_id").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Validators
 export const insertProspectSchema = createInsertSchema(prospects, {
   name: z.string().min(1).max(200),
@@ -145,6 +282,33 @@ export const insertSalesMetricsSchema = createInsertSchema(salesMetrics).omit({
   createdAt: true,
 });
 
+// Validators for new tables
+export const insertActivitySchema = createInsertSchema(prospectActivities, {
+  title: z.string().min(1).max(200),
+}).omit({ id: true, createdAt: true });
+
+export const insertNoteSchema = createInsertSchema(prospectNotes, {
+  content: z.string().min(1).max(5000),
+}).omit({ id: true, createdAt: true, updatedAt: true });
+
+export const insertMeetingSchema = createInsertSchema(prospectMeetings, {
+  title: z.string().min(1).max(200),
+}).omit({ id: true, createdAt: true, updatedAt: true });
+
+export const insertProspectDocumentSchema = createInsertSchema(prospectDocuments, {
+  name: z.string().min(1).max(200),
+  url: z.string().url().max(500),
+}).omit({ id: true, createdAt: true });
+
+export const insertProposalSchema = createInsertSchema(proposalVersions, {
+  name: z.string().min(1).max(200),
+  url: z.string().url().max(500),
+}).omit({ id: true, createdAt: true, updatedAt: true });
+
+export const insertAlertSchema = createInsertSchema(followUpAlerts, {
+  title: z.string().min(1).max(200),
+}).omit({ id: true, createdAt: true });
+
 // Types
 export type Prospect = typeof prospects.$inferSelect;
 export type InsertProspect = z.infer<typeof insertProspectSchema>;
@@ -153,3 +317,17 @@ export type InsertLead = z.infer<typeof insertLeadSchema>;
 export type RejectionReason = typeof rejectionReasons.$inferSelect;
 export type SalesMetrics = typeof salesMetrics.$inferSelect;
 export type PipelineSnapshot = typeof pipelineSnapshots.$inferSelect;
+
+// New types
+export type ProspectActivity = typeof prospectActivities.$inferSelect;
+export type InsertActivity = z.infer<typeof insertActivitySchema>;
+export type ProspectNote = typeof prospectNotes.$inferSelect;
+export type InsertNote = z.infer<typeof insertNoteSchema>;
+export type ProspectMeeting = typeof prospectMeetings.$inferSelect;
+export type InsertMeeting = z.infer<typeof insertMeetingSchema>;
+export type ProspectDocument = typeof prospectDocuments.$inferSelect;
+export type InsertProspectDocument = z.infer<typeof insertProspectDocumentSchema>;
+export type ProposalVersion = typeof proposalVersions.$inferSelect;
+export type InsertProposal = z.infer<typeof insertProposalSchema>;
+export type FollowUpAlert = typeof followUpAlerts.$inferSelect;
+export type InsertAlert = z.infer<typeof insertAlertSchema>;
