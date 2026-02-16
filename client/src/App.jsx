@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { QueryClientProvider, useQuery, useMutation } from '@tanstack/react-query';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient, apiRequest } from '@/lib/queryClient';
 import { AuthProvider, useAuth } from '@/lib/auth';
 import { Toaster } from '@/components/ui/toaster';
@@ -4421,79 +4421,7 @@ const calcularDiasHabiles = (fechaInicio) => {
   return dias;
 };
 
-// Transform API prospect to App.jsx format
-const transformProspect = (p, users = []) => {
-  // Map API stage to App.jsx status
-  const stageMap = {
-    'lead': 'Lead nuevo',
-    'levantamiento': 'Levantamiento',
-    'propuesta': 'Propuesta enviada',
-    'negociacion': 'Negociación',
-    'cierre': 'Inicio de operación',
-    'rechazada': 'Propuesta Rechazada',
-  };
-
-  // Map user ID to ejecutivo code
-  const userToCode = {};
-  users.forEach(u => {
-    if (u.name?.includes('Veronica') || u.name?.includes('Vero')) userToCode[u.id] = 'VA';
-    else if (u.name?.includes('Carmen')) userToCode[u.id] = 'CR';
-    else if (u.name?.includes('Jose') || u.name?.includes('Armando')) userToCode[u.id] = 'JM';
-    else if (u.name?.includes('Rodrigo')) userToCode[u.id] = 'RP';
-    else if (u.name?.includes('Cristina')) userToCode[u.id] = 'CS';
-    else if (u.name?.includes('Laura')) userToCode[u.id] = 'LM';
-    else if (u.name?.includes('Marian')) userToCode[u.id] = 'MO';
-  });
-
-  return {
-    id: p.id,
-    empresa: p.name,
-    planta: null,
-    ciudad: p.location,
-    industria: p.industry,
-    ejecutivo: userToCode[p.assignedToId] || 'CR',
-    contacto: {
-      nombre: p.contactName || '',
-      puesto: p.contactRole || '',
-      correo: p.contactEmail || '',
-      telefono: p.contactPhone || '',
-    },
-    servicios: ['rme'], // Default service
-    status: stageMap[p.stage] || 'Lead nuevo',
-    semana: null,
-    fecha: p.createdAt,
-    propuesta: {
-      status: p.stage === 'propuesta' ? 'Enviada' : null,
-      ventaTotal: Number(p.estimatedValue) || 0,
-      utilidad: 0,
-      carton: null,
-      playo: null,
-    },
-    motivoRechazo: p.rejectionDetail || null,
-    comentarios: p.reason || '',
-    volumenEstimado: p.estimatedVolume,
-    facturacionEstimada: Number(p.estimatedValue) || 0,
-    probability: p.probability || 30,
-    priority: p.priority || 'media',
-    nextStep: p.nextStep,
-  };
-};
-
 const InnovativeDemo = () => {
-  // Fetch prospects from API (with error handling)
-  const { data: apiProspects = [] } = useQuery({
-    queryKey: ['/api/comercial/prospects'],
-    retry: false,
-    refetchOnWindowFocus: false,
-  });
-
-  // Fetch users for mapping
-  const { data: apiUsers = [] } = useQuery({
-    queryKey: ['/api/settings/users'],
-    retry: false,
-    refetchOnWindowFocus: false,
-  });
-
   const [currentView, setCurrentView] = useState('dashboard');
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
@@ -4554,19 +4482,6 @@ const InnovativeDemo = () => {
   const [pipelineViewMode, setPipelineViewMode] = useState('kanban'); // 'kanban' | 'funnel' | 'tabla'
   const [comercialTab, setComercialTab] = useState('pipeline'); // 'pipeline' | 'presupuesto' | 'rechazadas'
   const [kanbanProspectos, setKanbanProspectos] = useState(topProspectos);
-
-  // Sync API data to kanbanProspectos state (with fallback to mock data)
-  useEffect(() => {
-    if (apiProspects && apiProspects.length > 0) {
-      try {
-        const transformed = apiProspects.map(p => transformProspect(p, apiUsers || []));
-        setKanbanProspectos(transformed);
-      } catch (error) {
-        console.error('Error transforming prospects:', error);
-        // Keep mock data on error
-      }
-    }
-  }, [apiProspects, apiUsers]);
   const [activeKanbanId, setActiveKanbanId] = useState(null);
   const [showStageGateModal, setShowStageGateModal] = useState(false);
   const [pendingMove, setPendingMove] = useState(null); // {prospecto, fromStage, toStage}
@@ -5930,31 +5845,10 @@ const InnovativeDemo = () => {
 
     const hubActiveCard = hubActiveKanbanId ? memberProspectos.find(p => p.id === hubActiveKanbanId) : null;
 
-    // Change prospect stage - updates local state AND persists to API
-    const changeProspectoStage = async (prospectoId, newStage) => {
-      // Optimistic update - update local state immediately
+    // Change prospect stage
+    const changeProspectoStage = (prospectoId, newStage) => {
       setKanbanProspectos(prev => prev.map(p => p.id === prospectoId ? { ...p, status: newStage } : p));
       setSelectedProspecto(prev => prev ? { ...prev, status: newStage } : null);
-
-      // Map App.jsx status to API stage
-      const stageMap = {
-        'Lead nuevo': 'lead',
-        'Reunión agendada': 'lead', // Map to lead since API doesn't have this
-        'Levantamiento': 'levantamiento',
-        'Propuesta enviada': 'propuesta',
-        'Negociación': 'negociacion',
-        'Inicio de operación': 'cierre',
-        'Propuesta Rechazada': 'rechazada',
-      };
-
-      try {
-        await apiRequest('PATCH', `/api/comercial/prospects/${prospectoId}`, {
-          stage: stageMap[newStage] || 'lead'
-        });
-        queryClient.invalidateQueries({ queryKey: ['/api/comercial/prospects'] });
-      } catch (error) {
-        console.error('Error updating prospect stage:', error);
-      }
     };
 
     // Calculate days since a date
