@@ -4490,6 +4490,17 @@ const InnovativeDemo = () => {
     queryKey: ['/api/settings/users'],
   });
 
+  // Mutation to update prospect stage
+  const updateProspectMutation = useMutation({
+    mutationFn: async ({ id, stage }) => {
+      const res = await apiRequest('PATCH', `/api/comercial/prospects/${id}`, { stage });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/comercial/prospects'] });
+    },
+  });
+
   const [currentView, setCurrentView] = useState('dashboard');
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
@@ -5921,11 +5932,31 @@ const InnovativeDemo = () => {
 
     const hubActiveCard = hubActiveKanbanId ? memberProspectos.find(p => p.id === hubActiveKanbanId) : null;
 
-    // Change prospect stage
-    const changeProspectoStage = (prospectoId, newStage) => {
+    // Change prospect stage - updates local state AND persists to API
+    const changeProspectoStage = async (prospectoId, newStage) => {
+      // Optimistic update - update local state immediately
       setKanbanProspectos(prev => prev.map(p => p.id === prospectoId ? { ...p, status: newStage } : p));
-      // Update selected prospecto too
       setSelectedProspecto(prev => prev ? { ...prev, status: newStage } : null);
+
+      // Map App.jsx status to API stage
+      const stageMap = {
+        'Lead nuevo': 'lead',
+        'Reunión agendada': 'lead', // Map to lead since API doesn't have this
+        'Levantamiento': 'levantamiento',
+        'Propuesta enviada': 'propuesta',
+        'Negociación': 'negociacion',
+        'Inicio de operación': 'cierre',
+        'Propuesta Rechazada': 'rechazada',
+      };
+
+      try {
+        await apiRequest('PATCH', `/api/comercial/prospects/${prospectoId}`, {
+          stage: stageMap[newStage] || 'lead'
+        });
+        queryClient.invalidateQueries({ queryKey: ['/api/comercial/prospects'] });
+      } catch (error) {
+        console.error('Error updating prospect stage:', error);
+      }
     };
 
     // Calculate days since a date
@@ -5959,37 +5990,52 @@ const InnovativeDemo = () => {
       ];
 
       return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={onClose}>
-          <div className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-2xl flex flex-col" onClick={e => e.stopPropagation()}>
-            {/* Header */}
-            <div className="bg-[#00a8a8] text-white px-6 py-4 rounded-t-xl">
-              <div className="flex items-center justify-between mb-2">
-                <div>
-                  <h2 className="text-xl font-bold">{p.empresa}{p.planta ? ` — ${p.planta}` : ''}</h2>
-                  {p.ciudad && <p className="text-sm text-white/80 flex items-center gap-1 mt-0.5"><MapPin size={12} /> {p.ciudad}{p.industria ? ` · ${p.industria}` : ''}</p>}
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4 backdrop-blur-sm" onClick={onClose}>
+          <div className="bg-white rounded-2xl max-w-3xl w-full max-h-[85vh] overflow-hidden shadow-2xl flex flex-col" onClick={e => e.stopPropagation()}>
+            {/* Header - Clean minimal style */}
+            <div className="px-6 pt-5 pb-4 border-b border-[#f0f0f0]">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <h2 className="text-xl font-semibold text-[#1a1a1a] tracking-tight">{p.empresa}</h2>
+                  <div className="flex items-center gap-2 mt-1.5">
+                    <span className="text-sm text-[#666]">{p.ciudad}</span>
+                    {p.industria && <span className="text-sm text-[#999]">·</span>}
+                    {p.industria && <span className="text-sm text-[#666]">{p.industria}</span>}
+                    <span className={`ml-2 px-2 py-0.5 rounded-full text-xs font-medium ${
+                      stageInfo?.color === '#2E7D32' ? 'bg-green-100 text-green-700' :
+                      stageInfo?.color === '#7C3AED' ? 'bg-purple-100 text-purple-700' :
+                      stageInfo?.color === '#00a8a8' ? 'bg-teal-100 text-teal-700' :
+                      stageInfo?.color === '#F57C00' ? 'bg-orange-100 text-orange-700' :
+                      stageInfo?.color === '#0D47A1' ? 'bg-blue-100 text-blue-700' :
+                      'bg-gray-100 text-gray-600'
+                    }`}>{stageInfo?.label || p.status}</span>
+                  </div>
                 </div>
-                <button onClick={onClose} className="text-white hover:text-white/80 p-1">
-                  <X size={24} />
+                <button onClick={onClose} className="text-[#999] hover:text-[#333] p-1 -mr-1 -mt-1 transition-colors">
+                  <X size={20} />
                 </button>
               </div>
-            </div>
 
-            {/* CRM Tabs */}
-            <div className="flex gap-1 px-6 py-3 bg-[#f9fafb] border-b border-[#e5e7eb] overflow-x-auto">
-              {CRM_TABS.map(tab => (
-                <button
-                  key={tab.id}
-                  onClick={() => setDrawerTab(tab.id)}
-                  className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
-                    drawerTab === tab.id
-                      ? 'bg-[#00a8a8] text-white shadow-sm'
-                      : 'bg-white text-[#6b7280] hover:bg-[#e5e7eb] border border-[#e5e7eb]'
-                  }`}
-                >
-                  <tab.icon size={16} />
-                  {tab.label}
-                </button>
-              ))}
+              {/* Tabs - Notion style */}
+              <div className="flex gap-1 mt-5 border-b border-[#f0f0f0] -mx-6 px-6">
+                {CRM_TABS.map(tab => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setDrawerTab(tab.id)}
+                    className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-all relative ${
+                      drawerTab === tab.id
+                        ? 'text-[#1a1a1a]'
+                        : 'text-[#999] hover:text-[#666]'
+                    }`}
+                  >
+                    <tab.icon size={15} />
+                    {tab.label}
+                    {drawerTab === tab.id && (
+                      <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#1a1a1a] rounded-full" />
+                    )}
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* CRM Components - shown based on tab */}
