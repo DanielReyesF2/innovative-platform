@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { QueryClientProvider } from '@tanstack/react-query';
+import { QueryClientProvider, useQuery } from '@tanstack/react-query';
 import { queryClient, apiRequest } from '@/lib/queryClient';
 import { AuthProvider, useAuth } from '@/lib/auth';
 import { Toaster } from '@/components/ui/toaster';
@@ -4422,6 +4422,22 @@ const calcularDiasHabiles = (fechaInicio) => {
 };
 
 const InnovativeDemo = () => {
+  // Fetch prospects from DB for CRM tabs ID mapping
+  const { data: dbProspectsForCRM = [] } = useQuery({
+    queryKey: ['/api/comercial/prospects'],
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Helper to find real prospect ID by name
+  const findRealProspectId = (mockProspect) => {
+    if (!mockProspect) return null;
+    const match = dbProspectsForCRM.find(dp =>
+      dp.name?.toLowerCase().includes(mockProspect.empresa?.toLowerCase()?.substring(0, 10)) ||
+      mockProspect.empresa?.toLowerCase().includes(dp.name?.toLowerCase()?.substring(0, 10))
+    );
+    return match?.id || mockProspect.id;
+  };
+
   const [currentView, setCurrentView] = useState('dashboard');
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
@@ -5861,8 +5877,23 @@ const InnovativeDemo = () => {
     // --- PROSPECT DETAIL DRAWER ---
     const ProspectoDrawer = ({ prospecto, onClose }) => {
       const [drawerTab, setDrawerTab] = React.useState('info');
+
+      // Fetch real prospect from DB by name to get the correct ID for CRM tabs
+      const { data: dbProspects = [] } = useQuery({
+        queryKey: ['/api/comercial/prospects'],
+        staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+      });
+
       if (!prospecto) return null;
       const p = prospecto;
+
+      // Find matching prospect in DB by name (empresa)
+      const dbProspect = dbProspects.find(dp =>
+        dp.name?.toLowerCase().includes(p.empresa?.toLowerCase()?.substring(0, 10)) ||
+        p.empresa?.toLowerCase().includes(dp.name?.toLowerCase()?.substring(0, 10))
+      );
+      const realProspectId = dbProspect?.id || p.id;
+
       const stageInfo = KANBAN_STAGES.find(s => s.id === p.status);
       const dias = diasDesde(p.fecha);
       const valor = p.propuesta?.ventaTotal || p.facturacionEstimada || 0;
@@ -5934,27 +5965,27 @@ const InnovativeDemo = () => {
             <div className="flex-1 overflow-y-auto">
               {drawerTab === 'timeline' && (
                 <div className="p-5">
-                  <ProspectTimeline prospectId={p.id} />
+                  <ProspectTimeline prospectId={realProspectId} />
                 </div>
               )}
               {drawerTab === 'notas' && (
                 <div className="p-5">
-                  <ProspectNotes prospectId={p.id} />
+                  <ProspectNotes prospectId={realProspectId} />
                 </div>
               )}
               {drawerTab === 'reuniones' && (
                 <div className="p-5">
-                  <ProspectMeetings prospectId={p.id} />
+                  <ProspectMeetings prospectId={realProspectId} />
                 </div>
               )}
               {drawerTab === 'docs' && (
                 <div className="p-5">
-                  <ProspectDocuments prospectId={p.id} />
+                  <ProspectDocuments prospectId={realProspectId} />
                 </div>
               )}
               {drawerTab === 'propuestas' && (
                 <div className="p-5">
-                  <ProspectProposals prospectId={p.id} />
+                  <ProspectProposals prospectId={realProspectId} />
                 </div>
               )}
 
@@ -10564,27 +10595,27 @@ const InnovativeDemo = () => {
             {/* CRM Components */}
             {detallesProspectoTab === 'timeline' && (
               <div className="p-6">
-                <ProspectTimeline prospectId={selectedProspecto.id} />
+                <ProspectTimeline prospectId={findRealProspectId(selectedProspecto)} />
               </div>
             )}
             {detallesProspectoTab === 'notas' && (
               <div className="p-6">
-                <ProspectNotes prospectId={selectedProspecto.id} />
+                <ProspectNotes prospectId={findRealProspectId(selectedProspecto)} />
               </div>
             )}
             {detallesProspectoTab === 'reuniones' && (
               <div className="p-6">
-                <ProspectMeetings prospectId={selectedProspecto.id} />
+                <ProspectMeetings prospectId={findRealProspectId(selectedProspecto)} />
               </div>
             )}
             {detallesProspectoTab === 'docs' && (
               <div className="p-6">
-                <ProspectDocuments prospectId={selectedProspecto.id} />
+                <ProspectDocuments prospectId={findRealProspectId(selectedProspecto)} />
               </div>
             )}
             {detallesProspectoTab === 'propuestas' && (
               <div className="p-6">
-                <ProspectProposals prospectId={selectedProspecto.id} />
+                <ProspectProposals prospectId={findRealProspectId(selectedProspecto)} />
               </div>
             )}
 
