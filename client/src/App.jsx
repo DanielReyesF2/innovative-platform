@@ -4480,25 +4480,18 @@ const transformProspect = (p, users = []) => {
 };
 
 const InnovativeDemo = () => {
-  // Fetch prospects from API
-  const { data: apiProspects = [], isLoading: prospectsLoading } = useQuery({
+  // Fetch prospects from API (with error handling)
+  const { data: apiProspects = [] } = useQuery({
     queryKey: ['/api/comercial/prospects'],
+    retry: false,
+    refetchOnWindowFocus: false,
   });
 
   // Fetch users for mapping
   const { data: apiUsers = [] } = useQuery({
     queryKey: ['/api/settings/users'],
-  });
-
-  // Mutation to update prospect stage
-  const updateProspectMutation = useMutation({
-    mutationFn: async ({ id, stage }) => {
-      const res = await apiRequest('PATCH', `/api/comercial/prospects/${id}`, { stage });
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/comercial/prospects'] });
-    },
+    retry: false,
+    refetchOnWindowFocus: false,
   });
 
   const [currentView, setCurrentView] = useState('dashboard');
@@ -4560,13 +4553,18 @@ const InnovativeDemo = () => {
   // Pipeline view states
   const [pipelineViewMode, setPipelineViewMode] = useState('kanban'); // 'kanban' | 'funnel' | 'tabla'
   const [comercialTab, setComercialTab] = useState('pipeline'); // 'pipeline' | 'presupuesto' | 'rechazadas'
-  const [kanbanProspectos, setKanbanProspectos] = useState([]);
+  const [kanbanProspectos, setKanbanProspectos] = useState(topProspectos);
 
-  // Sync API data to kanbanProspectos state
+  // Sync API data to kanbanProspectos state (with fallback to mock data)
   useEffect(() => {
-    if (apiProspects.length > 0) {
-      const transformed = apiProspects.map(p => transformProspect(p, apiUsers));
-      setKanbanProspectos(transformed);
+    if (apiProspects && apiProspects.length > 0) {
+      try {
+        const transformed = apiProspects.map(p => transformProspect(p, apiUsers || []));
+        setKanbanProspectos(transformed);
+      } catch (error) {
+        console.error('Error transforming prospects:', error);
+        // Keep mock data on error
+      }
     }
   }, [apiProspects, apiUsers]);
   const [activeKanbanId, setActiveKanbanId] = useState(null);
