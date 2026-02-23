@@ -30,22 +30,47 @@ import { ProspectDocuments } from "./ProspectDocuments";
 import { ProspectProposals } from "./ProspectProposals";
 
 const STAGE_LABELS: Record<string, string> = {
-  lead: "Leads",
-  levantamiento: "Levantamientos",
-  propuesta: "Propuestas",
+  contacto_inicial: "Contacto Inicial",
+  presentacion: "Presentacion",
+  levantamiento: "Levantamiento",
+  propuesta: "Propuesta",
   negociacion: "Negociacion",
-  cierre: "Cierre",
-  rechazada: "Rechazadas",
+  cierre_ganado: "Cierre Ganado",
+  cierre_perdido: "Cierre Perdido",
+  lead: "Contacto Inicial",
+  cierre: "Cierre Ganado",
+  rechazada: "Cierre Perdido",
 };
 
 const STAGE_COLORS: Record<string, string> = {
-  lead: "bg-blue-100 text-blue-800",
+  contacto_inicial: "bg-blue-100 text-blue-800",
+  presentacion: "bg-cyan-100 text-cyan-800",
   levantamiento: "bg-yellow-100 text-yellow-800",
   propuesta: "bg-purple-100 text-purple-800",
   negociacion: "bg-orange-100 text-orange-800",
+  cierre_ganado: "bg-green-100 text-green-800",
+  cierre_perdido: "bg-red-100 text-red-800",
+  lead: "bg-blue-100 text-blue-800",
   cierre: "bg-green-100 text-green-800",
   rechazada: "bg-red-100 text-red-800",
 };
+
+// Ordered pipeline stages for progression bar
+const PIPELINE_STAGES = [
+  "contacto_inicial",
+  "presentacion",
+  "levantamiento",
+  "propuesta",
+  "negociacion",
+  "cierre_ganado",
+] as const;
+
+function normalizeStage(stage: string): string {
+  if (stage === "lead") return "contacto_inicial";
+  if (stage === "cierre") return "cierre_ganado";
+  if (stage === "rechazada") return "cierre_perdido";
+  return stage;
+}
 
 interface ProspectDetailProps {
   prospect: any;
@@ -58,11 +83,29 @@ export function ProspectDetail({ prospect, onClose }: ProspectDetailProps) {
   const [activeTab, setActiveTab] = useState<TabType>("info");
   const [levData, setLevData] = useState<any>(prospect.levantamientoData || {});
   const [showConfirmSend, setShowConfirmSend] = useState(false);
+  const [showAdvanceStage, setShowAdvanceStage] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
   const updateProspect = useUpdateProspect();
   const sendToOps = useSendToOperaciones();
   const { toast } = useToast();
+
+  const currentStage = normalizeStage(prospect.stage);
+  const currentStageIndex = PIPELINE_STAGES.indexOf(currentStage as any);
+  const isTerminal = ["cierre_ganado", "cierre_perdido", "cierre", "rechazada"].includes(prospect.stage);
+
+  const handleAdvanceStage = async () => {
+    if (currentStageIndex < 0 || currentStageIndex >= PIPELINE_STAGES.length - 1) return;
+    const nextStage = PIPELINE_STAGES[currentStageIndex + 1];
+    try {
+      await updateProspect.mutateAsync({ id: prospect.id, stage: nextStage });
+      toast({ title: `Avanzado a ${STAGE_LABELS[nextStage]}` });
+      setShowAdvanceStage(false);
+      onClose();
+    } catch {
+      toast({ title: "Error al avanzar etapa", variant: "destructive" });
+    }
+  };
 
   const saveLevantamientoData = useCallback(
     async (data: any) => {
@@ -99,31 +142,86 @@ export function ProspectDetail({ prospect, onClose }: ProspectDetailProps) {
     }
   };
 
-  const canSend = prospect.stage === "lead" && !prospect.surveyId;
+  const canSend = ["lead", "contacto_inicial", "presentacion"].includes(prospect.stage) && !prospect.surveyId;
   const wasSent = !!prospect.sentToOpsAt;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
       <div className="flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-lg bg-background shadow-lg">
         {/* Header */}
-        <div className="flex items-center justify-between border-b px-6 py-4">
-          <div className="flex items-center gap-3">
-            <h2 className="text-xl font-bold">{prospect.name}</h2>
-            <span
-              className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${STAGE_COLORS[prospect.stage] || ""}`}
-            >
-              {STAGE_LABELS[prospect.stage] || prospect.stage}
-            </span>
-            {wasSent && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800">
-                <CheckCircle className="h-3 w-3" />
-                Enviado a Ops {new Date(prospect.sentToOpsAt).toLocaleDateString("es-MX")}
+        <div className="border-b px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <h2 className="text-xl font-bold">{prospect.name}</h2>
+              <span
+                className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${STAGE_COLORS[prospect.stage] || ""}`}
+              >
+                {STAGE_LABELS[prospect.stage] || prospect.stage}
               </span>
-            )}
+              {wasSent && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800">
+                  <CheckCircle className="h-3 w-3" />
+                  Enviado a Ops {new Date(prospect.sentToOpsAt).toLocaleDateString("es-MX")}
+                </span>
+              )}
+            </div>
+            <Button variant="ghost" size="sm" onClick={onClose}>
+              ✕
+            </Button>
           </div>
-          <Button variant="ghost" size="sm" onClick={onClose}>
-            ✕
-          </Button>
+
+          {/* Stage progression bar */}
+          {!isTerminal && (
+            <div className="mt-3 flex items-center gap-1">
+              {PIPELINE_STAGES.map((stage, idx) => {
+                const isCompleted = idx < currentStageIndex;
+                const isCurrent = idx === currentStageIndex;
+                return (
+                  <div key={stage} className="flex flex-1 items-center">
+                    <div
+                      className={`flex-1 rounded-full h-2 transition-colors ${
+                        isCompleted
+                          ? "bg-primary"
+                          : isCurrent
+                          ? "bg-primary/60"
+                          : "bg-muted"
+                      }`}
+                      title={STAGE_LABELS[stage]}
+                    />
+                    {idx < PIPELINE_STAGES.length - 1 && <div className="w-1" />}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+          {!isTerminal && (
+            <div className="mt-1 flex items-center justify-between">
+              <div className="flex gap-3 text-[10px] text-muted-foreground">
+                {PIPELINE_STAGES.map((stage, idx) => (
+                  <span
+                    key={stage}
+                    className={`flex-1 text-center ${
+                      idx <= currentStageIndex ? "font-medium text-foreground" : ""
+                    }`}
+                  >
+                    {STAGE_LABELS[stage]}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+          {!isTerminal && currentStageIndex >= 0 && currentStageIndex < PIPELINE_STAGES.length - 1 && (
+            <div className="mt-2 flex justify-end">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setShowAdvanceStage(true)}
+              >
+                <ChevronRight className="mr-1 h-3 w-3" />
+                Avanzar a {STAGE_LABELS[PIPELINE_STAGES[currentStageIndex + 1]]}
+              </Button>
+            </div>
+          )}
         </div>
 
         {/* Tabs */}
@@ -186,7 +284,7 @@ export function ProspectDetail({ prospect, onClose }: ProspectDetailProps) {
         )}
       </div>
 
-      {/* Confirm dialog */}
+      {/* Confirm send to ops dialog */}
       {showConfirmSend && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50">
           <div className="w-full max-w-md rounded-lg bg-background p-6 shadow-lg">
@@ -200,6 +298,28 @@ export function ProspectDetail({ prospect, onClose }: ProspectDetailProps) {
               </Button>
               <Button onClick={handleSendToOps} disabled={sendToOps.isPending}>
                 {sendToOps.isPending ? "Enviando..." : "Confirmar"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirm advance stage dialog */}
+      {showAdvanceStage && currentStageIndex >= 0 && currentStageIndex < PIPELINE_STAGES.length - 1 && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50">
+          <div className="w-full max-w-md rounded-lg bg-background p-6 shadow-lg">
+            <h3 className="text-lg font-bold">Avanzar etapa</h3>
+            <p className="mt-2 text-sm text-muted-foreground">
+              El prospecto pasara de{" "}
+              <strong>{STAGE_LABELS[PIPELINE_STAGES[currentStageIndex]]}</strong> a{" "}
+              <strong>{STAGE_LABELS[PIPELINE_STAGES[currentStageIndex + 1]]}</strong>.
+            </p>
+            <div className="mt-4 flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setShowAdvanceStage(false)}>
+                Cancelar
+              </Button>
+              <Button onClick={handleAdvanceStage} disabled={updateProspect.isPending}>
+                {updateProspect.isPending ? "Avanzando..." : "Confirmar"}
               </Button>
             </div>
           </div>

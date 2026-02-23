@@ -5,10 +5,15 @@ import { users } from "./common";
 
 // Enums
 export const prospectStageEnum = pgEnum("prospect_stage", [
-  "lead",
+  "contacto_inicial",
+  "presentacion",
   "levantamiento",
   "propuesta",
   "negociacion",
+  "cierre_ganado",
+  "cierre_perdido",
+  // Legacy values kept for backward compat with existing data
+  "lead",
   "cierre",
   "rechazada",
 ]);
@@ -83,13 +88,13 @@ export const rejectionReasons = pgTable("rejection_reasons", {
 export const prospects = pgTable("prospects", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
-  industry: text("industry").notNull(),
-  location: text("location").notNull(),
-  potential: text("potential").notNull(), // Bajo, Medio, Alto, Muy Alto
+  industry: text("industry"),
+  location: text("location"),
+  potential: text("potential"), // Bajo, Medio, Alto, Muy Alto
   estimatedVolume: text("estimated_volume"), // e.g. "120 ton/mes"
   estimatedValue: numeric("estimated_value", { precision: 12, scale: 2 }),
   probability: integer("probability").default(0), // 0-100
-  stage: prospectStageEnum("stage").notNull().default("lead"),
+  stage: prospectStageEnum("stage").notNull().default("contacto_inicial"),
   contactName: text("contact_name"),
   contactRole: text("contact_role"),
   contactPhone: text("contact_phone"),
@@ -126,8 +131,11 @@ export const leads = pgTable("leads", {
   id: serial("id").primaryKey(),
   companyName: text("company_name").notNull(),
   contactName: text("contact_name").notNull(),
+  contactPhone: text("contact_phone"),
+  contactEmail: text("contact_email"),
   contactRole: text("contact_role"),
   source: leadSourceEnum("source").notNull().default("web"),
+  notes: text("notes"),
   estimatedValue: numeric("estimated_value", { precision: 12, scale: 2 }),
   industry: text("industry"),
   location: text("location"),
@@ -263,15 +271,18 @@ export const followUpAlerts = pgTable("follow_up_alerts", {
 // Validators
 export const insertProspectSchema = createInsertSchema(prospects, {
   name: z.string().min(1).max(200),
-  industry: z.string().min(1).max(100),
-  location: z.string().min(1).max(200),
-  potential: z.string().min(1).max(20),
+  industry: z.string().max(100).optional(),
+  location: z.string().max(200).optional(),
+  potential: z.string().max(20).optional(),
   probability: z.number().min(0).max(100).optional(),
 }).omit({ id: true, createdAt: true, updatedAt: true });
 
 export const insertLeadSchema = createInsertSchema(leads, {
   companyName: z.string().min(1).max(200),
   contactName: z.string().min(1).max(200),
+  contactPhone: z.string().max(50).optional(),
+  contactEmail: z.string().email().max(200).optional().or(z.literal("")),
+  notes: z.string().max(1000).optional(),
 }).omit({ id: true, createdAt: true });
 
 export const insertRejectionReasonSchema = createInsertSchema(rejectionReasons, {

@@ -94,6 +94,20 @@ export function useAssignLead() {
   });
 }
 
+export function useConvertLead() {
+  return useMutation({
+    mutationFn: async ({ id, ...data }: { id: number; industry?: string; location?: string; potential?: string; estimatedValue?: string }) => {
+      const res = await apiRequest("POST", `/api/comercial/leads/${id}/convert`, data);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/comercial/leads"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/comercial/prospects"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/comercial/pipeline"] });
+    },
+  });
+}
+
 // --- Pipeline ---
 
 export function usePipeline() {
