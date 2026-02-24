@@ -15,7 +15,16 @@ async function migrate() {
   `);
   console.log("✓ Added 'prospecto' to prospect_stage enum");
 
-  // 2. Add 'source' column to prospects table
+  // 2. Make industry and potential nullable (leads don't have these)
+  await db.execute(sql`
+    ALTER TABLE "prospects" ALTER COLUMN "industry" DROP NOT NULL;
+  `);
+  await db.execute(sql`
+    ALTER TABLE "prospects" ALTER COLUMN "potential" DROP NOT NULL;
+  `);
+  console.log("✓ Made industry and potential nullable");
+
+  // 3. Add 'source' column to prospects table
   await db.execute(sql`
     ALTER TABLE "prospects" ADD COLUMN IF NOT EXISTS "source" "lead_source" DEFAULT 'otro';
   `);

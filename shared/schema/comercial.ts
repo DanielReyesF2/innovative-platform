@@ -84,9 +84,9 @@ export const rejectionReasons = pgTable("rejection_reasons", {
 export const prospects = pgTable("prospects", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
-  industry: text("industry").notNull(),
+  industry: text("industry"),
   location: text("location").notNull(),
-  potential: text("potential").notNull(), // Bajo, Medio, Alto, Muy Alto
+  potential: text("potential"), // Bajo, Medio, Alto, Muy Alto
   estimatedVolume: text("estimated_volume"), // e.g. "120 ton/mes"
   estimatedValue: numeric("estimated_value", { precision: 12, scale: 2 }),
   probability: integer("probability").default(0), // 0-100
