@@ -86,6 +86,51 @@ export async function rejectProspect(
   return updated;
 }
 
+// --- Qualify Lead → Prospecto ---
+
+export async function qualifyProspect(id: number, data: {
+  industry: string;
+  potential: string;
+  estimatedValue?: string | number;
+  estimatedVolume?: string;
+  probability: number;
+  priority: string;
+  contactRole?: string;
+  contactEmail?: string;
+  reason?: string;
+  nextStep?: string;
+}) {
+  // Verify prospect exists and is in 'lead' stage
+  const prospect = await db.query.prospects.findFirst({
+    where: eq(prospects.id, id),
+  });
+  if (!prospect) throw new Error("NOT_FOUND");
+  if (prospect.stage !== "lead") {
+    throw new Error("CONFLICT:El prospecto no esta en etapa 'lead'");
+  }
+
+  const [updated] = await db
+    .update(prospects)
+    .set({
+      stage: "prospecto",
+      industry: data.industry,
+      potential: data.potential,
+      estimatedValue: data.estimatedValue ? String(data.estimatedValue) : null,
+      estimatedVolume: data.estimatedVolume || null,
+      probability: data.probability,
+      priority: data.priority as any,
+      contactRole: data.contactRole || null,
+      contactEmail: data.contactEmail || null,
+      reason: data.reason || null,
+      nextStep: data.nextStep || null,
+      updatedAt: new Date(),
+    })
+    .where(eq(prospects.id, id))
+    .returning();
+
+  return updated;
+}
+
 // --- Leads ---
 
 export async function getLeads() {
@@ -129,7 +174,7 @@ export async function getRejectionReasons() {
 // --- Pipeline ---
 
 export async function getPipelineSummary() {
-  const stages = ["lead", "levantamiento", "propuesta", "negociacion", "cierre"];
+  const stages = ["lead", "prospecto", "levantamiento", "propuesta", "negociacion", "cierre"];
   const results = [];
 
   for (const stage of stages) {
@@ -180,9 +225,9 @@ export async function sendProspectToOperaciones(prospectId: number, sentById: nu
   });
   if (!prospect) throw new Error("NOT_FOUND");
 
-  // State guard: only "lead" stage can be sent
-  if (prospect.stage !== "lead") {
-    throw new Error("CONFLICT:El prospecto no esta en etapa 'lead'");
+  // State guard: only "prospecto" stage can be sent
+  if (prospect.stage !== "prospecto") {
+    throw new Error("CONFLICT:El prospecto no esta en etapa 'prospecto'");
   }
 
   // Idempotency: check no active survey exists
@@ -526,6 +571,7 @@ export async function generateAlerts() {
       lte(prospects.nextFollowUpAt, now),
       or(
         eq(prospects.stage, "lead"),
+        eq(prospects.stage, "prospecto"),
         eq(prospects.stage, "levantamiento"),
         eq(prospects.stage, "propuesta"),
         eq(prospects.stage, "negociacion")
@@ -562,6 +608,7 @@ export async function generateAlerts() {
       or(isNull(prospects.lastContactAt), lte(prospects.lastContactAt, sevenDaysAgo)),
       or(
         eq(prospects.stage, "lead"),
+        eq(prospects.stage, "prospecto"),
         eq(prospects.stage, "levantamiento"),
         eq(prospects.stage, "propuesta"),
         eq(prospects.stage, "negociacion")

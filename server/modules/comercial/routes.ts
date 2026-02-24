@@ -11,6 +11,7 @@ import {
   createProspect,
   updateProspect,
   rejectProspect,
+  qualifyProspect,
   getLeads,
   createLead,
   assignLead,
@@ -58,7 +59,7 @@ import {
   getRechazadasConVencimiento,
   getRechazadasProximasAVencer,
 } from "./storage";
-import { insertProspectSchema, insertLeadSchema, insertVentaRealSchema, insertKpiMensualSchema } from "../../../shared/schema/comercial";
+import { insertProspectSchema, insertLeadSchema, insertVentaRealSchema, insertKpiMensualSchema, qualifyProspectSchema } from "../../../shared/schema/comercial";
 
 export const router = Router();
 
@@ -182,6 +183,23 @@ router.post("/prospects/:id/reject", async (req, res) => {
     res.json(updated);
   } catch (error) {
     console.error("[comercial] Reject prospect error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+// --- Qualify Lead → Prospecto ---
+
+router.post("/prospects/:id/qualify", async (req, res) => {
+  try {
+    const parsed = qualifyProspectSchema.parse(req.body);
+    const updated = await qualifyProspect(Number(req.params.id), parsed);
+    res.json(updated);
+  } catch (error: any) {
+    console.error("[comercial] Qualify prospect error:", error);
+    const msg = error.message || "Internal server error";
+    if (msg.startsWith("NOT_FOUND")) return res.status(404).json({ message: "Prospecto no encontrado" });
+    if (msg.startsWith("CONFLICT:")) return res.status(409).json({ message: msg.slice(9) });
+    if (error.name === "ZodError") return res.status(400).json({ message: "Datos invalidos", errors: error.errors });
     res.status(500).json({ message: "Internal server error" });
   }
 });
