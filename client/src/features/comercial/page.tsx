@@ -14,8 +14,10 @@ import {
   AlertCircle,
   BarChart3,
   FileBarChart,
+  Plus,
 } from "lucide-react";
-import { useProspects, usePipeline, useLeads } from "./api";
+import { useProspects, usePipeline, useLeads, useCreateProspect } from "./api";
+import { Label } from "@/components/ui/label";
 import { KpiSection } from "@/features/kpis/components/KpiSection";
 import { ProspectDetail } from "./components/ProspectDetail";
 import { ComercialReports } from "./components/ComercialReports";
@@ -23,6 +25,7 @@ import { AlertsDropdown } from "./components/AlertsDropdown";
 
 const STAGE_LABELS: Record<string, string> = {
   lead: "Leads",
+  prospecto: "Prospectos",
   levantamiento: "Levantamientos",
   propuesta: "Propuestas",
   negociacion: "Negociación",
@@ -32,6 +35,7 @@ const STAGE_LABELS: Record<string, string> = {
 
 const STAGE_COLORS: Record<string, string> = {
   lead: "bg-blue-100 text-blue-800",
+  prospecto: "bg-cyan-100 text-cyan-800",
   levantamiento: "bg-yellow-100 text-yellow-800",
   propuesta: "bg-purple-100 text-purple-800",
   negociacion: "bg-orange-100 text-orange-800",
@@ -115,6 +119,8 @@ function PipelineView() {
   const [searchTerm, setSearchTerm] = useState("");
   const [stageFilter, setStageFilter] = useState<string>("all");
   const [selectedProspect, setSelectedProspect] = useState<any>(null);
+  const [showNewLead, setShowNewLead] = useState(false);
+  const createProspect = useCreateProspect();
 
   // Calculate metrics
   const activeProspects = prospects.filter((p: any) => p.stage !== "rechazada");
@@ -177,7 +183,7 @@ function PipelineView() {
           <CardTitle className="text-lg">Embudo de Ventas</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-5 gap-3">
+          <div className="grid grid-cols-6 gap-3">
             {pipeline.map((stage: any) => (
               <button
                 key={stage.stage}
@@ -198,6 +204,14 @@ function PipelineView() {
           </div>
         </CardContent>
       </Card>
+
+      {/* New Lead button */}
+      <div className="flex justify-end">
+        <Button onClick={() => setShowNewLead(true)}>
+          <Plus className="mr-2 h-4 w-4" />
+          Nuevo Lead
+        </Button>
+      </div>
 
       {/* Search and filters */}
       <div className="flex items-center gap-3">
@@ -255,7 +269,7 @@ function PipelineView() {
                       >
                         {STAGE_LABELS[prospect.stage] || prospect.stage}
                       </span>
-                      {prospect.priority && (
+                      {prospect.stage !== "lead" && prospect.priority && (
                         <span
                           className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
                             PRIORITY_COLORS[prospect.priority] || ""
@@ -265,19 +279,30 @@ function PipelineView() {
                         </span>
                       )}
                     </div>
-                    <div className="mt-1 flex items-center gap-4 text-sm text-muted-foreground">
-                      <span>{prospect.industry}</span>
-                      <span>{prospect.location}</span>
-                      {prospect.estimatedValue && (
-                        <span className="font-medium">
-                          ${Number(prospect.estimatedValue).toLocaleString("es-MX")}
-                        </span>
-                      )}
-                      {prospect.probability > 0 && (
-                        <span>{prospect.probability}% prob.</span>
-                      )}
-                    </div>
-                    {prospect.nextStep && (
+                    {/* Lead: minimal info */}
+                    {prospect.stage === "lead" && (
+                      <div className="mt-1 flex items-center gap-4 text-sm text-muted-foreground">
+                        {prospect.contactName && <span>{prospect.contactName}</span>}
+                        <span>{prospect.location}</span>
+                      </div>
+                    )}
+                    {/* Prospecto+: commercial info */}
+                    {prospect.stage !== "lead" && (
+                      <div className="mt-1 flex items-center gap-4 text-sm text-muted-foreground">
+                        <span>{prospect.industry}</span>
+                        <span>{prospect.location}</span>
+                        {prospect.estimatedValue && (
+                          <span className="font-medium">
+                            ${Number(prospect.estimatedValue).toLocaleString("es-MX")}
+                          </span>
+                        )}
+                        {prospect.probability > 0 && (
+                          <span>{prospect.probability}% prob.</span>
+                        )}
+                      </div>
+                    )}
+                    {/* Next step for prospecto+ */}
+                    {prospect.stage !== "lead" && prospect.nextStep && (
                       <div className="mt-1 text-xs text-muted-foreground">
                         Siguiente: {prospect.nextStep}
                       </div>
@@ -296,6 +321,17 @@ function PipelineView() {
         <ProspectDetail
           prospect={selectedProspect}
           onClose={() => setSelectedProspect(null)}
+        />
+      )}
+
+      {showNewLead && (
+        <NewLeadModal
+          onClose={() => setShowNewLead(false)}
+          isPending={createProspect.isPending}
+          onSubmit={async (data) => {
+            await createProspect.mutateAsync(data);
+            setShowNewLead(false);
+          }}
         />
       )}
     </>
@@ -324,6 +360,116 @@ function MetricCard({
         <p className="text-xs text-muted-foreground">{description}</p>
       </CardContent>
     </Card>
+  );
+}
+
+function NewLeadModal({
+  onClose,
+  onSubmit,
+  isPending,
+}: {
+  onClose: () => void;
+  onSubmit: (data: any) => void;
+  isPending: boolean;
+}) {
+  const [form, setForm] = useState({
+    name: "",
+    contactName: "",
+    location: "",
+    source: "otro",
+    contactPhone: "",
+  });
+
+  const set = (key: string, val: string) => setForm({ ...form, [key]: val });
+
+  const handleSubmit = () => {
+    if (!form.name || !form.contactName || !form.location) return;
+    onSubmit({
+      name: form.name,
+      contactName: form.contactName,
+      location: form.location,
+      source: form.source,
+      contactPhone: form.contactPhone || undefined,
+      stage: "lead",
+      potential: "Medio",
+      industry: "Por definir",
+      probability: 0,
+    });
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <div className="w-full max-w-md rounded-lg bg-background p-6 shadow-lg">
+        <h3 className="text-lg font-bold">Nuevo Lead</h3>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Captura rápida — solo datos básicos
+        </p>
+        <div className="mt-4 space-y-3">
+          <div>
+            <Label className="text-xs">Nombre empresa *</Label>
+            <Input
+              value={form.name}
+              onChange={(e) => set("name", e.target.value)}
+              placeholder="Ej: ACME Corp"
+              className="mt-1"
+            />
+          </div>
+          <div>
+            <Label className="text-xs">Nombre contacto *</Label>
+            <Input
+              value={form.contactName}
+              onChange={(e) => set("contactName", e.target.value)}
+              placeholder="Ej: Juan Pérez"
+              className="mt-1"
+            />
+          </div>
+          <div>
+            <Label className="text-xs">Ubicación *</Label>
+            <Input
+              value={form.location}
+              onChange={(e) => set("location", e.target.value)}
+              placeholder="Ej: CDMX, Monterrey"
+              className="mt-1"
+            />
+          </div>
+          <div>
+            <Label className="text-xs">Fuente</Label>
+            <select
+              value={form.source}
+              onChange={(e) => set("source", e.target.value)}
+              className="mt-1 h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+            >
+              <option value="referido">Referido</option>
+              <option value="web">Web</option>
+              <option value="linkedin">LinkedIn</option>
+              <option value="evento">Evento</option>
+              <option value="cold_call">Cold Call</option>
+              <option value="otro">Otro</option>
+            </select>
+          </div>
+          <div>
+            <Label className="text-xs">Teléfono contacto</Label>
+            <Input
+              value={form.contactPhone}
+              onChange={(e) => set("contactPhone", e.target.value)}
+              placeholder="Opcional"
+              className="mt-1"
+            />
+          </div>
+        </div>
+        <div className="mt-6 flex justify-end gap-2">
+          <Button variant="outline" onClick={onClose}>
+            Cancelar
+          </Button>
+          <Button
+            onClick={handleSubmit}
+            disabled={isPending || !form.name || !form.contactName || !form.location}
+          >
+            {isPending ? "Creando..." : "Crear Lead"}
+          </Button>
+        </div>
+      </div>
+    </div>
   );
 }
 

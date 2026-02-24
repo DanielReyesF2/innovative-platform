@@ -36,6 +36,19 @@ export function useCreateProspect() {
   });
 }
 
+export function useQualifyProspect() {
+  return useMutation({
+    mutationFn: async ({ id, ...data }: { id: number; [key: string]: any }) => {
+      const res = await apiRequest("POST", `/api/comercial/prospects/${id}/qualify`, data);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/comercial/prospects"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/comercial/pipeline"] });
+    },
+  });
+}
+
 export function useUpdateProspect() {
   return useMutation({
     mutationFn: async ({ id, ...data }: any) => {
