@@ -21,7 +21,7 @@ import {
   FileText,
   FileCheck,
 } from "lucide-react";
-import { useUpdateProspect, useSendToOperaciones } from "../api";
+import { useUpdateProspect, useSendToOperaciones, useQualifyProspect } from "../api";
 import { useToast } from "@/components/ui/use-toast";
 import { ProspectTimeline } from "./ProspectTimeline";
 import { ProspectNotes } from "./ProspectNotes";
@@ -31,6 +31,7 @@ import { ProspectProposals } from "./ProspectProposals";
 
 const STAGE_LABELS: Record<string, string> = {
   lead: "Leads",
+  prospecto: "Prospectos",
   levantamiento: "Levantamientos",
   propuesta: "Propuestas",
   negociacion: "Negociacion",
@@ -40,6 +41,7 @@ const STAGE_LABELS: Record<string, string> = {
 
 const STAGE_COLORS: Record<string, string> = {
   lead: "bg-blue-100 text-blue-800",
+  prospecto: "bg-cyan-100 text-cyan-800",
   levantamiento: "bg-yellow-100 text-yellow-800",
   propuesta: "bg-purple-100 text-purple-800",
   negociacion: "bg-orange-100 text-orange-800",
@@ -63,6 +65,8 @@ export function ProspectDetail({ prospect, onClose }: ProspectDetailProps) {
   const updateProspect = useUpdateProspect();
   const sendToOps = useSendToOperaciones();
   const { toast } = useToast();
+  const qualifyProspect = useQualifyProspect();
+  const [showQualify, setShowQualify] = useState(false);
 
   const saveLevantamientoData = useCallback(
     async (data: any) => {
@@ -99,7 +103,8 @@ export function ProspectDetail({ prospect, onClose }: ProspectDetailProps) {
     }
   };
 
-  const canSend = prospect.stage === "lead" && !prospect.surveyId;
+  const canSend = prospect.stage === "prospecto" && !prospect.surveyId;
+  const canQualify = prospect.stage === "lead";
   const wasSent = !!prospect.sentToOpsAt;
 
   return (
@@ -128,28 +133,39 @@ export function ProspectDetail({ prospect, onClose }: ProspectDetailProps) {
 
         {/* Tabs */}
         <div className="flex gap-1 border-b px-6 overflow-x-auto">
-          {[
-            { id: "info", label: "Info", icon: Building2 },
-            { id: "timeline", label: "Timeline", icon: Clock },
-            { id: "notas", label: "Notas", icon: StickyNote },
-            { id: "reuniones", label: "Reuniones", icon: Users },
-            { id: "documentos", label: "Docs", icon: FileText },
-            { id: "propuestas", label: "Propuestas", icon: FileCheck },
-            { id: "levantamiento", label: "Levantamiento", icon: Target },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as TabType)}
-              className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-colors whitespace-nowrap ${
-                activeTab === tab.id
-                  ? "border-b-2 border-primary text-primary"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <tab.icon className="h-4 w-4" />
-              {tab.label}
-            </button>
-          ))}
+          {(() => {
+            const stage = prospect.stage;
+            const allTabs = [
+              { id: "info", label: "Info", icon: Building2, minStage: "lead" },
+              { id: "timeline", label: "Timeline", icon: Clock, minStage: "prospecto" },
+              { id: "notas", label: "Notas", icon: StickyNote, minStage: "lead" },
+              { id: "reuniones", label: "Reuniones", icon: Users, minStage: "prospecto" },
+              { id: "documentos", label: "Docs", icon: FileText, minStage: "prospecto" },
+              { id: "propuestas", label: "Propuestas", icon: FileCheck, minStage: "propuesta" },
+              { id: "levantamiento", label: "Levantamiento", icon: Target, minStage: "levantamiento" },
+            ];
+
+            const stageOrder = ["lead", "prospecto", "levantamiento", "propuesta", "negociacion", "cierre", "rechazada"];
+            const currentIdx = stageOrder.indexOf(stage);
+            const isRechazada = stage === "rechazada";
+
+            return allTabs
+              .filter((tab) => isRechazada || currentIdx >= stageOrder.indexOf(tab.minStage))
+              .map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id as TabType)}
+                  className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-colors whitespace-nowrap ${
+                    activeTab === tab.id
+                      ? "border-b-2 border-primary text-primary"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <tab.icon className="h-4 w-4" />
+                  {tab.label}
+                </button>
+              ));
+          })()}
         </div>
 
         {/* Content */}
@@ -166,19 +182,29 @@ export function ProspectDetail({ prospect, onClose }: ProspectDetailProps) {
         </div>
 
         {/* Footer */}
-        {activeTab === "levantamiento" && (
+        {(activeTab === "levantamiento" || canQualify) && (
           <div className="flex items-center justify-between border-t px-6 py-3">
             <div className="text-xs text-muted-foreground">
               {isSaving ? "Guardando..." : ""}
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" onClick={handleSave} disabled={isSaving}>
-                Guardar
-              </Button>
-              {canSend && (
-                <Button onClick={() => setShowConfirmSend(true)} disabled={sendToOps.isPending}>
-                  <Send className="mr-2 h-4 w-4" />
-                  Enviar a Operaciones
+              {activeTab === "levantamiento" && (
+                <>
+                  <Button variant="outline" onClick={handleSave} disabled={isSaving}>
+                    Guardar
+                  </Button>
+                  {canSend && (
+                    <Button onClick={() => setShowConfirmSend(true)} disabled={sendToOps.isPending}>
+                      <Send className="mr-2 h-4 w-4" />
+                      Enviar a Operaciones
+                    </Button>
+                  )}
+                </>
+              )}
+              {canQualify && (
+                <Button onClick={() => setShowQualify(true)}>
+                  <Target className="mr-2 h-4 w-4" />
+                  Calificar como Prospecto
                 </Button>
               )}
             </div>
@@ -205,50 +231,79 @@ export function ProspectDetail({ prospect, onClose }: ProspectDetailProps) {
           </div>
         </div>
       )}
+
+      {showQualify && (
+        <QualifyModal
+          onClose={() => setShowQualify(false)}
+          isPending={qualifyProspect.isPending}
+          onSubmit={async (data) => {
+            try {
+              await qualifyProspect.mutateAsync({ id: prospect.id, ...data });
+              toast({ title: "Lead calificado como Prospecto" });
+              setShowQualify(false);
+              onClose();
+            } catch (err: any) {
+              toast({ title: err?.message || "Error al calificar", variant: "destructive" });
+            }
+          }}
+        />
+      )}
     </div>
   );
 }
 
 function InfoTab({ prospect }: { prospect: any }) {
+  const isLead = prospect.stage === "lead";
+
   return (
     <div className="space-y-4">
+      {/* Always shown: basic info */}
       <div className="grid gap-4 sm:grid-cols-2">
-        <InfoRow label="Industria" value={prospect.industry} />
+        <InfoRow label="Empresa" value={prospect.name} />
         <InfoRow label="Ubicacion" value={prospect.location} />
-        <InfoRow label="Potencial" value={prospect.potential} />
-        <InfoRow label="Probabilidad" value={`${prospect.probability}%`} />
-        <InfoRow
-          label="Valor Estimado"
-          value={prospect.estimatedValue ? `$${Number(prospect.estimatedValue).toLocaleString("es-MX")}` : undefined}
-        />
-        <InfoRow label="Volumen Estimado" value={prospect.estimatedVolume} />
-        <InfoRow label="Tiempo Cierre" value={prospect.estimatedCloseTime} />
-        <InfoRow label="Prioridad" value={prospect.priority?.replace("_", " ")} />
+        {prospect.source && <InfoRow label="Fuente" value={prospect.source} />}
       </div>
 
+      {/* Contact info — always shown */}
       {prospect.contactName && (
         <div className="rounded-lg border p-3">
           <h3 className="mb-2 text-sm font-semibold">Contacto</h3>
           <div className="grid gap-2 sm:grid-cols-2">
             <InfoRow label="Nombre" value={prospect.contactName} />
-            <InfoRow label="Rol" value={prospect.contactRole} />
+            {!isLead && <InfoRow label="Rol" value={prospect.contactRole} />}
             <InfoRow label="Telefono" value={prospect.contactPhone} />
-            <InfoRow label="Email" value={prospect.contactEmail} />
+            {!isLead && <InfoRow label="Email" value={prospect.contactEmail} />}
           </div>
         </div>
       )}
 
-      {prospect.lastActivity && (
+      {/* Commercial info — only for prospecto+ */}
+      {!isLead && (
+        <div className="grid gap-4 sm:grid-cols-2">
+          <InfoRow label="Industria" value={prospect.industry} />
+          <InfoRow label="Potencial" value={prospect.potential} />
+          <InfoRow label="Probabilidad" value={`${prospect.probability}%`} />
+          <InfoRow
+            label="Valor Estimado"
+            value={prospect.estimatedValue ? `$${Number(prospect.estimatedValue).toLocaleString("es-MX")}` : undefined}
+          />
+          <InfoRow label="Volumen Estimado" value={prospect.estimatedVolume} />
+          <InfoRow label="Tiempo Cierre" value={prospect.estimatedCloseTime} />
+          <InfoRow label="Prioridad" value={prospect.priority?.replace("_", " ")} />
+        </div>
+      )}
+
+      {!isLead && prospect.lastActivity && (
         <InfoRow label="Ultima actividad" value={prospect.lastActivity} />
       )}
-      {prospect.nextStep && (
+      {!isLead && prospect.nextStep && (
         <InfoRow label="Siguiente paso" value={prospect.nextStep} />
       )}
-      {prospect.reason && (
+      {!isLead && prospect.reason && (
         <InfoRow label="Razon de interes" value={prospect.reason} />
       )}
-      {prospect.risk && <InfoRow label="Riesgo" value={prospect.risk} />}
-      {prospect.opportunity && <InfoRow label="Oportunidad" value={prospect.opportunity} />}
+      {!isLead && prospect.risk && <InfoRow label="Riesgo" value={prospect.risk} />}
+      {!isLead && prospect.opportunity && <InfoRow label="Oportunidad" value={prospect.opportunity} />}
     </div>
   );
 }
@@ -259,6 +314,116 @@ function InfoRow({ label, value }: { label: string; value?: string | null }) {
     <div>
       <div className="text-xs text-muted-foreground">{label}</div>
       <div className="text-sm font-medium">{value}</div>
+    </div>
+  );
+}
+
+function QualifyModal({
+  onClose,
+  onSubmit,
+  isPending,
+}: {
+  onClose: () => void;
+  onSubmit: (data: any) => void;
+  isPending: boolean;
+}) {
+  const [form, setForm] = useState({
+    industry: "",
+    potential: "Medio",
+    estimatedValue: "",
+    estimatedVolume: "",
+    probability: 50,
+    priority: "media",
+    contactRole: "",
+    contactEmail: "",
+    reason: "",
+    nextStep: "",
+  });
+
+  const set = (key: string, val: any) => setForm({ ...form, [key]: val });
+
+  const handleSubmit = () => {
+    if (!form.industry) return;
+    onSubmit({
+      industry: form.industry,
+      potential: form.potential,
+      estimatedValue: form.estimatedValue || undefined,
+      estimatedVolume: form.estimatedVolume || undefined,
+      probability: form.probability,
+      priority: form.priority,
+      contactRole: form.contactRole || undefined,
+      contactEmail: form.contactEmail || undefined,
+      reason: form.reason || undefined,
+      nextStep: form.nextStep || undefined,
+    });
+  };
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4">
+      <div className="max-h-[80vh] w-full max-w-lg overflow-auto rounded-lg bg-background p-6 shadow-lg">
+        <h3 className="text-lg font-bold">Calificar Lead</h3>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Agrega la información comercial para convertirlo en Prospecto
+        </p>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          <div>
+            <Label className="text-xs">Industria *</Label>
+            <Input value={form.industry} onChange={(e) => set("industry", e.target.value)} placeholder="Ej: Manufactura" className="mt-1" />
+          </div>
+          <div>
+            <Label className="text-xs">Potencial</Label>
+            <select value={form.potential} onChange={(e) => set("potential", e.target.value)} className="mt-1 h-10 w-full rounded-md border border-input bg-background px-3 text-sm">
+              <option value="Bajo">Bajo</option>
+              <option value="Medio">Medio</option>
+              <option value="Alto">Alto</option>
+              <option value="Muy Alto">Muy Alto</option>
+            </select>
+          </div>
+          <div>
+            <Label className="text-xs">Valor estimado</Label>
+            <Input type="number" value={form.estimatedValue} onChange={(e) => set("estimatedValue", e.target.value)} placeholder="$" className="mt-1" />
+          </div>
+          <div>
+            <Label className="text-xs">Volumen estimado</Label>
+            <Input value={form.estimatedVolume} onChange={(e) => set("estimatedVolume", e.target.value)} placeholder="Ej: 50 ton/mes" className="mt-1" />
+          </div>
+          <div>
+            <Label className="text-xs">Probabilidad %</Label>
+            <Input type="number" min={0} max={100} value={form.probability} onChange={(e) => set("probability", Number(e.target.value))} className="mt-1" />
+          </div>
+          <div>
+            <Label className="text-xs">Prioridad</Label>
+            <select value={form.priority} onChange={(e) => set("priority", e.target.value)} className="mt-1 h-10 w-full rounded-md border border-input bg-background px-3 text-sm">
+              <option value="baja">Baja</option>
+              <option value="media">Media</option>
+              <option value="alta">Alta</option>
+              <option value="muy_alta">Muy Alta</option>
+            </select>
+          </div>
+          <div>
+            <Label className="text-xs">Rol del contacto</Label>
+            <Input value={form.contactRole} onChange={(e) => set("contactRole", e.target.value)} placeholder="Ej: Director de Operaciones" className="mt-1" />
+          </div>
+          <div>
+            <Label className="text-xs">Email contacto</Label>
+            <Input type="email" value={form.contactEmail} onChange={(e) => set("contactEmail", e.target.value)} placeholder="correo@empresa.com" className="mt-1" />
+          </div>
+          <div className="sm:col-span-2">
+            <Label className="text-xs">Razón de interés</Label>
+            <Input value={form.reason} onChange={(e) => set("reason", e.target.value)} placeholder="¿Por qué están interesados?" className="mt-1" />
+          </div>
+          <div className="sm:col-span-2">
+            <Label className="text-xs">Siguiente paso</Label>
+            <Input value={form.nextStep} onChange={(e) => set("nextStep", e.target.value)} placeholder="Ej: Agendar presentación" className="mt-1" />
+          </div>
+        </div>
+        <div className="mt-6 flex justify-end gap-2">
+          <Button variant="outline" onClick={onClose}>Cancelar</Button>
+          <Button onClick={handleSubmit} disabled={isPending || !form.industry}>
+            {isPending ? "Calificando..." : "Calificar como Prospecto"}
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }
