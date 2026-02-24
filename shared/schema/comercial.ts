@@ -6,6 +6,7 @@ import { users } from "./common";
 // Enums
 export const prospectStageEnum = pgEnum("prospect_stage", [
   "lead",
+  "prospecto",
   "levantamiento",
   "propuesta",
   "negociacion",
@@ -94,6 +95,7 @@ export const prospects = pgTable("prospects", {
   contactRole: text("contact_role"),
   contactPhone: text("contact_phone"),
   contactEmail: text("contact_email"),
+  source: leadSourceEnum("source").default("otro"),
   lastActivity: text("last_activity"),
   priority: priorityEnum("priority").default("media"),
   reason: text("reason"), // why they're interested
@@ -263,11 +265,24 @@ export const followUpAlerts = pgTable("follow_up_alerts", {
 // Validators
 export const insertProspectSchema = createInsertSchema(prospects, {
   name: z.string().min(1).max(200),
-  industry: z.string().min(1).max(100),
+  industry: z.string().max(100).optional(),
   location: z.string().min(1).max(200),
-  potential: z.string().min(1).max(20),
+  potential: z.string().max(20).optional(),
   probability: z.number().min(0).max(100).optional(),
 }).omit({ id: true, createdAt: true, updatedAt: true });
+
+export const qualifyProspectSchema = z.object({
+  industry: z.string().min(1).max(100),
+  potential: z.string().min(1).max(20),
+  estimatedValue: z.union([z.string(), z.number()]).optional(),
+  estimatedVolume: z.string().max(100).optional(),
+  probability: z.number().min(0).max(100),
+  priority: z.enum(["muy_alta", "alta", "media", "baja"]),
+  contactRole: z.string().max(200).optional(),
+  contactEmail: z.string().email().max(200).optional(),
+  reason: z.string().max(500).optional(),
+  nextStep: z.string().max(500).optional(),
+});
 
 export const insertLeadSchema = createInsertSchema(leads, {
   companyName: z.string().min(1).max(200),
@@ -359,6 +374,7 @@ export type InsertLead = z.infer<typeof insertLeadSchema>;
 export type RejectionReason = typeof rejectionReasons.$inferSelect;
 export type SalesMetrics = typeof salesMetrics.$inferSelect;
 export type PipelineSnapshot = typeof pipelineSnapshots.$inferSelect;
+export type QualifyProspectData = z.infer<typeof qualifyProspectSchema>;
 
 // New types
 export type ProspectActivity = typeof prospectActivities.$inferSelect;
