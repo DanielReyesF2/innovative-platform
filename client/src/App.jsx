@@ -12560,8 +12560,11 @@ class ErrorBoundary extends React.Component {
           <pre style={{ background: '#FEF2F2', padding: 16, borderRadius: 8, overflow: 'auto', fontSize: 13, whiteSpace: 'pre-wrap' }}>
             {this.state.error?.toString()}
           </pre>
-          <details style={{ marginTop: 16 }}>
-            <summary style={{ cursor: 'pointer', color: '#6b7280' }}>Stack trace</summary>
+          <pre style={{ background: '#fff3cd', padding: 16, borderRadius: 8, overflow: 'auto', fontSize: 11, whiteSpace: 'pre-wrap', marginTop: 8 }}>
+            {this.state.error?.stack}
+          </pre>
+          <details style={{ marginTop: 16 }} open>
+            <summary style={{ cursor: 'pointer', color: '#6b7280' }}>Component Stack</summary>
             <pre style={{ background: '#f3f4f6', padding: 16, borderRadius: 8, overflow: 'auto', fontSize: 11, whiteSpace: 'pre-wrap', marginTop: 8 }}>
               {this.state.errorInfo?.componentStack}
             </pre>
