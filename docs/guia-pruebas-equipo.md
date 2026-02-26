@@ -1,131 +1,107 @@
-# Guia de Pruebas - Plataforma Innovative
+# Guia de Pruebas - Hub Digital Innovative
 
 **Fecha:** 26 Feb 2026
-**URL:** https://innovative-production-7632.up.railway.app/
-**Objetivo:** Probar el flujo comercial completo (Leads → Prospectos → Pipeline) y reportar hallazgos.
+**URL:** https://innovative-production-7632.up.railway.app
 
 ---
 
 ## Acceso
 
-Ingresa con tu usuario y contrasena en la URL de arriba. Si no puedes entrar, avisa a Daniel.
+- **Usuario:** Pruebas
+- **Contrasenya:** Pruebas2026
+- Al abrir la URL, los campos ya vienen pre-llenados. Solo dale click a **Iniciar Sesion**.
 
 ---
 
 ## Que Probar
 
-### 1. Crear un Lead
+### 1. Dashboard
 
-1. Ve a **Pipeline Comercial** > pestaña **Leads**
-2. Click **Nuevo Lead**
-3. Llena solo datos basicos: empresa, contacto, telefono, fuente
-4. Guarda
+Al entrar veras el dashboard ejecutivo con KPIs generales de pipeline, ingresos operativos, economia circular y alertas.
+
+**Revisar:**
+- Los numeros se ven correctos?
+- Las graficas cargan bien?
+- La info es util para una vista rapida?
+
+---
+
+### 2. Crear un Nuevo Lead
+
+1. En el menu lateral, click en **Nuevas Cuentas** > **Pipeline & Prospectos**
+2. Click en el boton **+ Nuevo Lead**
+3. Llena el formulario:
+   - **Asesor Comercial** (obligatorio): selecciona a que ejecutivo se asigna
+   - **Empresa** (obligatorio): nombre de la empresa
+   - **Ciudad**: donde esta ubicada
+   - **Contacto** (obligatorio): nombre de la persona
+   - **Telefono y Correo**: datos de contacto
+   - **Fuente**: como llego el lead (referencia, llamada, etc.)
+   - **Notas**: comentarios adicionales
+4. Click **Crear Lead**
 
 **Preguntas:**
-- El formulario es claro y rapido?
+- El formulario es rapido y claro?
 - Falta algun campo importante para el primer contacto?
-- El lead aparece en la lista despues de crearlo?
+- El lead aparece en el kanban del asesor despues de crearlo?
 
 ---
 
-### 2. Calificar Lead → Prospecto
+### 3. Ver el Kanban del Asesor
 
-1. En la lista de Leads, busca el lead que creaste
-2. Click **Calificar**
-3. **Paso 1:** Llena datos de negocio (industria, ubicacion, potencial, valor estimado)
-4. Click **Siguiente**
-5. **Paso 2:** Llena info de residuos (tipos, volumen, proveedor actual)
-6. Click **Crear Prospecto**
+1. En la vista de Pipeline, click sobre uno de los asesores del equipo
+2. Veras su kanban personal con columnas: Lead > Prospecto > Reunion > Levantamiento > Propuesta > Cliente Nuevo
+3. Las tarjetas se pueden arrastrar entre columnas
 
 **Preguntas:**
-- Los 2 pasos tienen sentido? Sobran o faltan campos?
-- Las opciones de industria cubren nuestros clientes?
-- Los tipos de residuo estan completos?
-- El flujo se siente natural?
+- Las columnas y etapas tienen sentido?
+- El kanban es facil de entender?
+- Al hacer click en una tarjeta, se ve bien el detalle?
 
 ---
 
-### 3. Ver Prospecto en Pipeline
+### 4. Detalle de un Prospecto
 
-1. Ve a la pestaña **Pipeline**
-2. El prospecto debe aparecer en **Contacto Inicial**
-3. Click en el prospecto para ver el detalle
-
-**Preguntas:**
-- Se ve bien la barra de progreso de etapas?
-- Los tabs bloqueados (con candado) se entienden?
-- La info del prospecto esta completa?
-
----
-
-### 4. Avanzar Etapa
-
-1. Dentro del detalle del prospecto, click **Avanzar a [siguiente etapa]**
-2. Confirma
-3. Observa como se desbloquean nuevos tabs
+Click en cualquier tarjeta del kanban para ver su detalle con tabs:
+- **Info:** datos generales, contacto, servicios
+- **Timeline:** historial de actividades
+- **Notas:** crear y ver notas
+- **Reuniones:** agendar reuniones
+- **Docs:** documentos adjuntos
+- **Propuestas:** propuestas enviadas
 
 **Preguntas:**
-- Se desbloquean los tabs correctos en cada etapa?
-- El boton de avanzar es claro?
-- La barra de progreso se actualiza?
-
----
-
-### 5. Explorar Tabs del Prospecto
-
-Segun la etapa, prueba:
-- **Info:** Datos generales y de contacto
-- **Timeline:** Historial de actividades
-- **Notas:** Crear, editar, fijar notas
-- **Reuniones:** Agendar y completar reuniones
-- **Levantamiento:** Llenar datos detallados de la empresa
-- **Documentos:** Subir documentos
-- **Propuestas:** Crear propuestas
-
-**Preguntas:**
-- Cada seccion funciona como esperas?
-- Hay algo confuso o que no funcione?
+- La info esta completa?
+- Los tabs funcionan bien?
+- Es facil navegar entre secciones?
 
 ---
 
 ## Como Reportar
 
-Usa esta plantilla para cada hallazgo:
+Usa este formato para cada hallazgo en el grupo de WhatsApp:
 
 ```
-SECCION: [Leads / Calificacion / Pipeline / Detalle / Otro]
-TIPO: [Bug / Mejora / Pregunta / Dato faltante]
-DESCRIPCION: [Que encontraste o que sugieres]
-PANTALLA: [En que pantalla estabas]
-PRIORIDAD: [Alta / Media / Baja]
+SECCION: [Dashboard / Nuevo Lead / Kanban / Detalle / Otro]
+TIPO: [Bug / Mejora / Pregunta]
+QUE PASO: [Descripcion breve]
+SCREENSHOT: [Adjuntar foto si aplica]
 ```
 
 **Ejemplo:**
 ```
-SECCION: Calificacion
-TIPO: Dato faltante
-DESCRIPCION: No hay opcion de industria "Farmaceutica", tuve que poner "Otro"
-PANTALLA: Paso 1 del dialog de calificacion
-PRIORIDAD: Media
+SECCION: Nuevo Lead
+TIPO: Mejora
+QUE PASO: Faltaria un campo para seleccionar el tipo de industria desde el inicio
+SCREENSHOT: (adjunto)
 ```
 
 ---
 
-## Etapas del Pipeline (referencia)
+## Notas Importantes
 
-| Etapa | Descripcion |
-|---|---|
-| Contacto Inicial | Primer contacto, info basica |
-| Presentacion | Presentacion de servicios |
-| Levantamiento | Visita y datos detallados |
-| Propuesta | Cotizacion enviada |
-| Negociacion | En proceso de cierre |
-| Cierre Ganado | Cliente cerrado |
-
----
-
-## Notas
-
-- Esto es un ambiente de pruebas, pueden crear datos ficticios
-- Si algo truena (error rojo), toma screenshot y reporta
+- Es ambiente de pruebas, pueden crear datos ficticios
+- Si la pantalla se pone en blanco o sale un error rojo, tomen screenshot y reportenlo
+- Los datos de los prospectos que ya estan cargados son de ejemplo
+- Solo estan habilitados **Dashboard** y **Nuevas Cuentas** por ahora
 - Cualquier duda, pregunten en el grupo
