@@ -4457,7 +4457,7 @@ const InnovativeDemo = () => {
   const [nuevoLeadForm, setNuevoLeadForm] = useState({
     empresa: '', ciudad: '',
     contactoNombre: '', contactoCorreo: '', contactoTelefono: '',
-    fuente: 'otro', comentarios: ''
+    fuente: 'otro', comentarios: '', ejecutivo: ''
   });
   const [mostrarLevantamientos, setMostrarLevantamientos] = useState(false);
   const [selectedLevantamientoDetalle, setSelectedLevantamientoDetalle] = useState(null);
@@ -4918,7 +4918,7 @@ const InnovativeDemo = () => {
 
   // Crear nuevo lead
   const handleCrearLead = () => {
-    if (!nuevoLeadForm.empresa.trim() || !nuevoLeadForm.contactoNombre.trim()) {
+    if (!nuevoLeadForm.empresa.trim() || !nuevoLeadForm.contactoNombre.trim() || !nuevoLeadForm.ejecutivo) {
       return;
     }
     const nuevoProspecto = {
@@ -4927,7 +4927,7 @@ const InnovativeDemo = () => {
       planta: null,
       ciudad: nuevoLeadForm.ciudad.trim() || null,
       industria: null,
-      ejecutivo: currentUserCodigo,
+      ejecutivo: nuevoLeadForm.ejecutivo,
       contacto: {
         nombre: nuevoLeadForm.contactoNombre.trim(),
         puesto: '',
@@ -4951,7 +4951,7 @@ const InnovativeDemo = () => {
     setNuevoLeadForm({
       empresa: '', ciudad: '',
       contactoNombre: '', contactoCorreo: '', contactoTelefono: '',
-      fuente: 'otro', comentarios: ''
+      fuente: 'otro', comentarios: '', ejecutivo: ''
     });
   };
 
@@ -10949,6 +10949,19 @@ const InnovativeDemo = () => {
             </div>
 
             <div className="p-6 space-y-6">
+              {/* ASESOR COMERCIAL */}
+              <div>
+                <label className="text-xs font-medium text-[#6b7280] mb-1 block">Asesor Comercial *</label>
+                <select value={nuevoLeadForm.ejecutivo} onChange={e => setNuevoLeadForm(prev => ({...prev, ejecutivo: e.target.value}))}
+                  className="w-full px-3 py-2 border border-[#e5e7eb] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#00a8a8]/50 focus:border-[#00a8a8]">
+                  <option value="">Seleccionar asesor...</option>
+                  {salesTeamData.filter(m => m.codigo !== 'VA').map(member => (
+                    <option key={member.codigo} value={member.codigo}>{member.name} — {member.zona}</option>
+                  ))}
+                  <option value="VA">Veronica Arias — Nacional (Dirección)</option>
+                </select>
+              </div>
+
               {/* SECCIÓN 1: EMPRESA */}
               <div>
                 <h4 className="text-sm font-semibold text-[#1c2c4a] mb-3 flex items-center gap-2">
@@ -11031,9 +11044,9 @@ const InnovativeDemo = () => {
                   Cancelar
                 </button>
                 <button onClick={handleCrearLead}
-                  disabled={!nuevoLeadForm.empresa.trim() || !nuevoLeadForm.contactoNombre.trim()}
+                  disabled={!nuevoLeadForm.empresa.trim() || !nuevoLeadForm.contactoNombre.trim() || !nuevoLeadForm.ejecutivo}
                   className={`px-6 py-2 rounded-lg text-sm font-semibold transition-all ${
-                    nuevoLeadForm.empresa.trim() && nuevoLeadForm.contactoNombre.trim()
+                    nuevoLeadForm.empresa.trim() && nuevoLeadForm.contactoNombre.trim() && nuevoLeadForm.ejecutivo
                       ? 'bg-[#1c2c4a] hover:bg-[#1c2c4a]/90 text-white shadow-sm'
                       : 'bg-[#e5e7eb] text-[#6b7280] cursor-not-allowed'
                   }`}>
