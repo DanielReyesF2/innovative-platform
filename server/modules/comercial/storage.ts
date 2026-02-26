@@ -124,8 +124,9 @@ export async function convertLeadToProspect(
       .values({
         name: lead.companyName,
         contactName: lead.contactName,
-        contactPhone: (lead as any).contactPhone || null,
-        contactEmail: (lead as any).contactEmail || null,
+        contactRole: lead.contactRole || null,
+        contactPhone: lead.contactPhone || null,
+        contactEmail: lead.contactEmail || null,
         industry: qualifyData.industry || null,
         location: qualifyData.location || null,
         potential: qualifyData.potential || null,

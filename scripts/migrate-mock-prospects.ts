@@ -68,12 +68,17 @@ async function migrateProspects() {
     try {
       // Map stage to enum value
       const stageMap: Record<string, string> = {
-        "lead": "lead",
+        "contacto_inicial": "contacto_inicial",
+        "presentacion": "presentacion",
         "levantamiento": "levantamiento",
         "propuesta": "propuesta",
         "negociacion": "negociacion",
-        "cierre": "cierre",
-        "rechazada": "rechazada",
+        "cierre_ganado": "cierre_ganado",
+        "cierre_perdido": "cierre_perdido",
+        // Legacy
+        "lead": "contacto_inicial",
+        "cierre": "cierre_ganado",
+        "rechazada": "cierre_perdido",
       };
 
       const assignedToId = ejecutivoMap[p.ejecutivo] ?? 9; // Default to Carmen
