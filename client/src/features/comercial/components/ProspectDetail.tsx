@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,6 +20,7 @@ import {
   Users,
   FileText,
   FileCheck,
+  Lock,
 } from "lucide-react";
 import { useUpdateProspect, useSendToOperaciones } from "../api";
 import { useToast } from "@/components/ui/use-toast";
@@ -72,6 +73,26 @@ function normalizeStage(stage: string): string {
   return stage;
 }
 
+// Stage at which each tab becomes available
+const TAB_UNLOCK_STAGE: Record<string, string> = {
+  info: "contacto_inicial",
+  timeline: "contacto_inicial",
+  notas: "contacto_inicial",
+  reuniones: "presentacion",
+  levantamiento: "levantamiento",
+  documentos: "levantamiento",
+  propuestas: "propuesta",
+};
+
+function isTabUnlocked(tabId: string, currentStage: string): boolean {
+  const unlockStage = TAB_UNLOCK_STAGE[tabId];
+  if (!unlockStage) return true;
+  const unlockIndex = PIPELINE_STAGES.indexOf(unlockStage as any);
+  const currentIndex = PIPELINE_STAGES.indexOf(currentStage as any);
+  if (currentIndex < 0) return true; // terminal or unknown stage = show all
+  return currentIndex >= unlockIndex;
+}
+
 interface ProspectDetailProps {
   prospect: any;
   onClose: () => void;
@@ -93,6 +114,13 @@ export function ProspectDetail({ prospect, onClose }: ProspectDetailProps) {
   const currentStage = normalizeStage(prospect.stage);
   const currentStageIndex = PIPELINE_STAGES.indexOf(currentStage as any);
   const isTerminal = ["cierre_ganado", "cierre_perdido", "cierre", "rechazada"].includes(prospect.stage);
+
+  // Reset to info tab if current tab becomes locked after stage change
+  useEffect(() => {
+    if (!isTabUnlocked(activeTab, currentStage) && !isTerminal) {
+      setActiveTab("info");
+    }
+  }, [currentStage, activeTab, isTerminal]);
 
   const handleAdvanceStage = async () => {
     if (currentStageIndex < 0 || currentStageIndex >= PIPELINE_STAGES.length - 1) return;
@@ -231,23 +259,35 @@ export function ProspectDetail({ prospect, onClose }: ProspectDetailProps) {
             { id: "timeline", label: "Timeline", icon: Clock },
             { id: "notas", label: "Notas", icon: StickyNote },
             { id: "reuniones", label: "Reuniones", icon: Users },
+            { id: "levantamiento", label: "Levantamiento", icon: Target },
             { id: "documentos", label: "Docs", icon: FileText },
             { id: "propuestas", label: "Propuestas", icon: FileCheck },
-            { id: "levantamiento", label: "Levantamiento", icon: Target },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as TabType)}
-              className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-colors whitespace-nowrap ${
-                activeTab === tab.id
-                  ? "border-b-2 border-primary text-primary"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <tab.icon className="h-4 w-4" />
-              {tab.label}
-            </button>
-          ))}
+          ].map((tab) => {
+            const unlocked = isTerminal || isTabUnlocked(tab.id, currentStage);
+            return (
+              <button
+                key={tab.id}
+                onClick={() => unlocked && setActiveTab(tab.id as TabType)}
+                disabled={!unlocked}
+                title={
+                  !unlocked
+                    ? `Se desbloquea en ${STAGE_LABELS[TAB_UNLOCK_STAGE[tab.id]] || tab.id}`
+                    : undefined
+                }
+                className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-colors whitespace-nowrap ${
+                  !unlocked
+                    ? "text-muted-foreground/40 cursor-not-allowed"
+                    : activeTab === tab.id
+                    ? "border-b-2 border-primary text-primary"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <tab.icon className="h-4 w-4" />
+                {tab.label}
+                {!unlocked && <Lock className="h-3 w-3 ml-1" />}
+              </button>
+            );
+          })}
         </div>
 
         {/* Content */}

@@ -247,12 +247,14 @@ router.patch("/leads/:id/assign", async (req, res) => {
 
 router.post("/leads/:id/convert", async (req, res) => {
   try {
-    const { industry, location, potential, estimatedValue } = req.body;
+    const { industry, location, potential, estimatedValue, estimatedVolume, wasteInfo } = req.body;
     const result = await convertLeadToProspect(Number(req.params.id), {
       industry,
       location,
       potential,
       estimatedValue,
+      estimatedVolume,
+      wasteInfo,
     });
     res.status(201).json(result);
   } catch (error: any) {

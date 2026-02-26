@@ -111,7 +111,20 @@ export async function assignLead(id: number, assignedToId: number) {
 
 export async function convertLeadToProspect(
   leadId: number,
-  qualifyData: { industry?: string; location?: string; potential?: string; estimatedValue?: string }
+  qualifyData: {
+    industry?: string;
+    location?: string;
+    potential?: string;
+    estimatedValue?: string;
+    estimatedVolume?: string;
+    wasteInfo?: {
+      wasteTypes: string[];
+      estimatedVolume: string;
+      hasCurrentProvider: boolean;
+      currentProviderName?: string;
+      reasonForChange?: string;
+    };
+  }
 ) {
   const lead = await db.query.leads.findFirst({ where: eq(leads.id, leadId) });
   if (!lead) throw new Error("NOT_FOUND");
@@ -131,6 +144,10 @@ export async function convertLeadToProspect(
         location: qualifyData.location || null,
         potential: qualifyData.potential || null,
         estimatedValue: qualifyData.estimatedValue || null,
+        estimatedVolume: qualifyData.estimatedVolume || null,
+        levantamientoData: qualifyData.wasteInfo
+          ? { qualificationWaste: qualifyData.wasteInfo }
+          : null,
         stage: "contacto_inicial",
         probability: 10,
         priority: "media",

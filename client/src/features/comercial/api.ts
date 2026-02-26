@@ -96,7 +96,21 @@ export function useAssignLead() {
 
 export function useConvertLead() {
   return useMutation({
-    mutationFn: async ({ id, ...data }: { id: number; industry?: string; location?: string; potential?: string; estimatedValue?: string }) => {
+    mutationFn: async ({ id, ...data }: {
+      id: number;
+      industry?: string;
+      location?: string;
+      potential?: string;
+      estimatedValue?: string;
+      estimatedVolume?: string;
+      wasteInfo?: {
+        wasteTypes: string[];
+        estimatedVolume: string;
+        hasCurrentProvider: boolean;
+        currentProviderName?: string;
+        reasonForChange?: string;
+      };
+    }) => {
       const res = await apiRequest("POST", `/api/comercial/leads/${id}/convert`, data);
       return res.json();
     },
