@@ -12539,6 +12539,43 @@ const InnovativeDemo = () => {
   );
 };
 
+// Error Boundary to catch rendering errors and show useful message
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null, errorInfo: null };
+  }
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+  componentDidCatch(error, errorInfo) {
+    this.setState({ errorInfo });
+    console.error('[ErrorBoundary]', error, errorInfo);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ padding: 40, fontFamily: 'monospace', maxWidth: 800, margin: '0 auto' }}>
+          <h2 style={{ color: '#EF4444' }}>Error en la aplicacion</h2>
+          <pre style={{ background: '#FEF2F2', padding: 16, borderRadius: 8, overflow: 'auto', fontSize: 13, whiteSpace: 'pre-wrap' }}>
+            {this.state.error?.toString()}
+          </pre>
+          <details style={{ marginTop: 16 }}>
+            <summary style={{ cursor: 'pointer', color: '#6b7280' }}>Stack trace</summary>
+            <pre style={{ background: '#f3f4f6', padding: 16, borderRadius: 8, overflow: 'auto', fontSize: 11, whiteSpace: 'pre-wrap', marginTop: 8 }}>
+              {this.state.errorInfo?.componentStack}
+            </pre>
+          </details>
+          <button onClick={() => { this.setState({ hasError: false, error: null, errorInfo: null }); }} style={{ marginTop: 16, padding: '8px 16px', background: '#2E7D32', color: 'white', border: 'none', borderRadius: 8, cursor: 'pointer' }}>
+            Reintentar
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 // Auth wrapper component
 function AuthenticatedApp() {
   const { user, isLoading, authReady } = useAuth();
@@ -12569,7 +12606,9 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <AuthenticatedApp />
+        <ErrorBoundary>
+          <AuthenticatedApp />
+        </ErrorBoundary>
         <Toaster />
       </AuthProvider>
     </QueryClientProvider>
