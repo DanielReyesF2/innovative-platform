@@ -4,8 +4,8 @@ import { useToast } from "@/components/ui/use-toast";
 import { Send, Lock, Eye, EyeOff, AlertCircle, ChevronRight } from "lucide-react";
 
 export default function LoginPage() {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
+  const [username, setUsername] = useState("Pruebas");
+  const [password, setPassword] = useState("Pruebas2026");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -95,7 +95,7 @@ export default function LoginPage() {
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Email */}
             <div>
-              <label className="block text-sm font-medium text-[#1c2c4a] mb-2">Correo electronico</label>
+              <label className="block text-sm font-medium text-[#1c2c4a] mb-2">Usuario</label>
               <div className="relative">
                 <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6b7280]">
                   <Send size={16} />
@@ -104,9 +104,9 @@ export default function LoginPage() {
                   type="text"
                   value={username}
                   onChange={(e) => { setUsername(e.target.value); setError(""); }}
-                  placeholder="nombre@ig-la.com"
+                  placeholder="Usuario"
                   className="w-full pl-10 pr-4 py-3 bg-white border border-[#e5e7eb] rounded-lg text-sm text-[#1c2c4a] placeholder-[#6b7280]/50 focus:outline-none focus:ring-2 focus:ring-[#2E7D32]/30 focus:border-[#2E7D32] transition-all"
-                  autoComplete="username"
+                  autoComplete="off"
                 />
               </div>
             </div>
@@ -124,7 +124,7 @@ export default function LoginPage() {
                   onChange={(e) => { setPassword(e.target.value); setError(""); }}
                   placeholder="********"
                   className="w-full pl-10 pr-12 py-3 bg-white border border-[#e5e7eb] rounded-lg text-sm text-[#1c2c4a] placeholder-[#6b7280]/50 focus:outline-none focus:ring-2 focus:ring-[#2E7D32]/30 focus:border-[#2E7D32] transition-all"
-                  autoComplete="current-password"
+                  autoComplete="off"
                 />
                 <button
                   type="button"
