@@ -4439,8 +4439,8 @@ const InnovativeDemo = () => {
   };
 
   const [currentView, setCurrentView] = useState('dashboard');
-  const [loginEmail, setLoginEmail] = useState('pruebas@innovative.com.mx');
-  const [loginPassword, setLoginPassword] = useState('Pruebas2026!');
+  const [loginEmail, setLoginEmail] = useState('Pruebas');
+  const [loginPassword, setLoginPassword] = useState('Pruebas2026');
   const [loginError, setLoginError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
@@ -4842,7 +4842,7 @@ const InnovativeDemo = () => {
   const USUARIOS_AUTORIZADOS = [
     { email: 'daniel@econova.com.mx', password: 'Innovative2026!', nombre: 'Daniel Reyes', role: 'admin' },
     { email: 'vero@innovative.com.mx', password: 'Innovative2026!', nombre: 'Veronica Arias', role: 'director' },
-    { email: 'pruebas@innovative.com.mx', password: 'Pruebas2026!', nombre: 'Usuario Pruebas', role: 'ejecutivo' },
+    { email: 'Pruebas', password: 'Pruebas2026', nombre: 'Usuario Pruebas', role: 'ejecutivo' },
   ];
 
   const handleLogin = (e) => {
@@ -5007,16 +5007,16 @@ const InnovativeDemo = () => {
           <form onSubmit={handleLogin} className="space-y-5">
             {/* Email */}
             <div>
-              <label className="block text-sm font-medium text-[#1c2c4a] mb-2">Correo electrónico</label>
+              <label className="block text-sm font-medium text-[#1c2c4a] mb-2">Usuario</label>
               <div className="relative">
                 <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6b7280]">
                   <Send size={16} />
                 </div>
                 <input
-                  type="email"
+                  type="text"
                   value={loginEmail}
                   onChange={(e) => { setLoginEmail(e.target.value); setLoginError(''); }}
-                  placeholder="nombre@innovative.com"
+                  placeholder="Usuario"
                   autoComplete="off"
                   className="w-full pl-10 pr-4 py-3 bg-white border border-[#e5e7eb] rounded-lg text-sm text-[#1c2c4a] placeholder-[#6b7280]/50 focus:outline-none focus:ring-2 focus:ring-[#2E7D32]/30 focus:border-[#2E7D32] transition-all"
                 />
@@ -5273,7 +5273,7 @@ const InnovativeDemo = () => {
           {sidebarOpen && <span className="flex-1 text-left">Administración</span>}
         </button>
         <button
-          onClick={() => { localStorage.removeItem('innovative_session'); setCurrentView('login'); setLoginEmail('pruebas@innovative.com.mx'); setLoginPassword('Pruebas2026!'); }}
+          onClick={() => { localStorage.removeItem('innovative_session'); setCurrentView('login'); setLoginEmail('Pruebas'); setLoginPassword('Pruebas2026'); }}
           className={`w-full flex items-center ${sidebarOpen ? 'justify-start gap-2.5' : 'justify-center'} px-2.5 py-1.5 text-[#6b7280] hover:bg-red-500/10 hover:text-red-600 rounded-md text-[13px] font-medium transition-all`}
         >
           <LogOut size={16} className="flex-shrink-0" />
