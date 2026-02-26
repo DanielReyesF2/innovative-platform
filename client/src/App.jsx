@@ -5017,6 +5017,7 @@ const InnovativeDemo = () => {
                   value={loginEmail}
                   onChange={(e) => { setLoginEmail(e.target.value); setLoginError(''); }}
                   placeholder="nombre@innovative.com"
+                  autoComplete="off"
                   className="w-full pl-10 pr-4 py-3 bg-white border border-[#e5e7eb] rounded-lg text-sm text-[#1c2c4a] placeholder-[#6b7280]/50 focus:outline-none focus:ring-2 focus:ring-[#2E7D32]/30 focus:border-[#2E7D32] transition-all"
                 />
               </div>
@@ -5034,6 +5035,7 @@ const InnovativeDemo = () => {
                   value={loginPassword}
                   onChange={(e) => { setLoginPassword(e.target.value); setLoginError(''); }}
                   placeholder="••••••••"
+                  autoComplete="new-password"
                   className="w-full pl-10 pr-12 py-3 bg-white border border-[#e5e7eb] rounded-lg text-sm text-[#1c2c4a] placeholder-[#6b7280]/50 focus:outline-none focus:ring-2 focus:ring-[#2E7D32]/30 focus:border-[#2E7D32] transition-all"
                 />
                 <button
@@ -5271,7 +5273,7 @@ const InnovativeDemo = () => {
           {sidebarOpen && <span className="flex-1 text-left">Administración</span>}
         </button>
         <button
-          onClick={() => { localStorage.removeItem('innovative_session'); setCurrentView('login'); setLoginEmail(''); setLoginPassword(''); }}
+          onClick={() => { localStorage.removeItem('innovative_session'); setCurrentView('login'); setLoginEmail('pruebas@innovative.com.mx'); setLoginPassword('Pruebas2026!'); }}
           className={`w-full flex items-center ${sidebarOpen ? 'justify-start gap-2.5' : 'justify-center'} px-2.5 py-1.5 text-[#6b7280] hover:bg-red-500/10 hover:text-red-600 rounded-md text-[13px] font-medium transition-all`}
         >
           <LogOut size={16} className="flex-shrink-0" />
