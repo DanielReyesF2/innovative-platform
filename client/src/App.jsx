@@ -4439,8 +4439,8 @@ const InnovativeDemo = () => {
   };
 
   const [currentView, setCurrentView] = useState('dashboard');
-  const [loginEmail, setLoginEmail] = useState('');
-  const [loginPassword, setLoginPassword] = useState('');
+  const [loginEmail, setLoginEmail] = useState('pruebas@innovative.com.mx');
+  const [loginPassword, setLoginPassword] = useState('Pruebas2026!');
   const [loginError, setLoginError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
