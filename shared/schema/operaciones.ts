@@ -7,13 +7,16 @@ import { prospects } from "./comercial";
 // ─── Enums ───────────────────────────────────────────────
 
 export const surveyStatusEnum = pgEnum("survey_status", [
-  "borrador_comercial",
-  "pendiente_operaciones",
+  // Order MUST match DB exactly (original values first, then added ones)
+  "pendiente_revision",
   "agendado",
-  "en_sitio",
+  "en_proceso",
   "completado",
   "cancelado",
   "rechazado",
+  "borrador_comercial",
+  "pendiente_operaciones",
+  "en_sitio",
 ]);
 
 export const documentStatusEnum = pgEnum("document_status", [

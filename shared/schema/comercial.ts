@@ -5,7 +5,7 @@ import { users } from "./common";
 
 // Enums
 export const prospectStageEnum = pgEnum("prospect_stage", [
-  // Original values (order must match database)
+  // Order MUST match DB exactly (ALTER TYPE ADD VALUE appends at end)
   "lead",
   "prospecto",
   "levantamiento",
@@ -13,7 +13,6 @@ export const prospectStageEnum = pgEnum("prospect_stage", [
   "negociacion",
   "cierre",
   "rechazada",
-  // New values added via ALTER TYPE
   "contacto_inicial",
   "presentacion",
   "cierre_ganado",
