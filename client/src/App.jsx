@@ -4455,10 +4455,9 @@ const InnovativeDemo = () => {
   const [mostrarLeads, setMostrarLeads] = useState(false);
   const [showNuevoLead, setShowNuevoLead] = useState(false);
   const [nuevoLeadForm, setNuevoLeadForm] = useState({
-    empresa: '', planta: '', ciudad: '', industria: '',
-    contactoNombre: '', contactoPuesto: '', contactoCorreo: '', contactoTelefono: '',
-    servicios: [], comentarios: '',
-    tiposResiduos: '', volumenEstimado: '', facturacionEstimada: ''
+    empresa: '', ciudad: '',
+    contactoNombre: '', contactoCorreo: '', contactoTelefono: '',
+    fuente: 'otro', comentarios: ''
   });
   const [mostrarLevantamientos, setMostrarLevantamientos] = useState(false);
   const [selectedLevantamientoDetalle, setSelectedLevantamientoDetalle] = useState(null);
@@ -4843,6 +4842,7 @@ const InnovativeDemo = () => {
   const USUARIOS_AUTORIZADOS = [
     { email: 'daniel@econova.com.mx', password: 'Innovative2026!', nombre: 'Daniel Reyes', role: 'admin' },
     { email: 'vero@innovative.com.mx', password: 'Innovative2026!', nombre: 'Veronica Arias', role: 'director' },
+    { email: 'pruebas@innovative.com.mx', password: 'Pruebas2026!', nombre: 'Usuario Pruebas', role: 'ejecutivo' },
   ];
 
   const handleLogin = (e) => {
@@ -4918,39 +4918,40 @@ const InnovativeDemo = () => {
 
   // Crear nuevo lead
   const handleCrearLead = () => {
-    if (!nuevoLeadForm.empresa.trim() || !nuevoLeadForm.contactoNombre.trim() || !nuevoLeadForm.ciudad.trim()) {
+    if (!nuevoLeadForm.empresa.trim() || !nuevoLeadForm.contactoNombre.trim()) {
       return;
     }
     const nuevoProspecto = {
       id: Math.max(...kanbanProspectos.map(p => p.id), 0) + 1,
       empresa: nuevoLeadForm.empresa.trim(),
-      planta: nuevoLeadForm.planta.trim() || null,
-      ciudad: nuevoLeadForm.ciudad.trim(),
-      industria: nuevoLeadForm.industria.trim() || null,
+      planta: null,
+      ciudad: nuevoLeadForm.ciudad.trim() || null,
+      industria: null,
       ejecutivo: currentUserCodigo,
       contacto: {
         nombre: nuevoLeadForm.contactoNombre.trim(),
-        puesto: nuevoLeadForm.contactoPuesto.trim() || '',
+        puesto: '',
         correo: nuevoLeadForm.contactoCorreo.trim() || '',
         telefono: nuevoLeadForm.contactoTelefono.trim() || '',
       },
-      servicios: nuevoLeadForm.servicios,
+      servicios: [],
       status: 'Lead nuevo',
       semana: null,
       fecha: new Date().toISOString().split('T')[0],
       propuesta: { status: null, ventaTotal: null, utilidad: null, carton: null, playo: null },
       motivoRechazo: null,
       comentarios: nuevoLeadForm.comentarios.trim(),
-      volumenEstimado: nuevoLeadForm.volumenEstimado ? parseFloat(nuevoLeadForm.volumenEstimado) : null,
-      facturacionEstimada: nuevoLeadForm.facturacionEstimada ? parseFloat(nuevoLeadForm.facturacionEstimada) : null,
-      tiposResiduos: nuevoLeadForm.tiposResiduos.trim() || null,
+      fuente: nuevoLeadForm.fuente,
+      volumenEstimado: null,
+      facturacionEstimada: null,
+      tiposResiduos: null,
     };
     setKanbanProspectos(prev => [...prev, nuevoProspecto]);
     setShowNuevoLead(false);
     setNuevoLeadForm({
-      empresa: '', planta: '', ciudad: '', industria: '',
-      contactoNombre: '', contactoPuesto: '', contactoCorreo: '', contactoTelefono: '',
-      servicios: [], comentarios: '', tiposResiduos: '', volumenEstimado: '', facturacionEstimada: ''
+      empresa: '', ciudad: '',
+      contactoNombre: '', contactoCorreo: '', contactoTelefono: '',
+      fuente: 'otro', comentarios: ''
     });
   };
 
@@ -5102,22 +5103,6 @@ const InnovativeDemo = () => {
     { type: 'section', key: 'comercial', icon: TrendingUp, label: 'Nuevas Cuentas',
       items: [
         { id: 'comercial', icon: Briefcase, label: 'Pipeline & Prospectos' },
-      ]
-    },
-    { type: 'section', key: 'trazabilidad', icon: BarChart3, label: 'Trazabilidad',
-      items: [
-        { id: 'trazabilidad', icon: Target, label: 'Pipeline General' },
-      ]
-    },
-    { type: 'category', label: 'OPERACIONES' },
-    { type: 'section', key: 'operacion', icon: Truck, label: 'Operación',
-      items: [
-        { id: 'operacion', icon: ClipboardList, label: 'Levantamientos' },
-      ]
-    },
-    { type: 'section', key: 'subproductos', icon: Recycle, label: 'Subproductos',
-      items: [
-        { id: 'subproductos', icon: Leaf, label: 'Economía Circular' },
       ]
     },
   ];
@@ -10977,23 +10962,11 @@ const InnovativeDemo = () => {
                       className="w-full px-3 py-2 border border-[#e5e7eb] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#00a8a8]/50 focus:border-[#00a8a8]"
                       placeholder="Nombre de la empresa" />
                   </div>
-                  <div>
-                    <label className="text-xs font-medium text-[#6b7280] mb-1 block">Ciudad *</label>
+                  <div className="col-span-2">
+                    <label className="text-xs font-medium text-[#6b7280] mb-1 block">Ciudad</label>
                     <input type="text" value={nuevoLeadForm.ciudad} onChange={e => setNuevoLeadForm(prev => ({...prev, ciudad: e.target.value}))}
                       className="w-full px-3 py-2 border border-[#e5e7eb] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#00a8a8]/50 focus:border-[#00a8a8]"
                       placeholder="Ciudad / Estado" />
-                  </div>
-                  <div>
-                    <label className="text-xs font-medium text-[#6b7280] mb-1 block">Planta</label>
-                    <input type="text" value={nuevoLeadForm.planta} onChange={e => setNuevoLeadForm(prev => ({...prev, planta: e.target.value}))}
-                      className="w-full px-3 py-2 border border-[#e5e7eb] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#00a8a8]/50 focus:border-[#00a8a8]"
-                      placeholder="Nombre de planta (opcional)" />
-                  </div>
-                  <div className="col-span-2">
-                    <label className="text-xs font-medium text-[#6b7280] mb-1 block">Industria</label>
-                    <input type="text" value={nuevoLeadForm.industria} onChange={e => setNuevoLeadForm(prev => ({...prev, industria: e.target.value}))}
-                      className="w-full px-3 py-2 border border-[#e5e7eb] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#00a8a8]/50 focus:border-[#00a8a8]"
-                      placeholder="Ej: Automotriz, Retail, Alimenticia..." />
                   </div>
                 </div>
               </div>
@@ -11005,23 +10978,11 @@ const InnovativeDemo = () => {
                   Contacto
                 </h4>
                 <div className="grid grid-cols-2 gap-3">
-                  <div>
+                  <div className="col-span-2">
                     <label className="text-xs font-medium text-[#6b7280] mb-1 block">Nombre *</label>
                     <input type="text" value={nuevoLeadForm.contactoNombre} onChange={e => setNuevoLeadForm(prev => ({...prev, contactoNombre: e.target.value}))}
                       className="w-full px-3 py-2 border border-[#e5e7eb] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#00a8a8]/50 focus:border-[#00a8a8]"
                       placeholder="Nombre completo" />
-                  </div>
-                  <div>
-                    <label className="text-xs font-medium text-[#6b7280] mb-1 block">Puesto</label>
-                    <input type="text" value={nuevoLeadForm.contactoPuesto} onChange={e => setNuevoLeadForm(prev => ({...prev, contactoPuesto: e.target.value}))}
-                      className="w-full px-3 py-2 border border-[#e5e7eb] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#00a8a8]/50 focus:border-[#00a8a8]"
-                      placeholder="Puesto / Cargo" />
-                  </div>
-                  <div>
-                    <label className="text-xs font-medium text-[#6b7280] mb-1 block">Correo</label>
-                    <input type="email" value={nuevoLeadForm.contactoCorreo} onChange={e => setNuevoLeadForm(prev => ({...prev, contactoCorreo: e.target.value}))}
-                      className="w-full px-3 py-2 border border-[#e5e7eb] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#00a8a8]/50 focus:border-[#00a8a8]"
-                      placeholder="correo@empresa.com" />
                   </div>
                   <div>
                     <label className="text-xs font-medium text-[#6b7280] mb-1 block">Teléfono</label>
@@ -11029,73 +10990,35 @@ const InnovativeDemo = () => {
                       className="w-full px-3 py-2 border border-[#e5e7eb] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#00a8a8]/50 focus:border-[#00a8a8]"
                       placeholder="55 1234 5678" />
                   </div>
-                </div>
-              </div>
-
-              {/* SECCIÓN 3: SERVICIOS */}
-              <div>
-                <h4 className="text-sm font-semibold text-[#1c2c4a] mb-3 flex items-center gap-2">
-                  <Package size={16} className="text-[#2E7D32]" />
-                  Servicios de Interés
-                </h4>
-                <div className="grid grid-cols-2 gap-2">
-                  {SERVICIOS_INNOVATIVE.map(servicio => (
-                    <label key={servicio.id} className="flex items-center gap-2 p-2 rounded-lg hover:bg-[#f3f4f6] cursor-pointer transition-colors">
-                      <input type="checkbox" checked={nuevoLeadForm.servicios.includes(servicio.id)}
-                        onChange={e => {
-                          setNuevoLeadForm(prev => ({
-                            ...prev,
-                            servicios: e.target.checked
-                              ? [...prev.servicios, servicio.id]
-                              : prev.servicios.filter(s => s !== servicio.id)
-                          }));
-                        }}
-                        className="w-4 h-4 text-[#00a8a8] border-[#e5e7eb] rounded focus:ring-[#00a8a8]" />
-                      <div>
-                        <div className="text-sm font-medium text-[#1c2c4a]">{servicio.nombre}</div>
-                        <div className="text-[10px] text-[#6b7280]">{servicio.descripcion}</div>
-                      </div>
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-              {/* SECCIÓN 4: INFO PARA OPERACIONES */}
-              <div>
-                <h4 className="text-sm font-semibold text-[#1c2c4a] mb-3 flex items-center gap-2">
-                  <Truck size={16} className="text-[#F57C00]" />
-                  Información para Operaciones
-                </h4>
-                <div className="space-y-3">
                   <div>
-                    <label className="text-xs font-medium text-[#6b7280] mb-1 block">Tipos de residuos</label>
-                    <textarea value={nuevoLeadForm.tiposResiduos} onChange={e => setNuevoLeadForm(prev => ({...prev, tiposResiduos: e.target.value}))}
-                      className="w-full px-3 py-2 border border-[#e5e7eb] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#00a8a8]/50 focus:border-[#00a8a8] resize-none"
-                      rows={2} placeholder="Ej: Cartón, playo, orgánicos, lodos, RP..." />
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="text-xs font-medium text-[#6b7280] mb-1 block">Volumen estimado (ton/mes)</label>
-                      <input type="number" value={nuevoLeadForm.volumenEstimado} onChange={e => setNuevoLeadForm(prev => ({...prev, volumenEstimado: e.target.value}))}
-                        className="w-full px-3 py-2 border border-[#e5e7eb] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#00a8a8]/50 focus:border-[#00a8a8]"
-                        placeholder="Toneladas por mes" />
-                    </div>
-                    <div>
-                      <label className="text-xs font-medium text-[#6b7280] mb-1 block">Facturación estimada (MXN)</label>
-                      <input type="number" value={nuevoLeadForm.facturacionEstimada} onChange={e => setNuevoLeadForm(prev => ({...prev, facturacionEstimada: e.target.value}))}
-                        className="w-full px-3 py-2 border border-[#e5e7eb] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#00a8a8]/50 focus:border-[#00a8a8]"
-                        placeholder="Facturación mensual estimada" />
-                    </div>
+                    <label className="text-xs font-medium text-[#6b7280] mb-1 block">Correo</label>
+                    <input type="email" value={nuevoLeadForm.contactoCorreo} onChange={e => setNuevoLeadForm(prev => ({...prev, contactoCorreo: e.target.value}))}
+                      className="w-full px-3 py-2 border border-[#e5e7eb] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#00a8a8]/50 focus:border-[#00a8a8]"
+                      placeholder="correo@empresa.com" />
                   </div>
                 </div>
               </div>
 
-              {/* SECCIÓN 5: COMENTARIOS */}
+              {/* SECCIÓN 3: FUENTE */}
               <div>
-                <label className="text-xs font-medium text-[#6b7280] mb-1 block">Comentarios generales</label>
+                <label className="text-xs font-medium text-[#6b7280] mb-1 block">Fuente</label>
+                <select value={nuevoLeadForm.fuente} onChange={e => setNuevoLeadForm(prev => ({...prev, fuente: e.target.value}))}
+                  className="w-full px-3 py-2 border border-[#e5e7eb] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#00a8a8]/50 focus:border-[#00a8a8]">
+                  <option value="referido">Referido</option>
+                  <option value="web">Web</option>
+                  <option value="linkedin">LinkedIn</option>
+                  <option value="evento">Evento</option>
+                  <option value="cold_call">Cold Call</option>
+                  <option value="otro">Otro</option>
+                </select>
+              </div>
+
+              {/* SECCIÓN 4: NOTAS */}
+              <div>
+                <label className="text-xs font-medium text-[#6b7280] mb-1 block">Notas</label>
                 <textarea value={nuevoLeadForm.comentarios} onChange={e => setNuevoLeadForm(prev => ({...prev, comentarios: e.target.value}))}
                   className="w-full px-3 py-2 border border-[#e5e7eb] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#00a8a8]/50 focus:border-[#00a8a8] resize-none"
-                  rows={2} placeholder="Notas iniciales, contexto, cómo se consiguió el lead..." />
+                  rows={2} placeholder="Contexto inicial, como se consiguio el lead..." />
               </div>
             </div>
 
@@ -11108,9 +11031,9 @@ const InnovativeDemo = () => {
                   Cancelar
                 </button>
                 <button onClick={handleCrearLead}
-                  disabled={!nuevoLeadForm.empresa.trim() || !nuevoLeadForm.contactoNombre.trim() || !nuevoLeadForm.ciudad.trim()}
+                  disabled={!nuevoLeadForm.empresa.trim() || !nuevoLeadForm.contactoNombre.trim()}
                   className={`px-6 py-2 rounded-lg text-sm font-semibold transition-all ${
-                    nuevoLeadForm.empresa.trim() && nuevoLeadForm.contactoNombre.trim() && nuevoLeadForm.ciudad.trim()
+                    nuevoLeadForm.empresa.trim() && nuevoLeadForm.contactoNombre.trim()
                       ? 'bg-[#1c2c4a] hover:bg-[#1c2c4a]/90 text-white shadow-sm'
                       : 'bg-[#e5e7eb] text-[#6b7280] cursor-not-allowed'
                   }`}>
