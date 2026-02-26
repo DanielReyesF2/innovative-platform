@@ -5,17 +5,19 @@ import { users } from "./common";
 
 // Enums
 export const prospectStageEnum = pgEnum("prospect_stage", [
-  "contacto_inicial",
-  "presentacion",
+  // Original values (order must match database)
+  "lead",
+  "prospecto",
   "levantamiento",
   "propuesta",
   "negociacion",
-  "cierre_ganado",
-  "cierre_perdido",
-  // Legacy values kept for backward compat with existing data
-  "lead",
   "cierre",
   "rechazada",
+  // New values added via ALTER TYPE
+  "contacto_inicial",
+  "presentacion",
+  "cierre_ganado",
+  "cierre_perdido",
 ]);
 
 export const priorityEnum = pgEnum("priority_level", [
