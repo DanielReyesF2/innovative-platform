@@ -265,12 +265,21 @@ router.patch("/leads/:id/assign", async (req, res) => {
 
 router.post("/leads/:id/convert", async (req, res) => {
   try {
-    const { prospectId } = req.body;
-    if (!prospectId) return res.status(400).json({ message: "prospectId requerido" });
-    const updated = await convertLeadToProspect(Number(req.params.id), prospectId);
-    res.json(updated);
-  } catch (error) {
+    const { industry, location, potential, estimatedValue, estimatedVolume, wasteInfo } = req.body;
+    const result = await convertLeadToProspect(Number(req.params.id), {
+      industry,
+      location,
+      potential,
+      estimatedValue,
+      estimatedVolume,
+      wasteInfo,
+    });
+    res.status(201).json(result);
+  } catch (error: any) {
     console.error("[comercial] Convert lead error:", error);
+    const msg = error.message || "Internal server error";
+    if (msg === "NOT_FOUND") return res.status(404).json({ message: "Lead no encontrado" });
+    if (msg.startsWith("CONFLICT:")) return res.status(409).json({ message: msg.slice(9) });
     res.status(500).json({ message: "Internal server error" });
   }
 });
@@ -757,7 +766,7 @@ router.post("/prospects/:id/documents/upload", upload.single("file"), async (req
 
     // If it's an OC and user wants to mark as closed
     if (tipo === "orden_compra" && markAsClosed) {
-      await updateProspect(prospectId, { stage: "cierre" });
+      await updateProspect(prospectId, { stage: "cierre_ganado" });
     }
 
     res.status(201).json(document);

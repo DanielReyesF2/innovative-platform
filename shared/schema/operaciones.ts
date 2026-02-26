@@ -7,13 +7,16 @@ import { prospects } from "./comercial";
 // ─── Enums ───────────────────────────────────────────────
 
 export const surveyStatusEnum = pgEnum("survey_status", [
-  "borrador_comercial",
-  "pendiente_operaciones",
+  // Order MUST match DB exactly (original values first, then added ones)
+  "pendiente_revision",
   "agendado",
-  "en_sitio",
+  "en_proceso",
   "completado",
   "cancelado",
   "rechazado",
+  "borrador_comercial",
+  "pendiente_operaciones",
+  "en_sitio",
 ]);
 
 export const documentStatusEnum = pgEnum("document_status", [
@@ -146,6 +149,9 @@ export const surveys = pgTable("surveys", {
   acceptedById: integer("accepted_by_id").references(() => users.id),
   acceptedAt: timestamp("accepted_at"),
   schedulingNotes: text("scheduling_notes"),
+  // Legacy columns (exist in DB)
+  assignedToId: integer("assigned_to_id").references(() => users.id),
+  generalInfo: jsonb("general_info"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -247,7 +253,7 @@ export const surveySubproducts = pgTable("survey_subproducts", {
   characteristics: text("characteristics"),
   imageUrl: text("image_url"),
   collectionFrequency: text("collection_frequency"),
-  transportRequired: boolean("transport_required").default(false),
+  transportRequired: text("transport_required"),
   storage: text("storage"),
 });
 

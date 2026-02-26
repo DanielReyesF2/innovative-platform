@@ -9,12 +9,12 @@ import {
   Target,
   DollarSign,
   Search,
-  Filter,
   ChevronRight,
   AlertCircle,
   BarChart3,
   FileBarChart,
   Plus,
+  UserPlus,
 } from "lucide-react";
 import { useProspects, usePipeline, useLeads, useCreateProspect } from "./api";
 import { Label } from "@/components/ui/label";
@@ -22,23 +22,32 @@ import { KpiSection } from "@/features/kpis/components/KpiSection";
 import { ProspectDetail } from "./components/ProspectDetail";
 import { ComercialReports } from "./components/ComercialReports";
 import { AlertsDropdown } from "./components/AlertsDropdown";
+import { LeadsView } from "./components/LeadsView";
 
 const STAGE_LABELS: Record<string, string> = {
-  lead: "Leads",
-  prospecto: "Prospectos",
-  levantamiento: "Levantamientos",
-  propuesta: "Propuestas",
-  negociacion: "Negociación",
-  cierre: "Cierre",
-  rechazada: "Rechazadas",
+  contacto_inicial: "Contacto Inicial",
+  presentacion: "Presentacion",
+  levantamiento: "Levantamiento",
+  propuesta: "Propuesta",
+  negociacion: "Negociacion",
+  cierre_ganado: "Cierre Ganado",
+  cierre_perdido: "Cierre Perdido",
+  // Legacy
+  lead: "Contacto Inicial",
+  cierre: "Cierre Ganado",
+  rechazada: "Cierre Perdido",
 };
 
 const STAGE_COLORS: Record<string, string> = {
-  lead: "bg-blue-100 text-blue-800",
-  prospecto: "bg-cyan-100 text-cyan-800",
+  contacto_inicial: "bg-blue-100 text-blue-800",
+  presentacion: "bg-cyan-100 text-cyan-800",
   levantamiento: "bg-yellow-100 text-yellow-800",
   propuesta: "bg-purple-100 text-purple-800",
   negociacion: "bg-orange-100 text-orange-800",
+  cierre_ganado: "bg-green-100 text-green-800",
+  cierre_perdido: "bg-red-100 text-red-800",
+  // Legacy
+  lead: "bg-blue-100 text-blue-800",
   cierre: "bg-green-100 text-green-800",
   rechazada: "bg-red-100 text-red-800",
 };
@@ -52,7 +61,7 @@ const PRIORITY_COLORS: Record<string, string> = {
 
 export default function ComercialPage() {
   const { user } = useAuth();
-  const [mainTab, setMainTab] = useState<"pipeline" | "kpis" | "reportes">("pipeline");
+  const [mainTab, setMainTab] = useState<"leads" | "pipeline" | "kpis" | "reportes">("leads");
 
   return (
     <div className="space-y-6">
@@ -61,7 +70,7 @@ export default function ComercialPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Pipeline Comercial</h1>
           <p className="text-muted-foreground">
-            Gestión de prospectos, leads y embudo de ventas
+            Gestion de leads, prospectos y embudo de ventas
           </p>
         </div>
         <AlertsDropdown />
@@ -69,6 +78,17 @@ export default function ComercialPage() {
 
       {/* Main tab selector */}
       <div className="flex gap-2 border-b pb-2">
+        <button
+          onClick={() => setMainTab("leads")}
+          className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-t-md transition-colors ${
+            mainTab === "leads"
+              ? "border-b-2 border-primary text-primary"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <UserPlus className="h-4 w-4" />
+          Leads
+        </button>
         <button
           onClick={() => setMainTab("pipeline")}
           className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-t-md transition-colors ${
@@ -104,6 +124,7 @@ export default function ComercialPage() {
         </button>
       </div>
 
+      {mainTab === "leads" && <LeadsView />}
       {mainTab === "pipeline" && <PipelineView />}
       {mainTab === "kpis" && <KpiSection moduleSlug="comercial" compact />}
       {mainTab === "reportes" && <ComercialReports />}
@@ -123,7 +144,7 @@ function PipelineView() {
   const createProspect = useCreateProspect();
 
   // Calculate metrics
-  const activeProspects = prospects.filter((p: any) => p.stage !== "rechazada");
+  const activeProspects = prospects.filter((p: any) => !["rechazada", "cierre_perdido"].includes(p.stage));
   const totalPipelineValue = activeProspects.reduce(
     (sum: number, p: any) => sum + Number(p.estimatedValue || 0),
     0
@@ -135,7 +156,14 @@ function PipelineView() {
             activeProspects.length
         )
       : 0;
-  const closedDeals = prospects.filter((p: any) => p.stage === "cierre").length;
+  const closedDeals = prospects.filter((p: any) => ["cierre", "cierre_ganado"].includes(p.stage)).length;
+
+  // Map legacy stages for filtering
+  const stageAliases: Record<string, string[]> = {
+    contacto_inicial: ["contacto_inicial", "lead"],
+    cierre_ganado: ["cierre_ganado", "cierre"],
+    cierre_perdido: ["cierre_perdido", "rechazada"],
+  };
 
   // Filter prospects
   const filtered = prospects.filter((p: any) => {
@@ -143,7 +171,11 @@ function PipelineView() {
       !searchTerm ||
       p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       p.industry?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStage = stageFilter === "all" || p.stage === stageFilter;
+    const matchesStage =
+      stageFilter === "all" ||
+      (stageAliases[stageFilter]
+        ? stageAliases[stageFilter].includes(p.stage)
+        : p.stage === stageFilter);
     return matchesSearch && matchesStage;
   });
 
@@ -230,9 +262,9 @@ function PipelineView() {
           className="h-10 rounded-md border border-input bg-background px-3 text-sm"
         >
           <option value="all">Todas las etapas</option>
-          {Object.entries(STAGE_LABELS).map(([key, label]) => (
+          {["contacto_inicial", "presentacion", "levantamiento", "propuesta", "negociacion", "cierre_ganado", "cierre_perdido"].map((key) => (
             <option key={key} value={key}>
-              {label}
+              {STAGE_LABELS[key]}
             </option>
           ))}
         </select>
