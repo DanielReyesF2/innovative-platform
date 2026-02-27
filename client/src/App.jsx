@@ -171,6 +171,10 @@ const calcularScorePonderado = (ultimaSemana) => {
   return totalPeso > 0 ? scorePonderado / totalPeso : 0;
 };
 
+// Safe array accessors — avoids x?.[x.length - 1] antipattern where .length throws on undefined
+const lastOf = (arr) => Array.isArray(arr) && arr.length > 0 ? arr[arr.length - 1] : undefined;
+const nthFromEnd = (arr, n) => Array.isArray(arr) && arr.length >= n ? arr[arr.length - n] : undefined;
+
 // SVG Sparkline component (zero dependencies)
 const Sparkline = ({ data, width = 80, height = 24, color = '#00a8a8' }) => {
   if (!data || data.length < 2) return <span className="text-[10px] text-[#9ca3af]">Sin datos</span>;
@@ -5332,6 +5336,7 @@ const InnovativeDemo = () => {
       volumenEstimado: null,
       facturacionEstimada: null,
       tiposResiduos: null,
+      kpisSemanales: [],
     };
     setKanbanProspectos(prev => [...prev, nuevoProspecto]);
     setShowNuevoLead(false);
@@ -6107,6 +6112,70 @@ const InnovativeDemo = () => {
 
     </div>
     </div>
+    );
+  };
+
+  // HubKanbanCard — extracted from EjecutivoHubView so useSortable is called at component top level (not inside .map())
+  const HubKanbanCard = ({ prospecto, onSelect, prospectoNotas: notas, prospectoArchivos: archivos, calcularCamposCompletos: calcCampos }) => {
+    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+      id: prospecto.id,
+      data: { type: 'card', prospecto },
+    });
+    const valor = prospecto.propuesta?.ventaTotal || prospecto.facturacionEstimada || 0;
+    const primaryService = (prospecto.servicios || [])[0] || 'rme';
+    const svc = SERVICE_COLORS[primaryService] || SERVICE_COLORS.rme;
+    return (
+      <div
+        ref={setNodeRef}
+        style={{
+          transform: CSS.Transform.toString(transform),
+          transition,
+          opacity: isDragging ? 0.5 : 1,
+          backgroundColor: svc.bg,
+          borderLeft: `3px solid ${svc.border}`,
+        }}
+        {...attributes}
+        {...listeners}
+        className="rounded-lg p-1.5 mb-1 cursor-grab active:cursor-grabbing hover:shadow-md transition-all"
+        onClick={(e) => { if (!isDragging) { e.stopPropagation(); onSelect(prospecto); } }}
+      >
+        <div className="flex items-center justify-between gap-1 mb-0.5">
+          <h4 className="text-[12px] font-semibold text-[#1c2c4a] truncate leading-tight flex-1 min-w-0">{prospecto.empresa}</h4>
+          <span className="text-[8px] font-bold px-1 py-px rounded-full whitespace-nowrap flex-shrink-0" style={{ backgroundColor: `${svc.border}18`, color: svc.text }}>{svc.label}</span>
+        </div>
+        {(() => {
+          const fechaRef = estimarFechaProspecto(prospecto);
+          return (
+            <div className="flex items-center justify-between text-[10px] text-[#9ca3af]">
+              <div className="flex items-center gap-1">
+                {prospecto.ciudad && <span className="truncate max-w-[50px]">{prospecto.ciudad.split(',')[0]}</span>}
+                <span className="font-semibold px-1 py-px rounded text-[8px]" style={{ color: urgencyColor(fechaRef), backgroundColor: `${urgencyColor(fechaRef)}12` }}>
+                  {timeAgo(fechaRef)}
+                </span>
+              </div>
+              <div className="flex items-center gap-1 flex-shrink-0">
+                {(notas[prospecto.id]?.length > 0) && <span className="flex items-center gap-0.5 text-[#9ca3af]"><MessageSquare size={8} />{notas[prospecto.id].length}</span>}
+                {(archivos[prospecto.id]?.length > 0) && <span className="flex items-center gap-0.5 text-[#9ca3af]"><Paperclip size={8} />{archivos[prospecto.id].length}</span>}
+              </div>
+              {valor > 0 && <span className="font-bold text-[#0D47A1]">${(valor / 1000000).toFixed(1)}M</span>}
+            </div>
+          );
+        })()}
+        {(() => {
+          const campos = calcCampos(prospecto);
+          const completos = campos.filter(c => c.ok).length;
+          const total = campos.length;
+          const pct = (completos / total) * 100;
+          const barColor = completos === total ? '#2E7D32' : pct >= 60 ? '#F57C00' : '#ef4444';
+          return (
+            <div className="mt-1">
+              <div className="w-full h-[2px] bg-black/[0.04] rounded-full overflow-hidden">
+                <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: barColor }} />
+              </div>
+            </div>
+          );
+        })()}
+      </div>
     );
   };
 
@@ -6892,8 +6961,8 @@ const InnovativeDemo = () => {
 
       {/* DETAILED KPIs ROW — con progress bars */}
       {(() => {
-        const ultimaSemana = member.kpisSemanales?.[member.kpisSemanales.length - 1];
-        const penultimaSemana = member.kpisSemanales?.[member.kpisSemanales.length - 2];
+        const ultimaSemana = lastOf(member.kpisSemanales);
+        const penultimaSemana = nthFromEnd(member.kpisSemanales, 2);
         const score = calcularScorePonderado(ultimaSemana);
         const scoreColor = score > 0 ? getScoreColor(score) : null;
         const kpiKeys = Object.keys(KPI_METAS);
@@ -7169,69 +7238,16 @@ const InnovativeDemo = () => {
 
                               return (
                                 <div className="space-y-0">
-                                  {visibleItems.map(prospecto => {
-                                    const { attributes, listeners, setNodeRef: cardRef, transform, transition, isDragging } = useSortable({
-                                      id: prospecto.id,
-                                      data: { type: 'card', prospecto },
-                                    });
-                                    const valor = prospecto.propuesta?.ventaTotal || prospecto.facturacionEstimada || 0;
-                                    const primaryService = (prospecto.servicios || [])[0] || 'rme';
-                                    const svc = SERVICE_COLORS[primaryService] || SERVICE_COLORS.rme;
-                                    return (
-                                      <div
-                                        key={prospecto.id}
-                                        ref={cardRef}
-                                        style={{
-                                          transform: CSS.Transform.toString(transform),
-                                          transition,
-                                          opacity: isDragging ? 0.5 : 1,
-                                          backgroundColor: svc.bg,
-                                          borderLeft: `3px solid ${svc.border}`,
-                                        }}
-                                        {...attributes}
-                                        {...listeners}
-                                        className="rounded-lg p-1.5 mb-1 cursor-grab active:cursor-grabbing hover:shadow-md transition-all"
-                                        onClick={(e) => { if (!isDragging) { e.stopPropagation(); setSelectedProspecto(prospecto); setMostrarDetallesProspecto(true); } }}
-                                      >
-                                        <div className="flex items-center justify-between gap-1 mb-0.5">
-                                          <h4 className="text-[12px] font-semibold text-[#1c2c4a] truncate leading-tight flex-1 min-w-0">{prospecto.empresa}</h4>
-                                          <span className="text-[8px] font-bold px-1 py-px rounded-full whitespace-nowrap flex-shrink-0" style={{ backgroundColor: `${svc.border}18`, color: svc.text }}>{svc.label}</span>
-                                        </div>
-                                        {(() => {
-                                          const fechaRef = estimarFechaProspecto(prospecto);
-                                          return (
-                                            <div className="flex items-center justify-between text-[10px] text-[#9ca3af]">
-                                              <div className="flex items-center gap-1">
-                                                {prospecto.ciudad && <span className="truncate max-w-[50px]">{prospecto.ciudad.split(',')[0]}</span>}
-                                                <span className="font-semibold px-1 py-px rounded text-[8px]" style={{ color: urgencyColor(fechaRef), backgroundColor: `${urgencyColor(fechaRef)}12` }}>
-                                                  {timeAgo(fechaRef)}
-                                                </span>
-                                              </div>
-                                              <div className="flex items-center gap-1 flex-shrink-0">
-                                                {(prospectoNotas[prospecto.id]?.length > 0) && <span className="flex items-center gap-0.5 text-[#9ca3af]"><MessageSquare size={8} />{prospectoNotas[prospecto.id].length}</span>}
-                                                {(prospectoArchivos[prospecto.id]?.length > 0) && <span className="flex items-center gap-0.5 text-[#9ca3af]"><Paperclip size={8} />{prospectoArchivos[prospecto.id].length}</span>}
-                                              </div>
-                                              {valor > 0 && <span className="font-bold text-[#0D47A1]">${(valor / 1000000).toFixed(1)}M</span>}
-                                            </div>
-                                          );
-                                        })()}
-                                        {(() => {
-                                          const campos = calcularCamposCompletos(prospecto);
-                                          const completos = campos.filter(c => c.ok).length;
-                                          const total = campos.length;
-                                          const pct = (completos / total) * 100;
-                                          const barColor = completos === total ? '#2E7D32' : pct >= 60 ? '#F57C00' : '#ef4444';
-                                          return (
-                                            <div className="mt-1">
-                                              <div className="w-full h-[2px] bg-black/[0.04] rounded-full overflow-hidden">
-                                                <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: barColor }} />
-                                              </div>
-                                            </div>
-                                          );
-                                        })()}
-                                      </div>
-                                    );
-                                  })}
+                                  {visibleItems.map(prospecto => (
+                                    <HubKanbanCard
+                                      key={prospecto.id}
+                                      prospecto={prospecto}
+                                      onSelect={(p) => { setSelectedProspecto(p); setMostrarDetallesProspecto(true); }}
+                                      prospectoNotas={prospectoNotas}
+                                      prospectoArchivos={prospectoArchivos}
+                                      calcularCamposCompletos={calcularCamposCompletos}
+                                    />
+                                  ))}
                                   {/* Ver más / Ver menos button */}
                                   {hiddenCount > 0 && (
                                     <button
@@ -10615,7 +10631,7 @@ const InnovativeDemo = () => {
                   {kpiKeys.map(kpiKey => {
                     const kpi = KPI_METAS[kpiKey];
                     const totalReal = salesTeamData.reduce((sum, m) => {
-                      const ultimaSemana = m.kpisSemanales?.[m.kpisSemanales.length - 1];
+                      const ultimaSemana = lastOf(m.kpisSemanales);
                       return sum + (ultimaSemana?.[kpiKey] || 0);
                     }, 0);
                     const totalMeta = kpi.meta > 0 ? kpi.meta * salesTeamData.length : 0;
@@ -10675,9 +10691,9 @@ const InnovativeDemo = () => {
                       {salesTeamData
                         .map(member => ({
                           ...member,
-                          _ultimaSemana: member.kpisSemanales?.[member.kpisSemanales.length - 1],
-                          _penultimaSemana: member.kpisSemanales?.[member.kpisSemanales.length - 2],
-                          _score: calcularScorePonderado(member.kpisSemanales?.[member.kpisSemanales.length - 1]),
+                          _ultimaSemana: lastOf(member.kpisSemanales),
+                          _penultimaSemana: nthFromEnd(member.kpisSemanales, 2),
+                          _score: calcularScorePonderado(lastOf(member.kpisSemanales)),
                         }))
                         .sort((a, b) => b._score - a._score)
                         .map((member, rankIdx) => {
@@ -10960,7 +10976,7 @@ const InnovativeDemo = () => {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-5">
                     {(() => {
-                      const scores = salesTeamData.map(m => calcularScorePonderado(m.kpisSemanales?.[m.kpisSemanales.length - 1])).filter(s => s > 0);
+                      const scores = salesTeamData.map(m => calcularScorePonderado(lastOf(m.kpisSemanales))).filter(s => s > 0);
                       const destacados = scores.filter(s => s >= 110).length;
                       const enMeta = scores.filter(s => s >= 90 && s < 110).length;
                       const enRiesgo = scores.filter(s => s >= 70 && s < 90).length;
