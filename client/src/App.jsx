@@ -4992,6 +4992,7 @@ const InnovativeDemo = () => {
     setKanbanProspectos(prev =>
       prev.map(p => p.id === prospecto.id ? { ...p, status: targetStage } : p)
     );
+    setSelectedProspecto(prev => prev && prev.id === prospecto.id ? { ...prev, status: targetStage } : prev);
   }, [kanbanProspectos]);
 
   const handleDragStart = useCallback((event) => {
@@ -6328,6 +6329,7 @@ const InnovativeDemo = () => {
         return;
       }
       setKanbanProspectos(prev => prev.map(p => p.id === prospecto.id ? { ...p, status: targetStage } : p));
+      setSelectedProspecto(prev => prev && prev.id === prospecto.id ? { ...prev, status: targetStage } : prev);
     }, [memberProspectos]);
 
     const hubActiveCard = hubActiveKanbanId ? memberProspectos.find(p => p.id === hubActiveKanbanId) : null;
@@ -10536,6 +10538,7 @@ const InnovativeDemo = () => {
                     setKanbanProspectos(prev =>
                       prev.map(p => p.id === pendingMove.prospecto.id ? { ...p, status: pendingMove.toStage } : p)
                     );
+                    setSelectedProspecto(prev => prev && prev.id === pendingMove.prospecto.id ? { ...prev, status: pendingMove.toStage } : prev);
                     setShowStageGateModal(false);
                     setPendingMove(null);
                   }}
