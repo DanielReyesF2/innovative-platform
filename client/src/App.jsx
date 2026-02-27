@@ -6179,6 +6179,19 @@ const InnovativeDemo = () => {
     );
   };
 
+  // HubDroppableColumn — extracted so useDroppable is called at component top level (not inside .map())
+  const HubDroppableColumn = ({ stageId, children }) => {
+    const { isOver, setNodeRef } = useDroppable({ id: `hub-${stageId}`, data: { stageId } });
+    return (
+      <div
+        ref={setNodeRef}
+        className={`min-h-[120px] transition-colors rounded-lg flex-1 ${isOver ? 'bg-[#00a8a8]/5 ring-2 ring-[#00a8a8]/30' : ''}`}
+      >
+        {children}
+      </div>
+    );
+  };
+
   // VISTA: HUB DEL EJECUTIVO — centro de trabajo personal
   const EjecutivoHubView = () => {
     if (!hubEjecutivo) return null;
@@ -6305,6 +6318,9 @@ const InnovativeDemo = () => {
         ? memberProspectos.find(p => p.id === over.id)?.status
         : overId.startsWith('hub-') ? overId.replace('hub-', '') : overId;
       if (!targetStage || targetStage === prospecto.status) return;
+      // Validate target is a real hub kanban stage
+      const validStages = HUB_KANBAN_STAGES.map(s => s.id);
+      if (!validStages.includes(targetStage)) return;
       const gate = STAGE_GATES[targetStage];
       if (gate && !gate.validate(prospecto)) {
         setShowStageGateModal(true);
@@ -6663,46 +6679,6 @@ const InnovativeDemo = () => {
                   </div>
                 </div>
               )}
-
-              {/* Stage change */}
-              <div className="bg-white rounded-xl border border-[#e5e7eb] overflow-hidden">
-                <div className="px-4 py-3 bg-[#f9fafb] border-b border-[#e5e7eb]">
-                  <h3 className="text-sm font-semibold text-[#1c2c4a] flex items-center gap-2"><Target size={14} /> Cambiar Etapa</h3>
-                </div>
-                <div className="p-4">
-                  <div className="flex flex-wrap gap-2">
-                    {KANBAN_STAGES.map(stage => (
-                      <button
-                        key={stage.id}
-                        onClick={() => changeProspectoStage(p.id, stage.id)}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
-                          p.status === stage.id
-                            ? 'ring-2 ring-offset-1 shadow-sm'
-                            : 'opacity-60 hover:opacity-100'
-                        }`}
-                        style={{
-                          backgroundColor: p.status === stage.id ? stage.color + '15' : '#f9fafb',
-                          borderColor: p.status === stage.id ? stage.color : '#e5e7eb',
-                          color: p.status === stage.id ? stage.color : '#6b7280',
-                          ringColor: p.status === stage.id ? stage.color : undefined,
-                        }}
-                      >
-                        {stage.label}
-                      </button>
-                    ))}
-                    <button
-                      onClick={() => changeProspectoStage(p.id, 'Propuesta Rechazada')}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
-                        p.status === 'Propuesta Rechazada'
-                          ? 'bg-red-50 border-red-300 text-red-600 ring-2 ring-red-200 ring-offset-1 shadow-sm'
-                          : 'bg-[#f9fafb] border-[#e5e7eb] text-[#6b7280] opacity-60 hover:opacity-100'
-                      }`}
-                    >
-                      Rechazada
-                    </button>
-                  </div>
-                </div>
-              </div>
 
               {/* Additional info */}
               {(p.volumenEstimado || p.siguientePaso || p.motivoRechazo || p.propuesta) && (
@@ -7222,57 +7198,49 @@ const InnovativeDemo = () => {
                     </div>
 
                     {/* Droppable Area */}
-                    {(() => {
-                      const { isOver, setNodeRef } = useDroppable({ id: `hub-${stage.id}`, data: { stageId: stage.id } });
-                      return (
-                        <div
-                          ref={setNodeRef}
-                          className={`min-h-[120px] transition-colors rounded-lg flex-1 ${isOver ? 'bg-[#00a8a8]/5 ring-2 ring-[#00a8a8]/30' : ''}`}
-                        >
-                          <SortableContext items={stageItems.map(p => p.id)} strategy={verticalListSortingStrategy}>
-                            {(() => {
-                              const MAX_VISIBLE = 3;
-                              const isExpanded = expandedColumns[stage.id];
-                              const visibleItems = isExpanded ? stageItems : stageItems.slice(0, MAX_VISIBLE);
-                              const hiddenCount = stageItems.length - MAX_VISIBLE;
+                    <HubDroppableColumn stageId={stage.id}>
+                      <SortableContext items={stageItems.map(p => p.id)} strategy={verticalListSortingStrategy}>
+                        {(() => {
+                          const MAX_VISIBLE = 3;
+                          const isExpanded = expandedColumns[stage.id];
+                          const visibleItems = isExpanded ? stageItems : stageItems.slice(0, MAX_VISIBLE);
+                          const hiddenCount = stageItems.length - MAX_VISIBLE;
 
-                              return (
-                                <div className="space-y-0">
-                                  {visibleItems.map(prospecto => (
-                                    <HubKanbanCard
-                                      key={prospecto.id}
-                                      prospecto={prospecto}
-                                      onSelect={(p) => { setSelectedProspecto(p); setMostrarDetallesProspecto(true); }}
-                                      prospectoNotas={prospectoNotas}
-                                      prospectoArchivos={prospectoArchivos}
-                                      calcularCamposCompletos={calcularCamposCompletos}
-                                    />
-                                  ))}
-                                  {/* Ver más / Ver menos button */}
-                                  {hiddenCount > 0 && (
-                                    <button
-                                      onClick={(e) => { e.stopPropagation(); setExpandedColumns(prev => ({ ...prev, [stage.id]: !isExpanded })); }}
-                                      className="w-full py-1.5 text-[10px] font-medium text-[#0D47A1] hover:bg-[#0D47A1]/5 rounded-lg transition-colors flex items-center justify-center gap-1"
-                                    >
-                                      {isExpanded ? (
-                                        <>Ver menos <ChevronUp size={12} /></>
-                                      ) : (
-                                        <>+{hiddenCount} más <ChevronDown size={12} /></>
-                                      )}
-                                    </button>
+                          return (
+                            <div className="space-y-0">
+                              {visibleItems.map(prospecto => (
+                                <HubKanbanCard
+                                  key={prospecto.id}
+                                  prospecto={prospecto}
+                                  onSelect={(p) => { setSelectedProspecto(p); setMostrarDetallesProspecto(true); }}
+                                  prospectoNotas={prospectoNotas}
+                                  prospectoArchivos={prospectoArchivos}
+                                  calcularCamposCompletos={calcularCamposCompletos}
+                                />
+                              ))}
+                              {/* Ver más / Ver menos button */}
+                              {hiddenCount > 0 && (
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); setExpandedColumns(prev => ({ ...prev, [stage.id]: !isExpanded })); }}
+                                  className="w-full py-1.5 text-[10px] font-medium text-[#0D47A1] hover:bg-[#0D47A1]/5 rounded-lg transition-colors flex items-center justify-center gap-1"
+                                >
+                                  {isExpanded ? (
+                                    <>Ver menos <ChevronUp size={12} /></>
+                                  ) : (
+                                    <>+{hiddenCount} más <ChevronDown size={12} /></>
                                   )}
-                                </div>
-                              );
-                            })()}
-                          </SortableContext>
-                          {stageItems.length === 0 && (
-                            <div className="flex items-center justify-center h-16 border-2 border-dashed border-[#e5e7eb] rounded-lg text-[10px] text-[#9ca3af]">
-                              Arrastra aquí
+                                </button>
+                              )}
                             </div>
-                          )}
+                          );
+                        })()}
+                      </SortableContext>
+                      {stageItems.length === 0 && (
+                        <div className="flex items-center justify-center h-16 border-2 border-dashed border-[#e5e7eb] rounded-lg text-[10px] text-[#9ca3af]">
+                          Arrastra aquí
                         </div>
-                      );
-                    })()}
+                      )}
+                    </HubDroppableColumn>
                   </div>
                 );
               })}
@@ -8538,60 +8506,6 @@ const InnovativeDemo = () => {
       })()}
 
       </div>{/* close max-w-[1400px] */}
-
-      {/* Stage Gate Modal */}
-      {showStageGateModal && pendingMove && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowStageGateModal(false)}>
-          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 m-4" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center">
-                <Lock className="text-orange-600" size={20} />
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-[#1c2c4a]">Candado de Calificación</h3>
-                <p className="text-sm text-[#6b7280]">No se puede mover a "{KANBAN_STAGES.find(s => s.id === pendingMove.toStage)?.label}"</p>
-              </div>
-            </div>
-
-            <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-4">
-              <p className="text-sm text-orange-800 font-medium mb-2">
-                {STAGE_GATES[pendingMove.toStage]?.requirement}
-              </p>
-              <p className="text-sm text-orange-700">
-                {STAGE_GATES[pendingMove.toStage]?.message(pendingMove.prospecto)}
-              </p>
-            </div>
-
-            <div className="bg-[#f3f4f6] rounded-lg p-3 mb-4">
-              <div className="text-sm font-semibold text-[#1c2c4a]">{pendingMove.prospecto.empresa}</div>
-              <div className="text-xs text-[#6b7280]">{pendingMove.prospecto.industria} • {pendingMove.prospecto.ejecutivo}</div>
-            </div>
-
-            <div className="flex gap-3">
-              <button
-                onClick={() => {
-                  // Force move (override gate)
-                  setKanbanProspectos(prev =>
-                    prev.map(p => p.id === pendingMove.prospecto.id ? { ...p, status: pendingMove.toStage } : p)
-                  );
-                  setShowStageGateModal(false);
-                  setPendingMove(null);
-                }}
-                className="flex-1 px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
-              >
-                <Unlock size={14} />
-                Forzar Movimiento
-              </button>
-              <button
-                onClick={() => { setShowStageGateModal(false); setPendingMove(null); }}
-                className="flex-1 px-4 py-2 bg-[#f3f4f6] hover:bg-[#e5e7eb] text-[#1c2c4a] rounded-lg text-sm font-medium transition-colors"
-              >
-                Cancelar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
     );
   };
@@ -10584,6 +10498,63 @@ const InnovativeDemo = () => {
       )}
       
       {selectedTeamMember && <TeamMemberModal />}
+
+      {/* Stage Gate Modal — compartido entre Hub y Pipeline */}
+      {showStageGateModal && pendingMove && (() => {
+        const stageLabel = (currentView === 'hub-ejecutivo' ? HUB_KANBAN_STAGES : KANBAN_STAGES)
+          .find(s => s.id === pendingMove.toStage)?.label || pendingMove.toStage;
+        return (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowStageGateModal(false)}>
+            <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 m-4" onClick={e => e.stopPropagation()}>
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center">
+                  <Lock className="text-orange-600" size={20} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-[#1c2c4a]">Candado de Calificación</h3>
+                  <p className="text-sm text-[#6b7280]">No se puede mover a "{stageLabel}"</p>
+                </div>
+              </div>
+
+              <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-4">
+                <p className="text-sm text-orange-800 font-medium mb-2">
+                  {STAGE_GATES[pendingMove.toStage]?.requirement}
+                </p>
+                <p className="text-sm text-orange-700">
+                  {STAGE_GATES[pendingMove.toStage]?.message(pendingMove.prospecto)}
+                </p>
+              </div>
+
+              <div className="bg-[#f3f4f6] rounded-lg p-3 mb-4">
+                <div className="text-sm font-semibold text-[#1c2c4a]">{pendingMove.prospecto.empresa}</div>
+                <div className="text-xs text-[#6b7280]">{pendingMove.prospecto.industria} • {pendingMove.prospecto.ejecutivo}</div>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setKanbanProspectos(prev =>
+                      prev.map(p => p.id === pendingMove.prospecto.id ? { ...p, status: pendingMove.toStage } : p)
+                    );
+                    setShowStageGateModal(false);
+                    setPendingMove(null);
+                  }}
+                  className="flex-1 px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
+                >
+                  <Unlock size={14} />
+                  Forzar Movimiento
+                </button>
+                <button
+                  onClick={() => { setShowStageGateModal(false); setPendingMove(null); }}
+                  className="flex-1 px-4 py-2 bg-[#f3f4f6] hover:bg-[#e5e7eb] text-[#1c2c4a] rounded-lg text-sm font-medium transition-colors"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* KPI PANEL - Modal compartido para juntas semanales */}
       {showKpiPanel && kpiPanelArea && (() => {
