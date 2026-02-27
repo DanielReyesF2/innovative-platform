@@ -7339,7 +7339,7 @@ const InnovativeDemo = () => {
 
           {/* MODAL: Registrar Venta Real */}
           {showVentasRealesModal && (
-            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setShowVentasRealesModal(false)}>
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => { setShowVentasRealesModal(false); setVentaRealMonto(''); }}>
               <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden" onClick={e => e.stopPropagation()}>
                 {/* Header */}
                 <div className="flex items-center justify-between p-4 border-b border-[#e5e7eb]">
@@ -7352,7 +7352,7 @@ const InnovativeDemo = () => {
                       <p className="text-xs text-[#6b7280]">{member.name}</p>
                     </div>
                   </div>
-                  <button onClick={() => setShowVentasRealesModal(false)} className="p-2 hover:bg-[#f3f4f6] rounded-lg transition-colors">
+                  <button onClick={() => { setShowVentasRealesModal(false); setVentaRealMonto(''); }} className="p-2 hover:bg-[#f3f4f6] rounded-lg transition-colors">
                     <X size={20} className="text-[#6b7280]" />
                   </button>
                 </div>
@@ -7421,7 +7421,7 @@ const InnovativeDemo = () => {
                 {/* Footer */}
                 <div className="p-4 border-t border-[#e5e7eb] flex gap-3">
                   <button
-                    onClick={() => setShowVentasRealesModal(false)}
+                    onClick={() => { setShowVentasRealesModal(false); setVentaRealMonto(''); }}
                     className="flex-1 px-4 py-2.5 bg-[#f3f4f6] hover:bg-[#e5e7eb] text-[#1c2c4a] rounded-lg text-sm font-medium transition-colors"
                   >
                     Cancelar
@@ -7430,7 +7430,7 @@ const InnovativeDemo = () => {
                     onClick={async () => {
                       if (!ventaRealMonto) return;
                       try {
-                        await fetch('/api/comercial/ventas-reales', {
+                        const res = await fetch('/api/comercial/ventas-reales', {
                           method: 'POST',
                           headers: { 'Content-Type': 'application/json' },
                           credentials: 'include',
@@ -7441,9 +7441,12 @@ const InnovativeDemo = () => {
                             monto: Number(ventaRealMonto)
                           })
                         });
+                        if (!res.ok) throw new Error('Error del servidor');
+                        const editKey = `${member.id}-${ventaRealMes}-${ventaRealAño}`;
+                        setVentasRealesEditadas(prev => ({ ...prev, [editKey]: Number(ventaRealMonto) }));
                         setShowVentasRealesModal(false);
                         setVentaRealMonto('');
-                        // In real app, would refresh data here
+                        addToast(`Venta real registrada: ${member.name.split(' ')[0]}`, 'success');
                       } catch (err) {
                         addToast('Error al guardar venta real', 'error');
                       }
@@ -7907,29 +7910,53 @@ const InnovativeDemo = () => {
                           value={ventasRealesEditadas[editKey] ?? ''}
                           onChange={(e) => setVentasRealesEditadas(prev => ({ ...prev, [editKey]: e.target.value }))}
                           onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              // Save to API
+                            if (e.key === 'Enter' || e.key === 'Tab') {
+                              e.preventDefault();
+                              e.target.dataset.saved = 'true';
+                              const monto = Number(ventasRealesEditadas[editKey] || 0);
+                              setVentasRealesEditadas(prev => ({ ...prev, [editKey]: monto }));
+                              setEditingVentaReal(null);
                               fetch('/api/comercial/ventas-reales', {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
                                 credentials: 'include',
-                                body: JSON.stringify({
-                                  userId: member.id,
-                                  mes: ventaRealMes,
-                                  año: ventaRealAño,
-                                  monto: Number(ventasRealesEditadas[editKey] || 0)
-                                })
-                              }).then(() => setEditingVentaReal(null));
+                                body: JSON.stringify({ userId: member.id, mes: ventaRealMes, año: ventaRealAño, monto })
+                              }).then(res => {
+                                if (!res.ok) throw new Error('Error del servidor');
+                                addToast(`Venta real actualizada: ${member.name.split(' ')[0]}`, 'success');
+                              }).catch(() => {
+                                addToast('Error al guardar venta real', 'error');
+                              });
                             } else if (e.key === 'Escape') {
+                              e.target.dataset.saved = 'true';
+                              setVentasRealesEditadas(prev => { const n = { ...prev }; delete n[editKey]; return n; });
                               setEditingVentaReal(null);
                             }
                           }}
-                          onBlur={() => setEditingVentaReal(null)}
+                          onBlur={(e) => {
+                            if (e.target.dataset.saved === 'true') return;
+                            const monto = Number(ventasRealesEditadas[editKey] || 0);
+                            setVentasRealesEditadas(prev => ({ ...prev, [editKey]: monto }));
+                            setEditingVentaReal(null);
+                            if (monto > 0) {
+                              fetch('/api/comercial/ventas-reales', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                credentials: 'include',
+                                body: JSON.stringify({ userId: member.id, mes: ventaRealMes, año: ventaRealAño, monto })
+                              }).then(res => {
+                                if (!res.ok) throw new Error('Error del servidor');
+                                addToast(`Venta real actualizada: ${member.name.split(' ')[0]}`, 'success');
+                              }).catch(() => {
+                                addToast('Error al guardar venta real', 'error');
+                              });
+                            }
+                          }}
                           className="w-24 px-2 py-1 text-sm text-right border border-[#00a8a8] rounded focus:outline-none focus:ring-1 focus:ring-[#00a8a8]"
                           placeholder="0"
                         />
                       ) : (
-                        <span className="text-sm font-semibold text-[#00a8a8]">${(ventaActual / 1000000).toFixed(2)}M</span>
+                        <span className="text-sm font-semibold text-[#00a8a8]">${(Number(ventaActual) / 1000000).toFixed(2)}M</span>
                       )}
                     </td>
                     <td className="py-2.5 px-2 text-right">
@@ -7960,19 +7987,19 @@ const InnovativeDemo = () => {
                   ${(salesTeamData.reduce((s, m) => s + m.presupuestoMensual, 0) / 1000000).toFixed(2)}M
                 </td>
                 <td className="py-2.5 px-2 text-right font-bold text-[#00a8a8]">
-                  ${(salesTeamData.reduce((s, m) => s + (ventasRealesEditadas[`${m.id}-${ventaRealMes}-${ventaRealAño}`] ?? m.ventasReales), 0) / 1000000).toFixed(2)}M
+                  ${(salesTeamData.reduce((s, m) => s + Number(ventasRealesEditadas[`${m.id}-${ventaRealMes}-${ventaRealAño}`] ?? m.ventasReales), 0) / 1000000).toFixed(2)}M
                 </td>
                 <td className="py-2.5 px-2 text-right font-bold" style={{
                   color: (() => {
                     const totalPres = salesTeamData.reduce((s, m) => s + m.presupuestoMensual, 0);
-                    const totalReal = salesTeamData.reduce((s, m) => s + (ventasRealesEditadas[`${m.id}-${ventaRealMes}-${ventaRealAño}`] ?? m.ventasReales), 0);
+                    const totalReal = salesTeamData.reduce((s, m) => s + Number(ventasRealesEditadas[`${m.id}-${ventaRealMes}-${ventaRealAño}`] ?? m.ventasReales), 0);
                     const pct = totalPres > 0 ? Math.round((totalReal / totalPres) * 100) : 0;
                     return pct >= 80 ? '#2E7D32' : pct >= 40 ? '#F57C00' : '#EF4444';
                   })()
                 }}>
                   {(() => {
                     const totalPres = salesTeamData.reduce((s, m) => s + m.presupuestoMensual, 0);
-                    const totalReal = salesTeamData.reduce((s, m) => s + (ventasRealesEditadas[`${m.id}-${ventaRealMes}-${ventaRealAño}`] ?? m.ventasReales), 0);
+                    const totalReal = salesTeamData.reduce((s, m) => s + Number(ventasRealesEditadas[`${m.id}-${ventaRealMes}-${ventaRealAño}`] ?? m.ventasReales), 0);
                     return totalPres > 0 ? Math.round((totalReal / totalPres) * 100) : 0;
                   })()}%
                 </td>
