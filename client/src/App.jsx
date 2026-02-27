@@ -18,7 +18,7 @@ import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, us
 import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import html2canvas from 'html2canvas';
-import { Home, TrendingUp, Package, Users, FileText, Settings, ChevronRight, Download, Search, Filter, Bell, LogOut, Menu, X, DollarSign, Target, PhoneCall, Award, Calendar, MapPin, Truck, Leaf, Briefcase, ClipboardList, CheckSquare, AlertCircle, Send, Eye, Recycle, Trash2, BarChart3, TrendingDown, ChevronDown, ChevronUp, Save, FileImage, RotateCcw, Building2, GripVertical, Lock, Unlock, ArrowRight, Plus, ArrowLeft, Upload, Paperclip, MessageSquare, Clock, Image, Phone, Mail, ExternalLink, Copy, Check, XCircle, CheckCircle, Edit3, CalendarClock } from 'lucide-react';
+import { Home, TrendingUp, Package, Users, FileText, Settings, ChevronRight, Download, Search, Filter, Bell, LogOut, Menu, X, DollarSign, Target, PhoneCall, Award, Calendar, MapPin, Truck, Leaf, Briefcase, ClipboardList, CheckSquare, AlertCircle, AlertTriangle, Send, Eye, Recycle, Trash2, BarChart3, TrendingDown, ChevronDown, ChevronUp, Save, FileImage, RotateCcw, Building2, GripVertical, Lock, Unlock, ArrowRight, Plus, ArrowLeft, Upload, Paperclip, MessageSquare, Clock, Image, Phone, Mail, ExternalLink, Copy, Check, XCircle, CheckCircle, Edit3, CalendarClock } from 'lucide-react';
 
 // AVATAR COMPONENT — muestra foto del ejecutivo con fallback a iniciales
 const ExecutiveAvatar = ({ codigo, name, size = 'md', className = '' }) => {
@@ -4834,6 +4834,14 @@ const InnovativeDemo = () => {
   const [loginPassword, setLoginPassword] = useState('Pruebas2026');
   const [loginError, setLoginError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+
+  // Toast notification system
+  const [toasts, setToasts] = useState([]);
+  const addToast = (message, type = 'success') => {
+    const id = Date.now();
+    setToasts(prev => [...prev, { id, message, type }]);
+    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 3500);
+  };
   const [rememberMe, setRememberMe] = useState(true);
   const [selectedTeamMember, setSelectedTeamMember] = useState(null);
   const [selectedClient, setSelectedClient] = useState(null);
@@ -5136,7 +5144,7 @@ const InnovativeDemo = () => {
     const handleSubmit = (e) => {
       e.preventDefault();
       if (!motivoSeleccionado) {
-        alert('Debe seleccionar un motivo de rechazo');
+        addToast('Debe seleccionar un motivo de rechazo', 'warning');
         return;
       }
       onSave({
@@ -5340,6 +5348,7 @@ const InnovativeDemo = () => {
       kpisSemanales: [],
     };
     setKanbanProspectos(prev => [...prev, nuevoProspecto]);
+    addToast(`Lead creado: ${nuevoProspecto.empresa}`, 'success');
     setShowNuevoLead(false);
     setNuevoLeadForm({
       empresa: '', ciudad: '',
@@ -5666,7 +5675,7 @@ const InnovativeDemo = () => {
           {sidebarOpen && <span className="flex-1 text-left">Administración</span>}
         </button>
         <button
-          onClick={() => { localStorage.removeItem('innovative_session'); setCurrentView('login'); setLoginEmail('Pruebas'); setLoginPassword('Pruebas2026'); }}
+          onClick={() => { localStorage.removeItem('innovative_session'); setCurrentView('login'); setLoginEmail(''); setLoginPassword(''); }}
           className={`w-full flex items-center ${sidebarOpen ? 'justify-start gap-2.5' : 'justify-center'} px-2.5 py-1.5 text-[#6b7280] hover:bg-red-500/10 hover:text-red-600 rounded-md text-[13px] font-medium transition-all`}
         >
           <LogOut size={16} className="flex-shrink-0" />
@@ -6878,6 +6887,13 @@ const InnovativeDemo = () => {
           <div className="text-sm text-[#6b7280]">Pipeline Total</div>
           <div className="text-xl font-bold text-[#0D47A1]">${(totalPipeline / 1000000).toFixed(1)}M</div>
         </div>
+        <button
+          onClick={() => { setNuevoLeadForm(prev => ({ ...prev, ejecutivo: member.codigo })); setShowNuevoLead(true); }}
+          className="flex items-center gap-2 px-4 py-2.5 bg-[#1c2c4a] hover:bg-[#1c2c4a]/90 text-white rounded-lg text-sm font-semibold transition-all shadow-sm hover:shadow-md"
+        >
+          <Plus size={16} />
+          Nuevo Lead
+        </button>
       </div>
 
       {/* KPI ROW — funnel de conversión */}
@@ -7429,7 +7445,7 @@ const InnovativeDemo = () => {
                         setVentaRealMonto('');
                         // In real app, would refresh data here
                       } catch (err) {
-                        console.error('Error saving venta real:', err);
+                        addToast('Error al guardar venta real', 'error');
                       }
                     }}
                     disabled={!ventaRealMonto}
@@ -9525,13 +9541,13 @@ const InnovativeDemo = () => {
       if (clienteSeleccionado) {
         trazabilidadPorCliente[clienteSeleccionado] = datosEditables;
       }
-      alert('Cambios guardados exitosamente');
+      addToast('Cambios guardados', 'success');
     };
 
     const descargarReporte = (certificacion, formato) => {
       const cliente = clientesConReportes.find(c => c.id === clienteSeleccionado);
       const nombreCliente = cliente ? cliente.name : 'General';
-      alert(`Descargando reporte ${certificacion} de ${nombreCliente} en formato ${formato.toUpperCase()}`);
+      addToast(`Descargando reporte ${certificacion} de ${nombreCliente}`, 'success');
       setMostrarDropdownReportes(false);
       // Aquí se implementaría la descarga real del reporte específico de la certificación
     };
@@ -9854,7 +9870,7 @@ const InnovativeDemo = () => {
                       link.href = canvas.toDataURL();
                       link.click();
                     } catch (error) {
-                      console.error('Error exporting PNG:', error);
+                      addToast('Error al exportar imagen', 'error');
                     }
                   }}
                   className="px-3 py-1.5 bg-[#00a8a8] hover:bg-[#1e4a37] text-white rounded-md text-xs font-medium flex items-center gap-1.5"
@@ -10376,12 +10392,20 @@ const InnovativeDemo = () => {
                 <p className="text-[#00b3b3] font-medium text-sm mt-1">{selectedTeamMember.role}</p>
               </div>
             </div>
-            <button onClick={() => setSelectedTeamMember(null)} className="text-white hover:text-[#00b3b3]">
-              <X size={24} />
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => { setHubEjecutivo(selectedTeamMember); setSelectedTeamMember(null); setCurrentView('hub-ejecutivo'); }}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-white/20 hover:bg-white/30 text-white rounded-lg text-sm font-medium transition-colors"
+              >
+                Ver Hub <ArrowRight size={14} />
+              </button>
+              <button onClick={() => setSelectedTeamMember(null)} className="text-white hover:text-[#00b3b3]">
+                <X size={24} />
+              </button>
+            </div>
           </div>
         </div>
-        
+
         <div className="p-6">
           <div className="grid grid-cols-3 gap-4 mb-6">
             <div className="bg-[#f3f4f6] rounded-lg p-5 border border-[#e5e7eb] text-center">
@@ -10480,7 +10504,7 @@ const InnovativeDemo = () => {
   return (
     <>
       <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
-      <style>{`* { font-family: 'Inter', sans-serif; }`}</style>
+      <style>{`* { font-family: 'Inter', sans-serif; } @keyframes toastSlideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }`}</style>
       
       {currentView === 'login' ? (
         loginScreenJSX
@@ -10499,6 +10523,18 @@ const InnovativeDemo = () => {
         </div>
       )}
       
+      {/* Toast Notifications */}
+      <div className="fixed top-4 right-4 z-[60] flex flex-col gap-2 pointer-events-none">
+        {toasts.map(t => (
+          <div key={t.id} className={`pointer-events-auto px-4 py-3 rounded-lg shadow-lg text-sm font-medium text-white flex items-center gap-2 ${
+            t.type === 'success' ? 'bg-[#2E7D32]' : t.type === 'error' ? 'bg-[#ef4444]' : 'bg-[#F57C00]'
+          }`} style={{ animation: 'toastSlideIn 0.3s ease' }}>
+            {t.type === 'success' ? <CheckCircle size={16}/> : t.type === 'error' ? <AlertCircle size={16}/> : <AlertTriangle size={16}/>}
+            {t.message}
+          </div>
+        ))}
+      </div>
+
       {selectedTeamMember && <TeamMemberModal />}
 
       {/* Stage Gate Modal — compartido entre Hub y Pipeline */}
@@ -12176,7 +12212,7 @@ const InnovativeDemo = () => {
             </div>
             
             <div className="p-6">
-              <form className="space-y-6" onSubmit={(e) => { e.preventDefault(); alert('Levantamiento guardado exitosamente'); setMostrarNuevoLevantamiento(false); }}>
+              <form className="space-y-6" onSubmit={(e) => { e.preventDefault(); addToast('Levantamiento guardado', 'success'); setMostrarNuevoLevantamiento(false); }}>
                 {/* INFORMACIÓN GENERAL */}
                 <div className="bg-[#f3f4f6] rounded-lg p-5 border border-[#e5e7eb]">
                   <h3 className="text-lg font-semibold text-[#1c2c4a] mb-4 flex items-center gap-2">
@@ -12707,7 +12743,7 @@ const InnovativeDemo = () => {
                                   link.href = canvas.toDataURL();
                                   link.click();
                                 } catch (error) {
-                                  console.error('Error exporting PNG:', error);
+                                  addToast('Error al exportar imagen', 'error');
                                 }
                               }
                             }}
@@ -12875,7 +12911,7 @@ const InnovativeDemo = () => {
                     <div className="flex justify-end gap-3">
                       <button
                         onClick={() => {
-                          alert('Descargando reporte completo en PDF...');
+                          addToast('Descargando reporte en PDF...', 'success');
                         }}
                         className="bg-[#0D47A1] hover:bg-[#0D47A1] text-white px-6 py-3 rounded-md font-medium text-sm flex items-center gap-2 transition-all shadow-sm hover:shadow-md"
                       >
@@ -12902,9 +12938,7 @@ const InnovativeDemo = () => {
             setDetalleRechazo('');
           }}
           onSave={(datosRechazo) => {
-            // En una aplicación real, aquí se actualizaría el estado del prospecto
-            console.log('Datos de rechazo guardados:', datosRechazo);
-            alert(`Motivo de rechazo registrado exitosamente para ${prospectoParaRechazar.empresa}`);
+            addToast(`Rechazo registrado: ${prospectoParaRechazar.empresa}`, 'success');
             setMostrarModalRechazo(false);
             setProspectoParaRechazar(null);
             setMotivoRechazoSeleccionado('');
