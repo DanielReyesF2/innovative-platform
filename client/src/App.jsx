@@ -7448,7 +7448,7 @@ const InnovativeDemo = () => {
             </div>
           </div>
           <div className="text-center">
-            <div className="text-[10px] text-[#6b7280]">Presupuesto Mes</div>
+            <div className="text-[10px] text-[#6b7280]">Presupuesto {presupuestoEvolution[mesActualIdx]?.mes || 'Mes'}</div>
             <div className="text-sm font-bold text-[#1c2c4a]">${(presupuestoMesEquipo / 1000000).toFixed(1)}M</div>
           </div>
         </div>
