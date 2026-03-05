@@ -3850,17 +3850,17 @@ const salesTeamData = [
     reuniones: 4,
     cierres: 2,
     tasaConversion: 125,
-    presupuestoAnual2026: 130130812,
-    presupuestoMensual: 10844234,
+    presupuestoAnual2026: 21688469,
+    presupuestoMensual: 1807372,
     ventasReales: 4200000,
-    cumplimientoPresupuesto: 31,
+    cumplimientoPresupuesto: 20,
     tiempoRespuesta: '1.5 hrs',
     satisfaccionCliente: 4.9,
     activitiesSemanal: 35,
     eficienciaGlobal: 90,
     avatar: '👩‍💼',
     ultimaActividad: 'Kick Off Hub Digital Comercial',
-    notas: 'Directora del equipo comercial. Presupuesto = total equipo ($164.5M). Prospectos directos con cuentas estratégicas.',
+    notas: 'Directora del equipo comercial. Presupuesto anual equipo = $130.1M dividido parejo entre 6 ejecutivos. Prospectos directos con cuentas estratégicas.',
     // KPIs semanales reales del Excel (semana 31)
     kpisSemanales: [
       { semana: 31, leadsNuevos: 4, reunionesAgendadas: 4, levantamientos: 4, propuestasEnviadas: 5, propuestasRechazadas: 0 }
@@ -3879,8 +3879,8 @@ const salesTeamData = [
     reuniones: 22,
     cierres: 0,
     tasaConversion: 19,
-    presupuestoAnual2026: 47135000,
-    presupuestoMensual: 3928000,
+    presupuestoAnual2026: 21688469,
+    presupuestoMensual: 1807372,
     ventasReales: 0,
     cumplimientoPresupuesto: 0,
     tiempoRespuesta: '1.5 hrs',
@@ -3916,8 +3916,8 @@ const salesTeamData = [
     reuniones: 15,
     cierres: 0,
     tasaConversion: 10,
-    presupuestoAnual2026: 79577000,
-    presupuestoMensual: 6631000,
+    presupuestoAnual2026: 21688469,
+    presupuestoMensual: 1807372,
     ventasReales: 0,
     cumplimientoPresupuesto: 0,
     tiempoRespuesta: '4.2 hrs',
@@ -3958,8 +3958,8 @@ const salesTeamData = [
     reuniones: 4,
     cierres: 2,
     tasaConversion: 0,
-    presupuestoAnual2026: 10513000,
-    presupuestoMensual: 876000,
+    presupuestoAnual2026: 21688469,
+    presupuestoMensual: 1807372,
     ventasReales: 0,
     cumplimientoPresupuesto: 0,
     tiempoRespuesta: '5.5 hrs',
@@ -3989,8 +3989,8 @@ const salesTeamData = [
     reuniones: 0,
     cierres: 0,
     tasaConversion: 0,
-    presupuestoAnual2026: 18107320,
-    presupuestoMensual: 1509000,
+    presupuestoAnual2026: 21688469,
+    presupuestoMensual: 1807372,
     ventasReales: 0,
     cumplimientoPresupuesto: 0,
     tiempoRespuesta: '2.0 hrs',
@@ -4015,8 +4015,8 @@ const salesTeamData = [
     reuniones: 3,
     cierres: 0,
     tasaConversion: 0,
-    presupuestoAnual2026: 0,
-    presupuestoMensual: 0,
+    presupuestoAnual2026: 21688469,
+    presupuestoMensual: 1807372,
     ventasReales: 0,
     cumplimientoPresupuesto: 0,
     tiempoRespuesta: '3.0 hrs',
@@ -4637,8 +4637,8 @@ const clientesConReportes = [
 
 // EVOLUCIÓN PRESUPUESTO VS REAL — DATOS REALES 2026
 const presupuestoEvolution = [
-  { mes: 'Ene', presupuesto: 2774200, real: 0 },
-  { mes: 'Feb', presupuesto: 2769810, real: 0 },
+  { mes: 'Ene', presupuesto: 2774200, real: 2000000 },
+  { mes: 'Feb', presupuesto: 2769810, real: 2200000 },
   { mes: 'Mar', presupuesto: 4009709, real: 0 },
   { mes: 'Abr', presupuesto: 11011618, real: 0 },
   { mes: 'May', presupuesto: 12452161, real: 0 },
@@ -5813,15 +5813,16 @@ const InnovativeDemo = () => {
     const pipelineBruto = topProspectos.reduce((s, p) => s + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0);
     const pipelinePonderado = calcularWeightedPipeline(topProspectos);
     const winRate = calcularWinRate(topProspectos);
-    const presupuestoTotal = salesTeamData.reduce((s, m) => s + m.presupuestoAnual2026, 0);
-    const ventasTotal = salesTeamData.reduce((s, m) => s + m.ventasReales, 0);
+    const presupuestoTotal = presupuestoEvolution.reduce((s, m) => s + m.presupuesto, 0);
+    const ventasTotal = presupuestoEvolution.reduce((s, m) => s + m.real, 0);
     const stageData = KANBAN_STAGES.map(stage => ({
       ...stage,
       count: topProspectos.filter(p => p.status === stage.id).length,
       valor: topProspectos.filter(p => p.status === stage.id).reduce((s, p) => s + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0),
     }));
-    const presupuestoMesEquipo = salesTeamData.reduce((s, m) => s + (m.presupuestoMensual || 0), 0);
-    const ventasRealesEquipo = salesTeamData.reduce((s, m) => s + (m.ventasReales || 0), 0);
+    const hubMesIdx = new Date().getMonth();
+    const presupuestoMesEquipo = presupuestoEvolution[hubMesIdx]?.presupuesto || 0;
+    const ventasRealesEquipo = presupuestoEvolution[hubMesIdx]?.real || 0;
     const topDeals = [...topProspectos]
       .filter(p => !['Propuesta Rechazada'].includes(p.status))
       .sort((a, b) => (b.propuesta?.ventaTotal || b.facturacionEstimada || 0) - (a.propuesta?.ventaTotal || a.facturacionEstimada || 0))
@@ -7108,11 +7109,12 @@ const InnovativeDemo = () => {
     const winRate = calcularWinRate(kanbanProspectos);
     const velocity = calcularPipelineVelocity(kanbanProspectos);
     const oportunidadesActivas = kanbanProspectos.filter(p => !['Propuesta Rechazada', 'Inicio de operación'].includes(p.status)).length;
-    const presupuestoTotal = salesTeamData.reduce((s, m) => s + (m.presupuestoAnual2026 || 0), 0);
-    const ventasReales = salesTeamData.reduce((s, m) => s + (m.ventasReales || 0), 0);
+    const presupuestoTotal = presupuestoEvolution.reduce((s, m) => s + m.presupuesto, 0);
+    const ventasReales = presupuestoEvolution.reduce((s, m) => s + m.real, 0);
 
-    // Métricas de Vero
-    const presupuestoMesEquipo = salesTeamData.reduce((s, m) => s + (m.presupuestoMensual || 0), 0);
+    // Métricas de Vero — mes actual del chart (0-indexed: Marzo = 2)
+    const mesActualIdx = new Date().getMonth(); // 0=Ene, 1=Feb, 2=Mar...
+    const presupuestoMesEquipo = presupuestoEvolution[mesActualIdx]?.presupuesto || 0;
     const proyeccionCierre = kanbanProspectos
       .filter(p => ['Propuesta enviada', 'Negociación'].includes(p.status))
       .reduce((s, p) => s + ((p.propuesta?.ventaTotal || p.facturacionEstimada || 0) * (STAGE_PROBABILITY[p.status] || 0)), 0);
@@ -7492,11 +7494,13 @@ const InnovativeDemo = () => {
               </tr>
             </thead>
             <tbody>
-              {salesTeamData.filter(m => m.presupuestoMensual > 0).map(member => {
+              {salesTeamData.map(member => {
+                const mesChartPresupuesto = presupuestoEvolution[ventaRealMes - 1]?.presupuesto || 0;
+                const memberMesPresupuesto = Math.round(mesChartPresupuesto / salesTeamData.length);
                 const editKey = `${member.id}-${ventaRealMes}-${ventaRealAño}`;
                 const isEditing = editingVentaReal === editKey;
                 const ventaActual = ventasRealesEditadas[editKey] ?? member.ventasReales;
-                const pct = member.presupuestoMensual > 0 ? Math.round((ventaActual / member.presupuestoMensual) * 100) : 0;
+                const pct = memberMesPresupuesto > 0 ? Math.round((ventaActual / memberMesPresupuesto) * 100) : 0;
                 const pctColor = pct >= 80 ? '#2E7D32' : pct >= 40 ? '#F57C00' : '#EF4444';
 
                 return (
@@ -7511,7 +7515,7 @@ const InnovativeDemo = () => {
                       </div>
                     </td>
                     <td className="py-2.5 px-2 text-right">
-                      <span className="text-sm text-[#6b7280]">${(member.presupuestoMensual / 1000000).toFixed(2)}M</span>
+                      <span className="text-sm text-[#6b7280]">${(memberMesPresupuesto / 1000000).toFixed(2)}M</span>
                     </td>
                     <td className="py-2.5 px-2 text-right">
                       {isEditing ? (
@@ -7592,30 +7596,27 @@ const InnovativeDemo = () => {
               })}
             </tbody>
             <tfoot>
-              <tr className="bg-[#f9fafb]">
-                <td className="py-2.5 px-2 font-semibold text-[#1c2c4a]">Total Equipo</td>
-                <td className="py-2.5 px-2 text-right font-semibold text-[#1c2c4a]">
-                  ${(salesTeamData.reduce((s, m) => s + m.presupuestoMensual, 0) / 1000000).toFixed(2)}M
-                </td>
-                <td className="py-2.5 px-2 text-right font-bold text-[#00a8a8]">
-                  ${(salesTeamData.reduce((s, m) => s + Number(ventasRealesEditadas[`${m.id}-${ventaRealMes}-${ventaRealAño}`] ?? m.ventasReales), 0) / 1000000).toFixed(2)}M
-                </td>
-                <td className="py-2.5 px-2 text-right font-bold" style={{
-                  color: (() => {
-                    const totalPres = salesTeamData.reduce((s, m) => s + m.presupuestoMensual, 0);
-                    const totalReal = salesTeamData.reduce((s, m) => s + Number(ventasRealesEditadas[`${m.id}-${ventaRealMes}-${ventaRealAño}`] ?? m.ventasReales), 0);
-                    const pct = totalPres > 0 ? Math.round((totalReal / totalPres) * 100) : 0;
-                    return pct >= 80 ? '#2E7D32' : pct >= 40 ? '#F57C00' : '#EF4444';
-                  })()
-                }}>
-                  {(() => {
-                    const totalPres = salesTeamData.reduce((s, m) => s + m.presupuestoMensual, 0);
-                    const totalReal = salesTeamData.reduce((s, m) => s + Number(ventasRealesEditadas[`${m.id}-${ventaRealMes}-${ventaRealAño}`] ?? m.ventasReales), 0);
-                    return totalPres > 0 ? Math.round((totalReal / totalPres) * 100) : 0;
-                  })()}%
-                </td>
-                <td></td>
-              </tr>
+              {(() => {
+                const footerPres = presupuestoEvolution[ventaRealMes - 1]?.presupuesto || 0;
+                const footerReal = salesTeamData.reduce((s, m) => s + Number(ventasRealesEditadas[`${m.id}-${ventaRealMes}-${ventaRealAño}`] ?? m.ventasReales), 0);
+                const footerPct = footerPres > 0 ? Math.round((footerReal / footerPres) * 100) : 0;
+                const footerColor = footerPct >= 80 ? '#2E7D32' : footerPct >= 40 ? '#F57C00' : '#EF4444';
+                return (
+                  <tr className="bg-[#f9fafb]">
+                    <td className="py-2.5 px-2 font-semibold text-[#1c2c4a]">Total Equipo</td>
+                    <td className="py-2.5 px-2 text-right font-semibold text-[#1c2c4a]">
+                      ${(footerPres / 1000000).toFixed(2)}M
+                    </td>
+                    <td className="py-2.5 px-2 text-right font-bold text-[#00a8a8]">
+                      ${(footerReal / 1000000).toFixed(2)}M
+                    </td>
+                    <td className="py-2.5 px-2 text-right font-bold" style={{ color: footerColor }}>
+                      {footerPct}%
+                    </td>
+                    <td></td>
+                  </tr>
+                );
+              })()}
             </tfoot>
           </table>
         </div>
