@@ -6637,62 +6637,67 @@ const InnovativeDemo = () => {
               );
             })()}
 
-            <div className="p-5 space-y-5">
-              {/* Value + date row */}
-              <div className="flex items-center gap-3">
-                <div className="flex-1 bg-[#EFF6FF] rounded-xl p-3 text-center">
-                  <div className="text-xs text-[#6b7280] mb-0.5">Valor estimado</div>
-                  <div className="text-xl font-bold text-[#0D47A1]">{valor > 0 ? `$${(valor / 1000).toFixed(0)}K` : '—'}</div>
-                </div>
-                <div className="flex-1 bg-[#f3f4f6] rounded-xl p-3 text-center">
-                  <div className="text-xs text-[#6b7280] mb-0.5">Días en presupuesto</div>
-                  <div className="text-xl font-bold text-[#1c2c4a]">{dias !== null ? dias : '—'}</div>
+            <div className="p-5 space-y-4">
+              {/* Compact summary row */}
+              <div className="flex items-center flex-wrap gap-x-4 gap-y-2">
+                <span className="text-xl font-bold text-[#0D47A1]">{valor > 0 ? `$${(valor / 1000).toFixed(0)}K` : '—'}</span>
+                <div className="w-px h-5 bg-[#e5e7eb]" />
+                <div className="flex items-center gap-1.5">
+                  <Clock size={14} className="text-[#9ca3af]" />
+                  <span className="text-sm font-semibold text-[#1c2c4a]">{dias !== null ? `${dias} días` : '—'}</span>
                 </div>
                 {p.propuesta?.status && (
-                  <div className={`flex-1 rounded-xl p-3 text-center ${
-                    p.propuesta.status === 'Aceptada' ? 'bg-green-50' : p.propuesta.status === 'Rechazada' ? 'bg-red-50' : 'bg-gray-50'
-                  }`}>
-                    <div className="text-xs text-[#6b7280] mb-0.5">Propuesta</div>
-                    <div className={`text-sm font-bold ${
-                      p.propuesta.status === 'Aceptada' ? 'text-green-700' : p.propuesta.status === 'Rechazada' ? 'text-red-600' : 'text-gray-600'
-                    }`}>{p.propuesta.status}</div>
-                  </div>
+                  <>
+                    <div className="w-px h-5 bg-[#e5e7eb]" />
+                    <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
+                      p.propuesta.status === 'Aceptada' ? 'bg-green-100 text-green-700' : p.propuesta.status === 'Rechazada' ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-600'
+                    }`}>{p.propuesta.status}</span>
+                  </>
+                )}
+                {sc.length > 0 && (
+                  <>
+                    <div className="w-px h-5 bg-[#e5e7eb]" />
+                    <div className="flex gap-1.5">
+                      {sc.map(s => (
+                        <span key={s.id} className="px-2 py-0.5 rounded text-[11px] font-semibold" style={{ backgroundColor: s.bg, color: s.text }}>
+                          {s.nombre}
+                        </span>
+                      ))}
+                    </div>
+                  </>
                 )}
               </div>
 
-              {/* Contact section */}
+              {/* Contact - inline */}
               {p.contacto?.nombre && (
-                <div className="bg-white rounded-xl border border-[#e5e7eb] overflow-hidden">
-                  <div className="px-4 py-3 bg-[#f9fafb] border-b border-[#e5e7eb]">
-                    <h3 className="text-sm font-semibold text-[#1c2c4a] flex items-center gap-2"><Users size={14} /> Contacto</h3>
-                  </div>
-                  <div className="p-4 space-y-3">
+                <div className="border-t border-[#f0f0f0] pt-3">
+                  <div className="flex items-start justify-between">
                     <div>
                       <div className="text-sm font-semibold text-[#1c2c4a]">{p.contacto.nombre}</div>
-                      {p.contacto.puesto && <div className="text-xs text-[#6b7280]">{p.contacto.puesto}</div>}
+                      {p.contacto.puesto && <div className="text-xs text-[#6b7280] mt-0.5">{p.contacto.puesto}</div>}
                     </div>
-                    {/* Quick actions */}
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex gap-1.5">
                       {p.contacto.telefono && (
-                        <a href={`tel:${p.contacto.telefono}`} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-50 text-green-700 text-xs font-medium hover:bg-green-100 transition-colors">
+                        <a href={`tel:${p.contacto.telefono}`} className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-green-50 text-green-700 text-xs font-medium hover:bg-green-100 transition-colors">
                           <Phone size={12} /> Llamar
                         </a>
                       )}
                       {p.contacto.telefono && (
-                        <a href={`https://wa.me/52${p.contacto.telefono.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-50 text-green-700 text-xs font-medium hover:bg-green-100 transition-colors">
+                        <a href={`https://wa.me/52${p.contacto.telefono.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-green-50 text-green-700 text-xs font-medium hover:bg-green-100 transition-colors">
                           <MessageSquare size={12} /> WhatsApp
                         </a>
                       )}
                       {p.contacto.correo && (
-                        <a href={`mailto:${p.contacto.correo}`} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 text-xs font-medium hover:bg-blue-100 transition-colors">
+                        <a href={`mailto:${p.contacto.correo}`} className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-blue-50 text-blue-700 text-xs font-medium hover:bg-blue-100 transition-colors">
                           <Mail size={12} /> Email
                         </a>
                       )}
                     </div>
-                    {/* Contact details with copy */}
+                  </div>
+                  <div className="mt-2 space-y-1">
                     {p.contacto.correo && (
-                      <div className="flex items-center justify-between group">
-                        <div className="flex items-center gap-2 text-sm text-[#6b7280]">
+                      <div className="flex items-center justify-between group text-sm text-[#6b7280]">
+                        <div className="flex items-center gap-2">
                           <Mail size={13} className="text-[#9ca3af]" />
                           <span>{p.contacto.correo}</span>
                         </div>
@@ -6702,8 +6707,8 @@ const InnovativeDemo = () => {
                       </div>
                     )}
                     {p.contacto.telefono && (
-                      <div className="flex items-center justify-between group">
-                        <div className="flex items-center gap-2 text-sm text-[#6b7280]">
+                      <div className="flex items-center justify-between group text-sm text-[#6b7280]">
+                        <div className="flex items-center gap-2">
                           <Phone size={13} className="text-[#9ca3af]" />
                           <span>{p.contacto.telefono}</span>
                         </div>
@@ -6716,189 +6721,54 @@ const InnovativeDemo = () => {
                 </div>
               )}
 
-              {/* Services */}
-              {sc.length > 0 && (
-                <div className="bg-white rounded-xl border border-[#e5e7eb] overflow-hidden">
-                  <div className="px-4 py-3 bg-[#f9fafb] border-b border-[#e5e7eb]">
-                    <h3 className="text-sm font-semibold text-[#1c2c4a] flex items-center gap-2"><Package size={14} /> Servicios</h3>
-                  </div>
-                  <div className="p-4 flex flex-wrap gap-2">
-                    {sc.map(s => (
-                      <span key={s.id} className="px-3 py-1.5 rounded-lg text-xs font-semibold" style={{ backgroundColor: s.bg, color: s.text, border: `1px solid ${s.border || s.text}20` }}>
-                        {s.nombre}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
+              {/* Services moved to summary row */}
 
-              {/* Additional info */}
-              {(p.volumenEstimado || p.siguientePaso || p.motivoRechazo || p.propuesta) && (
-                <div className="bg-white rounded-xl border border-[#e5e7eb] overflow-hidden">
-                  <div className="px-4 py-3 bg-[#f9fafb] border-b border-[#e5e7eb]">
-                    <h3 className="text-sm font-semibold text-[#1c2c4a] flex items-center gap-2"><ClipboardList size={14} /> Detalles</h3>
-                  </div>
-                  <div className="p-4 space-y-2.5">
-                    {p.volumenEstimado && (
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-[#6b7280]">Volumen estimado</span>
-                        <span className="font-medium text-[#1c2c4a]">{p.volumenEstimado}</span>
-                      </div>
-                    )}
-                    {p.propuesta?.ventaMensual && (
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-[#6b7280]">Venta mensual</span>
-                        <span className="font-medium text-[#1c2c4a]">${(p.propuesta.ventaMensual / 1000).toFixed(0)}K</span>
-                      </div>
-                    )}
-                    {p.propuesta?.ventaTotal && (
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-[#6b7280]">Venta total (contrato)</span>
-                        <span className="font-bold text-[#0D47A1]">${(p.propuesta.ventaTotal / 1000).toFixed(0)}K</span>
-                      </div>
-                    )}
-                    {p.siguientePaso && (
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-[#6b7280]">Siguiente paso</span>
-                        <span className="font-medium text-[#00a8a8]">{p.siguientePaso}</span>
-                      </div>
-                    )}
-                    {p.motivoRechazo && (() => {
-                      const cat = classifyRechazo(p.motivoRechazo);
-                      return (
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-[#6b7280]">Motivo rechazo</span>
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full" style={{ backgroundColor: `${cat?.color}15`, color: cat?.color }}>{cat?.label}</span>
-                            <span className="font-medium text-sm truncate max-w-[200px]" style={{ color: cat?.color }}>{p.motivoRechazo}</span>
-                          </div>
-                        </div>
-                      );
-                    })()}
-                    {p.fecha && (
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-[#6b7280]">Fecha</span>
-                        <span className="font-medium text-[#1c2c4a]">{p.fecha}</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* NOTAS per-prospecto */}
-              <div className="bg-white rounded-xl border border-[#e5e7eb] overflow-hidden">
-                <div className="px-4 py-3 bg-[#f9fafb] border-b border-[#e5e7eb]">
-                  <h3 className="text-sm font-semibold text-[#1c2c4a] flex items-center gap-2">
-                    <MessageSquare size={14} /> Notas
-                    {(prospectoNotas[p.id]?.length > 0) && (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#e5e7eb] text-[#6b7280]">{prospectoNotas[p.id].length}</span>
-                    )}
-                  </h3>
-                </div>
-                <div className="p-4 space-y-3">
-                  {/* Input nueva nota */}
-                  <div className="flex gap-2">
-                    <textarea
-                      value={prospectoNuevaNota}
-                      onChange={(e) => setProspectoNuevaNota(e.target.value)}
-                      onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); agregarNota(); }}}
-                      placeholder="Escribe una nota... (Enter para guardar)"
-                      className="flex-1 border border-[#e5e7eb] rounded-lg px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#00a8a8]/30 focus:border-[#00a8a8]"
-                      rows={1}
-                    />
-                    <button
-                      onClick={agregarNota}
-                      disabled={!prospectoNuevaNota.trim()}
-                      className="self-end px-3 py-2 bg-[#00a8a8] hover:bg-[#008080] disabled:opacity-40 text-white rounded-lg text-sm font-medium transition-colors"
-                    >
-                      <Send size={14} />
-                    </button>
-                  </div>
-                  {/* Lista de notas */}
-                  {(prospectoNotas[p.id]?.length > 0) ? (
-                    <div className="space-y-2 max-h-48 overflow-y-auto">
-                      {[...(prospectoNotas[p.id] || [])].reverse().map(nota => (
-                        <div key={nota.id} className="bg-[#f9fafb] rounded-lg p-3 group">
-                          <div className="flex items-start justify-between gap-2">
-                            <p className="text-sm text-[#1c2c4a] flex-1 whitespace-pre-wrap">{nota.text}</p>
-                            <button
-                              onClick={() => eliminarNota(nota.id)}
-                              className="opacity-0 group-hover:opacity-100 text-[#6b7280] hover:text-red-500 transition-all flex-shrink-0 mt-0.5"
-                            >
-                              <Trash2 size={12} />
-                            </button>
-                          </div>
-                          <div className="flex items-center gap-1 mt-1.5 text-[10px] text-[#9ca3af]">
-                            <Clock size={9} />
-                            {timeAgo(nota.date) || 'ahora'}
-                          </div>
-                        </div>
-                      ))}
+              {/* Details - simple rows */}
+              {(p.volumenEstimado || p.siguientePaso || p.motivoRechazo || p.propuesta || p.fecha) && (
+                <div className="border-t border-[#f0f0f0] pt-3 space-y-2">
+                  {p.fecha && (
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-[#6b7280]">Fecha</span>
+                      <span className="font-medium text-[#1c2c4a]">{p.fecha}</span>
                     </div>
-                  ) : (
-                    <p className="text-xs text-[#9ca3af] text-center py-2">Agrega una nota...</p>
                   )}
-                </div>
-              </div>
-
-              {/* ARCHIVOS per-prospecto */}
-              {(() => {
-                const drawerFileRef = React.createRef();
-                return (
-                  <div className="bg-white rounded-xl border border-[#e5e7eb] overflow-hidden">
-                    <div className="px-4 py-3 bg-[#f9fafb] border-b border-[#e5e7eb]">
-                      <h3 className="text-sm font-semibold text-[#1c2c4a] flex items-center gap-2">
-                        <Paperclip size={14} /> Archivos
-                        {(prospectoArchivos[p.id]?.length > 0) && (
-                          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#e5e7eb] text-[#6b7280]">{prospectoArchivos[p.id].length}</span>
-                        )}
-                      </h3>
+                  {p.volumenEstimado && (
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-[#6b7280]">Volumen estimado</span>
+                      <span className="font-medium text-[#1c2c4a]">{p.volumenEstimado}</span>
                     </div>
-                    <div className="p-4 space-y-3">
-                      {/* Upload zone */}
-                      <div
-                        className="border border-dashed border-[#d1d5db] hover:border-[#00a8a8] rounded-lg p-3 text-center transition-colors cursor-pointer"
-                        onClick={() => drawerFileRef.current?.click()}
-                      >
-                        <input
-                          type="file"
-                          ref={drawerFileRef}
-                          className="hidden"
-                          multiple
-                          accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,.xlsx,.xls,.csv,.doc,.docx"
-                          onChange={handleFileUpload}
-                        />
-                        <Upload size={16} className="text-[#d1d5db] mx-auto mb-1" />
-                        <p className="text-xs text-[#6b7280]">Click para subir archivos</p>
+                  )}
+                  {p.propuesta?.ventaMensual && (
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-[#6b7280]">Venta mensual</span>
+                      <span className="font-medium text-[#1c2c4a]">${(p.propuesta.ventaMensual / 1000).toFixed(0)}K</span>
+                    </div>
+                  )}
+                  {p.propuesta?.ventaTotal && (
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-[#6b7280]">Venta total</span>
+                      <span className="font-bold text-[#0D47A1]">${(p.propuesta.ventaTotal / 1000).toFixed(0)}K</span>
+                    </div>
+                  )}
+                  {p.siguientePaso && (
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-[#6b7280]">Siguiente paso</span>
+                      <span className="font-medium text-[#00a8a8]">{p.siguientePaso}</span>
+                    </div>
+                  )}
+                  {p.motivoRechazo && (() => {
+                    const cat = classifyRechazo(p.motivoRechazo);
+                    return (
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-[#6b7280]">Motivo rechazo</span>
+                        <span className="font-medium truncate max-w-[200px]" style={{ color: cat?.color }}>{p.motivoRechazo}</span>
                       </div>
-                      {/* File list */}
-                      {(prospectoArchivos[p.id]?.length > 0) ? (
-                        <div className="space-y-1.5 max-h-40 overflow-y-auto">
-                          {[...(prospectoArchivos[p.id] || [])].reverse().map(archivo => (
-                            <div key={archivo.id} className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-[#f9fafb] group transition-colors">
-                              <div className="w-7 h-7 rounded-md bg-[#f3f4f6] flex items-center justify-center flex-shrink-0">
-                                {getFileIcon(archivo.type)}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <div className="text-xs font-medium text-[#1c2c4a] truncate">{archivo.name}</div>
-                                <div className="text-[10px] text-[#9ca3af]">{formatFileSize(archivo.size)} · {archivo.date}</div>
-                              </div>
-                              <button
-                                onClick={() => eliminarArchivo(archivo.id)}
-                                className="opacity-0 group-hover:opacity-100 text-[#6b7280] hover:text-red-500 transition-all"
-                              >
-                                <Trash2 size={12} />
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="text-xs text-[#9ca3af] text-center py-2">Sube un archivo...</p>
-                      )}
-                    </div>
-                  </div>
-                );
-              })()}
+                    );
+                  })()}
+                </div>
+              )}
+
+              {/* Notes & Files available in their dedicated tabs */}
             </div>
           </>)}
             </div>
