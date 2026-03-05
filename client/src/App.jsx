@@ -8057,6 +8057,79 @@ const InnovativeDemo = () => {
         </p>
       </div>
 
+      {/* ═══════ CUENTAS DEL MES — Prospectos agrupados por mes de cierre ═══════ */}
+      <div className="mt-4 bg-white rounded-xl border border-[#e5e7eb] shadow-sm overflow-hidden">
+        <div className="px-4 py-3 border-b border-[#e5e7eb] flex items-center justify-between bg-[#f9fafb]">
+          <h4 className="text-sm font-semibold text-[#1c2c4a] flex items-center gap-2">
+            <Users size={15} className="text-[#00a8a8]" />
+            Cuentas del Mes
+          </h4>
+          <span className="text-xs text-[#6b7280]">Prospectos activos con propuesta</span>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-[#f3f4f6] border-b border-[#e5e7eb]">
+              <tr>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[#6b7280]">Empresa</th>
+                <th className="px-3 py-3 text-left text-xs font-semibold text-[#6b7280]">Ejecutivo</th>
+                <th className="px-3 py-3 text-left text-xs font-semibold text-[#6b7280]">Etapa</th>
+                <th className="px-3 py-3 text-left text-xs font-semibold text-[#6b7280]">Mes Cierre</th>
+                <th className="px-3 py-3 text-right text-xs font-semibold text-[#6b7280]">Venta Total</th>
+                <th className="px-3 py-3 text-right text-xs font-semibold text-[#6b7280]">% Margen</th>
+              </tr>
+            </thead>
+            <tbody>
+              {kanbanProspectos
+                .filter(p => p.status !== 'Propuesta Rechazada' && p.propuesta?.mesCierre)
+                .sort((a, b) => (a.propuesta?.mesCierre || '').localeCompare(b.propuesta?.mesCierre || ''))
+                .map(p => {
+                  const ejecutivo = salesTeamData.find(e => e.codigo === p.ejecutivo);
+                  const stage = KANBAN_STAGES.find(s => s.id === p.status);
+                  const [y, m] = (p.propuesta?.mesCierre || '').split('-');
+                  const mesLabel = m ? `${['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'][parseInt(m, 10) - 1]} ${y}` : '—';
+                  return (
+                    <tr key={p.id} className="border-b border-[#e5e7eb] hover:bg-[#f9fafb] cursor-pointer transition-colors"
+                      onClick={() => { setSelectedProspecto(p); setMostrarDetallesProspecto(true); }}>
+                      <td className="px-4 py-2.5">
+                        <div className="text-sm font-semibold text-[#1c2c4a]">{p.empresa}</div>
+                        {p.planta && <div className="text-[11px] text-[#9ca3af]">{p.planta}</div>}
+                      </td>
+                      <td className="px-3 py-2.5 text-xs text-[#6b7280]">{ejecutivo?.name?.split(' ').slice(0, 2).join(' ') || p.ejecutivo}</td>
+                      <td className="px-3 py-2.5">
+                        <span className="inline-flex items-center gap-1.5 text-xs font-medium px-2 py-1 rounded-full"
+                          style={{ backgroundColor: `${stage?.color}15`, color: stage?.color, border: `1px solid ${stage?.color}30` }}>
+                          <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: stage?.color }}></span>
+                          {stage?.label || p.status}
+                        </span>
+                      </td>
+                      <td className="px-3 py-2.5 text-xs font-medium text-[#1c2c4a]">{mesLabel}</td>
+                      <td className="px-3 py-2.5 text-right text-sm font-semibold text-[#0D47A1]">
+                        {p.propuesta?.ventaTotal ? `$${(p.propuesta.ventaTotal / 1000000).toFixed(2)}M` : '—'}
+                      </td>
+                      <td className="px-3 py-2.5 text-right text-sm font-medium text-[#1c2c4a]">
+                        {p.propuesta?.utilidad ? `${(p.propuesta.utilidad * 100).toFixed(1)}%` : '—'}
+                      </td>
+                    </tr>
+                  );
+                })}
+            </tbody>
+            <tfoot className="bg-[#f3f4f6] border-t-2 border-[#e5e7eb]">
+              <tr>
+                <td className="px-4 py-3 text-sm font-bold text-[#1c2c4a]" colSpan={4}>
+                  Total: {kanbanProspectos.filter(p => p.status !== 'Propuesta Rechazada' && p.propuesta?.mesCierre).length} cuentas
+                </td>
+                <td className="px-3 py-3 text-right text-sm font-bold text-[#0D47A1]">
+                  ${(kanbanProspectos
+                    .filter(p => p.status !== 'Propuesta Rechazada' && p.propuesta?.mesCierre)
+                    .reduce((s, p) => s + (p.propuesta?.ventaTotal || 0), 0) / 1000000).toFixed(2)}M
+                </td>
+                <td className="px-3 py-3"></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+
       {/* ═══════ VOLUMEN POR MATERIAL (CARTÓN / PLAYO) — Compacto ═══════ */}
       <div className="mt-4 bg-white rounded-xl border border-[#e5e7eb] p-4">
         <div className="flex items-center gap-2 mb-3">
