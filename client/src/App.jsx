@@ -8224,64 +8224,46 @@ const InnovativeDemo = () => {
           </div>
         );
 
-        const byRecovery = { sin_seguimiento: [], en_seguimiento: [], re_contactada: [] };
-        allRejected.forEach(p => {
-          const seg = prospectoSeguimiento[p.id];
-          const state = getRecoveryState(seg);
-          if (byRecovery[state.id]) byRecovery[state.id].push(p);
-        });
-        const overdue = allRejected.filter(p => getSeguimientoUrgency(prospectoSeguimiento[p.id])?.overdue);
-        const recoverable = allRejected.filter(p => classifyRechazo(p.motivoRechazo)?.recoverable);
         const totalValue = allRejected.reduce((s, p) => s + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0);
         const byCat = { pricing: [], proposal: [], operational: [] };
         allRejected.forEach(p => { const cat = classifyRechazo(p.motivoRechazo); if (byCat[cat.id]) byCat[cat.id].push(p); });
 
         return (
           <div className="mt-4 space-y-4">
-            {/* Summary cards */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <div className="bg-white rounded-xl border border-[#e5e7eb] p-4">
-                <div className="text-[10px] text-[#6b7280] mb-1">Total Rechazadas</div>
-                <div className="text-2xl font-bold text-[#1c2c4a]">{allRejected.length}</div>
-                <div className="text-[10px] text-[#6b7280]">${(totalValue / 1000000).toFixed(1)}M en valor</div>
-              </div>
-              <div className="bg-white rounded-xl border border-[#e5e7eb] p-4">
-                <div className="text-[10px] text-[#6b7280] mb-1">Recuperables</div>
-                <div className="text-2xl font-bold text-green-600">{recoverable.length}</div>
-                <div className="text-[10px] text-[#6b7280]">por precio o propuesta</div>
-              </div>
-              <div className="bg-white rounded-xl border border-[#e5e7eb] p-4">
-                <div className="text-[10px] text-[#6b7280] mb-1">En Seguimiento</div>
-                <div className="text-2xl font-bold text-[#F59E0B]">{byRecovery.en_seguimiento.length + byRecovery.re_contactada.length}</div>
-                <div className="text-[10px] text-[#6b7280]">con fecha programada</div>
-              </div>
-              <div className="bg-white rounded-xl border border-[#e5e7eb] p-4">
-                <div className="text-[10px] text-[#6b7280] mb-1">Vencidas</div>
-                <div className="text-2xl font-bold text-red-500">{overdue.length}</div>
-                <div className="text-[10px] text-[#6b7280]">requieren atencion</div>
-              </div>
+            {/* Summary card */}
+            <div className="bg-white rounded-xl border border-[#e5e7eb] p-4 max-w-xs">
+              <div className="text-[10px] text-[#6b7280] mb-1">Total Rechazadas</div>
+              <div className="text-2xl font-bold text-[#1c2c4a]">{allRejected.length}</div>
+              <div className="text-[10px] text-[#6b7280]">${(totalValue / 1000000).toFixed(1)}M en valor</div>
             </div>
 
-            {/* Recovery funnel */}
+            {/* PIE CHART — Distribución de Rechazos */}
             <div className="bg-white rounded-xl border border-[#e5e7eb] p-4">
-              <h4 className="text-xs font-semibold text-[#1c2c4a] mb-3 flex items-center gap-2">
-                <RotateCcw size={14} className="text-[#F59E0B]" /> Funnel de Recuperacion
-              </h4>
-              <div className="grid grid-cols-3 gap-3">
-                {Object.entries(byRecovery).map(([stateId, items]) => {
-                  const state = RECOVERY_STATES[stateId];
-                  return (
-                    <div key={stateId} className="rounded-xl p-4 border" style={{ backgroundColor: state.bg, borderColor: `${state.color}25` }}>
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs font-semibold" style={{ color: state.color }}>{state.label}</span>
-                        <span className="text-xl font-bold" style={{ color: state.color }}>{items.length}</span>
-                      </div>
-                      <div className="w-full h-2 bg-white/60 rounded-full overflow-hidden">
-                        <div className="h-full rounded-full transition-all" style={{ width: `${allRejected.length ? (items.length / allRejected.length) * 100 : 0}%`, backgroundColor: state.color }} />
-                      </div>
-                    </div>
-                  );
-                })}
+              <h4 className="text-xs font-semibold text-[#1c2c4a] mb-3">Distribución de Rechazos</h4>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={Object.entries(byCat).map(([catId, items]) => ({
+                        name: RECHAZO_CATEGORIES[catId].label,
+                        value: items.length,
+                        color: RECHAZO_CATEGORIES[catId].color,
+                      })).filter(d => d.value > 0)}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={50}
+                      outerRadius={90}
+                      paddingAngle={3}
+                      dataKey="value"
+                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    >
+                      {Object.entries(byCat).filter(([, items]) => items.length > 0).map(([catId]) => (
+                        <Cell key={catId} fill={RECHAZO_CATEGORIES[catId].color} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value) => [`${value} rechazadas`, '']} />
+                  </PieChart>
+                </ResponsiveContainer>
               </div>
             </div>
 
