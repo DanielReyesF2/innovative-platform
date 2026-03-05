@@ -3926,7 +3926,7 @@ const salesTeamData = [
     eficienciaGlobal: 45,
     avatar: '👨‍💼',
     ultimaActividad: 'Propuestas enviadas: Givaudan, Gonher, Xignux, Pepsico',
-    notas: '40 prospectos en pipeline. 4 propuestas enviadas, 2 en levantamiento (Panduit, Genomma Lab), 15 reuniones agendadas, 19 rechazadas por precio. Zona Norte.',
+    notas: '40 prospectos en presupuesto. 4 propuestas enviadas, 2 en levantamiento (Panduit, Genomma Lab), 15 reuniones agendadas, 19 rechazadas por precio. Zona Norte.',
     kpisSemanales: [
       { semana: 31, leadsNuevos: 11, reunionesAgendadas: 5, levantamientos: 1, propuestasEnviadas: 0, propuestasRechazadas: 0 },
       { semana: 32, leadsNuevos: 3, reunionesAgendadas: 3, levantamientos: 1, propuestasEnviadas: 0, propuestasRechazadas: 0 },
