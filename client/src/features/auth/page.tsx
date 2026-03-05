@@ -57,11 +57,11 @@ export default function LoginPage() {
           <div className="mt-12 text-center text-white">
             <h2 className="text-2xl font-bold mb-3">Hub Digital</h2>
             <p className="text-white/80 text-sm max-w-sm mx-auto leading-relaxed">
-              Gestion integral de pipeline comercial, operaciones, trazabilidad y KPIs del equipo.
+              Gestion integral de presupuesto comercial, operaciones, trazabilidad y KPIs del equipo.
             </p>
           </div>
           <div className="mt-8 flex flex-wrap justify-center gap-3 max-w-md">
-            {["Pipeline Comercial", "Kanban Board", "Trazabilidad", "KPIs en Tiempo Real", "Economia Circular"].map((feature) => (
+            {["Presupuesto Comercial", "Kanban Board", "Trazabilidad", "KPIs en Tiempo Real", "Economia Circular"].map((feature) => (
               <span
                 key={feature}
                 className="px-4 py-2 bg-white/10 border border-white/20 rounded-full text-white/90 text-xs font-medium"

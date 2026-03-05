@@ -5506,7 +5506,7 @@ const InnovativeDemo = () => {
     { type: 'category', label: 'COMERCIAL' },
     { type: 'section', key: 'comercial', icon: TrendingUp, label: 'Nuevas Cuentas',
       items: [
-        { id: 'comercial', icon: Briefcase, label: 'Pipeline & Prospectos' },
+        { id: 'comercial', icon: Briefcase, label: 'Presupuesto & Prospectos' },
       ]
     },
   ];
@@ -5753,7 +5753,7 @@ const InnovativeDemo = () => {
         {/* Pipeline Total */}
         <div className="bg-gradient-to-br from-[#1c2c4a] to-[#0D47A1] rounded-xl p-5 text-white">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-medium text-white/70">Pipeline por Ejecutivo</span>
+            <span className="text-xs font-medium text-white/70">Presupuesto por Ejecutivo</span>
             <DollarSign size={18} className="text-white/40" />
           </div>
           <div className="text-2xl font-bold">${(pipelinePonderado / 1000000).toFixed(1)}M</div>
@@ -5791,7 +5791,7 @@ const InnovativeDemo = () => {
       </div>
 
       {/* ═══════ SECTION A: COMERCIAL ═══════ */}
-      <SectionHeader color="#00a8a8" icon={TrendingUp} label="Comercial" linkLabel="Ver Pipeline" onLinkClick={() => setCurrentView('comercial')} />
+      <SectionHeader color="#00a8a8" icon={TrendingUp} label="Comercial" linkLabel="Ver Presupuesto" onLinkClick={() => setCurrentView('comercial')} />
 
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
         <div className="bg-white rounded-xl border border-[#e5e7eb] p-4">
@@ -5813,9 +5813,9 @@ const InnovativeDemo = () => {
 
       {/* Pipeline + Top Deals */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4">
-        {/* Pipeline por Stage (compact) */}
+        {/* Presupuesto por Etapa (compact) */}
         <div className="lg:col-span-2 bg-white rounded-xl border border-[#e5e7eb] p-4">
-          <h3 className="text-sm font-semibold text-[#1c2c4a] mb-3">Pipeline por Stage</h3>
+          <h3 className="text-sm font-semibold text-[#1c2c4a] mb-3">Presupuesto por Etapa</h3>
           <div className="space-y-1.5">
             {stageData.map(stage => {
               const maxCount = Math.max(...stageData.map(s => s.count), 1);
@@ -6048,7 +6048,7 @@ const InnovativeDemo = () => {
               <thead>
                 <tr className="border-b border-[#e5e7eb]">
                   <th className="text-left py-2 text-[#6b7280] font-medium">Ejecutivo</th>
-                  <th className="text-right py-2 text-[#6b7280] font-medium">Pipeline</th>
+                  <th className="text-right py-2 text-[#6b7280] font-medium">Presupuesto</th>
                   <th className="text-right py-2 text-[#6b7280] font-medium">Opps</th>
                   <th className="text-right py-2 text-[#6b7280] font-medium">Leads/S</th>
                   <th className="text-right py-2 text-[#6b7280] font-medium">Reun/S</th>
@@ -6585,7 +6585,7 @@ const InnovativeDemo = () => {
                             )}
                             <button onClick={() => { changeProspectoStage(p.id, 'Lead nuevo'); guardarSeguimiento(p.id, { recoveryStatus: null, fechaSeguimiento: null }); }}
                               className="px-3 py-2 rounded-lg bg-[#00a8a8] text-white text-xs font-semibold hover:bg-[#008080] transition-colors flex items-center justify-center gap-1.5">
-                              <RotateCcw size={12} /> Reactivar en Pipeline
+                              <RotateCcw size={12} /> Reactivar en Presupuesto
                             </button>
                           </div>
                         </div>
@@ -6604,7 +6604,7 @@ const InnovativeDemo = () => {
                   <div className="text-xl font-bold text-[#0D47A1]">{valor > 0 ? `$${(valor / 1000).toFixed(0)}K` : '—'}</div>
                 </div>
                 <div className="flex-1 bg-[#f3f4f6] rounded-xl p-3 text-center">
-                  <div className="text-xs text-[#6b7280] mb-0.5">Días en pipeline</div>
+                  <div className="text-xs text-[#6b7280] mb-0.5">Días en presupuesto</div>
                   <div className="text-xl font-bold text-[#1c2c4a]">{dias !== null ? dias : '—'}</div>
                 </div>
                 {p.propuesta?.status && (
@@ -6884,7 +6884,7 @@ const InnovativeDemo = () => {
           <p className="text-sm text-[#6b7280]">{member.role} — {member.zona}</p>
         </div>
         <div className="text-right hidden md:block">
-          <div className="text-sm text-[#6b7280]">Pipeline Total</div>
+          <div className="text-sm text-[#6b7280]">Presupuesto Total</div>
           <div className="text-xl font-bold text-[#0D47A1]">${(totalPipeline / 1000000).toFixed(1)}M</div>
         </div>
         <button
@@ -7172,7 +7172,7 @@ const InnovativeDemo = () => {
           {/* Quick summary bar */}
           <div className="flex items-center gap-4 text-xs">
             <span className="text-[#6b7280]"><strong className="text-[#1c2c4a]">{memberProspectos.filter(p => p.status !== 'Propuesta Rechazada').length}</strong> prospectos</span>
-            <span className="text-[#6b7280]"><strong className="text-[#0D47A1]">${(totalPipeline / 1000000).toFixed(1)}M</strong> pipeline</span>
+            <span className="text-[#6b7280]"><strong className="text-[#0D47A1]">${(totalPipeline / 1000000).toFixed(1)}M</strong> presupuesto</span>
             {memberRechazados.length > 0 && <span className="text-red-500"><strong>{memberRechazados.length}</strong> rechazadas</span>}
             <div className="flex items-center gap-2 ml-auto">
               {HUB_KANBAN_STAGES.map(s => {
@@ -7656,7 +7656,7 @@ const InnovativeDemo = () => {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-xl font-bold text-[#1c2c4a]">{userGreeting}, {currentUserName}</h1>
-          <p className="text-sm text-[#6b7280] mt-0.5">Tu pipeline comercial al momento</p>
+          <p className="text-sm text-[#6b7280] mt-0.5">Tu presupuesto comercial al momento</p>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -7766,7 +7766,7 @@ const InnovativeDemo = () => {
               <div className="flex items-center gap-2 mt-2.5 pt-2 border-t border-[#f3f4f6]">
                 <span className="text-[10px] text-[#6b7280]">{memberProspectos.length} opps</span>
                 <span className="text-[10px] text-[#6b7280]">·</span>
-                <span className="text-[10px] text-[#6b7280]">${((memberProspectos.reduce((s, p) => s + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0)) / 1000000).toFixed(1)}M pipeline</span>
+                <span className="text-[10px] text-[#6b7280]">${((memberProspectos.reduce((s, p) => s + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0)) / 1000000).toFixed(1)}M presupuesto</span>
               </div>
             </div>
           );
@@ -7776,7 +7776,7 @@ const InnovativeDemo = () => {
       {/* ═══════ TAB BAR ═══════ */}
       <div className="mt-5 flex items-center gap-1 bg-white rounded-xl border border-[#e5e7eb] p-1">
         {[
-          { id: 'pipeline', label: 'Pipeline', icon: ClipboardList },
+          { id: 'pipeline', label: 'Presupuesto', icon: ClipboardList },
           { id: 'presupuesto', label: 'Presupuesto', icon: DollarSign },
           { id: 'rechazadas', label: 'Rechazadas', icon: RotateCcw, badge: kanbanProspectos.filter(p => p.status === 'Propuesta Rechazada').length },
         ].map(tab => (
@@ -8047,7 +8047,7 @@ const InnovativeDemo = () => {
       {comercialTab === 'pipeline' && (<>
       {/* Distribución de Pipeline por Ejecutivo — Barras apiladas por etapa */}
       <div className="mt-4 bg-white rounded-xl border border-[#e5e7eb] card-modern p-5">
-        <h3 className="text-sm font-semibold text-[#1c2c4a] mb-3">Pipeline por Ejecutivo</h3>
+        <h3 className="text-sm font-semibold text-[#1c2c4a] mb-3">Presupuesto por Ejecutivo</h3>
         <div className="space-y-4">
           {salesTeamData.map(member => {
             const memberProspectos = kanbanProspectos.filter(p => p.ejecutivo === member.codigo);
@@ -8112,7 +8112,7 @@ const InnovativeDemo = () => {
         </div>
       </div>
 
-      <SectionHeader color="#0D47A1" icon={ClipboardList} label="Pipeline Detallado" />
+      <SectionHeader color="#0D47A1" icon={ClipboardList} label="Presupuesto Detallado" />
 
       {/* VIEW TOGGLE */}
       <div className="flex items-center justify-between">
@@ -8436,7 +8436,7 @@ const InnovativeDemo = () => {
           <div className="mt-4 bg-white rounded-xl border border-[#e5e7eb] p-12 text-center">
             <CheckCircle className="mx-auto text-green-400 mb-3" size={40} />
             <h3 className="text-sm font-semibold text-[#1c2c4a] mb-1">Sin oportunidades rechazadas</h3>
-            <p className="text-xs text-[#6b7280]">Todas las oportunidades estan activas en el pipeline</p>
+            <p className="text-xs text-[#6b7280]">Todas las oportunidades estan activas en el presupuesto</p>
           </div>
         );
 
@@ -9197,7 +9197,7 @@ const InnovativeDemo = () => {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-xl font-bold text-[#1c2c4a]">{userGreeting}, {currentUserName}</h1>
-            <p className="text-sm text-[#6b7280] mt-0.5">Flujo, conversión y velocidad del pipeline</p>
+            <p className="text-sm text-[#6b7280] mt-0.5">Flujo, conversión y velocidad del presupuesto</p>
           </div>
         </div>
 
@@ -9220,7 +9220,7 @@ const InnovativeDemo = () => {
           <div className="bg-white rounded-xl border border-[#e5e7eb] card-modern p-5">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-[13px] font-medium text-[#6b7280] mb-1">Pipeline Total</div>
+                <div className="text-[13px] font-medium text-[#6b7280] mb-1">Presupuesto Total</div>
                 <div className="text-2xl font-bold text-[#1c2c4a]">${(totalPipeline / 1000000).toFixed(1)}M</div>
               </div>
               <div className="w-10 h-10 rounded-xl bg-[#0D47A1]/10 flex items-center justify-center">
@@ -9295,7 +9295,7 @@ const InnovativeDemo = () => {
 
         {/* VELOCIDAD DEL PIPELINE — Full width */}
         <div className="mt-4 bg-white rounded-xl border border-[#e5e7eb] card-modern p-5">
-          <h3 className="text-sm font-semibold text-[#1c2c4a] mb-1">Velocidad del Pipeline</h3>
+          <h3 className="text-sm font-semibold text-[#1c2c4a] mb-1">Velocidad del Presupuesto</h3>
           <ResponsiveContainer width="100%" height={400}>
             <ComposedChart data={metricasPorEtapa.filter(m => m.count > 0)} margin={{ top: 10, right: 50, bottom: 10, left: 10 }}>
               <defs>
@@ -9387,7 +9387,7 @@ const InnovativeDemo = () => {
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-semibold text-[#1c2c4a] flex items-center gap-2">
               <BarChart3 size={16} className="text-[#00a8a8]" />
-              Pipeline General — Todas las Áreas
+              Presupuesto General — Todas las Áreas
             </h3>
             <div className="flex items-center gap-4 text-[10px] text-[#6b7280]">
               <div className="flex items-center gap-1.5">
@@ -10452,7 +10452,7 @@ const InnovativeDemo = () => {
           <div className="bg-[#f3f4f6] border border-[#e5e7eb] rounded-lg p-6 mb-6">
             <h3 className="text-lg font-semibold text-[#1c2c4a] mb-4 flex items-center gap-2">
               <TrendingUp size={20} />
-              Pipeline Detallado
+              Presupuesto Detallado
             </h3>
             <div className="grid grid-cols-4 gap-4">
               <div className="bg-white rounded-lg p-4 text-center border border-[#e5e7eb]">
@@ -10692,7 +10692,7 @@ const InnovativeDemo = () => {
                   })}
                   {/* Pipeline Velocity */}
                   <div className="bg-white rounded-lg border border-[#e5e7eb] p-3 text-center">
-                    <div className="text-[11px] text-[#6b7280] mb-1">Velocidad Pipeline</div>
+                    <div className="text-[11px] text-[#6b7280] mb-1">Velocidad Presupuesto</div>
                     <div className="text-xl font-bold text-[#0D47A1]">${(calcularPipelineVelocity(kanbanProspectos) / 1000).toFixed(0)}K</div>
                     <div className="text-[11px] text-[#6b7280] mt-1">MXN/dia</div>
                   </div>
@@ -10862,7 +10862,7 @@ const InnovativeDemo = () => {
                                         </div>
                                       )}
                                       <div className="ml-auto text-xs font-bold text-[#0D47A1]">
-                                        Pipeline: ${(memberProspectos.reduce((s, p) => s + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0) / 1000000).toFixed(1)}M
+                                        Presupuesto: ${(memberProspectos.reduce((s, p) => s + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0) / 1000000).toFixed(1)}M
                                       </div>
                                     </div>
 

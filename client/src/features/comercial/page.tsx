@@ -68,7 +68,7 @@ export default function ComercialPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Pipeline Comercial</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Presupuesto Comercial</h1>
           <p className="text-muted-foreground">
             Gestion de leads, prospectos y embudo de ventas
           </p>
@@ -98,7 +98,7 @@ export default function ComercialPage() {
           }`}
         >
           <TrendingUp className="h-4 w-4" />
-          Pipeline
+          Presupuesto
         </button>
         <button
           onClick={() => setMainTab("kpis")}
@@ -184,7 +184,7 @@ function PipelineView() {
       {/* KPI Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <MetricCard
-          title="Pipeline Total"
+          title="Presupuesto Total"
           value={`$${(totalPipelineValue / 1_000_000).toFixed(1)}M`}
           description={`${activeProspects.length} prospectos activos`}
           icon={<DollarSign className="h-4 w-4 text-muted-foreground" />}
