@@ -5043,7 +5043,7 @@ const InnovativeDemo = () => {
     { id: 'Levantamiento', label: 'Reunión', color: '#F57C00' },
     { id: 'Propuesta enviada', label: 'Levantamiento', color: '#00a8a8' },
     { id: 'Negociación', label: 'Propuesta', color: '#7C3AED' },
-    { id: 'Inicio de operación', label: 'Cliente Nuevo', color: '#2E7D32' },
+    { id: 'Inicio de operación', label: 'Socio Ambiental', color: '#2E7D32' },
   ];
 
   // Stage gate validation rules
@@ -6193,6 +6193,9 @@ const InnovativeDemo = () => {
     const valor = prospecto.propuesta?.ventaTotal || prospecto.facturacionEstimada || 0;
     const primaryService = (prospecto.servicios || [])[0] || 'rme';
     const svc = SERVICE_COLORS[primaryService] || SERVICE_COLORS.rme;
+    const fechaRef = estimarFechaProspecto(prospecto);
+    const diasSinActualizar = fechaRef ? Math.floor((new Date() - new Date(fechaRef)) / (1000 * 60 * 60 * 24)) : null;
+    const diasColor = diasSinActualizar === null ? '#9ca3af' : diasSinActualizar > 30 ? '#EF4444' : diasSinActualizar > 14 ? '#F59E0B' : '#9ca3af';
     return (
       <div
         ref={setNodeRef}
@@ -6217,6 +6220,12 @@ const InnovativeDemo = () => {
           {prospecto.ciudad && <span className="text-[#6b7280]">{prospecto.ciudad.split(',')[0]}</span>}
           {valor > 0 && <span className="font-bold text-[#0D47A1]">${(valor / 1000000).toFixed(1)}M</span>}
         </div>
+        {diasSinActualizar !== null && (
+          <div className="flex items-center gap-1 mt-1.5 text-[11px]" style={{ color: diasColor }}>
+            <Clock size={11} />
+            <span>{diasSinActualizar === 0 ? 'Actualizado hoy' : diasSinActualizar === 1 ? 'Hace 1 día' : `Hace ${diasSinActualizar} días`}</span>
+          </div>
+        )}
       </div>
     );
   };
