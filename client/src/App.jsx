@@ -4902,7 +4902,7 @@ const InnovativeDemo = () => {
 
   // Pipeline view states
   const [pipelineViewMode, setPipelineViewMode] = useState('kanban'); // 'kanban' | 'funnel' | 'tabla'
-  const [comercialTab, setComercialTab] = useState('pipeline'); // 'pipeline' | 'presupuesto' | 'rechazadas'
+  const [comercialTab, setComercialTab] = useState('presupuesto'); // 'presupuesto' | 'rechazadas'
   const [kanbanProspectos, setKanbanProspectos] = useState(topProspectos);
   const [activeKanbanId, setActiveKanbanId] = useState(null);
   const [showStageGateModal, setShowStageGateModal] = useState(false);
@@ -5704,6 +5704,8 @@ const InnovativeDemo = () => {
       count: topProspectos.filter(p => p.status === stage.id).length,
       valor: topProspectos.filter(p => p.status === stage.id).reduce((s, p) => s + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0),
     }));
+    const presupuestoMesEquipo = salesTeamData.reduce((s, m) => s + (m.presupuestoMensual || 0), 0);
+    const ventasRealesEquipo = salesTeamData.reduce((s, m) => s + (m.ventasReales || 0), 0);
     const topDeals = [...topProspectos]
       .filter(p => !['Propuesta Rechazada'].includes(p.status))
       .sort((a, b) => (b.propuesta?.ventaTotal || b.facturacionEstimada || 0) - (a.propuesta?.ventaTotal || a.facturacionEstimada || 0))
@@ -5793,92 +5795,33 @@ const InnovativeDemo = () => {
       {/* ═══════ SECTION A: COMERCIAL ═══════ */}
       <SectionHeader color="#00a8a8" icon={TrendingUp} label="Comercial" linkLabel="Ver Presupuesto" onLinkClick={() => setCurrentView('comercial')} />
 
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
-        <div className="bg-white rounded-xl border border-[#e5e7eb] p-4">
-          <div className="text-xs text-[#6b7280] mb-1">Oportunidades</div>
-          <div className="text-xl font-bold text-[#1c2c4a]">{leadsActivos.length}</div>
-          <div className="text-[10px] text-[#6b7280]">{rechazadas.length} rechazadas</div>
-        </div>
-        <div className="bg-white rounded-xl border border-[#e5e7eb] p-4">
-          <div className="text-xs text-[#6b7280] mb-1">Win Rate</div>
-          <div className="text-xl font-bold text-[#1c2c4a]">{winRate.toFixed(0)}%</div>
-          <div className="text-[10px] text-[#2E7D32]">{ganadas.length} ganadas</div>
-        </div>
-        <div className="bg-white rounded-xl border border-[#e5e7eb] p-4">
-          <div className="text-xs text-[#6b7280] mb-1">Propuestas Pendientes</div>
-          <div className="text-xl font-bold text-[#1c2c4a]">{propuestasEnviadas.length}</div>
-          <div className="text-[10px] text-[#00a8a8]">${(propuestasEnviadas.reduce((s, p) => s + (p.propuesta?.ventaTotal || 0), 0) / 1000000).toFixed(1)}M</div>
-        </div>
-      </div>
-
-      {/* Pipeline + Top Deals */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4">
-        {/* Presupuesto por Etapa (compact) */}
-        <div className="lg:col-span-2 bg-white rounded-xl border border-[#e5e7eb] p-4">
-          <h3 className="text-sm font-semibold text-[#1c2c4a] mb-3">Presupuesto por Etapa</h3>
-          <div className="space-y-1.5">
-            {stageData.map(stage => {
-              const maxCount = Math.max(...stageData.map(s => s.count), 1);
-              const pct = (stage.count / maxCount) * 100;
-              return (
-                <div key={stage.id} className="flex items-center gap-2">
-                  <div className="w-20 text-[11px] font-medium text-[#6b7280] text-right truncate">{stage.label}</div>
-                  <div className="flex-1 bg-[#f3f4f6] rounded-full h-5 overflow-hidden">
-                    <div className="h-full rounded-full flex items-center justify-end pr-2 transition-all"
-                      style={{ width: `${Math.max(pct, 8)}%`, backgroundColor: stage.color }}>
-                      <span className="text-[10px] font-bold text-white">{stage.count}</span>
-                    </div>
-                  </div>
-                  <div className="w-14 text-right text-[11px] font-semibold text-[#1c2c4a]">${(stage.valor / 1000000).toFixed(1)}M</div>
-                </div>
-              );
-            })}
+      {/* PRESUPUESTO MENSUAL — CARD PRINCIPAL */}
+      <div className="bg-gradient-to-r from-[#1c2c4a] to-[#0D47A1] rounded-xl p-6 text-white">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h3 className="text-lg font-bold">Presupuesto Mensual</h3>
+            <p className="text-sm text-white/70">{['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'][new Date().getMonth()]} {new Date().getFullYear()}</p>
           </div>
-          <div className="mt-2 pt-2 border-t border-[#e5e7eb] flex items-center justify-between text-[11px] text-[#6b7280]">
-            <span>Total: {topProspectos.length} oportunidades</span>
-            <span>Ponderado: <span className="font-semibold text-[#00a8a8]">${(pipelinePonderado / 1000000).toFixed(1)}M</span></span>
-          </div>
+          <DollarSign size={28} className="text-white/40" />
         </div>
-
-        {/* Top 3 Deals */}
-        <div className="bg-white rounded-xl border border-[#e5e7eb] p-4">
-          <h3 className="text-sm font-semibold text-[#1c2c4a] mb-3">Top Oportunidades</h3>
-          <div className="space-y-2">
-            {topDeals.map((deal, idx) => {
-              const valor = deal.propuesta?.ventaTotal || deal.facturacionEstimada || 0;
-              const stage = KANBAN_STAGES.find(s => s.id === deal.status);
-              return (
-                <div key={deal.id} className="flex items-center gap-2 p-2 rounded-lg hover:bg-[#f3f4f6] transition-colors cursor-pointer"
-                  onClick={() => { setSelectedProspecto(deal); setMostrarDetallesProspecto(true); }}>
-                  <div className="w-5 h-5 rounded-full bg-[#f3f4f6] flex items-center justify-center text-[10px] font-bold text-[#6b7280]">{idx + 1}</div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-xs font-semibold text-[#1c2c4a] truncate">{deal.empresa}</div>
-                    <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full" style={{ backgroundColor: `${stage?.color}15`, color: stage?.color }}>{stage?.label}</span>
-                  </div>
-                  <div className="text-xs font-bold text-[#0D47A1]">${(valor / 1000000).toFixed(1)}M</div>
-                </div>
-              );
-            })}
+        <div className="grid grid-cols-3 gap-6">
+          <div>
+            <div className="text-xs text-white/60 mb-1">Meta del Mes</div>
+            <div className="text-2xl font-bold">${(presupuestoMesEquipo / 1000000).toFixed(1)}M</div>
           </div>
-          {/* Historial anual */}
-          <div className="mt-3 pt-3 border-t border-[#e5e7eb]">
-            <div className="text-[11px] text-[#6b7280] mb-1">Historial Anual</div>
-            <div className="space-y-1.5">
-              {historicoVentas.map(h => {
-                const maxVal = Math.max(...historicoVentas.map(v => v.valor));
-                const pct = (h.valor / maxVal) * 100;
-                return (
-                  <div key={h.año} className="flex items-center gap-2">
-                    <div className="w-8 text-[10px] font-semibold text-[#1c2c4a]">{h.año}</div>
-                    <div className="flex-1 bg-[#f3f4f6] rounded-full h-2.5 overflow-hidden">
-                      <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: h.tipo === 'Presupuesto' ? '#00a8a8' : '#0D47A1' }} />
-                    </div>
-                    <div className="text-[10px] font-semibold text-[#1c2c4a] w-10 text-right">${(h.valor / 1000000).toFixed(0)}M</div>
-                  </div>
-                );
-              })}
+          <div>
+            <div className="text-xs text-white/60 mb-1">Ventas Reales</div>
+            <div className="text-2xl font-bold">${(ventasRealesEquipo / 1000000).toFixed(1)}M</div>
+          </div>
+          <div>
+            <div className="text-xs text-white/60 mb-1">Cumplimiento</div>
+            <div className={`text-2xl font-bold ${presupuestoMesEquipo > 0 ? ((ventasRealesEquipo / presupuestoMesEquipo) * 100 >= 70 ? 'text-green-300' : (ventasRealesEquipo / presupuestoMesEquipo) * 100 >= 40 ? 'text-yellow-300' : 'text-red-300') : ''}`}>
+              {presupuestoMesEquipo > 0 ? ((ventasRealesEquipo / presupuestoMesEquipo) * 100).toFixed(0) : 0}%
             </div>
           </div>
+        </div>
+        <div className="mt-4 w-full bg-white/20 rounded-full h-2.5 overflow-hidden">
+          <div className="h-full rounded-full bg-white/80 transition-all" style={{ width: `${Math.min(presupuestoMesEquipo > 0 ? (ventasRealesEquipo / presupuestoMesEquipo) * 100 : 0, 100)}%` }} />
         </div>
       </div>
 
@@ -6887,13 +6830,6 @@ const InnovativeDemo = () => {
           <div className="text-sm text-[#6b7280]">Presupuesto Total</div>
           <div className="text-xl font-bold text-[#0D47A1]">${(totalPipeline / 1000000).toFixed(1)}M</div>
         </div>
-        <button
-          onClick={() => { setNuevoLeadForm(prev => ({ ...prev, ejecutivo: member.codigo })); setShowNuevoLead(true); }}
-          className="flex items-center gap-2 px-4 py-2.5 bg-[#1c2c4a] hover:bg-[#1c2c4a]/90 text-white rounded-lg text-sm font-semibold transition-all shadow-sm hover:shadow-md"
-        >
-          <Plus size={16} />
-          Nuevo Lead
-        </button>
       </div>
 
       {/* KPI ROW — funnel de conversión */}
@@ -7660,13 +7596,6 @@ const InnovativeDemo = () => {
         </div>
         <div className="flex items-center gap-2">
           <button
-            onClick={() => setShowNuevoLead(true)}
-            className="flex items-center gap-2 px-4 py-2.5 bg-[#1c2c4a] hover:bg-[#1c2c4a]/90 text-white rounded-lg text-sm font-semibold transition-all shadow-sm hover:shadow-md"
-          >
-            <Plus size={16} />
-            Nuevo Lead
-          </button>
-          <button
             onClick={() => { setKpiPanelArea('comercial'); setShowKpiPanel(true); }}
             className="flex items-center gap-2 px-4 py-2.5 bg-[#00a8a8] hover:bg-[#008080] text-white rounded-lg text-sm font-semibold transition-all shadow-sm hover:shadow-md"
           >
@@ -7776,7 +7705,6 @@ const InnovativeDemo = () => {
       {/* ═══════ TAB BAR ═══════ */}
       <div className="mt-5 flex items-center gap-1 bg-white rounded-xl border border-[#e5e7eb] p-1">
         {[
-          { id: 'pipeline', label: 'Presupuesto', icon: ClipboardList },
           { id: 'presupuesto', label: 'Presupuesto', icon: DollarSign },
           { id: 'rechazadas', label: 'Rechazadas', icon: RotateCcw, badge: kanbanProspectos.filter(p => p.status === 'Propuesta Rechazada').length },
         ].map(tab => (
