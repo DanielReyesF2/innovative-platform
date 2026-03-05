@@ -6184,7 +6184,7 @@ const InnovativeDemo = () => {
     );
   };
 
-  // HubKanbanCard — extracted from EjecutivoHubView so useSortable is called at component top level (not inside .map())
+  // HubKanbanCard — redesigned for readability (bigger text, no clutter)
   const HubKanbanCard = ({ prospecto, onSelect, prospectoNotas: notas, prospectoArchivos: archivos, calcularCamposCompletos: calcCampos }) => {
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
       id: prospecto.id,
@@ -6200,50 +6200,23 @@ const InnovativeDemo = () => {
           transform: CSS.Transform.toString(transform),
           transition,
           opacity: isDragging ? 0.5 : 1,
-          backgroundColor: svc.bg,
-          borderLeft: `3px solid ${svc.border}`,
         }}
         {...attributes}
         {...listeners}
-        className="rounded-lg p-1.5 mb-1 cursor-grab active:cursor-grabbing hover:shadow-md transition-all"
+        className="bg-white rounded-lg border border-[#e5e7eb] p-3 mb-2 cursor-grab active:cursor-grabbing hover:shadow-md hover:border-[#00a8a8]/40 transition-all"
         onClick={(e) => { if (!isDragging) { e.stopPropagation(); onSelect(prospecto); } }}
       >
-        <div className="flex items-center justify-between gap-1 mb-0.5">
-          <h4 className="text-[12px] font-semibold text-[#1c2c4a] truncate leading-tight flex-1 min-w-0">{prospecto.empresa}</h4>
-          <span className="text-[8px] font-bold px-1 py-px rounded-full whitespace-nowrap flex-shrink-0" style={{ backgroundColor: `${svc.border}18`, color: svc.text }}>{svc.label}</span>
+        <div className="flex items-start justify-between gap-2 mb-1.5">
+          <h4 className="text-[13px] font-bold text-[#1c2c4a] leading-snug">{prospecto.empresa}</h4>
+          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap flex-shrink-0" style={{ backgroundColor: `${svc.border}18`, color: svc.text }}>{svc.label}</span>
         </div>
-        {(() => {
-          const fechaRef = estimarFechaProspecto(prospecto);
-          return (
-            <div className="flex items-center justify-between text-[10px] text-[#9ca3af]">
-              <div className="flex items-center gap-1">
-                {prospecto.ciudad && <span className="truncate max-w-[50px]">{prospecto.ciudad.split(',')[0]}</span>}
-                <span className="font-semibold px-1 py-px rounded text-[8px]" style={{ color: urgencyColor(fechaRef), backgroundColor: `${urgencyColor(fechaRef)}12` }}>
-                  {timeAgo(fechaRef)}
-                </span>
-              </div>
-              <div className="flex items-center gap-1 flex-shrink-0">
-                {(notas[prospecto.id]?.length > 0) && <span className="flex items-center gap-0.5 text-[#9ca3af]"><MessageSquare size={8} />{notas[prospecto.id].length}</span>}
-                {(archivos[prospecto.id]?.length > 0) && <span className="flex items-center gap-0.5 text-[#9ca3af]"><Paperclip size={8} />{archivos[prospecto.id].length}</span>}
-              </div>
-              {valor > 0 && <span className="font-bold text-[#0D47A1]">${(valor / 1000000).toFixed(1)}M</span>}
-            </div>
-          );
-        })()}
-        {(() => {
-          const campos = calcCampos(prospecto);
-          const completos = campos.filter(c => c.ok).length;
-          const total = campos.length;
-          const pct = (completos / total) * 100;
-          const barColor = completos === total ? '#2E7D32' : pct >= 60 ? '#F57C00' : '#ef4444';
-          return (
-            <div className="mt-1">
-              <div className="w-full h-[2px] bg-black/[0.04] rounded-full overflow-hidden">
-                <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: barColor }} />
-              </div>
-            </div>
-          );
-        })()}
+        {prospecto.contacto?.nombre && (
+          <div className="text-xs text-[#6b7280] mb-1">{prospecto.contacto.nombre}</div>
+        )}
+        <div className="flex items-center justify-between text-xs text-[#9ca3af]">
+          {prospecto.ciudad && <span className="text-[#6b7280]">{prospecto.ciudad.split(',')[0]}</span>}
+          {valor > 0 && <span className="font-bold text-[#0D47A1]">${(valor / 1000000).toFixed(1)}M</span>}
+        </div>
       </div>
     );
   };
@@ -6254,7 +6227,7 @@ const InnovativeDemo = () => {
     return (
       <div
         ref={setNodeRef}
-        className={`min-h-[120px] transition-colors rounded-lg flex-1 ${isOver ? 'bg-[#00a8a8]/5 ring-2 ring-[#00a8a8]/30' : ''}`}
+        className={`min-h-[120px] max-h-[60vh] overflow-y-auto transition-colors rounded-lg flex-1 ${isOver ? 'bg-[#00a8a8]/5 ring-2 ring-[#00a8a8]/30' : ''}`}
       >
         {children}
       </div>
@@ -6975,22 +6948,10 @@ const InnovativeDemo = () => {
       {/* PIPELINE — Kanban personal del ejecutivo */}
         <div className="space-y-4">
           {/* Quick summary bar */}
-          <div className="flex items-center gap-4 text-xs">
+          <div className="flex items-center gap-6 text-sm mb-2">
             <span className="text-[#6b7280]"><strong className="text-[#1c2c4a]">{memberProspectos.filter(p => p.status !== 'Propuesta Rechazada').length}</strong> prospectos</span>
             <span className="text-[#6b7280]"><strong className="text-[#0D47A1]">${(totalPipeline / 1000000).toFixed(1)}M</strong> presupuesto</span>
-            {memberRechazados.length > 0 && <span className="text-red-500"><strong>{memberRechazados.length}</strong> rechazadas</span>}
-            <div className="flex items-center gap-2 ml-auto">
-              {HUB_KANBAN_STAGES.map(s => {
-                const c = memberProspectos.filter(p => p.status === s.id).length;
-                return c > 0 ? (
-                  <div key={s.id} className="flex items-center gap-1 text-[10px]">
-                    <div className="w-2 h-2 rounded-sm" style={{ backgroundColor: s.color }} />
-                    <span className="text-[#6b7280]">{s.label}</span>
-                    <span className="font-bold text-[#1c2c4a]">{c}</span>
-                  </div>
-                ) : null;
-              })}
-            </div>
+            {memberRechazados.length > 0 && <span className="text-red-500 font-medium"><strong>{memberRechazados.length}</strong> rechazadas</span>}
           </div>
 
           {/* KANBAN GRID */}
@@ -7009,54 +6970,28 @@ const InnovativeDemo = () => {
                 return (
                   <div key={stage.id} className="flex flex-col">
                     {/* Column Header */}
-                    <div className="rounded-t-lg p-2.5 mb-1.5" style={{ borderTop: `3px solid ${stage.color}` }}>
-                      <div className="flex items-center justify-between mb-0.5">
-                        <div className="flex items-center gap-1.5">
-                          <h3 className="text-xs font-semibold text-[#1c2c4a]">{stage.label}</h3>
-                          <span className="text-[10px] bg-[#f3f4f6] text-[#6b7280] px-1.5 py-0.5 rounded-full font-medium">{stageItems.length}</span>
-                        </div>
-                        {gate && <Lock size={10} className="text-[#9ca3af]" />}
+                    <div className="rounded-t-lg p-3 mb-2" style={{ borderTop: `4px solid ${stage.color}` }}>
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-sm font-bold text-[#1c2c4a]">{stage.label}</h3>
+                        <span className="text-sm bg-[#f3f4f6] text-[#1c2c4a] px-2 py-0.5 rounded-full font-bold">{stageItems.length}</span>
                       </div>
-                      {stageValue > 0 && <div className="text-[10px] text-[#6b7280]">${(stageValue / 1000000).toFixed(1)}M</div>}
                     </div>
 
                     {/* Droppable Area */}
                     <HubDroppableColumn stageId={stage.id}>
                       <SortableContext items={stageItems.map(p => p.id)} strategy={verticalListSortingStrategy}>
-                        {(() => {
-                          const MAX_VISIBLE = 3;
-                          const isExpanded = expandedColumns[stage.id];
-                          const visibleItems = isExpanded ? stageItems : stageItems.slice(0, MAX_VISIBLE);
-                          const hiddenCount = stageItems.length - MAX_VISIBLE;
-
-                          return (
-                            <div className="space-y-0">
-                              {visibleItems.map(prospecto => (
-                                <HubKanbanCard
-                                  key={prospecto.id}
-                                  prospecto={prospecto}
-                                  onSelect={(p) => { setSelectedProspecto(p); setMostrarDetallesProspecto(true); }}
-                                  prospectoNotas={prospectoNotas}
-                                  prospectoArchivos={prospectoArchivos}
-                                  calcularCamposCompletos={calcularCamposCompletos}
-                                />
-                              ))}
-                              {/* Ver más / Ver menos button */}
-                              {hiddenCount > 0 && (
-                                <button
-                                  onClick={(e) => { e.stopPropagation(); setExpandedColumns(prev => ({ ...prev, [stage.id]: !isExpanded })); }}
-                                  className="w-full py-1.5 text-[10px] font-medium text-[#0D47A1] hover:bg-[#0D47A1]/5 rounded-lg transition-colors flex items-center justify-center gap-1"
-                                >
-                                  {isExpanded ? (
-                                    <>Ver menos <ChevronUp size={12} /></>
-                                  ) : (
-                                    <>+{hiddenCount} más <ChevronDown size={12} /></>
-                                  )}
-                                </button>
-                              )}
-                            </div>
-                          );
-                        })()}
+                        <div className="space-y-0">
+                          {stageItems.map(prospecto => (
+                            <HubKanbanCard
+                              key={prospecto.id}
+                              prospecto={prospecto}
+                              onSelect={(p) => { setSelectedProspecto(p); setMostrarDetallesProspecto(true); }}
+                              prospectoNotas={prospectoNotas}
+                              prospectoArchivos={prospectoArchivos}
+                              calcularCamposCompletos={calcularCamposCompletos}
+                            />
+                          ))}
+                        </div>
                       </SortableContext>
                       {stageItems.length === 0 && (
                         <div className="flex items-center justify-center h-16 border-2 border-dashed border-[#e5e7eb] rounded-lg text-[10px] text-[#9ca3af]">
