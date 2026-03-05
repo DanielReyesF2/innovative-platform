@@ -6948,276 +6948,29 @@ const InnovativeDemo = () => {
         </div>
       </div>
 
-      {/* KPI ROW — funnel de conversión */}
-      <div className="grid grid-cols-3 md:grid-cols-6 gap-3 mb-5">
-        <div className="bg-white rounded-xl border border-[#e5e7eb] p-3 text-center">
-          <div className="text-2xl font-bold text-[#6b7280]">{memberLeads.length}</div>
-          <div className="text-xs text-[#6b7280] mt-0.5">Leads</div>
+      {/* 3 KPIs */}
+      <div className="grid grid-cols-3 gap-3 mb-5">
+        <div className="bg-white rounded-xl border border-[#e5e7eb] p-4 text-center">
+          <div className="text-3xl font-bold text-[#00a8a8]">{memberProspectosActivos.length}</div>
+          <div className="text-xs text-[#6b7280] mt-1">Prospectos Activos</div>
         </div>
-        <div className="bg-white rounded-xl border border-[#e5e7eb] p-3 text-center">
-          <div className="text-2xl font-bold text-[#00a8a8]">{memberProspectosActivos.length}</div>
-          <div className="text-xs text-[#6b7280] mt-0.5">Prospectos</div>
+        <div className="bg-white rounded-xl border border-[#e5e7eb] p-4 text-center">
+          <div className="text-3xl font-bold text-[#7C3AED]">{memberPropuestas.length}</div>
+          <div className="text-xs text-[#6b7280] mt-1">Propuestas</div>
         </div>
-        <div className="bg-white rounded-xl border border-[#e5e7eb] p-3 text-center">
-          <div className="text-2xl font-bold text-[#7C3AED]">{memberPropuestas.length}</div>
-          <div className="text-xs text-[#6b7280] mt-0.5">Propuestas</div>
+        <div className="bg-white rounded-xl border border-[#e5e7eb] p-4 text-center">
+          <div className="text-3xl font-bold" style={{ color: member.cumplimientoPresupuesto >= 70 ? '#2E7D32' : member.cumplimientoPresupuesto >= 40 ? '#F57C00' : '#DC2626' }}>
+            {member.cumplimientoPresupuesto}%
+          </div>
+          <div className="text-xs text-[#6b7280] mt-1">Presupuesto</div>
+          <div className="w-full h-1.5 bg-[#e5e7eb] rounded-full overflow-hidden mt-2">
+            <div className="h-full rounded-full transition-all duration-500" style={{
+              width: `${Math.min(member.cumplimientoPresupuesto, 100)}%`,
+              backgroundColor: member.cumplimientoPresupuesto >= 70 ? '#2E7D32' : member.cumplimientoPresupuesto >= 40 ? '#F57C00' : '#DC2626',
+            }} />
+          </div>
         </div>
-        <div className="bg-white rounded-xl border border-[#e5e7eb] p-3 text-center">
-          <div className="text-2xl font-bold text-[#2E7D32]">{memberGanados.length}</div>
-          <div className="text-xs text-[#6b7280] mt-0.5">Cierres</div>
-        </div>
-        {memberRechazados.length > 0 && (() => {
-          const vencidos = memberRechazados.filter(p => getSeguimientoUrgency(prospectoSeguimiento[p.id])?.overdue).length;
-          const conSeg = memberRechazados.filter(p => prospectoSeguimiento[p.id]?.fechaSeguimiento).length;
-          return (
-            <button
-              onClick={() => setShowRechazadasModal(true)}
-              className={`bg-white rounded-xl border p-3 text-center hover:shadow-md transition-all ${vencidos > 0 ? 'border-red-300' : 'border-[#e5e7eb]'}`}
-            >
-              <div className="flex items-center justify-center gap-1">
-                <div className="text-2xl font-bold" style={{ color: vencidos > 0 ? '#EF4444' : '#F59E0B' }}>{memberRechazados.length}</div>
-                {vencidos > 0 && <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />}
-              </div>
-              <div className="text-xs text-[#6b7280] mt-0.5">Rechazadas</div>
-              <div className="text-[9px] text-[#9ca3af] mt-0.5">{conSeg} con seguimiento</div>
-            </button>
-          );
-        })()}
-        {member.presupuestoAnual2026 > 0 && (
-          <button
-            onClick={() => setShowVentasRealesModal(true)}
-            className="bg-white rounded-xl border border-[#e5e7eb] p-3 text-center hover:shadow-md hover:border-[#00a8a8]/50 transition-all cursor-pointer"
-          >
-            <div className="text-2xl font-bold" style={{ color: member.cumplimientoPresupuesto >= 70 ? '#2E7D32' : member.cumplimientoPresupuesto >= 40 ? '#F57C00' : '#DC2626' }}>
-              {member.cumplimientoPresupuesto}%
-            </div>
-            <div className="text-xs text-[#6b7280] mt-0.5">Presupuesto</div>
-            <div className="w-full h-1.5 bg-[#e5e7eb] rounded-full overflow-hidden mt-1.5">
-              <div className="h-full rounded-full transition-all duration-500" style={{
-                width: `${Math.min(member.cumplimientoPresupuesto, 100)}%`,
-                backgroundColor: member.cumplimientoPresupuesto >= 70 ? '#2E7D32' : member.cumplimientoPresupuesto >= 40 ? '#F57C00' : '#DC2626',
-              }} />
-            </div>
-            <div className="text-[9px] text-[#00a8a8] mt-1 flex items-center justify-center gap-0.5">
-              <Edit3 size={8} /> Editar venta real
-            </div>
-          </button>
-        )}
       </div>
-
-      {/* DETAILED KPIs ROW — con progress bars */}
-      {(() => {
-        const ultimaSemana = lastOf(member.kpisSemanales);
-        const penultimaSemana = nthFromEnd(member.kpisSemanales, 2);
-        const score = calcularScorePonderado(ultimaSemana);
-        const scoreColor = score > 0 ? getScoreColor(score) : null;
-        const kpiKeys = Object.keys(KPI_METAS);
-
-        return ultimaSemana ? (
-          <div className="bg-white rounded-xl border border-[#e5e7eb] p-4 mb-5">
-            <div className="grid grid-cols-3 md:grid-cols-7 gap-3">
-              {kpiKeys.map(kpiKey => {
-                const real = ultimaSemana?.[kpiKey] || 0;
-                const prevReal = penultimaSemana?.[kpiKey] || 0;
-                const meta = KPI_METAS[kpiKey].meta;
-                const pct = meta > 0 ? (real / meta) * 100 : 0;
-                const diff = real - prevReal;
-                const pace = calcularPace(real, meta, KPI_METAS[kpiKey].frecuencia);
-
-                return (
-                  <div key={kpiKey} className="text-center">
-                    <div className="text-[10px] text-[#6b7280] uppercase tracking-wide mb-1">{KPI_METAS[kpiKey].label}</div>
-                    <div className={`text-lg font-bold ${meta === 0 ? 'text-[#1c2c4a]' : ''}`} style={meta > 0 ? { color: getBarColor(pct) } : undefined}>
-                      {real}{meta > 0 ? `/${meta}` : ''}
-                    </div>
-                    {meta > 0 && (
-                      <div className="w-full h-1.5 bg-[#e5e7eb] rounded-full overflow-hidden mt-1">
-                        <div className="h-full rounded-full transition-all" style={{ width: `${Math.min(pct, 100)}%`, backgroundColor: getBarColor(pct) }} />
-                      </div>
-                    )}
-                    <div className="flex items-center justify-center gap-1 mt-1">
-                      {pace !== null && (
-                        <span className={`text-[10px] font-medium ${pace >= 0 ? 'text-[#2E7D32]' : 'text-[#EF4444]'}`}>
-                          {pace >= 0 ? 'adelante' : 'atras'}
-                        </span>
-                      )}
-                      {diff !== 0 && penultimaSemana && (
-                        <span className={`text-[10px] font-semibold ${diff > 0 ? 'text-[#2E7D32]' : 'text-[#EF4444]'}`}>
-                          {diff > 0 ? '+' : ''}{diff}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-              {/* Tendencia */}
-              <div className="text-center">
-                <div className="text-[10px] text-[#6b7280] uppercase tracking-wide mb-1">Tendencia</div>
-                <div className="flex justify-center">
-                  <Sparkline
-                    data={(member.kpisSemanales || []).slice(-8).map(s => (s.leadsNuevos || 0) + (s.reunionesAgendadas || 0) + (s.levantamientos || 0))}
-                    width={60}
-                    height={24}
-                    color="#00a8a8"
-                  />
-                </div>
-              </div>
-              {/* Score */}
-              <div className="text-center">
-                <div className="text-[10px] text-[#6b7280] uppercase tracking-wide mb-1">Score</div>
-                {score > 0 ? (
-                  <div className="flex flex-col items-center">
-                    <div className="inline-flex items-center px-2 py-0.5 rounded-full text-sm font-bold" style={{ backgroundColor: scoreColor.bgLight, color: scoreColor.text }}>
-                      {score.toFixed(0)}%
-                    </div>
-                    <span className="text-[9px] font-medium mt-0.5" style={{ color: scoreColor.text }}>{scoreColor.label}</span>
-                  </div>
-                ) : (
-                  <span className="text-xs text-[#9ca3af]">—</span>
-                )}
-              </div>
-            </div>
-          </div>
-        ) : null;
-      })()}
-
-      {/* HISTORIAL DE DESEMPEÑO — Timeline limpio */}
-      {(() => {
-        const kpiData = member.kpisSemanales || [];
-        if (kpiData.length === 0) return null;
-
-        // Agrupar semanas por mes
-        const weekToMonth = (semana) => {
-          const baseWeek = 31;
-          const monthOffset = Math.floor((semana - baseWeek) / 4);
-          const months = ['Ago', 'Sep', 'Oct', 'Nov', 'Dic', 'Ene', 'Feb'];
-          return months[Math.min(Math.max(monthOffset, 0), months.length - 1)] || 'Feb';
-        };
-
-        const porMes = {};
-        kpiData.forEach(week => {
-          const mes = weekToMonth(week.semana);
-          if (!porMes[mes]) {
-            porMes[mes] = { semanas: [], totals: { leadsNuevos: 0, reunionesAgendadas: 0, levantamientos: 0, propuestasEnviadas: 0, propuestasRechazadas: 0 } };
-          }
-          porMes[mes].semanas.push(week);
-          porMes[mes].totals.leadsNuevos += week.leadsNuevos || 0;
-          porMes[mes].totals.reunionesAgendadas += week.reunionesAgendadas || 0;
-          porMes[mes].totals.levantamientos += week.levantamientos || 0;
-          porMes[mes].totals.propuestasEnviadas += week.propuestasEnviadas || 0;
-          porMes[mes].totals.propuestasRechazadas += week.propuestasRechazadas || 0;
-        });
-
-        const mesesOrden = ['Ago', 'Sep', 'Oct', 'Nov', 'Dic', 'Ene', 'Feb'];
-        const mesesData = mesesOrden.filter(m => porMes[m]).map(mes => {
-          const d = porMes[mes];
-          const numSemanas = d.semanas.length;
-          const metaLeads = KPI_METAS.leadsNuevos.meta * numSemanas;
-          const metaReuniones = KPI_METAS.reunionesAgendadas.meta * numSemanas;
-          const metaLevantamientos = KPI_METAS.levantamientos.meta;
-
-          let scorePonderado = 0;
-          let totalPeso = 0;
-          if (metaLeads > 0) {
-            scorePonderado += Math.min((d.totals.leadsNuevos / metaLeads) * 100, 150) * KPI_METAS.leadsNuevos.peso;
-            totalPeso += KPI_METAS.leadsNuevos.peso;
-          }
-          if (metaReuniones > 0) {
-            scorePonderado += Math.min((d.totals.reunionesAgendadas / metaReuniones) * 100, 150) * KPI_METAS.reunionesAgendadas.peso;
-            totalPeso += KPI_METAS.reunionesAgendadas.peso;
-          }
-          if (metaLevantamientos > 0) {
-            scorePonderado += Math.min((d.totals.levantamientos / metaLevantamientos) * 100, 150) * KPI_METAS.levantamientos.peso;
-            totalPeso += KPI_METAS.levantamientos.peso;
-          }
-          const score = totalPeso > 0 ? scorePonderado / totalPeso : 0;
-
-          return { mes, ...d.totals, numSemanas, score, semanas: d.semanas };
-        });
-
-        return (
-          <div className="bg-white rounded-xl border border-[#e5e7eb] p-4 mb-5">
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-sm font-semibold text-[#1c2c4a]">Historial</span>
-              <button
-                onClick={() => setShowHistorial(!showHistorial)}
-                className="text-xs text-[#0D47A1] hover:underline"
-              >
-                {showHistorial ? 'Ver menos' : 'Ver detalle'}
-              </button>
-            </div>
-
-            {/* Timeline horizontal de meses */}
-            <div className="flex items-stretch gap-2">
-              {mesesData.map((m, i) => {
-                const scoreColor = getScoreColor(m.score);
-                const isSelected = historialMesExpandido === m.mes;
-                return (
-                  <button
-                    key={i}
-                    onClick={() => setHistorialMesExpandido(isSelected ? null : m.mes)}
-                    className={`flex-1 p-3 rounded-lg border transition-all ${isSelected ? 'border-[#0D47A1] bg-[#0D47A1]/5' : 'border-[#e5e7eb] hover:border-[#d1d5db]'}`}
-                  >
-                    <div className="text-xs text-[#6b7280] mb-1">{m.mes}</div>
-                    <div className="text-lg font-bold" style={{ color: scoreColor.text }}>{m.score.toFixed(0)}%</div>
-                    <div className="w-full h-1 rounded-full bg-[#e5e7eb] mt-2 overflow-hidden">
-                      <div className="h-full rounded-full" style={{ width: `${Math.min(m.score, 100)}%`, backgroundColor: scoreColor.bg }} />
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Detalle del mes seleccionado */}
-            {historialMesExpandido && (() => {
-              const m = mesesData.find(x => x.mes === historialMesExpandido);
-              if (!m) return null;
-              const scoreColor = getScoreColor(m.score);
-              return (
-                <div className="mt-4 pt-4 border-t border-[#e5e7eb]">
-                  <div className="grid grid-cols-5 gap-4 text-center mb-4">
-                    <div>
-                      <div className="text-2xl font-bold text-[#1c2c4a]">{m.leadsNuevos}</div>
-                      <div className="text-[10px] text-[#6b7280]">Leads</div>
-                    </div>
-                    <div>
-                      <div className="text-2xl font-bold text-[#1c2c4a]">{m.reunionesAgendadas}</div>
-                      <div className="text-[10px] text-[#6b7280]">Reuniones</div>
-                    </div>
-                    <div>
-                      <div className="text-2xl font-bold text-[#1c2c4a]">{m.levantamientos}</div>
-                      <div className="text-[10px] text-[#6b7280]">Levantam.</div>
-                    </div>
-                    <div>
-                      <div className="text-2xl font-bold text-[#1c2c4a]">{m.propuestasEnviadas}</div>
-                      <div className="text-[10px] text-[#6b7280]">Propuestas</div>
-                    </div>
-                    <div>
-                      <div className="text-2xl font-bold" style={{ color: m.propuestasRechazadas > 0 ? '#EF4444' : '#9ca3af' }}>{m.propuestasRechazadas}</div>
-                      <div className="text-[10px] text-[#6b7280]">Rechazos</div>
-                    </div>
-                  </div>
-
-                  {/* Semanas del mes */}
-                  {showHistorial && (
-                    <div className="space-y-1">
-                      {m.semanas.map((sem, j) => (
-                        <div key={j} className="flex items-center gap-3 text-xs py-1.5 px-2 rounded bg-[#f9fafb]">
-                          <span className="text-[#9ca3af] w-12">Sem {sem.semana}</span>
-                          <span className="text-[#1c2c4a]">{sem.leadsNuevos} leads</span>
-                          <span className="text-[#1c2c4a]">{sem.reunionesAgendadas} reuniones</span>
-                          <span className="text-[#1c2c4a]">{sem.levantamientos} levant.</span>
-                          {sem.comentario && <span className="text-[#6b7280] italic ml-auto truncate max-w-[200px]">"{sem.comentario}"</span>}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              );
-            })()}
-          </div>
-        );
-      })()}
 
       {/* PIPELINE — Kanban personal del ejecutivo */}
         <div className="space-y-4">
