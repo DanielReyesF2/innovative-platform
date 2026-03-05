@@ -4637,8 +4637,8 @@ const clientesConReportes = [
 
 // EVOLUCIÓN PRESUPUESTO VS REAL — DATOS REALES 2026
 const presupuestoEvolution = [
-  { mes: 'Ene', presupuesto: 2774200, real: 2000000 },
-  { mes: 'Feb', presupuesto: 2769810, real: 2200000 },
+  { mes: 'Ene', presupuesto: 2774200, real: 0 },
+  { mes: 'Feb', presupuesto: 2769810, real: 0 },
   { mes: 'Mar', presupuesto: 4009709, real: 0 },
   { mes: 'Abr', presupuesto: 11011618, real: 0 },
   { mes: 'May', presupuesto: 12452161, real: 0 },
@@ -5814,7 +5814,7 @@ const InnovativeDemo = () => {
     const pipelinePonderado = calcularWeightedPipeline(topProspectos);
     const winRate = calcularWinRate(topProspectos);
     const presupuestoTotal = presupuestoEvolution.reduce((s, m) => s + m.presupuesto, 0);
-    const ventasTotal = presupuestoEvolution.reduce((s, m) => s + m.real, 0);
+    const ventasTotal = salesTeamData.reduce((s, m) => s + (m.ventasReales || 0), 0);
     const stageData = KANBAN_STAGES.map(stage => ({
       ...stage,
       count: topProspectos.filter(p => p.status === stage.id).length,
@@ -5822,7 +5822,7 @@ const InnovativeDemo = () => {
     }));
     const hubMesIdx = new Date().getMonth();
     const presupuestoMesEquipo = presupuestoEvolution[hubMesIdx]?.presupuesto || 0;
-    const ventasRealesEquipo = presupuestoEvolution[hubMesIdx]?.real || 0;
+    const ventasRealesEquipo = salesTeamData.reduce((s, m) => s + (m.ventasReales || 0), 0);
     const topDeals = [...topProspectos]
       .filter(p => !['Propuesta Rechazada'].includes(p.status))
       .sort((a, b) => (b.propuesta?.ventaTotal || b.facturacionEstimada || 0) - (a.propuesta?.ventaTotal || a.facturacionEstimada || 0))
@@ -7110,10 +7110,10 @@ const InnovativeDemo = () => {
     const velocity = calcularPipelineVelocity(kanbanProspectos);
     const oportunidadesActivas = kanbanProspectos.filter(p => !['Propuesta Rechazada', 'Inicio de operación'].includes(p.status)).length;
     const presupuestoTotal = presupuestoEvolution.reduce((s, m) => s + m.presupuesto, 0);
-    const ventasReales = presupuestoEvolution.reduce((s, m) => s + m.real, 0);
+    const ventasReales = salesTeamData.reduce((s, m) => s + (m.ventasReales || 0), 0);
 
-    // Métricas de Vero — mes actual del chart (0-indexed: Marzo = 2)
-    const mesActualIdx = new Date().getMonth(); // 0=Ene, 1=Feb, 2=Mar...
+    // Mes actual del chart (0-indexed: Marzo = 2)
+    const mesActualIdx = new Date().getMonth();
     const presupuestoMesEquipo = presupuestoEvolution[mesActualIdx]?.presupuesto || 0;
     const proyeccionCierre = kanbanProspectos
       .filter(p => ['Propuesta enviada', 'Negociación'].includes(p.status))
