@@ -6115,7 +6115,7 @@ const InnovativeDemo = () => {
                 </tr>
               </thead>
               <tbody>
-                {salesTeamData.filter(m => m.codigo !== 'VA').map(member => {
+                {salesTeamData.map(member => {
                   const memberProspectos = topProspectos.filter(p => p.ejecutivo === member.codigo);
                   const memberPipeline = memberProspectos.reduce((s, p) => s + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0);
                   const lastWeek = member.kpisSemanales && member.kpisSemanales.length > 0 ? member.kpisSemanales[member.kpisSemanales.length - 1] : null;
@@ -7352,7 +7352,7 @@ const InnovativeDemo = () => {
 
       {/* Presupuesto por Ejecutivo (grid) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
-        {salesTeamData.filter(m => m.codigo !== 'VA').sort((a, b) => b.presupuestoAnual2026 - a.presupuestoAnual2026).map(member => {
+        {salesTeamData.sort((a, b) => b.presupuestoAnual2026 - a.presupuestoAnual2026).map(member => {
           const pct = member.cumplimientoPresupuesto || 0;
           const barColor = pct >= 80 ? '#2E7D32' : pct >= 40 ? '#F57C00' : '#ef4444';
           const memberProspectos = kanbanProspectos.filter(p => p.ejecutivo === member.codigo);
