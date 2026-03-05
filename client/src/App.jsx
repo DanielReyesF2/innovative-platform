@@ -8042,65 +8042,16 @@ const InnovativeDemo = () => {
 
       <SectionHeader color="#0D47A1" icon={ClipboardList} label="Presupuesto Detallado" />
 
-      {/* VIEW TOGGLE */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 bg-white rounded-lg border border-[#e5e7eb] p-1">
-          {[
-            { id: 'kanban', label: 'Kanban', icon: ClipboardList },
-            { id: 'tabla', label: 'Tabla', icon: BarChart3 },
-          ].map(view => (
-            <button
-              key={view.id}
-              onClick={() => { setPipelineViewMode(view.id); if (view.id === 'kanban') setFilterEtapa('todos'); }}
-              className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                pipelineViewMode === view.id
-                  ? 'bg-[#00a8a8] text-white shadow-sm'
-                  : 'text-[#6b7280] hover:text-[#1c2c4a] hover:bg-[#f3f4f6]'
-              }`}
-            >
-              <view.icon size={16} />
-              {view.label}
-            </button>
-          ))}
-        </div>
 
-        {/* Service Type Summary — how many per service */}
-        <div className="flex items-center gap-2 flex-wrap">
-          {(() => {
-            const counts = {};
-            kanbanProspectos.forEach(p => {
-              const svcId = (p.servicios || [])[0] || 'rme';
-              counts[svcId] = (counts[svcId] || 0) + 1;
-            });
-            return Object.entries(counts)
-              .sort((a, b) => b[1] - a[1])
-              .map(([svcId, count]) => {
-                const svc = SERVICE_COLORS[svcId] || SERVICE_COLORS.rme;
-                return (
-                  <div
-                    key={svcId}
-                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium"
-                    style={{ backgroundColor: svc.bg, color: svc.text, border: `1px solid ${svc.border}30` }}
-                  >
-                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: svc.border }}></div>
-                    {svc.label}
-                    <span className="font-bold">{count}</span>
-                  </div>
-                );
-              });
-          })()}
-        </div>
-      </div>
-
-      {/* Shared Filter Bar — visible in kanban and tabla */}
+      {/* Filter Bar */}
       {(() => {
         const activeFilters = [filterServicio, filterEjecutivo].filter(f => f !== 'todos').length
-          + (pipelineViewMode === 'tabla' && filterEtapa !== 'todos' ? 1 : 0);
+          + (filterEtapa !== 'todos' ? 1 : 0);
         const totalFiltered = kanbanProspectos
           .filter(p => p.status !== 'Propuesta Rechazada')
           .filter(p => filterServicio === 'todos' || (p.servicios || [])[0] === filterServicio)
           .filter(p => filterEjecutivo === 'todos' || p.ejecutivo === filterEjecutivo)
-          .filter(p => pipelineViewMode !== 'tabla' || filterEtapa === 'todos' || p.status === filterEtapa)
+          .filter(p => filterEtapa === 'todos' || p.status === filterEtapa)
           .length;
 
         return (
@@ -8133,20 +8084,18 @@ const InnovativeDemo = () => {
                 return <option key={m.codigo} value={m.codigo}>{m.name.split(' ').slice(0, 2).join(' ')} ({count})</option>;
               })}
             </select>
-            {pipelineViewMode === 'tabla' && (
-              <select
-                value={filterEtapa}
-                onChange={e => setFilterEtapa(e.target.value)}
-                className="text-xs border border-[#e5e7eb] rounded-lg px-3 py-1.5 bg-white text-[#1c2c4a] focus:outline-none focus:ring-2 focus:ring-[#00a8a8]/30 focus:border-[#00a8a8]"
-              >
-                <option value="todos">Todas las etapas</option>
-                {KANBAN_STAGES.map(s => {
-                  const count = kanbanProspectos.filter(p => p.status === s.id).length;
-                  if (count === 0) return null;
-                  return <option key={s.id} value={s.id}>{s.label} ({count})</option>;
-                })}
-              </select>
-            )}
+            <select
+              value={filterEtapa}
+              onChange={e => setFilterEtapa(e.target.value)}
+              className="text-xs border border-[#e5e7eb] rounded-lg px-3 py-1.5 bg-white text-[#1c2c4a] focus:outline-none focus:ring-2 focus:ring-[#00a8a8]/30 focus:border-[#00a8a8]"
+            >
+              <option value="todos">Todas las etapas</option>
+              {KANBAN_STAGES.map(s => {
+                const count = kanbanProspectos.filter(p => p.status === s.id).length;
+                if (count === 0) return null;
+                return <option key={s.id} value={s.id}>{s.label} ({count})</option>;
+              })}
+            </select>
             {activeFilters > 0 && (
               <button
                 onClick={() => { setFilterServicio('todos'); setFilterEjecutivo('todos'); setFilterEtapa('todos'); }}
@@ -8161,112 +8110,9 @@ const InnovativeDemo = () => {
         );
       })()}
 
-      {/* KANBAN VIEW */}
-      {pipelineViewMode === 'kanban' && (
-        <div className="mt-4">
-          {/* Area labels row */}
-          <div className="grid grid-cols-6 gap-3 mb-1">
-            <div className="col-span-2 flex items-center gap-1.5">
-              <div className="w-1.5 h-1.5 rounded-full bg-[#00a8a8]"></div>
-              <span className="text-[10px] uppercase tracking-wider font-semibold text-[#00a8a8]">Comercial</span>
-              <div className="flex-1 h-px bg-[#00a8a8]/20 ml-1"></div>
-            </div>
-            <div className="col-span-2 flex items-center gap-1.5">
-              <div className="w-1.5 h-1.5 rounded-full bg-[#F57C00]"></div>
-              <span className="text-[10px] uppercase tracking-wider font-semibold text-[#F57C00]">Operaciones</span>
-              <div className="flex-1 h-px bg-[#F57C00]/20 ml-1"></div>
-            </div>
-            <div className="col-span-2 flex items-center gap-1.5">
-              <div className="w-1.5 h-1.5 rounded-full bg-[#2E7D32]"></div>
-              <span className="text-[10px] uppercase tracking-wider font-semibold text-[#2E7D32]">Cierre</span>
-              <div className="flex-1 h-px bg-[#2E7D32]/20 ml-1"></div>
-            </div>
-          </div>
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragStart={handleDragStart}
-            onDragEnd={handleDragEnd}
-          >
-            <div className="grid grid-cols-6 gap-3">
-              {KANBAN_STAGES.map(stage => {
-                const stageItems = kanbanProspectos
-                  .filter(p => p.status === stage.id)
-                  .filter(p => filterServicio === 'todos' || (p.servicios || [])[0] === filterServicio)
-                  .filter(p => filterEjecutivo === 'todos' || p.ejecutivo === filterEjecutivo);
-                const stageValue = stageItems.reduce((s, p) => s + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0);
-                const gate = STAGE_GATES[stage.id];
 
-                return (
-                  <div key={stage.id} className="flex flex-col">
-                    {/* Column Header */}
-                    <div className="rounded-t-lg p-3 mb-2" style={{ borderTop: `3px solid ${stage.color}` }}>
-                      <div className="flex items-center justify-between mb-1">
-                        <div className="flex items-center gap-2">
-                          <h3 className="text-sm font-semibold text-[#1c2c4a]">{stage.label}</h3>
-                          <span className="text-xs bg-[#f3f4f6] text-[#6b7280] px-1.5 py-0.5 rounded-full font-medium">
-                            {stageItems.length}
-                          </span>
-                        </div>
-                        {gate && (
-                          <div title={gate.requirement}>
-                            <Lock size={12} className="text-[#6b7280]" />
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex items-center justify-between text-xs text-[#6b7280]">
-                        <span>${(stageValue / 1000000).toFixed(1)}M</span>
-                        <span className="font-medium" style={{ color: stage.color }}>{stage.prob}</span>
-                      </div>
-                    </div>
-
-                    {/* Droppable Area */}
-                    <DroppableColumn stageId={stage.id}>
-                      <SortableContext items={stageItems.slice(0, 20).map(p => p.id)} strategy={verticalListSortingStrategy}>
-                        <div className="space-y-0">
-                          {stageItems.slice(0, 20).map(prospecto => (
-                            <DraggableCard key={prospecto.id} prospecto={prospecto} />
-                          ))}
-                        </div>
-                      </SortableContext>
-                      {stageItems.length > 20 && (
-                        <button
-                          onClick={() => { setPipelineViewMode('tabla'); }}
-                          className="w-full mt-2 py-2 text-xs font-medium text-[#00a8a8] hover:text-[#008080] bg-[#00a8a8]/5 hover:bg-[#00a8a8]/10 rounded-lg transition-colors flex items-center justify-center gap-1"
-                        >
-                          Ver {stageItems.length - 20} más <ChevronDown size={12} />
-                        </button>
-                      )}
-                      {stageItems.length === 0 && (
-                        <div className="flex items-center justify-center h-20 border-2 border-dashed border-[#e5e7eb] rounded-lg text-xs text-[#6b7280]">
-                          Arrastra aquí
-                        </div>
-                      )}
-                    </DroppableColumn>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Drag Overlay */}
-            <DragOverlay>
-              {activeCard && (
-                <div className="bg-white rounded-lg border-2 border-[#00a8a8] p-2 shadow-xl w-[180px] rotate-2">
-                  <h4 className="text-xs font-semibold text-[#1c2c4a] truncate">{activeCard.empresa}</h4>
-                  <div className="flex items-center justify-between text-[10px] text-[#6b7280] mt-0.5">
-                    <span>{activeCard.ejecutivo}</span>
-                    <span className="font-bold text-[#0D47A1]">${((activeCard.propuesta?.ventaTotal || activeCard.facturacionEstimada || 0) / 1000000).toFixed(1)}M</span>
-                  </div>
-                </div>
-              )}
-            </DragOverlay>
-          </DndContext>
-        </div>
-      )}
-
-      {/* FUNNEL VIEW */}
       {/* TABLE VIEW */}
-      {pipelineViewMode === 'tabla' && (() => {
+      {(() => {
         const filteredProspectos = kanbanProspectos
           .filter(p => p.status !== 'Propuesta Rechazada')
           .filter(p => filterServicio === 'todos' || (p.servicios || [])[0] === filterServicio)
@@ -8289,6 +8135,7 @@ const InnovativeDemo = () => {
                   <th className="px-3 py-3 text-left text-xs font-semibold text-[#6b7280]">Servicio</th>
                   <th className="px-3 py-3 text-left text-xs font-semibold text-[#6b7280]">Stage</th>
                   <th className="px-3 py-3 text-left text-xs font-semibold text-[#6b7280]">Ejecutivo</th>
+                  <th className="px-3 py-3 text-right text-xs font-semibold text-[#6b7280]">Venta Total</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-[#6b7280]">Contacto</th>
                 </tr>
               </thead>
@@ -8329,6 +8176,15 @@ const InnovativeDemo = () => {
                           </span>
                         </td>
                         <td className="px-3 py-2.5 text-xs text-[#6b7280]">{ejecutivo?.name?.split(' ').slice(0, 2).join(' ') || p.ejecutivo}</td>
+                        <td className="px-3 py-2.5 text-right">
+                          <span className="text-sm font-semibold text-[#0D47A1]">
+                            {p.propuesta?.ventaTotal
+                              ? `$${(p.propuesta.ventaTotal / 1000000).toFixed(2)}M`
+                              : p.facturacionEstimada
+                                ? `$${(p.facturacionEstimada / 1000000).toFixed(2)}M`
+                                : '—'}
+                          </span>
+                        </td>
                         <td className="px-4 py-2.5">
                           <div className="text-sm text-[#1c2c4a]">{p.contacto?.nombre || '—'}</div>
                           {p.contacto?.puesto && <div className="text-[11px] text-[#9ca3af] truncate">{p.contacto.puesto}</div>}
@@ -8343,7 +8199,7 @@ const InnovativeDemo = () => {
               </tbody>
               <tfoot className="bg-[#f3f4f6] border-t-2 border-[#e5e7eb]">
                 <tr>
-                  <td className="px-4 py-3 text-sm font-bold text-[#1c2c4a]" colSpan={5}>
+                  <td className="px-4 py-3 text-sm font-bold text-[#1c2c4a]" colSpan={6}>
                     Total: {filteredProspectos.length} oportunidades
                   </td>
                 </tr>
