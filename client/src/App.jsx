@@ -4856,7 +4856,8 @@ const InnovativeDemo = () => {
   const [nuevoLeadForm, setNuevoLeadForm] = useState({
     empresa: '', ciudad: '',
     contactoNombre: '', contactoCorreo: '', contactoTelefono: '',
-    fuente: 'otro', comentarios: '', ejecutivo: ''
+    fuente: 'otro', comentarios: '', ejecutivo: '',
+    fechaPrimerContacto: new Date().toISOString().split('T')[0],
   });
   const [mostrarLevantamientos, setMostrarLevantamientos] = useState(false);
   const [selectedLevantamientoDetalle, setSelectedLevantamientoDetalle] = useState(null);
@@ -5337,7 +5338,7 @@ const InnovativeDemo = () => {
       servicios: [],
       status: 'Lead nuevo',
       semana: null,
-      fecha: new Date().toISOString().split('T')[0],
+      fecha: nuevoLeadForm.fechaPrimerContacto || null,
       propuesta: { status: null, ventaTotal: null, utilidad: null, carton: null, playo: null },
       motivoRechazo: null,
       comentarios: nuevoLeadForm.comentarios.trim(),
@@ -5353,7 +5354,8 @@ const InnovativeDemo = () => {
     setNuevoLeadForm({
       empresa: '', ciudad: '',
       contactoNombre: '', contactoCorreo: '', contactoTelefono: '',
-      fuente: 'otro', comentarios: '', ejecutivo: ''
+      fuente: 'otro', comentarios: '', ejecutivo: '',
+      fechaPrimerContacto: new Date().toISOString().split('T')[0],
     });
   };
 
@@ -11217,6 +11219,20 @@ const InnovativeDemo = () => {
                       className="w-full px-3 py-2 border border-[#e5e7eb] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#00a8a8]/50 focus:border-[#00a8a8]"
                       placeholder="correo@empresa.com" />
                   </div>
+                </div>
+              </div>
+
+              {/* SECCIÓN: FECHA */}
+              <div>
+                <h4 className="text-sm font-semibold text-[#1c2c4a] mb-3 flex items-center gap-2">
+                  <Calendar size={16} className="text-[#F59E0B]" />
+                  Fecha
+                </h4>
+                <div>
+                  <label className="text-xs font-medium text-[#6b7280] mb-1 block">Fecha de Primer Contacto *</label>
+                  <input type="date" value={nuevoLeadForm.fechaPrimerContacto}
+                    onChange={e => setNuevoLeadForm(prev => ({...prev, fechaPrimerContacto: e.target.value}))}
+                    className="w-full px-3 py-2 border border-[#e5e7eb] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#00a8a8]/50 focus:border-[#00a8a8]" />
                 </div>
               </div>
 
