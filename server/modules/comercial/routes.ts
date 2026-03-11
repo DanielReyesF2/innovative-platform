@@ -10,6 +10,7 @@ import {
   getProspectsByStage,
   createProspect,
   updateProspect,
+  deleteProspect,
   rejectProspect,
   qualifyProspect,
   getLeads,
@@ -164,6 +165,17 @@ router.patch("/prospects/:id", async (req, res) => {
     res.json(updated);
   } catch (error) {
     console.error("[comercial] Update prospect error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+router.delete("/prospects/:id", async (req, res) => {
+  try {
+    const deleted = await deleteProspect(Number(req.params.id));
+    if (!deleted) return res.status(404).json({ message: "Prospecto no encontrado" });
+    res.json({ success: true });
+  } catch (error) {
+    console.error("[comercial] Delete prospect error:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 });

@@ -57,6 +57,18 @@ export async function createProspect(data: InsertProspect) {
   return prospect;
 }
 
+export async function deleteProspect(id: number) {
+  // Delete related records first
+  await db.delete(prospectActivities).where(eq(prospectActivities.prospectId, id));
+  await db.delete(prospectNotes).where(eq(prospectNotes.prospectId, id));
+  await db.delete(prospectMeetings).where(eq(prospectMeetings.prospectId, id));
+  await db.delete(prospectDocuments).where(eq(prospectDocuments.prospectId, id));
+  await db.delete(proposalVersions).where(eq(proposalVersions.prospectId, id));
+  await db.delete(followUpAlerts).where(eq(followUpAlerts.prospectId, id));
+  const [deleted] = await db.delete(prospects).where(eq(prospects.id, id)).returning();
+  return deleted;
+}
+
 export async function updateProspect(id: number, data: Partial<InsertProspect>) {
   const [updated] = await db
     .update(prospects)

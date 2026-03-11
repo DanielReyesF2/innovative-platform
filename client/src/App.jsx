@@ -302,7 +302,6 @@ const topProspectos = [
       utilidad: 0.107,
       carton: null,
       playo: null,
-      mesCierre: '2026-03',
     },
     motivoRechazo: null,
     comentarios: '',
@@ -332,7 +331,6 @@ const topProspectos = [
       utilidad: 0.111,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: null,
     comentarios: '',
@@ -362,7 +360,6 @@ const topProspectos = [
       utilidad: 0.064,
       carton: 2000,
       playo: 1000,
-      mesCierre: '2026-03',
     },
     motivoRechazo: null,
     comentarios: '',
@@ -392,7 +389,6 @@ const topProspectos = [
       utilidad: 0.202,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: null,
     comentarios: '',
@@ -422,7 +418,6 @@ const topProspectos = [
       utilidad: 0.073,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: null,
     comentarios: '',
@@ -452,7 +447,6 @@ const topProspectos = [
       utilidad: 0.14,
       carton: 20000,
       playo: 842,
-      mesCierre: null,
     },
     motivoRechazo: null,
     comentarios: '',
@@ -482,7 +476,6 @@ const topProspectos = [
       utilidad: 0.188,
       carton: 3444,
       playo: 7630,
-      mesCierre: null,
     },
     motivoRechazo: null,
     comentarios: '',
@@ -512,7 +505,6 @@ const topProspectos = [
       utilidad: 0.142,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: null,
     comentarios: '',
@@ -542,7 +534,6 @@ const topProspectos = [
       utilidad: 0.22,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: null,
     comentarios: '',
@@ -572,7 +563,6 @@ const topProspectos = [
       utilidad: 0.232,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: null,
     comentarios: '',
@@ -602,7 +592,6 @@ const topProspectos = [
       utilidad: 0.207,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: 'Demora en responder',
     comentarios: '',
@@ -632,7 +621,6 @@ const topProspectos = [
       utilidad: 0.377,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: 'Demora en responder',
     comentarios: '',
@@ -662,7 +650,6 @@ const topProspectos = [
       utilidad: 0.179,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: 'Demora en responder',
     comentarios: '',
@@ -692,7 +679,6 @@ const topProspectos = [
       utilidad: 0.171,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: 'Demora en responder',
     comentarios: '',
@@ -722,7 +708,6 @@ const topProspectos = [
       utilidad: 0.181,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: 'Precios no competitivos',
     comentarios: '',
@@ -752,7 +737,6 @@ const topProspectos = [
       utilidad: 0.238,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: null,
     comentarios: '',
@@ -782,7 +766,6 @@ const topProspectos = [
       utilidad: 0.132,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: null,
     comentarios: '',
@@ -812,7 +795,6 @@ const topProspectos = [
       utilidad: 0.221,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: null,
     comentarios: '',
@@ -842,7 +824,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: null,
     comentarios: '',
@@ -872,7 +853,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: null,
     comentarios: '',
@@ -906,7 +886,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: null,
     comentarios: '',
@@ -936,7 +915,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: null,
     comentarios: '',
@@ -966,7 +944,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: null,
     comentarios: '',
@@ -996,7 +973,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: null,
     comentarios: '',
@@ -1026,7 +1002,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: null,
     comentarios: 'Lead original de Vero Excel',
@@ -1056,7 +1031,6 @@ const topProspectos = [
       utilidad: 0.231,
       carton: null,
       playo: null,
-      mesCierre: '2026-04',
     },
     motivoRechazo: null,
     comentarios: '',
@@ -1086,7 +1060,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: null,
     comentarios: '',
@@ -1116,7 +1089,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: null,
     comentarios: '',
@@ -1146,7 +1118,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: null,
     comentarios: '',
@@ -1176,7 +1147,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: null,
     comentarios: '',
@@ -1206,7 +1176,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: null,
     comentarios: '',
@@ -1236,7 +1205,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: null,
     comentarios: '',
@@ -1266,7 +1234,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: null,
     comentarios: '',
@@ -1296,7 +1263,6 @@ const topProspectos = [
       utilidad: 0.286,
       carton: 43000,
       playo: 33000,
-      mesCierre: null,
     },
     motivoRechazo: null,
     comentarios: '',
@@ -1330,7 +1296,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: null,
     comentarios: '',
@@ -1360,7 +1325,6 @@ const topProspectos = [
       utilidad: 0.186,
       carton: null,
       playo: null,
-      mesCierre: '2026-03',
     },
     motivoRechazo: null,
     comentarios: '',
@@ -1390,7 +1354,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: null,
     comentarios: '',
@@ -1420,7 +1383,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: null,
     comentarios: '',
@@ -1450,7 +1412,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: null,
     comentarios: '',
@@ -1480,7 +1441,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: '2026-04',
     },
     motivoRechazo: null,
     comentarios: '',
@@ -1510,7 +1470,6 @@ const topProspectos = [
       utilidad: 0.164,
       carton: null,
       playo: null,
-      mesCierre: '2026-04',
     },
     motivoRechazo: null,
     comentarios: '',
@@ -1540,7 +1499,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: null,
     comentarios: '',
@@ -1570,7 +1528,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: null,
     comentarios: 'Consiguiendo contacto',
@@ -1600,7 +1557,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: null,
     comentarios: '',
@@ -1630,7 +1586,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: null,
     comentarios: '',
@@ -1660,7 +1615,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: null,
     comentarios: '',
@@ -1690,7 +1644,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: null,
     comentarios: '',
@@ -1726,7 +1679,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: '2026-05',
     },
     motivoRechazo: null,
     comentarios: '',
@@ -1756,7 +1708,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: null,
     comentarios: '',
@@ -1786,7 +1737,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: '2026-04',
     },
     motivoRechazo: null,
     comentarios: '',
@@ -1816,7 +1766,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: null,
     comentarios: '',
@@ -1848,7 +1797,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: null,
     comentarios: 'Levantamiento 11 feb 2026',
@@ -1878,7 +1826,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: null,
     comentarios: 'Levantamiento 13 feb 2026',
@@ -1910,7 +1857,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: null,
     comentarios: 'Pendiente de enviar volumenes',
@@ -1942,7 +1888,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: 'No fuimos competitivos en precios',
     comentarios: '',
@@ -1972,7 +1917,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: 'No fuimos competitivos en precios',
     comentarios: '',
@@ -2002,7 +1946,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: 'No fuimos competitivos en precios',
     comentarios: '',
@@ -2032,7 +1975,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: 'No fuimos competitivos en precios',
     comentarios: '',
@@ -2062,7 +2004,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: 'No fuimos competitivos en precios',
     comentarios: '',
@@ -2092,7 +2033,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: 'No fuimos competitivos en precios',
     comentarios: '',
@@ -2122,7 +2062,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: 'No fuimos competitivos en precios',
     comentarios: '',
@@ -2152,7 +2091,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: 'No fuimos competitivos en precios',
     comentarios: '',
@@ -2182,7 +2120,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: 'No fuimos competitivos en precios',
     comentarios: '',
@@ -2212,7 +2149,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: 'No fuimos competitivos en precios',
     comentarios: '',
@@ -2242,7 +2178,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: 'No fuimos competitivos en precios',
     comentarios: '',
@@ -2272,7 +2207,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: 'No fuimos competitivos en precios',
     comentarios: '',
@@ -2302,7 +2236,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: 'No fuimos competitivos en precios',
     comentarios: '',
@@ -2332,7 +2265,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: 'No fuimos competitivos en precios',
     comentarios: '',
@@ -2362,7 +2294,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: 'No fuimos competitivos en precios',
     comentarios: '',
@@ -2392,7 +2323,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: 'No fuimos competitivos en precios',
     comentarios: '',
@@ -2422,7 +2352,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: 'No fuimos competitivos en precios',
     comentarios: '',
@@ -2452,7 +2381,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: 'No fuimos competitivos en precios',
     comentarios: '',
@@ -2482,7 +2410,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: 'No fuimos competitivos en precios',
     comentarios: '',
@@ -2514,7 +2441,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: null,
     comentarios: 'Requiere IMMEX',
@@ -2544,7 +2470,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: null,
     comentarios: '',
@@ -2574,7 +2499,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: null,
     comentarios: '',
@@ -2604,7 +2528,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: null,
     comentarios: '',
@@ -2634,7 +2557,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: null,
     comentarios: '',
@@ -2664,7 +2586,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: null,
     comentarios: '',
@@ -2694,7 +2615,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: null,
     comentarios: '',
@@ -2724,7 +2644,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: null,
     comentarios: '',
@@ -2754,7 +2673,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: null,
     comentarios: '',
@@ -2784,7 +2702,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: null,
     comentarios: '',
@@ -2814,7 +2731,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: null,
     comentarios: '',
@@ -2844,7 +2760,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: null,
     comentarios: '',
@@ -2874,7 +2789,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: null,
     comentarios: 'Requiere IMMEX',
@@ -2904,7 +2818,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: null,
     comentarios: 'Requiere IMMEX',
@@ -2938,7 +2851,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: null,
     comentarios: 'Licitación inicia 09-feb-2026. Levantamientos realizados nov-2025. Scrap ferroso y no ferroso, RME, RP, Segregación en sitio',
@@ -2968,7 +2880,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: null,
     comentarios: 'Licitación inicia 09-feb-2026. Levantamientos realizados nov-2025. Scrap ferroso y no ferroso, RME, RP, Segregación en sitio',
@@ -2998,7 +2909,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: null,
     comentarios: 'Licitación inicia 09-feb-2026. Levantamientos realizados nov-2025. Scrap ferroso y no ferroso, RME, RP, Segregación en sitio',
@@ -3028,7 +2938,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: null,
     comentarios: 'Licitación inicia 09-feb-2026. Levantamientos realizados nov-2025. Scrap ferroso y no ferroso, RME, RP, Segregación en sitio',
@@ -3058,7 +2967,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: null,
     comentarios: 'Licitación inicia 09-feb-2026. Levantamientos realizados nov-2025. Scrap ferroso y no ferroso, RME, RP, Segregación en sitio',
@@ -3088,7 +2996,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: null,
     comentarios: 'Licitación inicia 09-feb-2026. Levantamientos realizados nov-2025. Scrap ferroso y no ferroso, RME, RP, Segregación en sitio',
@@ -3122,7 +3029,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: null,
     comentarios: 'Licitación entrega 09-feb-2026 / Fallo 01-mar-2026. Subproductos. Pendiente licitación adicional de otros residuos',
@@ -3152,7 +3058,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: null,
     comentarios: 'Licitación entrega 09-feb-2026 / Fallo 01-mar-2026. Subproductos. Pendiente licitación adicional de otros residuos',
@@ -3182,7 +3087,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: null,
     comentarios: 'Licitación entrega 09-feb-2026 / Fallo 01-mar-2026. Subproductos. Pendiente licitación adicional de otros residuos',
@@ -3212,7 +3116,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: null,
     comentarios: 'Licitación entrega 09-feb-2026 / Fallo 01-mar-2026. Subproductos. Pendiente licitación adicional de otros residuos',
@@ -3242,7 +3145,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: null,
     comentarios: 'Licitación entrega 09-feb-2026 / Fallo 01-mar-2026. Subproductos. Pendiente licitación adicional de otros residuos',
@@ -3276,7 +3178,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: '2026-05',
     },
     motivoRechazo: null,
     comentarios: 'Cotización enviada nov-2025, pendiente respuesta para reunión',
@@ -3306,7 +3207,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: null,
     comentarios: 'AGA pendiente por definir frecuencias',
@@ -3340,7 +3240,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: '2026-04',
     },
     motivoRechazo: null,
     comentarios: 'Cotización enviada 27-ene; análisis de agua enviado 03-feb; pendiente respuesta. Biodigestor OG50',
@@ -3370,7 +3269,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: null,
     comentarios: 'Llamada 05-feb; presentación Innovative 06-feb',
@@ -3400,7 +3298,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: null,
     comentarios: 'Correo enviado 12-ene; esperando respuesta',
@@ -3430,7 +3327,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: '2026-05',
     },
     motivoRechazo: null,
     comentarios: 'Contacto reunión 28-ene, cotizando. Equipo JM cotizando',
@@ -3460,7 +3356,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: null,
     comentarios: 'Contacto reunión 28-ene, cotizando. Equipo JM cotizando',
@@ -3494,7 +3389,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: '2026-03',
     },
     motivoRechazo: null,
     comentarios: 'Contrato ganado',
@@ -3524,7 +3418,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: null,
     comentarios: '',
@@ -3554,7 +3447,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: null,
     comentarios: '',
@@ -3584,7 +3476,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: null,
     comentarios: '',
@@ -3614,7 +3505,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: null,
     comentarios: 'Información de licitación pendiente',
@@ -3644,7 +3534,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: '2026-03',
     },
     motivoRechazo: null,
     comentarios: 'Licitación ganada sin inicio de operación',
@@ -3674,7 +3563,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: null,
     comentarios: 'En revisión de volúmenes y materiales',
@@ -3704,7 +3592,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: null,
     comentarios: 'Prospecto - presentación por agendar',
@@ -3734,7 +3621,6 @@ const topProspectos = [
       utilidad: null,
       carton: null,
       playo: null,
-      mesCierre: null,
     },
     motivoRechazo: null,
     comentarios: 'Prospecto - presentación por agendar',
@@ -3744,65 +3630,65 @@ const topProspectos = [
   // ==========================================================================
   // CARMEN RODRÍGUEZ (CR) LEADS - IDs 115-154 (Prospectos en seguimiento)
   // ==========================================================================
-  { id: 115, empresa: 'Tritech Autoparts Mexicana', planta: null, ciudad: 'Guanajuato', industria: 'Automotriz', ejecutivo: 'CR', contacto: { nombre: 'Allain Christy Walker Morales', puesto: 'Supervisor de seguridad y medio ambiente', correo: 'awalker@tritechautoparts.com.mx', telefono: '4641165018' }, servicios: ['rme'], status: 'Lead nuevo', semana: null, fecha: null, propuesta: { status: null, ventaTotal: null, utilidad: null, carton: null, playo: null, mesCierre: null }, motivoRechazo: null, comentarios: '', volumenEstimado: null, facturacionEstimada: null },
-  { id: 116, empresa: 'ZKW Mexico', planta: null, ciudad: 'Silao, Guanajuato', industria: 'Automotriz', ejecutivo: 'CR', contacto: { nombre: 'Hector Abraham Anguiano Ramirez', puesto: 'Gerente de EHS', correo: 'hector.anguiano@zkw.mx', telefono: '4771266333' }, servicios: ['rme'], status: 'Lead nuevo', semana: null, fecha: null, propuesta: { status: null, ventaTotal: null, utilidad: null, carton: null, playo: null, mesCierre: null }, motivoRechazo: null, comentarios: '', volumenEstimado: null, facturacionEstimada: null },
-  { id: 117, empresa: 'Nishikawa Sealing Systems Mexico', planta: null, ciudad: 'Guanajuato', industria: 'Automotriz', ejecutivo: 'CR', contacto: { nombre: 'Yesenia America Landa Juarez', puesto: 'Jefe de Seguridad y Medio Ambiente', correo: 'ylanda@nsm-mx.com', telefono: '4773090323' }, servicios: ['rme'], status: 'Lead nuevo', semana: null, fecha: null, propuesta: { status: null, ventaTotal: null, utilidad: null, carton: null, playo: null, mesCierre: null }, motivoRechazo: null, comentarios: '', volumenEstimado: null, facturacionEstimada: null },
-  { id: 118, empresa: 'Astemo Silao', planta: null, ciudad: 'Silao, Guanajuato', industria: 'Automotriz', ejecutivo: 'CR', contacto: { nombre: 'Patricia Moramay Patiño de Lucio', puesto: 'Assistant Manager HSE', correo: 'patricia.patino.qh@astemo.com', telefono: '477 126 0516' }, servicios: ['rme'], status: 'Lead nuevo', semana: null, fecha: null, propuesta: { status: null, ventaTotal: null, utilidad: null, carton: null, playo: null, mesCierre: null }, motivoRechazo: null, comentarios: '', volumenEstimado: null, facturacionEstimada: null },
-  { id: 119, empresa: 'Ashimori Industria de México', planta: null, ciudad: 'Guanajuato', industria: 'Automotriz', ejecutivo: 'CR', contacto: { nombre: 'Jonathan Baruk García González', puesto: 'Ingeniero de medio ambiente', correo: 'baruk.garcia@ashimorimexico.com', telefono: '4772768003' }, servicios: ['rme'], status: 'Lead nuevo', semana: null, fecha: null, propuesta: { status: null, ventaTotal: null, utilidad: null, carton: null, playo: null, mesCierre: null }, motivoRechazo: null, comentarios: '', volumenEstimado: null, facturacionEstimada: null },
-  { id: 120, empresa: 'Avanzar Interior (Adient)', planta: null, ciudad: 'Celaya, Guanajuato', industria: 'Automotriz', ejecutivo: 'CR', contacto: { nombre: 'Ricardo Plazola Navarrete', puesto: 'EHS Superintendente', correo: 'ricardo.plazola@adient.com', telefono: '4622351833' }, servicios: ['rme'], status: 'Lead nuevo', semana: null, fecha: null, propuesta: { status: null, ventaTotal: null, utilidad: null, carton: null, playo: null, mesCierre: null }, motivoRechazo: null, comentarios: '', volumenEstimado: null, facturacionEstimada: null },
-  { id: 121, empresa: 'Furukawa Automotive Systems', planta: null, ciudad: 'San Luis Potosí', industria: 'Automotriz', ejecutivo: 'CR', contacto: { nombre: 'Ignacio Quiroz Rodriguez', puesto: 'Supervisor SR de SSyMA', correo: 'iquiroz01@fasmexico.com', telefono: '4111243211' }, servicios: ['rme'], status: 'Lead nuevo', semana: null, fecha: null, propuesta: { status: null, ventaTotal: null, utilidad: null, carton: null, playo: null, mesCierre: null }, motivoRechazo: null, comentarios: '', volumenEstimado: null, facturacionEstimada: null },
-  { id: 122, empresa: 'Hutchinson Autopartes Mexico', planta: null, ciudad: 'Celaya, Guanajuato', industria: 'Automotriz', ejecutivo: 'CR', contacto: { nombre: 'Claudia Rodriguez Mtz', puesto: 'Gte. Compras', correo: 'claudia.rodriguez@hutchinson.com', telefono: '4612109743' }, servicios: ['rsu'], status: 'Propuesta enviada', semana: null, fecha: '2026-02-01', propuesta: { status: null, ventaTotal: null, utilidad: null, carton: null, playo: null, mesCierre: null }, motivoRechazo: null, comentarios: 'Se presentó propuesta licitación RSU, en espera de fallo', volumenEstimado: null, facturacionEstimada: null },
-  { id: 123, empresa: 'TYW Manufacturing Mexico', planta: null, ciudad: 'Celaya, Guanajuato', industria: 'Automotriz', ejecutivo: 'CR', contacto: { nombre: 'Lucas Fu', puesto: 'Gerente General', correo: 'tywmanufacturingmexico@gmail.com', telefono: '4622543278' }, servicios: ['rme'], status: 'Lead nuevo', semana: null, fecha: null, propuesta: { status: null, ventaTotal: null, utilidad: null, carton: null, playo: null, mesCierre: null }, motivoRechazo: null, comentarios: '', volumenEstimado: null, facturacionEstimada: null },
-  { id: 124, empresa: 'Tsubakimoto Automotive Mexico', planta: null, ciudad: 'Guanajuato', industria: 'Automotriz', ejecutivo: 'CR', contacto: { nombre: 'Claudia Irene García Martínez', puesto: 'Gerente de EHS', correo: 'c.garcia@tsubakimoto.com.mx', telefono: '4777300614' }, servicios: ['rme'], status: 'Reunión agendada', semana: null, fecha: null, propuesta: { status: null, ventaTotal: null, utilidad: null, carton: null, playo: null, mesCierre: null }, motivoRechazo: null, comentarios: 'En seguimiento, en espera de que comparta volúmenes y confirme cita para levantamiento', volumenEstimado: null, facturacionEstimada: null },
-  { id: 125, empresa: 'VCST de México', planta: null, ciudad: 'Guanajuato', industria: 'Automotriz', ejecutivo: 'CR', contacto: { nombre: 'Mayra Ivethe Murillo Flores', puesto: 'EHS Officer', correo: 'mayra.murillo@vcst.com', telefono: '4774018874' }, servicios: ['rme'], status: 'Lead nuevo', semana: null, fecha: null, propuesta: { status: null, ventaTotal: null, utilidad: null, carton: null, playo: null, mesCierre: null }, motivoRechazo: null, comentarios: '', volumenEstimado: null, facturacionEstimada: null },
-  { id: 126, empresa: 'OSG Royco', planta: null, ciudad: 'Toluca, Estado de México', industria: 'Automotriz', ejecutivo: 'CR', contacto: { nombre: 'Luis Guillermo Aguirre Villarreal', puesto: 'Coordinador Certificación Ambiental', correo: 'luis.aguirre@osgroyco.com.mx', telefono: '722 410 3324' }, servicios: ['rme'], status: 'Lead nuevo', semana: null, fecha: null, propuesta: { status: null, ventaTotal: null, utilidad: null, carton: null, playo: null, mesCierre: null }, motivoRechazo: null, comentarios: '', volumenEstimado: null, facturacionEstimada: null },
-  { id: 127, empresa: 'AFT Automotive Mx', planta: null, ciudad: 'Guanajuato', industria: 'Automotriz', ejecutivo: 'CR', contacto: { nombre: 'Lucia Shalom Hernandez Mendez', puesto: 'Project Manager', correo: 's.hernandez@aft-automotive.mx', telefono: '4792326386' }, servicios: ['rme'], status: 'Lead nuevo', semana: null, fecha: null, propuesta: { status: null, ventaTotal: null, utilidad: null, carton: null, playo: null, mesCierre: null }, motivoRechazo: null, comentarios: '', volumenEstimado: null, facturacionEstimada: null },
-  { id: 128, empresa: 'USUI International Manufacturing', planta: null, ciudad: 'Guanajuato', industria: 'Automotriz', ejecutivo: 'CR', contacto: { nombre: 'Luis Antonio Roque Frausto', puesto: 'Operations Manager', correo: 'LuisRoque@usui.co.jp', telefono: '4777247061' }, servicios: ['rme'], status: 'Lead nuevo', semana: null, fecha: null, propuesta: { status: null, ventaTotal: null, utilidad: null, carton: null, playo: null, mesCierre: null }, motivoRechazo: null, comentarios: '', volumenEstimado: null, facturacionEstimada: null },
-  { id: 129, empresa: 'SARRELMEX', planta: null, ciudad: 'Celaya, Guanajuato', industria: 'Automotriz', ejecutivo: 'CR', contacto: { nombre: 'Francisco Javier Quevedo Hernandez', puesto: 'Coord. de EHS', correo: 'ehs@sarrel.com', telefono: '4613451860' }, servicios: ['rme'], status: 'Propuesta enviada', semana: null, fecha: '2026-01-15', propuesta: { status: null, ventaTotal: null, utilidad: null, carton: null, playo: null, mesCierre: null }, motivoRechazo: null, comentarios: 'Se presentó propuesta. Fallo negativo inicial — precios fuera de rango. Se dio oportunidad de contrapropuesta, en seguimiento.', volumenEstimado: null, facturacionEstimada: null },
-  { id: 130, empresa: 'Pasubio Mexico', planta: null, ciudad: 'León, Guanajuato', industria: 'Automotriz', ejecutivo: 'CR', contacto: { nombre: 'Joel Cuellar Mireles', puesto: 'Director de Planta', correo: 'joel.cuellar@pasubio.com', telefono: '477 592 0625' }, servicios: ['rme'], status: 'Lead nuevo', semana: null, fecha: null, propuesta: { status: null, ventaTotal: null, utilidad: null, carton: null, playo: null, mesCierre: null }, motivoRechazo: null, comentarios: '', volumenEstimado: null, facturacionEstimada: null },
-  { id: 131, empresa: 'Toyoetsu de Mexico', planta: null, ciudad: 'San Miguel de Allende', industria: 'Automotriz', ejecutivo: 'CR', contacto: { nombre: 'Juan Manuel Medina', puesto: 'Responsable Ambiental', correo: 'jumedina@ttna.com', telefono: '4421099466' }, servicios: ['rme'], status: 'Lead nuevo', semana: null, fecha: null, propuesta: { status: null, ventaTotal: null, utilidad: null, carton: null, playo: null, mesCierre: null }, motivoRechazo: null, comentarios: '', volumenEstimado: null, facturacionEstimada: null },
-  { id: 132, empresa: 'Inteva Mexico', planta: null, ciudad: 'Guanajuato', industria: 'Automotriz', ejecutivo: 'CR', contacto: { nombre: 'Rosalba Zuñiga Lopez', puesto: 'EHS and Security Responsible', correo: 'Rzuniga@intevaproducts.com', telefono: '4791024463' }, servicios: ['rme'], status: 'Lead nuevo', semana: null, fecha: null, propuesta: { status: null, ventaTotal: null, utilidad: null, carton: null, playo: null, mesCierre: null }, motivoRechazo: null, comentarios: '', volumenEstimado: null, facturacionEstimada: null },
-  { id: 133, empresa: 'KASAI Mexicana', planta: null, ciudad: 'Guanajuato', industria: 'Automotriz', ejecutivo: 'CR', contacto: { nombre: 'Martha Angelica Quesada Duran', puesto: 'EHS Manager', correo: 'martha.quesada@kasai-group.com', telefono: '4771231911' }, servicios: ['rme'], status: 'Reunión agendada', semana: null, fecha: null, propuesta: { status: null, ventaTotal: null, utilidad: null, carton: null, playo: null, mesCierre: null }, motivoRechazo: null, comentarios: 'En comunicación, en espera de concertar cita con Gerente de compras para presentación', volumenEstimado: null, facturacionEstimada: null },
-  { id: 134, empresa: 'Almond Cataforesis', planta: null, ciudad: 'Guanajuato', industria: 'Automotriz', ejecutivo: 'CR', contacto: { nombre: 'Mauricio Ramirez', puesto: 'Sup. EHS', correo: 'mantenimiento@almondcataforesis.com', telefono: '4724788600' }, servicios: ['rme'], status: 'Lead nuevo', semana: null, fecha: null, propuesta: { status: null, ventaTotal: null, utilidad: null, carton: null, playo: null, mesCierre: null }, motivoRechazo: null, comentarios: '', volumenEstimado: null, facturacionEstimada: null },
-  { id: 135, empresa: 'Celay S.A. de C.V.', planta: null, ciudad: 'Celaya, Guanajuato', industria: 'Automotriz', ejecutivo: 'CR', contacto: { nombre: 'Samantha Montalvo Rodriguez', puesto: 'Coordinadora SSyMA', correo: 'tecenfermeria@celay.com.mx', telefono: '4641811511' }, servicios: ['rme'], status: 'Lead nuevo', semana: null, fecha: null, propuesta: { status: null, ventaTotal: null, utilidad: null, carton: null, playo: null, mesCierre: null }, motivoRechazo: null, comentarios: '', volumenEstimado: null, facturacionEstimada: null },
-  { id: 136, empresa: 'Wollsdorf Mexico', planta: null, ciudad: 'Guanajuato', industria: 'Automotriz', ejecutivo: 'CR', contacto: { nombre: 'Rafael Lopez', puesto: 'HSE+HR Manager', correo: 'rafael.lopez@wollsdorf.com', telefono: '4778060290' }, servicios: ['rme'], status: 'Lead nuevo', semana: null, fecha: null, propuesta: { status: null, ventaTotal: null, utilidad: null, carton: null, playo: null, mesCierre: null }, motivoRechazo: null, comentarios: '', volumenEstimado: null, facturacionEstimada: null },
-  { id: 137, empresa: 'Minebea AccessSolutions Mexico', planta: null, ciudad: 'Celaya, Guanajuato', industria: 'Automotriz', ejecutivo: 'CR', contacto: { nombre: 'Jose Francisco Baltazar Samudio', puesto: 'A.Manager EHS', correo: 'jose_baltazar@minebea-as.com', telefono: '4621264932' }, servicios: ['rme'], status: 'Lead nuevo', semana: null, fecha: null, propuesta: { status: null, ventaTotal: null, utilidad: null, carton: null, playo: null, mesCierre: null }, motivoRechazo: null, comentarios: '', volumenEstimado: null, facturacionEstimada: null },
-  { id: 138, empresa: 'IKD Mexico', planta: null, ciudad: 'Celaya, Guanajuato', industria: 'Automotriz', ejecutivo: 'CR', contacto: { nombre: 'Jorge Luis Esquinca Pacheco', puesto: 'Gerente Infraestructura y Equipamiento', correo: 'jorge.esquinca@ikdmexico.com', telefono: '4622527287' }, servicios: ['rme'], status: 'Lead nuevo', semana: null, fecha: null, propuesta: { status: null, ventaTotal: null, utilidad: null, carton: null, playo: null, mesCierre: null }, motivoRechazo: null, comentarios: '', volumenEstimado: null, facturacionEstimada: null },
-  { id: 139, empresa: 'NKPM Mexico', planta: null, ciudad: 'Guanajuato', industria: 'Automotriz', ejecutivo: 'CR', contacto: { nombre: 'Enrique Garcia', puesto: 'Especialista en Logística y cadena de suministro', correo: 'enrique.garcia@nkpm.com.mx', telefono: '' }, servicios: ['rme'], status: 'Lead nuevo', semana: null, fecha: null, propuesta: { status: null, ventaTotal: null, utilidad: null, carton: null, playo: null, mesCierre: null }, motivoRechazo: null, comentarios: '', volumenEstimado: null, facturacionEstimada: null },
-  { id: 140, empresa: 'MAZDA', planta: null, ciudad: 'Salamanca, Guanajuato', industria: 'Automotriz', ejecutivo: 'CR', contacto: { nombre: 'Karla Paramo Garcia', puesto: 'Coordinador PR & BR', correo: 'paramo.k@mx.mazda.com', telefono: '464 647 9300 x6081' }, servicios: ['rme'], status: 'Lead nuevo', semana: null, fecha: null, propuesta: { status: null, ventaTotal: null, utilidad: null, carton: null, playo: null, mesCierre: null }, motivoRechazo: null, comentarios: '', volumenEstimado: null, facturacionEstimada: null },
-  { id: 141, empresa: 'Nissen Chemitec Mexico', planta: null, ciudad: 'Guanajuato', industria: 'Automotriz', ejecutivo: 'CR', contacto: { nombre: 'Franco Omar', puesto: '', correo: 'ofranco@nissenchemitec.mx', telefono: '' }, servicios: ['rme'], status: 'Lead nuevo', semana: null, fecha: null, propuesta: { status: null, ventaTotal: null, utilidad: null, carton: null, playo: null, mesCierre: null }, motivoRechazo: null, comentarios: '', volumenEstimado: null, facturacionEstimada: null },
-  { id: 142, empresa: 'General Motors de Mexico', planta: 'Planta Silao', ciudad: 'Silao, Guanajuato', industria: 'Automotriz', ejecutivo: 'CR', contacto: { nombre: 'Victor Cabral', puesto: 'Director', correo: 'victor.cabral@gm.com', telefono: '' }, servicios: ['rme'], status: 'Lead nuevo', semana: null, fecha: null, propuesta: { status: null, ventaTotal: null, utilidad: null, carton: null, playo: null, mesCierre: null }, motivoRechazo: null, comentarios: '', volumenEstimado: null, facturacionEstimada: null },
-  { id: 143, empresa: 'Toyota Motor Manufacturing de Guanajuato', planta: null, ciudad: 'Apaseo el Grande, Guanajuato', industria: 'Automotriz', ejecutivo: 'CR', contacto: { nombre: 'Sonia Ayma', puesto: 'Gerente de asuntos externos y RSE', correo: 'sonia.ayma@toyota.com', telefono: '' }, servicios: ['rme'], status: 'Lead nuevo', semana: null, fecha: null, propuesta: { status: null, ventaTotal: null, utilidad: null, carton: null, playo: null, mesCierre: null }, motivoRechazo: null, comentarios: '', volumenEstimado: null, facturacionEstimada: null },
-  { id: 144, empresa: 'Honda de Mexico', planta: 'Planta Celaya', ciudad: 'Celaya, Guanajuato', industria: 'Automotriz', ejecutivo: 'CR', contacto: { nombre: 'J. Luis Tejeda Rico', puesto: 'Business Celaya & RMO', correo: 'luis_tejeda@hdm.honda.com', telefono: '' }, servicios: ['rme'], status: 'Lead nuevo', semana: null, fecha: null, propuesta: { status: null, ventaTotal: null, utilidad: null, carton: null, playo: null, mesCierre: null }, motivoRechazo: null, comentarios: '', volumenEstimado: null, facturacionEstimada: null },
-  { id: 145, empresa: "L'Oréal", planta: 'Planta Cosbel', ciudad: 'Estado de México', industria: 'Cosmética y cuidado personal', ejecutivo: 'CR', contacto: { nombre: 'Miriam Alvarez', puesto: 'Compras indirectas', correo: 'miriam.alvarez@loreal.com', telefono: '55 4354 5773' }, servicios: ['rme'], status: 'Propuesta enviada', semana: null, fecha: '2026-01-20', propuesta: { status: null, ventaTotal: null, utilidad: null, carton: null, playo: null, mesCierre: null }, motivoRechazo: null, comentarios: 'En proceso de licitación, segundo round, en espera de instrucciones', volumenEstimado: null, facturacionEstimada: null },
-  { id: 146, empresa: "L'Oréal", planta: 'Planta Centrex', ciudad: 'Estado de México', industria: 'Cosmética y cuidado personal', ejecutivo: 'CR', contacto: { nombre: 'Miriam Alvarez', puesto: 'Compras indirectas', correo: 'miriam.alvarez@loreal.com', telefono: '55 4354 5773' }, servicios: ['rme'], status: 'Propuesta enviada', semana: null, fecha: '2026-01-20', propuesta: { status: null, ventaTotal: null, utilidad: null, carton: null, playo: null, mesCierre: null }, motivoRechazo: null, comentarios: 'En proceso de licitación, segundo round, en espera de instrucciones', volumenEstimado: null, facturacionEstimada: null },
-  { id: 147, empresa: "L'Oréal", planta: 'Planta Mitikah', ciudad: 'CDMX', industria: 'Cosmética y cuidado personal', ejecutivo: 'CR', contacto: { nombre: 'Miriam Alvarez', puesto: 'Compras indirectas', correo: 'miriam.alvarez@loreal.com', telefono: '55 4354 5773' }, servicios: ['rme'], status: 'Propuesta enviada', semana: null, fecha: '2026-01-20', propuesta: { status: null, ventaTotal: null, utilidad: null, carton: null, playo: null, mesCierre: null }, motivoRechazo: null, comentarios: 'En proceso de licitación, segundo round, en espera de instrucciones', volumenEstimado: null, facturacionEstimada: null },
-  { id: 148, empresa: 'HOPE GLOBAL', planta: null, ciudad: 'León, Guanajuato', industria: 'Automotriz', ejecutivo: 'CR', contacto: { nombre: 'Ivette Medina A.', puesto: 'Compras', correo: 'gmedina@hopeglobal.com', telefono: '477 441 4664' }, servicios: ['rme'], status: 'Propuesta enviada', semana: null, fecha: '2026-02-05', propuesta: { status: null, ventaTotal: null, utilidad: null, carton: null, playo: null, mesCierre: null }, motivoRechazo: null, comentarios: 'Se presentó Propuesta 05 feb/2026, en espera de fallo', volumenEstimado: null, facturacionEstimada: null },
-  { id: 149, empresa: 'SOVERE', planta: 'Planta Sol', ciudad: 'León, Guanajuato', industria: 'Automotriz', ejecutivo: 'CR', contacto: { nombre: 'Yanete Jaramillo', puesto: 'Jefe de sistema de gestión y Seg', correo: 'sgc@sovere.com.mx', telefono: '477 142 7930' }, servicios: ['rme'], status: 'Levantamiento', semana: null, fecha: null, propuesta: { status: null, ventaTotal: null, utilidad: null, carton: null, playo: null, mesCierre: null }, motivoRechazo: null, comentarios: 'En espera de presentar propuesta', volumenEstimado: null, facturacionEstimada: null },
-  { id: 150, empresa: 'SOVERE', planta: 'Planta 1', ciudad: 'León, Guanajuato', industria: 'Automotriz', ejecutivo: 'CR', contacto: { nombre: 'Yanete Jaramillo', puesto: 'Jefe de sistema de gestión y Seg', correo: 'sgc@sovere.com.mx', telefono: '477 142 7930' }, servicios: ['rme'], status: 'Levantamiento', semana: null, fecha: null, propuesta: { status: null, ventaTotal: null, utilidad: null, carton: null, playo: null, mesCierre: null }, motivoRechazo: null, comentarios: 'En espera de presentar propuesta', volumenEstimado: null, facturacionEstimada: null },
-  { id: 151, empresa: 'MAGNA COSMA', planta: 'Planta SLP', ciudad: 'San Luis Potosí', industria: 'Automotriz', ejecutivo: 'CR', contacto: { nombre: 'Ma. Guadalupe Loredo', puesto: 'Compras', correo: 'maguadalupe.loredo@magna.com', telefono: '444 499 8300' }, servicios: ['rp'], status: 'Propuesta enviada', semana: null, fecha: '2026-01-28', propuesta: { status: null, ventaTotal: null, utilidad: null, carton: null, playo: null, mesCierre: null }, motivoRechazo: null, comentarios: 'Se presentó propuesta licitación residuos peligrosos, en espera de fallo', volumenEstimado: null, facturacionEstimada: null },
+  { id: 115, empresa: 'Tritech Autoparts Mexicana', planta: null, ciudad: 'Guanajuato', industria: 'Automotriz', ejecutivo: 'CR', contacto: { nombre: 'Allain Christy Walker Morales', puesto: 'Supervisor de seguridad y medio ambiente', correo: 'awalker@tritechautoparts.com.mx', telefono: '4641165018' }, servicios: ['rme'], status: 'Lead nuevo', semana: null, fecha: null, propuesta: { status: null, ventaTotal: null, utilidad: null, carton: null, playo: null }, motivoRechazo: null, comentarios: '', volumenEstimado: null, facturacionEstimada: null },
+  { id: 116, empresa: 'ZKW Mexico', planta: null, ciudad: 'Silao, Guanajuato', industria: 'Automotriz', ejecutivo: 'CR', contacto: { nombre: 'Hector Abraham Anguiano Ramirez', puesto: 'Gerente de EHS', correo: 'hector.anguiano@zkw.mx', telefono: '4771266333' }, servicios: ['rme'], status: 'Lead nuevo', semana: null, fecha: null, propuesta: { status: null, ventaTotal: null, utilidad: null, carton: null, playo: null }, motivoRechazo: null, comentarios: '', volumenEstimado: null, facturacionEstimada: null },
+  { id: 117, empresa: 'Nishikawa Sealing Systems Mexico', planta: null, ciudad: 'Guanajuato', industria: 'Automotriz', ejecutivo: 'CR', contacto: { nombre: 'Yesenia America Landa Juarez', puesto: 'Jefe de Seguridad y Medio Ambiente', correo: 'ylanda@nsm-mx.com', telefono: '4773090323' }, servicios: ['rme'], status: 'Lead nuevo', semana: null, fecha: null, propuesta: { status: null, ventaTotal: null, utilidad: null, carton: null, playo: null }, motivoRechazo: null, comentarios: '', volumenEstimado: null, facturacionEstimada: null },
+  { id: 118, empresa: 'Astemo Silao', planta: null, ciudad: 'Silao, Guanajuato', industria: 'Automotriz', ejecutivo: 'CR', contacto: { nombre: 'Patricia Moramay Patiño de Lucio', puesto: 'Assistant Manager HSE', correo: 'patricia.patino.qh@astemo.com', telefono: '477 126 0516' }, servicios: ['rme'], status: 'Lead nuevo', semana: null, fecha: null, propuesta: { status: null, ventaTotal: null, utilidad: null, carton: null, playo: null }, motivoRechazo: null, comentarios: '', volumenEstimado: null, facturacionEstimada: null },
+  { id: 119, empresa: 'Ashimori Industria de México', planta: null, ciudad: 'Guanajuato', industria: 'Automotriz', ejecutivo: 'CR', contacto: { nombre: 'Jonathan Baruk García González', puesto: 'Ingeniero de medio ambiente', correo: 'baruk.garcia@ashimorimexico.com', telefono: '4772768003' }, servicios: ['rme'], status: 'Lead nuevo', semana: null, fecha: null, propuesta: { status: null, ventaTotal: null, utilidad: null, carton: null, playo: null }, motivoRechazo: null, comentarios: '', volumenEstimado: null, facturacionEstimada: null },
+  { id: 120, empresa: 'Avanzar Interior (Adient)', planta: null, ciudad: 'Celaya, Guanajuato', industria: 'Automotriz', ejecutivo: 'CR', contacto: { nombre: 'Ricardo Plazola Navarrete', puesto: 'EHS Superintendente', correo: 'ricardo.plazola@adient.com', telefono: '4622351833' }, servicios: ['rme'], status: 'Lead nuevo', semana: null, fecha: null, propuesta: { status: null, ventaTotal: null, utilidad: null, carton: null, playo: null }, motivoRechazo: null, comentarios: '', volumenEstimado: null, facturacionEstimada: null },
+  { id: 121, empresa: 'Furukawa Automotive Systems', planta: null, ciudad: 'San Luis Potosí', industria: 'Automotriz', ejecutivo: 'CR', contacto: { nombre: 'Ignacio Quiroz Rodriguez', puesto: 'Supervisor SR de SSyMA', correo: 'iquiroz01@fasmexico.com', telefono: '4111243211' }, servicios: ['rme'], status: 'Lead nuevo', semana: null, fecha: null, propuesta: { status: null, ventaTotal: null, utilidad: null, carton: null, playo: null }, motivoRechazo: null, comentarios: '', volumenEstimado: null, facturacionEstimada: null },
+  { id: 122, empresa: 'Hutchinson Autopartes Mexico', planta: null, ciudad: 'Celaya, Guanajuato', industria: 'Automotriz', ejecutivo: 'CR', contacto: { nombre: 'Claudia Rodriguez Mtz', puesto: 'Gte. Compras', correo: 'claudia.rodriguez@hutchinson.com', telefono: '4612109743' }, servicios: ['rsu'], status: 'Propuesta enviada', semana: null, fecha: '2026-02-01', propuesta: { status: null, ventaTotal: null, utilidad: null, carton: null, playo: null }, motivoRechazo: null, comentarios: 'Se presentó propuesta licitación RSU, en espera de fallo', volumenEstimado: null, facturacionEstimada: null },
+  { id: 123, empresa: 'TYW Manufacturing Mexico', planta: null, ciudad: 'Celaya, Guanajuato', industria: 'Automotriz', ejecutivo: 'CR', contacto: { nombre: 'Lucas Fu', puesto: 'Gerente General', correo: 'tywmanufacturingmexico@gmail.com', telefono: '4622543278' }, servicios: ['rme'], status: 'Lead nuevo', semana: null, fecha: null, propuesta: { status: null, ventaTotal: null, utilidad: null, carton: null, playo: null }, motivoRechazo: null, comentarios: '', volumenEstimado: null, facturacionEstimada: null },
+  { id: 124, empresa: 'Tsubakimoto Automotive Mexico', planta: null, ciudad: 'Guanajuato', industria: 'Automotriz', ejecutivo: 'CR', contacto: { nombre: 'Claudia Irene García Martínez', puesto: 'Gerente de EHS', correo: 'c.garcia@tsubakimoto.com.mx', telefono: '4777300614' }, servicios: ['rme'], status: 'Reunión agendada', semana: null, fecha: null, propuesta: { status: null, ventaTotal: null, utilidad: null, carton: null, playo: null }, motivoRechazo: null, comentarios: 'En seguimiento, en espera de que comparta volúmenes y confirme cita para levantamiento', volumenEstimado: null, facturacionEstimada: null },
+  { id: 125, empresa: 'VCST de México', planta: null, ciudad: 'Guanajuato', industria: 'Automotriz', ejecutivo: 'CR', contacto: { nombre: 'Mayra Ivethe Murillo Flores', puesto: 'EHS Officer', correo: 'mayra.murillo@vcst.com', telefono: '4774018874' }, servicios: ['rme'], status: 'Lead nuevo', semana: null, fecha: null, propuesta: { status: null, ventaTotal: null, utilidad: null, carton: null, playo: null }, motivoRechazo: null, comentarios: '', volumenEstimado: null, facturacionEstimada: null },
+  { id: 126, empresa: 'OSG Royco', planta: null, ciudad: 'Toluca, Estado de México', industria: 'Automotriz', ejecutivo: 'CR', contacto: { nombre: 'Luis Guillermo Aguirre Villarreal', puesto: 'Coordinador Certificación Ambiental', correo: 'luis.aguirre@osgroyco.com.mx', telefono: '722 410 3324' }, servicios: ['rme'], status: 'Lead nuevo', semana: null, fecha: null, propuesta: { status: null, ventaTotal: null, utilidad: null, carton: null, playo: null }, motivoRechazo: null, comentarios: '', volumenEstimado: null, facturacionEstimada: null },
+  { id: 127, empresa: 'AFT Automotive Mx', planta: null, ciudad: 'Guanajuato', industria: 'Automotriz', ejecutivo: 'CR', contacto: { nombre: 'Lucia Shalom Hernandez Mendez', puesto: 'Project Manager', correo: 's.hernandez@aft-automotive.mx', telefono: '4792326386' }, servicios: ['rme'], status: 'Lead nuevo', semana: null, fecha: null, propuesta: { status: null, ventaTotal: null, utilidad: null, carton: null, playo: null }, motivoRechazo: null, comentarios: '', volumenEstimado: null, facturacionEstimada: null },
+  { id: 128, empresa: 'USUI International Manufacturing', planta: null, ciudad: 'Guanajuato', industria: 'Automotriz', ejecutivo: 'CR', contacto: { nombre: 'Luis Antonio Roque Frausto', puesto: 'Operations Manager', correo: 'LuisRoque@usui.co.jp', telefono: '4777247061' }, servicios: ['rme'], status: 'Lead nuevo', semana: null, fecha: null, propuesta: { status: null, ventaTotal: null, utilidad: null, carton: null, playo: null }, motivoRechazo: null, comentarios: '', volumenEstimado: null, facturacionEstimada: null },
+  { id: 129, empresa: 'SARRELMEX', planta: null, ciudad: 'Celaya, Guanajuato', industria: 'Automotriz', ejecutivo: 'CR', contacto: { nombre: 'Francisco Javier Quevedo Hernandez', puesto: 'Coord. de EHS', correo: 'ehs@sarrel.com', telefono: '4613451860' }, servicios: ['rme'], status: 'Propuesta enviada', semana: null, fecha: '2026-01-15', propuesta: { status: null, ventaTotal: null, utilidad: null, carton: null, playo: null }, motivoRechazo: null, comentarios: 'Se presentó propuesta. Fallo negativo inicial — precios fuera de rango. Se dio oportunidad de contrapropuesta, en seguimiento.', volumenEstimado: null, facturacionEstimada: null },
+  { id: 130, empresa: 'Pasubio Mexico', planta: null, ciudad: 'León, Guanajuato', industria: 'Automotriz', ejecutivo: 'CR', contacto: { nombre: 'Joel Cuellar Mireles', puesto: 'Director de Planta', correo: 'joel.cuellar@pasubio.com', telefono: '477 592 0625' }, servicios: ['rme'], status: 'Lead nuevo', semana: null, fecha: null, propuesta: { status: null, ventaTotal: null, utilidad: null, carton: null, playo: null }, motivoRechazo: null, comentarios: '', volumenEstimado: null, facturacionEstimada: null },
+  { id: 131, empresa: 'Toyoetsu de Mexico', planta: null, ciudad: 'San Miguel de Allende', industria: 'Automotriz', ejecutivo: 'CR', contacto: { nombre: 'Juan Manuel Medina', puesto: 'Responsable Ambiental', correo: 'jumedina@ttna.com', telefono: '4421099466' }, servicios: ['rme'], status: 'Lead nuevo', semana: null, fecha: null, propuesta: { status: null, ventaTotal: null, utilidad: null, carton: null, playo: null }, motivoRechazo: null, comentarios: '', volumenEstimado: null, facturacionEstimada: null },
+  { id: 132, empresa: 'Inteva Mexico', planta: null, ciudad: 'Guanajuato', industria: 'Automotriz', ejecutivo: 'CR', contacto: { nombre: 'Rosalba Zuñiga Lopez', puesto: 'EHS and Security Responsible', correo: 'Rzuniga@intevaproducts.com', telefono: '4791024463' }, servicios: ['rme'], status: 'Lead nuevo', semana: null, fecha: null, propuesta: { status: null, ventaTotal: null, utilidad: null, carton: null, playo: null }, motivoRechazo: null, comentarios: '', volumenEstimado: null, facturacionEstimada: null },
+  { id: 133, empresa: 'KASAI Mexicana', planta: null, ciudad: 'Guanajuato', industria: 'Automotriz', ejecutivo: 'CR', contacto: { nombre: 'Martha Angelica Quesada Duran', puesto: 'EHS Manager', correo: 'martha.quesada@kasai-group.com', telefono: '4771231911' }, servicios: ['rme'], status: 'Reunión agendada', semana: null, fecha: null, propuesta: { status: null, ventaTotal: null, utilidad: null, carton: null, playo: null }, motivoRechazo: null, comentarios: 'En comunicación, en espera de concertar cita con Gerente de compras para presentación', volumenEstimado: null, facturacionEstimada: null },
+  { id: 134, empresa: 'Almond Cataforesis', planta: null, ciudad: 'Guanajuato', industria: 'Automotriz', ejecutivo: 'CR', contacto: { nombre: 'Mauricio Ramirez', puesto: 'Sup. EHS', correo: 'mantenimiento@almondcataforesis.com', telefono: '4724788600' }, servicios: ['rme'], status: 'Lead nuevo', semana: null, fecha: null, propuesta: { status: null, ventaTotal: null, utilidad: null, carton: null, playo: null }, motivoRechazo: null, comentarios: '', volumenEstimado: null, facturacionEstimada: null },
+  { id: 135, empresa: 'Celay S.A. de C.V.', planta: null, ciudad: 'Celaya, Guanajuato', industria: 'Automotriz', ejecutivo: 'CR', contacto: { nombre: 'Samantha Montalvo Rodriguez', puesto: 'Coordinadora SSyMA', correo: 'tecenfermeria@celay.com.mx', telefono: '4641811511' }, servicios: ['rme'], status: 'Lead nuevo', semana: null, fecha: null, propuesta: { status: null, ventaTotal: null, utilidad: null, carton: null, playo: null }, motivoRechazo: null, comentarios: '', volumenEstimado: null, facturacionEstimada: null },
+  { id: 136, empresa: 'Wollsdorf Mexico', planta: null, ciudad: 'Guanajuato', industria: 'Automotriz', ejecutivo: 'CR', contacto: { nombre: 'Rafael Lopez', puesto: 'HSE+HR Manager', correo: 'rafael.lopez@wollsdorf.com', telefono: '4778060290' }, servicios: ['rme'], status: 'Lead nuevo', semana: null, fecha: null, propuesta: { status: null, ventaTotal: null, utilidad: null, carton: null, playo: null }, motivoRechazo: null, comentarios: '', volumenEstimado: null, facturacionEstimada: null },
+  { id: 137, empresa: 'Minebea AccessSolutions Mexico', planta: null, ciudad: 'Celaya, Guanajuato', industria: 'Automotriz', ejecutivo: 'CR', contacto: { nombre: 'Jose Francisco Baltazar Samudio', puesto: 'A.Manager EHS', correo: 'jose_baltazar@minebea-as.com', telefono: '4621264932' }, servicios: ['rme'], status: 'Lead nuevo', semana: null, fecha: null, propuesta: { status: null, ventaTotal: null, utilidad: null, carton: null, playo: null }, motivoRechazo: null, comentarios: '', volumenEstimado: null, facturacionEstimada: null },
+  { id: 138, empresa: 'IKD Mexico', planta: null, ciudad: 'Celaya, Guanajuato', industria: 'Automotriz', ejecutivo: 'CR', contacto: { nombre: 'Jorge Luis Esquinca Pacheco', puesto: 'Gerente Infraestructura y Equipamiento', correo: 'jorge.esquinca@ikdmexico.com', telefono: '4622527287' }, servicios: ['rme'], status: 'Lead nuevo', semana: null, fecha: null, propuesta: { status: null, ventaTotal: null, utilidad: null, carton: null, playo: null }, motivoRechazo: null, comentarios: '', volumenEstimado: null, facturacionEstimada: null },
+  { id: 139, empresa: 'NKPM Mexico', planta: null, ciudad: 'Guanajuato', industria: 'Automotriz', ejecutivo: 'CR', contacto: { nombre: 'Enrique Garcia', puesto: 'Especialista en Logística y cadena de suministro', correo: 'enrique.garcia@nkpm.com.mx', telefono: '' }, servicios: ['rme'], status: 'Lead nuevo', semana: null, fecha: null, propuesta: { status: null, ventaTotal: null, utilidad: null, carton: null, playo: null }, motivoRechazo: null, comentarios: '', volumenEstimado: null, facturacionEstimada: null },
+  { id: 140, empresa: 'MAZDA', planta: null, ciudad: 'Salamanca, Guanajuato', industria: 'Automotriz', ejecutivo: 'CR', contacto: { nombre: 'Karla Paramo Garcia', puesto: 'Coordinador PR & BR', correo: 'paramo.k@mx.mazda.com', telefono: '464 647 9300 x6081' }, servicios: ['rme'], status: 'Lead nuevo', semana: null, fecha: null, propuesta: { status: null, ventaTotal: null, utilidad: null, carton: null, playo: null }, motivoRechazo: null, comentarios: '', volumenEstimado: null, facturacionEstimada: null },
+  { id: 141, empresa: 'Nissen Chemitec Mexico', planta: null, ciudad: 'Guanajuato', industria: 'Automotriz', ejecutivo: 'CR', contacto: { nombre: 'Franco Omar', puesto: '', correo: 'ofranco@nissenchemitec.mx', telefono: '' }, servicios: ['rme'], status: 'Lead nuevo', semana: null, fecha: null, propuesta: { status: null, ventaTotal: null, utilidad: null, carton: null, playo: null }, motivoRechazo: null, comentarios: '', volumenEstimado: null, facturacionEstimada: null },
+  { id: 142, empresa: 'General Motors de Mexico', planta: 'Planta Silao', ciudad: 'Silao, Guanajuato', industria: 'Automotriz', ejecutivo: 'CR', contacto: { nombre: 'Victor Cabral', puesto: 'Director', correo: 'victor.cabral@gm.com', telefono: '' }, servicios: ['rme'], status: 'Lead nuevo', semana: null, fecha: null, propuesta: { status: null, ventaTotal: null, utilidad: null, carton: null, playo: null }, motivoRechazo: null, comentarios: '', volumenEstimado: null, facturacionEstimada: null },
+  { id: 143, empresa: 'Toyota Motor Manufacturing de Guanajuato', planta: null, ciudad: 'Apaseo el Grande, Guanajuato', industria: 'Automotriz', ejecutivo: 'CR', contacto: { nombre: 'Sonia Ayma', puesto: 'Gerente de asuntos externos y RSE', correo: 'sonia.ayma@toyota.com', telefono: '' }, servicios: ['rme'], status: 'Lead nuevo', semana: null, fecha: null, propuesta: { status: null, ventaTotal: null, utilidad: null, carton: null, playo: null }, motivoRechazo: null, comentarios: '', volumenEstimado: null, facturacionEstimada: null },
+  { id: 144, empresa: 'Honda de Mexico', planta: 'Planta Celaya', ciudad: 'Celaya, Guanajuato', industria: 'Automotriz', ejecutivo: 'CR', contacto: { nombre: 'J. Luis Tejeda Rico', puesto: 'Business Celaya & RMO', correo: 'luis_tejeda@hdm.honda.com', telefono: '' }, servicios: ['rme'], status: 'Lead nuevo', semana: null, fecha: null, propuesta: { status: null, ventaTotal: null, utilidad: null, carton: null, playo: null }, motivoRechazo: null, comentarios: '', volumenEstimado: null, facturacionEstimada: null },
+  { id: 145, empresa: "L'Oréal", planta: 'Planta Cosbel', ciudad: 'Estado de México', industria: 'Cosmética y cuidado personal', ejecutivo: 'CR', contacto: { nombre: 'Miriam Alvarez', puesto: 'Compras indirectas', correo: 'miriam.alvarez@loreal.com', telefono: '55 4354 5773' }, servicios: ['rme'], status: 'Propuesta enviada', semana: null, fecha: '2026-01-20', propuesta: { status: null, ventaTotal: null, utilidad: null, carton: null, playo: null }, motivoRechazo: null, comentarios: 'En proceso de licitación, segundo round, en espera de instrucciones', volumenEstimado: null, facturacionEstimada: null },
+  { id: 146, empresa: "L'Oréal", planta: 'Planta Centrex', ciudad: 'Estado de México', industria: 'Cosmética y cuidado personal', ejecutivo: 'CR', contacto: { nombre: 'Miriam Alvarez', puesto: 'Compras indirectas', correo: 'miriam.alvarez@loreal.com', telefono: '55 4354 5773' }, servicios: ['rme'], status: 'Propuesta enviada', semana: null, fecha: '2026-01-20', propuesta: { status: null, ventaTotal: null, utilidad: null, carton: null, playo: null }, motivoRechazo: null, comentarios: 'En proceso de licitación, segundo round, en espera de instrucciones', volumenEstimado: null, facturacionEstimada: null },
+  { id: 147, empresa: "L'Oréal", planta: 'Planta Mitikah', ciudad: 'CDMX', industria: 'Cosmética y cuidado personal', ejecutivo: 'CR', contacto: { nombre: 'Miriam Alvarez', puesto: 'Compras indirectas', correo: 'miriam.alvarez@loreal.com', telefono: '55 4354 5773' }, servicios: ['rme'], status: 'Propuesta enviada', semana: null, fecha: '2026-01-20', propuesta: { status: null, ventaTotal: null, utilidad: null, carton: null, playo: null }, motivoRechazo: null, comentarios: 'En proceso de licitación, segundo round, en espera de instrucciones', volumenEstimado: null, facturacionEstimada: null },
+  { id: 148, empresa: 'HOPE GLOBAL', planta: null, ciudad: 'León, Guanajuato', industria: 'Automotriz', ejecutivo: 'CR', contacto: { nombre: 'Ivette Medina A.', puesto: 'Compras', correo: 'gmedina@hopeglobal.com', telefono: '477 441 4664' }, servicios: ['rme'], status: 'Propuesta enviada', semana: null, fecha: '2026-02-05', propuesta: { status: null, ventaTotal: null, utilidad: null, carton: null, playo: null }, motivoRechazo: null, comentarios: 'Se presentó Propuesta 05 feb/2026, en espera de fallo', volumenEstimado: null, facturacionEstimada: null },
+  { id: 149, empresa: 'SOVERE', planta: 'Planta Sol', ciudad: 'León, Guanajuato', industria: 'Automotriz', ejecutivo: 'CR', contacto: { nombre: 'Yanete Jaramillo', puesto: 'Jefe de sistema de gestión y Seg', correo: 'sgc@sovere.com.mx', telefono: '477 142 7930' }, servicios: ['rme'], status: 'Levantamiento', semana: null, fecha: null, propuesta: { status: null, ventaTotal: null, utilidad: null, carton: null, playo: null }, motivoRechazo: null, comentarios: 'En espera de presentar propuesta', volumenEstimado: null, facturacionEstimada: null },
+  { id: 150, empresa: 'SOVERE', planta: 'Planta 1', ciudad: 'León, Guanajuato', industria: 'Automotriz', ejecutivo: 'CR', contacto: { nombre: 'Yanete Jaramillo', puesto: 'Jefe de sistema de gestión y Seg', correo: 'sgc@sovere.com.mx', telefono: '477 142 7930' }, servicios: ['rme'], status: 'Levantamiento', semana: null, fecha: null, propuesta: { status: null, ventaTotal: null, utilidad: null, carton: null, playo: null }, motivoRechazo: null, comentarios: 'En espera de presentar propuesta', volumenEstimado: null, facturacionEstimada: null },
+  { id: 151, empresa: 'MAGNA COSMA', planta: 'Planta SLP', ciudad: 'San Luis Potosí', industria: 'Automotriz', ejecutivo: 'CR', contacto: { nombre: 'Ma. Guadalupe Loredo', puesto: 'Compras', correo: 'maguadalupe.loredo@magna.com', telefono: '444 499 8300' }, servicios: ['rp'], status: 'Propuesta enviada', semana: null, fecha: '2026-01-28', propuesta: { status: null, ventaTotal: null, utilidad: null, carton: null, playo: null }, motivoRechazo: null, comentarios: 'Se presentó propuesta licitación residuos peligrosos, en espera de fallo', volumenEstimado: null, facturacionEstimada: null },
   // ==========================================================================
   // CARMEN RODRÍGUEZ (CR) OPORTUNIDADES NO GANADAS - IDs 152-170
   // ==========================================================================
-  { id: 152, empresa: 'MARQUARDT', planta: 'Puerto Interior', ciudad: 'Silao, Guanajuato', industria: 'Automotriz', ejecutivo: 'CR', contacto: { nombre: 'Gema Espinoza', puesto: 'Compras', correo: 'Gema.Espinoza@marquardt.com', telefono: '462 187 4457' }, servicios: ['rme'], status: 'Propuesta Rechazada', semana: null, fecha: null, propuesta: { status: 'Rechazada', ventaTotal: null, utilidad: null, carton: null, playo: null, mesCierre: null }, motivoRechazo: 'Precios considerados excesivamente altos', comentarios: 'Propuesta Manejo Integral rechazada por costos altos', volumenEstimado: null, facturacionEstimada: null },
-  { id: 153, empresa: 'NSK Warner', planta: null, ciudad: 'Guanajuato', industria: 'Automotriz', ejecutivo: 'CR', contacto: { nombre: 'Alejandro Gonzalez / Itchel Romero', puesto: 'Compras / Seg e Hig', correo: 'alejandro.gonzalez@nsk.com', telefono: '4775283578' }, servicios: ['rme'], status: 'Propuesta Rechazada', semana: null, fecha: null, propuesta: { status: 'Rechazada', ventaTotal: null, utilidad: null, carton: null, playo: null, mesCierre: null }, motivoRechazo: 'Propuesta no se alineaba a sus expectativas', comentarios: 'Propuesta Manejo Integral, fallo no favorable', volumenEstimado: null, facturacionEstimada: null },
-  { id: 154, empresa: 'NSK Bearings', planta: null, ciudad: 'Guanajuato', industria: 'Automotriz', ejecutivo: 'CR', contacto: { nombre: 'Alejandro Gonzalez / Itchel Romero', puesto: 'Compras / Seg e Hig', correo: 'alejandro.gonzalez@nsk.com', telefono: '4775283578' }, servicios: ['rme'], status: 'Propuesta Rechazada', semana: null, fecha: null, propuesta: { status: 'Rechazada', ventaTotal: null, utilidad: null, carton: null, playo: null, mesCierre: null }, motivoRechazo: 'Propuesta no se alineaba a sus expectativas', comentarios: 'Propuesta Manejo Integral, fallo no favorable', volumenEstimado: null, facturacionEstimada: null },
-  { id: 155, empresa: 'Continental', planta: 'FIPASI Silao', ciudad: 'Silao, Guanajuato', industria: 'Automotriz/Neumáticos', ejecutivo: 'CR', contacto: { nombre: 'Nancy Federico', puesto: 'Compras', correo: 'nancy.federico@continental-corporation.com', telefono: '333 955 5274' }, servicios: ['rme'], status: 'Propuesta Rechazada', semana: null, fecha: null, propuesta: { status: 'Rechazada', ventaTotal: null, utilidad: null, carton: null, playo: null, mesCierre: null }, motivoRechazo: 'Propuesta no suficientemente buena, eligieron otros participantes', comentarios: 'No hemos sido invitados nuevamente', volumenEstimado: null, facturacionEstimada: null },
-  { id: 156, empresa: 'Continental Contitech', planta: 'Planta 3 CS - SLP', ciudad: 'San Luis Potosí', industria: 'Automotriz/Neumáticos', ejecutivo: 'CR', contacto: { nombre: 'Nancy Federico', puesto: 'Compras', correo: 'nancy.federico@continental-corporation.com', telefono: '333 955 5274' }, servicios: ['rme'], status: 'Propuesta Rechazada', semana: null, fecha: null, propuesta: { status: 'Rechazada', ventaTotal: null, utilidad: null, carton: null, playo: null, mesCierre: null }, motivoRechazo: 'Propuesta no suficientemente buena', comentarios: 'No hemos sido invitados nuevamente', volumenEstimado: null, facturacionEstimada: null },
-  { id: 157, empresa: 'Continental Contitech', planta: 'Planta 2 PTG - SLP', ciudad: 'San Luis Potosí', industria: 'Automotriz/Neumáticos', ejecutivo: 'CR', contacto: { nombre: 'Nancy Federico', puesto: 'Compras', correo: 'nancy.federico@continental-corporation.com', telefono: '333 955 5274' }, servicios: ['rme'], status: 'Propuesta Rechazada', semana: null, fecha: null, propuesta: { status: 'Rechazada', ventaTotal: null, utilidad: null, carton: null, playo: null, mesCierre: null }, motivoRechazo: 'Propuesta no suficientemente buena', comentarios: 'No hemos sido invitados nuevamente', volumenEstimado: null, facturacionEstimada: null },
-  { id: 158, empresa: 'Continental Contitech', planta: 'Planta 1 ADI - SLP', ciudad: 'San Luis Potosí', industria: 'Automotriz/Neumáticos', ejecutivo: 'CR', contacto: { nombre: 'Nancy Federico', puesto: 'Compras', correo: 'nancy.federico@continental-corporation.com', telefono: '333 955 5274' }, servicios: ['rme'], status: 'Propuesta Rechazada', semana: null, fecha: null, propuesta: { status: 'Rechazada', ventaTotal: null, utilidad: null, carton: null, playo: null, mesCierre: null }, motivoRechazo: 'Propuesta no suficientemente buena', comentarios: 'No hemos sido invitados nuevamente', volumenEstimado: null, facturacionEstimada: null },
-  { id: 159, empresa: 'Continental Contitech', planta: 'Planta 5 SSL - SLP', ciudad: 'San Luis Potosí', industria: 'Automotriz/Neumáticos', ejecutivo: 'CR', contacto: { nombre: 'Nancy Federico', puesto: 'Compras', correo: 'nancy.federico@continental-corporation.com', telefono: '333 955 5274' }, servicios: ['rme'], status: 'Propuesta Rechazada', semana: null, fecha: null, propuesta: { status: 'Rechazada', ventaTotal: null, utilidad: null, carton: null, playo: null, mesCierre: null }, motivoRechazo: 'Propuesta no suficientemente buena', comentarios: 'No hemos sido invitados nuevamente', volumenEstimado: null, facturacionEstimada: null },
-  { id: 160, empresa: 'Continental Contitech', planta: 'Planta 4 ADSM - SLP', ciudad: 'San Luis Potosí', industria: 'Automotriz/Neumáticos', ejecutivo: 'CR', contacto: { nombre: 'Nancy Federico', puesto: 'Compras', correo: 'nancy.federico@continental-corporation.com', telefono: '333 955 5274' }, servicios: ['rme'], status: 'Propuesta Rechazada', semana: null, fecha: null, propuesta: { status: 'Rechazada', ventaTotal: null, utilidad: null, carton: null, playo: null, mesCierre: null }, motivoRechazo: 'Propuesta no suficientemente buena', comentarios: 'No hemos sido invitados nuevamente', volumenEstimado: null, facturacionEstimada: null },
-  { id: 161, empresa: 'Grupo FLEXI', planta: 'Planta Advance', ciudad: 'León, Guanajuato', industria: 'Calzado', ejecutivo: 'CR', contacto: { nombre: 'Julieta Ramirez Arriaga', puesto: 'Compras', correo: 'jrmzarriaga@flexi.com.mx', telefono: '' }, servicios: ['rme', 'rp', 'rsu'], status: 'Propuesta Rechazada', semana: null, fecha: '2026-01-15', propuesta: { status: 'Rechazada', ventaTotal: null, utilidad: null, carton: null, playo: null, mesCierre: null }, motivoRechazo: 'Costos aumentan hasta 136% vs actuales', comentarios: 'Propuesta manejo integral enero 2026, costos no competitivos', volumenEstimado: null, facturacionEstimada: null },
-  { id: 162, empresa: 'Grupo FLEXI', planta: 'CEDIS Puerto Interior', ciudad: 'Silao, Guanajuato', industria: 'Calzado', ejecutivo: 'CR', contacto: { nombre: 'Julieta Ramirez Arriaga', puesto: 'Compras', correo: 'jrmzarriaga@flexi.com.mx', telefono: '' }, servicios: ['rme', 'rp', 'rsu'], status: 'Propuesta Rechazada', semana: null, fecha: '2026-01-15', propuesta: { status: 'Rechazada', ventaTotal: null, utilidad: null, carton: null, playo: null, mesCierre: null }, motivoRechazo: 'Costos aumentan hasta 136% vs actuales', comentarios: 'Propuesta manejo integral enero 2026, costos no competitivos', volumenEstimado: null, facturacionEstimada: null },
-  { id: 163, empresa: 'Grupo FLEXI', planta: 'Planta Duende', ciudad: 'León, Guanajuato', industria: 'Calzado', ejecutivo: 'CR', contacto: { nombre: 'Julieta Ramirez Arriaga', puesto: 'Compras', correo: 'jrmzarriaga@flexi.com.mx', telefono: '' }, servicios: ['rme', 'rp', 'rsu'], status: 'Propuesta Rechazada', semana: null, fecha: '2026-01-15', propuesta: { status: 'Rechazada', ventaTotal: null, utilidad: null, carton: null, playo: null, mesCierre: null }, motivoRechazo: 'Costos aumentan hasta 136% vs actuales', comentarios: 'Propuesta manejo integral enero 2026, costos no competitivos', volumenEstimado: null, facturacionEstimada: null },
-  { id: 164, empresa: 'Grupo FLEXI', planta: 'Planta Oriental', ciudad: 'León, Guanajuato', industria: 'Calzado', ejecutivo: 'CR', contacto: { nombre: 'Julieta Ramirez Arriaga', puesto: 'Compras', correo: 'jrmzarriaga@flexi.com.mx', telefono: '' }, servicios: ['rme', 'rp', 'rsu'], status: 'Propuesta Rechazada', semana: null, fecha: '2026-01-15', propuesta: { status: 'Rechazada', ventaTotal: null, utilidad: null, carton: null, playo: null, mesCierre: null }, motivoRechazo: 'Costos aumentan hasta 136% vs actuales', comentarios: 'Propuesta manejo integral enero 2026, costos no competitivos', volumenEstimado: null, facturacionEstimada: null },
-  { id: 165, empresa: 'Grupo FLEXI', planta: 'Planta Stiva', ciudad: 'León, Guanajuato', industria: 'Calzado', ejecutivo: 'CR', contacto: { nombre: 'Julieta Ramirez Arriaga', puesto: 'Compras', correo: 'jrmzarriaga@flexi.com.mx', telefono: '' }, servicios: ['rme', 'rp', 'rsu'], status: 'Propuesta Rechazada', semana: null, fecha: '2026-01-15', propuesta: { status: 'Rechazada', ventaTotal: null, utilidad: null, carton: null, playo: null, mesCierre: null }, motivoRechazo: 'Costos aumentan hasta 136% vs actuales', comentarios: 'Propuesta manejo integral enero 2026, costos no competitivos', volumenEstimado: null, facturacionEstimada: null },
-  { id: 166, empresa: 'Schreiber Foods', planta: 'Puerto Interior', ciudad: 'Silao, Guanajuato', industria: 'Alimentos y Lácteos', ejecutivo: 'CR', contacto: { nombre: 'Juan Carlos Salazar', puesto: 'Compras', correo: 'JuanCarlos.SalazarRamirez@schreiberfoods.com', telefono: '' }, servicios: ['rme'], status: 'Propuesta Rechazada', semana: null, fecha: null, propuesta: { status: 'Rechazada', ventaTotal: null, utilidad: null, carton: null, playo: null, mesCierre: null }, motivoRechazo: 'Precios no competitivos con otros proveedores', comentarios: 'Propuesta manejo integral no aprobada', volumenEstimado: null, facturacionEstimada: null },
-  { id: 167, empresa: 'AGRIZAR', planta: 'Planta Silao', ciudad: 'Silao, Guanajuato', industria: 'Alimentos y Lácteos', ejecutivo: 'CR', contacto: { nombre: 'Lorena Luna Covarubias', puesto: 'Compras', correo: 'lorena.luna@agrizar.com', telefono: '462 251 1500' }, servicios: ['rme'], status: 'Propuesta Rechazada', semana: null, fecha: null, propuesta: { status: 'Rechazada', ventaTotal: null, utilidad: null, carton: null, playo: null, mesCierre: null }, motivoRechazo: 'No somos competitivos, precios más elevados a los actuales', comentarios: 'Propuesta Manejo Integral rechazada', volumenEstimado: null, facturacionEstimada: null },
-  { id: 168, empresa: 'ArcelorMittal', planta: 'Planta Siderúrgica', ciudad: 'Lázaro Cárdenas, Michoacán', industria: 'Siderúrgica y Acero', ejecutivo: 'CR', contacto: { nombre: 'Jair Hernandez', puesto: 'Compras', correo: 'MX.Jair.Hernandez@arcelormittal.com', telefono: '' }, servicios: ['rme'], status: 'Propuesta Rechazada', semana: null, fecha: null, propuesta: { status: 'Rechazada', ventaTotal: null, utilidad: null, carton: null, playo: null, mesCierre: null }, motivoRechazo: 'Declinamos - sin proveeduría en la zona', comentarios: 'Invitados 2 veces a licitar. Primera vez fuimos a levantamiento sin presentar propuesta. Segunda vez declinamos.', volumenEstimado: null, facturacionEstimada: null },
-  { id: 169, empresa: 'ArcelorMittal', planta: 'Mina', ciudad: 'Lázaro Cárdenas, Michoacán', industria: 'Siderúrgica y Acero', ejecutivo: 'CR', contacto: { nombre: 'Jair Hernandez', puesto: 'Compras', correo: 'MX.Jair.Hernandez@arcelormittal.com', telefono: '753 139 5823' }, servicios: ['rme'], status: 'Propuesta Rechazada', semana: null, fecha: null, propuesta: { status: 'Rechazada', ventaTotal: null, utilidad: null, carton: null, playo: null, mesCierre: null }, motivoRechazo: 'Declinamos - sin proveeduría en la zona', comentarios: 'Invitados 2 veces a licitar, declinamos por falta de proveeduría', volumenEstimado: null, facturacionEstimada: null },
-  { id: 170, empresa: 'BOS Automotive', planta: 'Planta Irapuato', ciudad: 'Irapuato, Guanajuato', industria: 'Automotriz', ejecutivo: 'CR', contacto: { nombre: 'Saul Garcia', puesto: 'Compras', correo: 'sfgarcia@bos.de', telefono: '' }, servicios: ['biodigestores'], status: 'Propuesta Rechazada', semana: null, fecha: null, propuesta: { status: 'Rechazada', ventaTotal: null, utilidad: null, carton: null, playo: null, mesCierre: null }, motivoRechazo: 'No viable por el momento', comentarios: 'Propuesta Biodigestor rechazada', volumenEstimado: null, facturacionEstimada: null },
+  { id: 152, empresa: 'MARQUARDT', planta: 'Puerto Interior', ciudad: 'Silao, Guanajuato', industria: 'Automotriz', ejecutivo: 'CR', contacto: { nombre: 'Gema Espinoza', puesto: 'Compras', correo: 'Gema.Espinoza@marquardt.com', telefono: '462 187 4457' }, servicios: ['rme'], status: 'Propuesta Rechazada', semana: null, fecha: null, propuesta: { status: 'Rechazada', ventaTotal: null, utilidad: null, carton: null, playo: null }, motivoRechazo: 'Precios considerados excesivamente altos', comentarios: 'Propuesta Manejo Integral rechazada por costos altos', volumenEstimado: null, facturacionEstimada: null },
+  { id: 153, empresa: 'NSK Warner', planta: null, ciudad: 'Guanajuato', industria: 'Automotriz', ejecutivo: 'CR', contacto: { nombre: 'Alejandro Gonzalez / Itchel Romero', puesto: 'Compras / Seg e Hig', correo: 'alejandro.gonzalez@nsk.com', telefono: '4775283578' }, servicios: ['rme'], status: 'Propuesta Rechazada', semana: null, fecha: null, propuesta: { status: 'Rechazada', ventaTotal: null, utilidad: null, carton: null, playo: null }, motivoRechazo: 'Propuesta no se alineaba a sus expectativas', comentarios: 'Propuesta Manejo Integral, fallo no favorable', volumenEstimado: null, facturacionEstimada: null },
+  { id: 154, empresa: 'NSK Bearings', planta: null, ciudad: 'Guanajuato', industria: 'Automotriz', ejecutivo: 'CR', contacto: { nombre: 'Alejandro Gonzalez / Itchel Romero', puesto: 'Compras / Seg e Hig', correo: 'alejandro.gonzalez@nsk.com', telefono: '4775283578' }, servicios: ['rme'], status: 'Propuesta Rechazada', semana: null, fecha: null, propuesta: { status: 'Rechazada', ventaTotal: null, utilidad: null, carton: null, playo: null }, motivoRechazo: 'Propuesta no se alineaba a sus expectativas', comentarios: 'Propuesta Manejo Integral, fallo no favorable', volumenEstimado: null, facturacionEstimada: null },
+  { id: 155, empresa: 'Continental', planta: 'FIPASI Silao', ciudad: 'Silao, Guanajuato', industria: 'Automotriz/Neumáticos', ejecutivo: 'CR', contacto: { nombre: 'Nancy Federico', puesto: 'Compras', correo: 'nancy.federico@continental-corporation.com', telefono: '333 955 5274' }, servicios: ['rme'], status: 'Propuesta Rechazada', semana: null, fecha: null, propuesta: { status: 'Rechazada', ventaTotal: null, utilidad: null, carton: null, playo: null }, motivoRechazo: 'Propuesta no suficientemente buena, eligieron otros participantes', comentarios: 'No hemos sido invitados nuevamente', volumenEstimado: null, facturacionEstimada: null },
+  { id: 156, empresa: 'Continental Contitech', planta: 'Planta 3 CS - SLP', ciudad: 'San Luis Potosí', industria: 'Automotriz/Neumáticos', ejecutivo: 'CR', contacto: { nombre: 'Nancy Federico', puesto: 'Compras', correo: 'nancy.federico@continental-corporation.com', telefono: '333 955 5274' }, servicios: ['rme'], status: 'Propuesta Rechazada', semana: null, fecha: null, propuesta: { status: 'Rechazada', ventaTotal: null, utilidad: null, carton: null, playo: null }, motivoRechazo: 'Propuesta no suficientemente buena', comentarios: 'No hemos sido invitados nuevamente', volumenEstimado: null, facturacionEstimada: null },
+  { id: 157, empresa: 'Continental Contitech', planta: 'Planta 2 PTG - SLP', ciudad: 'San Luis Potosí', industria: 'Automotriz/Neumáticos', ejecutivo: 'CR', contacto: { nombre: 'Nancy Federico', puesto: 'Compras', correo: 'nancy.federico@continental-corporation.com', telefono: '333 955 5274' }, servicios: ['rme'], status: 'Propuesta Rechazada', semana: null, fecha: null, propuesta: { status: 'Rechazada', ventaTotal: null, utilidad: null, carton: null, playo: null }, motivoRechazo: 'Propuesta no suficientemente buena', comentarios: 'No hemos sido invitados nuevamente', volumenEstimado: null, facturacionEstimada: null },
+  { id: 158, empresa: 'Continental Contitech', planta: 'Planta 1 ADI - SLP', ciudad: 'San Luis Potosí', industria: 'Automotriz/Neumáticos', ejecutivo: 'CR', contacto: { nombre: 'Nancy Federico', puesto: 'Compras', correo: 'nancy.federico@continental-corporation.com', telefono: '333 955 5274' }, servicios: ['rme'], status: 'Propuesta Rechazada', semana: null, fecha: null, propuesta: { status: 'Rechazada', ventaTotal: null, utilidad: null, carton: null, playo: null }, motivoRechazo: 'Propuesta no suficientemente buena', comentarios: 'No hemos sido invitados nuevamente', volumenEstimado: null, facturacionEstimada: null },
+  { id: 159, empresa: 'Continental Contitech', planta: 'Planta 5 SSL - SLP', ciudad: 'San Luis Potosí', industria: 'Automotriz/Neumáticos', ejecutivo: 'CR', contacto: { nombre: 'Nancy Federico', puesto: 'Compras', correo: 'nancy.federico@continental-corporation.com', telefono: '333 955 5274' }, servicios: ['rme'], status: 'Propuesta Rechazada', semana: null, fecha: null, propuesta: { status: 'Rechazada', ventaTotal: null, utilidad: null, carton: null, playo: null }, motivoRechazo: 'Propuesta no suficientemente buena', comentarios: 'No hemos sido invitados nuevamente', volumenEstimado: null, facturacionEstimada: null },
+  { id: 160, empresa: 'Continental Contitech', planta: 'Planta 4 ADSM - SLP', ciudad: 'San Luis Potosí', industria: 'Automotriz/Neumáticos', ejecutivo: 'CR', contacto: { nombre: 'Nancy Federico', puesto: 'Compras', correo: 'nancy.federico@continental-corporation.com', telefono: '333 955 5274' }, servicios: ['rme'], status: 'Propuesta Rechazada', semana: null, fecha: null, propuesta: { status: 'Rechazada', ventaTotal: null, utilidad: null, carton: null, playo: null }, motivoRechazo: 'Propuesta no suficientemente buena', comentarios: 'No hemos sido invitados nuevamente', volumenEstimado: null, facturacionEstimada: null },
+  { id: 161, empresa: 'Grupo FLEXI', planta: 'Planta Advance', ciudad: 'León, Guanajuato', industria: 'Calzado', ejecutivo: 'CR', contacto: { nombre: 'Julieta Ramirez Arriaga', puesto: 'Compras', correo: 'jrmzarriaga@flexi.com.mx', telefono: '' }, servicios: ['rme', 'rp', 'rsu'], status: 'Propuesta Rechazada', semana: null, fecha: '2026-01-15', propuesta: { status: 'Rechazada', ventaTotal: null, utilidad: null, carton: null, playo: null }, motivoRechazo: 'Costos aumentan hasta 136% vs actuales', comentarios: 'Propuesta manejo integral enero 2026, costos no competitivos', volumenEstimado: null, facturacionEstimada: null },
+  { id: 162, empresa: 'Grupo FLEXI', planta: 'CEDIS Puerto Interior', ciudad: 'Silao, Guanajuato', industria: 'Calzado', ejecutivo: 'CR', contacto: { nombre: 'Julieta Ramirez Arriaga', puesto: 'Compras', correo: 'jrmzarriaga@flexi.com.mx', telefono: '' }, servicios: ['rme', 'rp', 'rsu'], status: 'Propuesta Rechazada', semana: null, fecha: '2026-01-15', propuesta: { status: 'Rechazada', ventaTotal: null, utilidad: null, carton: null, playo: null }, motivoRechazo: 'Costos aumentan hasta 136% vs actuales', comentarios: 'Propuesta manejo integral enero 2026, costos no competitivos', volumenEstimado: null, facturacionEstimada: null },
+  { id: 163, empresa: 'Grupo FLEXI', planta: 'Planta Duende', ciudad: 'León, Guanajuato', industria: 'Calzado', ejecutivo: 'CR', contacto: { nombre: 'Julieta Ramirez Arriaga', puesto: 'Compras', correo: 'jrmzarriaga@flexi.com.mx', telefono: '' }, servicios: ['rme', 'rp', 'rsu'], status: 'Propuesta Rechazada', semana: null, fecha: '2026-01-15', propuesta: { status: 'Rechazada', ventaTotal: null, utilidad: null, carton: null, playo: null }, motivoRechazo: 'Costos aumentan hasta 136% vs actuales', comentarios: 'Propuesta manejo integral enero 2026, costos no competitivos', volumenEstimado: null, facturacionEstimada: null },
+  { id: 164, empresa: 'Grupo FLEXI', planta: 'Planta Oriental', ciudad: 'León, Guanajuato', industria: 'Calzado', ejecutivo: 'CR', contacto: { nombre: 'Julieta Ramirez Arriaga', puesto: 'Compras', correo: 'jrmzarriaga@flexi.com.mx', telefono: '' }, servicios: ['rme', 'rp', 'rsu'], status: 'Propuesta Rechazada', semana: null, fecha: '2026-01-15', propuesta: { status: 'Rechazada', ventaTotal: null, utilidad: null, carton: null, playo: null }, motivoRechazo: 'Costos aumentan hasta 136% vs actuales', comentarios: 'Propuesta manejo integral enero 2026, costos no competitivos', volumenEstimado: null, facturacionEstimada: null },
+  { id: 165, empresa: 'Grupo FLEXI', planta: 'Planta Stiva', ciudad: 'León, Guanajuato', industria: 'Calzado', ejecutivo: 'CR', contacto: { nombre: 'Julieta Ramirez Arriaga', puesto: 'Compras', correo: 'jrmzarriaga@flexi.com.mx', telefono: '' }, servicios: ['rme', 'rp', 'rsu'], status: 'Propuesta Rechazada', semana: null, fecha: '2026-01-15', propuesta: { status: 'Rechazada', ventaTotal: null, utilidad: null, carton: null, playo: null }, motivoRechazo: 'Costos aumentan hasta 136% vs actuales', comentarios: 'Propuesta manejo integral enero 2026, costos no competitivos', volumenEstimado: null, facturacionEstimada: null },
+  { id: 166, empresa: 'Schreiber Foods', planta: 'Puerto Interior', ciudad: 'Silao, Guanajuato', industria: 'Alimentos y Lácteos', ejecutivo: 'CR', contacto: { nombre: 'Juan Carlos Salazar', puesto: 'Compras', correo: 'JuanCarlos.SalazarRamirez@schreiberfoods.com', telefono: '' }, servicios: ['rme'], status: 'Propuesta Rechazada', semana: null, fecha: null, propuesta: { status: 'Rechazada', ventaTotal: null, utilidad: null, carton: null, playo: null }, motivoRechazo: 'Precios no competitivos con otros proveedores', comentarios: 'Propuesta manejo integral no aprobada', volumenEstimado: null, facturacionEstimada: null },
+  { id: 167, empresa: 'AGRIZAR', planta: 'Planta Silao', ciudad: 'Silao, Guanajuato', industria: 'Alimentos y Lácteos', ejecutivo: 'CR', contacto: { nombre: 'Lorena Luna Covarubias', puesto: 'Compras', correo: 'lorena.luna@agrizar.com', telefono: '462 251 1500' }, servicios: ['rme'], status: 'Propuesta Rechazada', semana: null, fecha: null, propuesta: { status: 'Rechazada', ventaTotal: null, utilidad: null, carton: null, playo: null }, motivoRechazo: 'No somos competitivos, precios más elevados a los actuales', comentarios: 'Propuesta Manejo Integral rechazada', volumenEstimado: null, facturacionEstimada: null },
+  { id: 168, empresa: 'ArcelorMittal', planta: 'Planta Siderúrgica', ciudad: 'Lázaro Cárdenas, Michoacán', industria: 'Siderúrgica y Acero', ejecutivo: 'CR', contacto: { nombre: 'Jair Hernandez', puesto: 'Compras', correo: 'MX.Jair.Hernandez@arcelormittal.com', telefono: '' }, servicios: ['rme'], status: 'Propuesta Rechazada', semana: null, fecha: null, propuesta: { status: 'Rechazada', ventaTotal: null, utilidad: null, carton: null, playo: null }, motivoRechazo: 'Declinamos - sin proveeduría en la zona', comentarios: 'Invitados 2 veces a licitar. Primera vez fuimos a levantamiento sin presentar propuesta. Segunda vez declinamos.', volumenEstimado: null, facturacionEstimada: null },
+  { id: 169, empresa: 'ArcelorMittal', planta: 'Mina', ciudad: 'Lázaro Cárdenas, Michoacán', industria: 'Siderúrgica y Acero', ejecutivo: 'CR', contacto: { nombre: 'Jair Hernandez', puesto: 'Compras', correo: 'MX.Jair.Hernandez@arcelormittal.com', telefono: '753 139 5823' }, servicios: ['rme'], status: 'Propuesta Rechazada', semana: null, fecha: null, propuesta: { status: 'Rechazada', ventaTotal: null, utilidad: null, carton: null, playo: null }, motivoRechazo: 'Declinamos - sin proveeduría en la zona', comentarios: 'Invitados 2 veces a licitar, declinamos por falta de proveeduría', volumenEstimado: null, facturacionEstimada: null },
+  { id: 170, empresa: 'BOS Automotive', planta: 'Planta Irapuato', ciudad: 'Irapuato, Guanajuato', industria: 'Automotriz', ejecutivo: 'CR', contacto: { nombre: 'Saul Garcia', puesto: 'Compras', correo: 'sfgarcia@bos.de', telefono: '' }, servicios: ['biodigestores'], status: 'Propuesta Rechazada', semana: null, fecha: null, propuesta: { status: 'Rechazada', ventaTotal: null, utilidad: null, carton: null, playo: null }, motivoRechazo: 'No viable por el momento', comentarios: 'Propuesta Biodigestor rechazada', volumenEstimado: null, facturacionEstimada: null },
 ];
 
 // leadsData ahora se genera dinámicamente desde topProspectos
@@ -3850,17 +3736,17 @@ const salesTeamData = [
     reuniones: 4,
     cierres: 2,
     tasaConversion: 125,
-    presupuestoAnual2026: 21688469,
-    presupuestoMensual: 1807372,
+    presupuestoAnual2026: 130130812,
+    presupuestoMensual: 10844234,
     ventasReales: 4200000,
-    cumplimientoPresupuesto: 20,
+    cumplimientoPresupuesto: 31,
     tiempoRespuesta: '1.5 hrs',
     satisfaccionCliente: 4.9,
     activitiesSemanal: 35,
     eficienciaGlobal: 90,
     avatar: '👩‍💼',
     ultimaActividad: 'Kick Off Hub Digital Comercial',
-    notas: 'Directora del equipo comercial. Presupuesto anual equipo = $130.1M dividido parejo entre 6 ejecutivos. Prospectos directos con cuentas estratégicas.',
+    notas: 'Directora del equipo comercial. Presupuesto = total equipo ($164.5M). Prospectos directos con cuentas estratégicas.',
     // KPIs semanales reales del Excel (semana 31)
     kpisSemanales: [
       { semana: 31, leadsNuevos: 4, reunionesAgendadas: 4, levantamientos: 4, propuestasEnviadas: 5, propuestasRechazadas: 0 }
@@ -3879,8 +3765,8 @@ const salesTeamData = [
     reuniones: 22,
     cierres: 0,
     tasaConversion: 19,
-    presupuestoAnual2026: 21688469,
-    presupuestoMensual: 1807372,
+    presupuestoAnual2026: 47135000,
+    presupuestoMensual: 3928000,
     ventasReales: 0,
     cumplimientoPresupuesto: 0,
     tiempoRespuesta: '1.5 hrs',
@@ -3916,8 +3802,8 @@ const salesTeamData = [
     reuniones: 15,
     cierres: 0,
     tasaConversion: 10,
-    presupuestoAnual2026: 21688469,
-    presupuestoMensual: 1807372,
+    presupuestoAnual2026: 79577000,
+    presupuestoMensual: 6631000,
     ventasReales: 0,
     cumplimientoPresupuesto: 0,
     tiempoRespuesta: '4.2 hrs',
@@ -3926,7 +3812,7 @@ const salesTeamData = [
     eficienciaGlobal: 45,
     avatar: '👨‍💼',
     ultimaActividad: 'Propuestas enviadas: Givaudan, Gonher, Xignux, Pepsico',
-    notas: '40 prospectos en presupuesto. 4 propuestas enviadas, 2 en levantamiento (Panduit, Genomma Lab), 15 reuniones agendadas, 19 rechazadas por precio. Zona Norte.',
+    notas: '40 prospectos en pipeline. 4 propuestas enviadas, 2 en levantamiento (Panduit, Genomma Lab), 15 reuniones agendadas, 19 rechazadas por precio. Zona Norte.',
     kpisSemanales: [
       { semana: 31, leadsNuevos: 11, reunionesAgendadas: 5, levantamientos: 1, propuestasEnviadas: 0, propuestasRechazadas: 0 },
       { semana: 32, leadsNuevos: 3, reunionesAgendadas: 3, levantamientos: 1, propuestasEnviadas: 0, propuestasRechazadas: 0 },
@@ -3958,8 +3844,8 @@ const salesTeamData = [
     reuniones: 4,
     cierres: 2,
     tasaConversion: 0,
-    presupuestoAnual2026: 21688469,
-    presupuestoMensual: 1807372,
+    presupuestoAnual2026: 10513000,
+    presupuestoMensual: 876000,
     ventasReales: 0,
     cumplimientoPresupuesto: 0,
     tiempoRespuesta: '5.5 hrs',
@@ -3989,8 +3875,8 @@ const salesTeamData = [
     reuniones: 0,
     cierres: 0,
     tasaConversion: 0,
-    presupuestoAnual2026: 21688469,
-    presupuestoMensual: 1807372,
+    presupuestoAnual2026: 18107320,
+    presupuestoMensual: 1509000,
     ventasReales: 0,
     cumplimientoPresupuesto: 0,
     tiempoRespuesta: '2.0 hrs',
@@ -4015,8 +3901,8 @@ const salesTeamData = [
     reuniones: 3,
     cierres: 0,
     tasaConversion: 0,
-    presupuestoAnual2026: 21688469,
-    presupuestoMensual: 1807372,
+    presupuestoAnual2026: 0,
+    presupuestoMensual: 0,
     ventasReales: 0,
     cumplimientoPresupuesto: 0,
     tiempoRespuesta: '3.0 hrs',
@@ -4970,8 +4856,7 @@ const InnovativeDemo = () => {
   const [nuevoLeadForm, setNuevoLeadForm] = useState({
     empresa: '', ciudad: '',
     contactoNombre: '', contactoCorreo: '', contactoTelefono: '',
-    fuente: 'otro', comentarios: '', ejecutivo: '',
-    fechaPrimerContacto: new Date().toISOString().split('T')[0],
+    fuente: 'otro', comentarios: '', ejecutivo: ''
   });
   const [mostrarLevantamientos, setMostrarLevantamientos] = useState(false);
   const [selectedLevantamientoDetalle, setSelectedLevantamientoDetalle] = useState(null);
@@ -5017,7 +4902,7 @@ const InnovativeDemo = () => {
 
   // Pipeline view states
   const [pipelineViewMode, setPipelineViewMode] = useState('kanban'); // 'kanban' | 'funnel' | 'tabla'
-  const [comercialTab, setComercialTab] = useState('presupuesto'); // 'presupuesto' | 'rechazadas'
+  const [comercialTab, setComercialTab] = useState('pipeline'); // 'pipeline' | 'presupuesto' | 'rechazadas'
   const [kanbanProspectos, setKanbanProspectos] = useState(topProspectos);
   const [activeKanbanId, setActiveKanbanId] = useState(null);
   const [showStageGateModal, setShowStageGateModal] = useState(false);
@@ -5452,8 +5337,8 @@ const InnovativeDemo = () => {
       servicios: [],
       status: 'Lead nuevo',
       semana: null,
-      fecha: nuevoLeadForm.fechaPrimerContacto || null,
-      propuesta: { status: null, ventaTotal: null, utilidad: null, carton: null, playo: null, mesCierre: null },
+      fecha: new Date().toISOString().split('T')[0],
+      propuesta: { status: null, ventaTotal: null, utilidad: null, carton: null, playo: null },
       motivoRechazo: null,
       comentarios: nuevoLeadForm.comentarios.trim(),
       fuente: nuevoLeadForm.fuente,
@@ -5468,8 +5353,7 @@ const InnovativeDemo = () => {
     setNuevoLeadForm({
       empresa: '', ciudad: '',
       contactoNombre: '', contactoCorreo: '', contactoTelefono: '',
-      fuente: 'otro', comentarios: '', ejecutivo: '',
-      fechaPrimerContacto: new Date().toISOString().split('T')[0],
+      fuente: 'otro', comentarios: '', ejecutivo: ''
     });
   };
 
@@ -5813,16 +5697,13 @@ const InnovativeDemo = () => {
     const pipelineBruto = topProspectos.reduce((s, p) => s + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0);
     const pipelinePonderado = calcularWeightedPipeline(topProspectos);
     const winRate = calcularWinRate(topProspectos);
-    const presupuestoTotal = presupuestoEvolution.reduce((s, m) => s + m.presupuesto, 0);
-    const ventasTotal = salesTeamData.reduce((s, m) => s + (m.ventasReales || 0), 0);
+    const presupuestoTotal = salesTeamData.reduce((s, m) => s + m.presupuestoAnual2026, 0);
+    const ventasTotal = salesTeamData.reduce((s, m) => s + m.ventasReales, 0);
     const stageData = KANBAN_STAGES.map(stage => ({
       ...stage,
       count: topProspectos.filter(p => p.status === stage.id).length,
       valor: topProspectos.filter(p => p.status === stage.id).reduce((s, p) => s + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0),
     }));
-    const hubMesIdx = new Date().getMonth();
-    const presupuestoMesEquipo = presupuestoEvolution[hubMesIdx]?.presupuesto || 0;
-    const ventasRealesEquipo = salesTeamData.reduce((s, m) => s + (m.ventasReales || 0), 0);
     const topDeals = [...topProspectos]
       .filter(p => !['Propuesta Rechazada'].includes(p.status))
       .sort((a, b) => (b.propuesta?.ventaTotal || b.facturacionEstimada || 0) - (a.propuesta?.ventaTotal || a.facturacionEstimada || 0))
@@ -5868,15 +5749,15 @@ const InnovativeDemo = () => {
       </div>
 
       {/* ═══════ ROW 0: EXECUTIVE MEGA-KPIs ═══════ */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Pipeline Total */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Presupuesto Anual */}
         <div className="bg-gradient-to-br from-[#1c2c4a] to-[#0D47A1] rounded-xl p-5 text-white">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-medium text-white/70">Presupuesto por Ejecutivo</span>
+            <span className="text-xs font-medium text-white/70">Presupuesto Anual</span>
             <DollarSign size={18} className="text-white/40" />
           </div>
-          <div className="text-2xl font-bold">${(pipelinePonderado / 1000000).toFixed(1)}M</div>
-          <div className="text-xs text-white/60 mt-1">Bruto: ${(pipelineBruto / 1000000).toFixed(0)}M · {leadsActivos.length} opps</div>
+          <div className="text-2xl font-bold">${(presupuestoTotal / 1000000).toFixed(0)}M</div>
+          <div className="text-xs text-white/60 mt-1">Venta real: ${(ventasTotal / 1000000).toFixed(1)}M · {presupuestoTotal > 0 ? Math.round((ventasTotal / presupuestoTotal) * 100) : 0}% cumplimiento</div>
         </div>
         {/* Ingresos Operativos */}
         <div className="bg-gradient-to-br from-[#2E7D32] to-[#1B5E20] rounded-xl p-5 text-white">
@@ -5887,58 +5768,97 @@ const InnovativeDemo = () => {
           <div className="text-2xl font-bold">${(ingresosOperativos / 1000000).toFixed(1)}M<span className="text-sm font-normal text-white/60">/mes</span></div>
           <div className="text-xs text-white/60 mt-1">{clientesConReportes.length} clientes activos · {clientesConReportes.reduce((s, c) => s + c.sucursales, 0)} sucursales</div>
         </div>
-        {/* Toneladas Circulares */}
-        <div className="bg-gradient-to-br from-[#00796B] to-[#004D40] rounded-xl p-5 text-white">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-medium text-white/70">Economía Circular</span>
-            <Recycle size={18} className="text-white/40" />
-          </div>
-          <div className="text-2xl font-bold">{(toneladasCirculares / 1000).toFixed(1)}K<span className="text-sm font-normal text-white/60"> ton</span></div>
-          <div className="text-xs text-white/60 mt-1">{porcentajeDesviacion.toFixed(0)}% desviación · {co2Evitado.toFixed(0)} ton CO₂ evitado</div>
-        </div>
-        {/* Alertas */}
-        <div className={`bg-gradient-to-br ${alertas.length > 5 ? 'from-[#C62828] to-[#B71C1C]' : 'from-[#E65100] to-[#BF360C]'} rounded-xl p-5 text-white`}>
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-medium text-white/70">Alertas Pendientes</span>
-            <Bell size={18} className="text-white/40" />
-          </div>
-          <div className="text-2xl font-bold">{alertas.length}</div>
-          <div className="text-xs text-white/60 mt-1">
-            {alertas.filter(a => a.prioridad === 'alta').length} alta · {alertas.filter(a => a.prioridad === 'media').length} media prioridad
-          </div>
-        </div>
       </div>
 
       {/* ═══════ SECTION A: COMERCIAL ═══════ */}
       <SectionHeader color="#00a8a8" icon={TrendingUp} label="Comercial" linkLabel="Ver Presupuesto" onLinkClick={() => setCurrentView('comercial')} />
 
-      {/* PRESUPUESTO MENSUAL — CARD PRINCIPAL */}
-      <div className="bg-gradient-to-r from-[#1c2c4a] to-[#0D47A1] rounded-xl p-6 text-white">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h3 className="text-lg font-bold">Presupuesto Mensual</h3>
-            <p className="text-sm text-white/70">{['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'][new Date().getMonth()]} {new Date().getFullYear()}</p>
-          </div>
-          <DollarSign size={28} className="text-white/40" />
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+        <div className="bg-white rounded-xl border border-[#e5e7eb] p-4">
+          <div className="text-xs text-[#6b7280] mb-1">Oportunidades</div>
+          <div className="text-xl font-bold text-[#1c2c4a]">{leadsActivos.length}</div>
+          <div className="text-[10px] text-[#6b7280]">{rechazadas.length} rechazadas</div>
         </div>
-        <div className="grid grid-cols-3 gap-6">
-          <div>
-            <div className="text-xs text-white/60 mb-1">Meta del Mes</div>
-            <div className="text-2xl font-bold">${(presupuestoMesEquipo / 1000000).toFixed(1)}M</div>
+        <div className="bg-white rounded-xl border border-[#e5e7eb] p-4">
+          <div className="text-xs text-[#6b7280] mb-1">Win Rate</div>
+          <div className="text-xl font-bold text-[#1c2c4a]">{winRate.toFixed(0)}%</div>
+          <div className="text-[10px] text-[#2E7D32]">{ganadas.length} ganadas</div>
+        </div>
+        <div className="bg-white rounded-xl border border-[#e5e7eb] p-4">
+          <div className="text-xs text-[#6b7280] mb-1">Propuestas Pendientes</div>
+          <div className="text-xl font-bold text-[#1c2c4a]">{propuestasEnviadas.length}</div>
+          <div className="text-[10px] text-[#00a8a8]">${(propuestasEnviadas.reduce((s, p) => s + (p.propuesta?.ventaTotal || 0), 0) / 1000000).toFixed(1)}M</div>
+        </div>
+      </div>
+
+      {/* Pipeline + Top Deals */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4">
+        {/* Pipeline por Stage (compact) */}
+        <div className="lg:col-span-2 bg-white rounded-xl border border-[#e5e7eb] p-4">
+          <h3 className="text-sm font-semibold text-[#1c2c4a] mb-3">Presupuesto por Etapa</h3>
+          <div className="space-y-1.5">
+            {stageData.map(stage => {
+              const maxCount = Math.max(...stageData.map(s => s.count), 1);
+              const pct = (stage.count / maxCount) * 100;
+              return (
+                <div key={stage.id} className="flex items-center gap-2">
+                  <div className="w-20 text-[11px] font-medium text-[#6b7280] text-right truncate">{stage.label}</div>
+                  <div className="flex-1 bg-[#f3f4f6] rounded-full h-5 overflow-hidden">
+                    <div className="h-full rounded-full flex items-center justify-end pr-2 transition-all"
+                      style={{ width: `${Math.max(pct, 8)}%`, backgroundColor: stage.color }}>
+                      <span className="text-[10px] font-bold text-white">{stage.count}</span>
+                    </div>
+                  </div>
+                  <div className="w-14 text-right text-[11px] font-semibold text-[#1c2c4a]">${(stage.valor / 1000000).toFixed(1)}M</div>
+                </div>
+              );
+            })}
           </div>
-          <div>
-            <div className="text-xs text-white/60 mb-1">Ventas Reales</div>
-            <div className="text-2xl font-bold">${(ventasRealesEquipo / 1000000).toFixed(1)}M</div>
+          <div className="mt-2 pt-2 border-t border-[#e5e7eb] flex items-center justify-between text-[11px] text-[#6b7280]">
+            <span>Total: {topProspectos.length} oportunidades</span>
+            <span>Ponderado: <span className="font-semibold text-[#00a8a8]">${(pipelinePonderado / 1000000).toFixed(1)}M</span></span>
           </div>
-          <div>
-            <div className="text-xs text-white/60 mb-1">Cumplimiento</div>
-            <div className={`text-2xl font-bold ${presupuestoMesEquipo > 0 ? ((ventasRealesEquipo / presupuestoMesEquipo) * 100 >= 70 ? 'text-green-300' : (ventasRealesEquipo / presupuestoMesEquipo) * 100 >= 40 ? 'text-yellow-300' : 'text-red-300') : ''}`}>
-              {presupuestoMesEquipo > 0 ? ((ventasRealesEquipo / presupuestoMesEquipo) * 100).toFixed(0) : 0}%
+        </div>
+
+        {/* Top 3 Deals */}
+        <div className="bg-white rounded-xl border border-[#e5e7eb] p-4">
+          <h3 className="text-sm font-semibold text-[#1c2c4a] mb-3">Top Oportunidades</h3>
+          <div className="space-y-2">
+            {topDeals.map((deal, idx) => {
+              const valor = deal.propuesta?.ventaTotal || deal.facturacionEstimada || 0;
+              const stage = KANBAN_STAGES.find(s => s.id === deal.status);
+              return (
+                <div key={deal.id} className="flex items-center gap-2 p-2 rounded-lg hover:bg-[#f3f4f6] transition-colors cursor-pointer"
+                  onClick={() => { setSelectedProspecto(deal); setMostrarDetallesProspecto(true); }}>
+                  <div className="w-5 h-5 rounded-full bg-[#f3f4f6] flex items-center justify-center text-[10px] font-bold text-[#6b7280]">{idx + 1}</div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-xs font-semibold text-[#1c2c4a] truncate">{deal.empresa}</div>
+                    <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full" style={{ backgroundColor: `${stage?.color}15`, color: stage?.color }}>{stage?.label}</span>
+                  </div>
+                  <div className="text-xs font-bold text-[#0D47A1]">${(valor / 1000000).toFixed(1)}M</div>
+                </div>
+              );
+            })}
+          </div>
+          {/* Historial anual */}
+          <div className="mt-3 pt-3 border-t border-[#e5e7eb]">
+            <div className="text-[11px] text-[#6b7280] mb-1">Historial Anual</div>
+            <div className="space-y-1.5">
+              {historicoVentas.map(h => {
+                const maxVal = Math.max(...historicoVentas.map(v => v.valor));
+                const pct = (h.valor / maxVal) * 100;
+                return (
+                  <div key={h.año} className="flex items-center gap-2">
+                    <div className="w-8 text-[10px] font-semibold text-[#1c2c4a]">{h.año}</div>
+                    <div className="flex-1 bg-[#f3f4f6] rounded-full h-2.5 overflow-hidden">
+                      <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: h.tipo === 'Presupuesto' ? '#00a8a8' : '#0D47A1' }} />
+                    </div>
+                    <div className="text-[10px] font-semibold text-[#1c2c4a] w-10 text-right">${(h.valor / 1000000).toFixed(0)}M</div>
+                  </div>
+                );
+              })}
             </div>
           </div>
-        </div>
-        <div className="mt-4 w-full bg-white/20 rounded-full h-2.5 overflow-hidden">
-          <div className="h-full rounded-full bg-white/80 transition-all" style={{ width: `${Math.min(presupuestoMesEquipo > 0 ? (ventasRealesEquipo / presupuestoMesEquipo) * 100 : 0, 100)}%` }} />
         </div>
       </div>
 
@@ -6030,162 +5950,14 @@ const InnovativeDemo = () => {
         </div>
       </div>
 
-      {/* ═══════ SECTION C: ECONOMIA CIRCULAR ═══════ */}
-      <SectionHeader color="#2E7D32" icon={Recycle} label="Economía Circular" linkLabel="Ver Trazabilidad" onLinkClick={() => setCurrentView('subproductos')} />
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <div className="bg-white rounded-xl border border-[#e5e7eb] p-4">
-          <div className="text-xs text-[#6b7280] mb-1">Toneladas Circulares</div>
-          <div className="text-xl font-bold text-[#1c2c4a]">{(toneladasCirculares / 1000).toFixed(1)}K</div>
-          <div className="text-[10px] text-[#6b7280]">de {(totalGenerado / 1000).toFixed(1)}K generadas</div>
-        </div>
-        <div className="bg-white rounded-xl border border-[#e5e7eb] p-4">
-          <div className="text-xs text-[#6b7280] mb-1">Tasa de Desviación</div>
-          <div className="text-xl font-bold" style={{ color: porcentajeDesviacion >= 90 ? '#2E7D32' : porcentajeDesviacion >= 70 ? '#F57C00' : '#DC2626' }}>{porcentajeDesviacion.toFixed(1)}%</div>
-          <div className="text-[10px] text-[#2E7D32]">Meta: 95%</div>
-        </div>
-        <div className="bg-white rounded-xl border border-[#e5e7eb] p-4">
-          <div className="text-xs text-[#6b7280] mb-1">Clientes Activos</div>
-          <div className="text-xl font-bold text-[#1c2c4a]">{clientesConReportes.length}</div>
-          <div className="text-[10px] text-[#6b7280]">{clientesConReportes.reduce((s, c) => s + c.sucursales, 0)} sucursales</div>
-        </div>
-        <div className="bg-white rounded-xl border border-[#e5e7eb] p-4">
-          <div className="text-xs text-[#6b7280] mb-1">CO₂ Evitado</div>
-          <div className="text-xl font-bold text-[#1c2c4a]">{co2Evitado.toFixed(0)}<span className="text-xs font-normal text-[#6b7280]"> ton</span></div>
-          <div className="text-[10px] text-[#2E7D32]">≈ {clientesConReportes.reduce((s, c) => s + c.impactoMensual.arboles, 0).toLocaleString()} árboles</div>
-        </div>
-      </div>
-
-      {/* Circular chart + Clientes */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4">
-        <div className="lg:col-span-2 bg-white rounded-xl border border-[#e5e7eb] p-4">
-          <h3 className="text-sm font-semibold text-[#1c2c4a] mb-2">Distribución por Destino</h3>
-          <ResponsiveContainer width="100%" height={160}>
-            <AreaChart data={distribucionPorDestinoBase}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
-              <XAxis dataKey="mes" tick={{ fontSize: 10, fill: '#6b7280' }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 10, fill: '#6b7280' }} axisLine={false} tickLine={false} width={35} />
-              <Tooltip contentStyle={{ fontSize: 11, borderRadius: 8 }} />
-              <Area type="monotone" dataKey="Reciclaje" stackId="1" stroke="#0D47A1" fill="#0D47A1" fillOpacity={0.7} />
-              <Area type="monotone" dataKey="Composta" stackId="1" stroke="#2E7D32" fill="#2E7D32" fillOpacity={0.7} />
-              <Area type="monotone" dataKey="Reuso" stackId="1" stroke="#00a8a8" fill="#00a8a8" fillOpacity={0.7} />
-              <Area type="monotone" dataKey="Relleno sanitario" stackId="1" stroke="#6b7280" fill="#6b7280" fillOpacity={0.4} />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
-
-        <div className="bg-white rounded-xl border border-[#e5e7eb] p-4">
-          <h3 className="text-sm font-semibold text-[#1c2c4a] mb-3">Clientes Circulares</h3>
-          <div className="space-y-3">
-            {clientesConReportes.map(c => (
-              <div key={c.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-[#f9fafb] cursor-pointer" onClick={() => setCurrentView('subproductos')}>
-                <span className="text-lg">{c.logo}</span>
-                <div className="flex-1 min-w-0">
-                  <div className="text-xs font-semibold text-[#1c2c4a] truncate">{c.name}</div>
-                  <div className="text-[10px] text-[#6b7280]">{c.rmeGestionado} ton · {c.sucursales} suc.</div>
-                </div>
-                <div className="text-right">
-                  <div className="text-xs font-bold text-[#0D47A1]">${(c.ingresosMes / 1000000).toFixed(1)}M</div>
-                  <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-medium ${
-                    c.statusReporte === 'Enviado' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'
-                  }`}>{c.statusReporte}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* ═══════ SECTION D: EQUIPO + ALERTAS ═══════ */}
-      <SectionHeader color="#1c2c4a" icon={Users} label="Equipo y Alertas" />
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Team performance table */}
-        <div className="lg:col-span-2 bg-white rounded-xl border border-[#e5e7eb] p-4">
-          <h3 className="text-sm font-semibold text-[#1c2c4a] mb-3">Rendimiento del Equipo</h3>
-          <div className="overflow-x-auto">
-            <table className="w-full text-xs">
-              <thead>
-                <tr className="border-b border-[#e5e7eb]">
-                  <th className="text-left py-2 text-[#6b7280] font-medium">Ejecutivo</th>
-                  <th className="text-right py-2 text-[#6b7280] font-medium">Presupuesto</th>
-                  <th className="text-right py-2 text-[#6b7280] font-medium">Opps</th>
-                  <th className="text-right py-2 text-[#6b7280] font-medium">Leads/S</th>
-                  <th className="text-right py-2 text-[#6b7280] font-medium">Reun/S</th>
-                  <th className="text-right py-2 text-[#6b7280] font-medium">Score</th>
-                </tr>
-              </thead>
-              <tbody>
-                {salesTeamData.map(member => {
-                  const memberProspectos = topProspectos.filter(p => p.ejecutivo === member.codigo);
-                  const memberPipeline = memberProspectos.reduce((s, p) => s + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0);
-                  const lastWeek = member.kpisSemanales && member.kpisSemanales.length > 0 ? member.kpisSemanales[member.kpisSemanales.length - 1] : null;
-                  return (
-                    <tr key={member.id}
-                      className="border-b border-[#f3f4f6] hover:bg-[#f9fafb] cursor-pointer transition-colors"
-                      onClick={() => { setHubEjecutivo(member);setCurrentView('hub-ejecutivo'); }}>
-                      <td className="py-2.5">
-                        <div className="flex items-center gap-2">
-                          <ExecutiveAvatar codigo={member.codigo} name={member.name} size="xs" />
-                          <div>
-                            <div className="font-semibold text-[#1c2c4a]">{member.name.split(' ').slice(0, 2).join(' ')}</div>
-                            <div className="text-[10px] text-[#6b7280]">{member.zona}</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="text-right font-bold text-[#0D47A1] py-2.5">${(memberPipeline / 1000000).toFixed(1)}M</td>
-                      <td className="text-right text-[#1c2c4a] py-2.5">{memberProspectos.length}</td>
-                      <td className="text-right text-[#1c2c4a] py-2.5">{lastWeek?.leadsNuevos ?? '—'}</td>
-                      <td className="text-right text-[#1c2c4a] py-2.5">{lastWeek?.reunionesAgendadas ?? '—'}</td>
-                      <td className="text-right py-2.5">
-                        <span className={`inline-block px-2 py-0.5 rounded-full font-bold text-[10px] ${
-                          member.eficienciaGlobal >= 75 ? 'bg-green-100 text-green-700' :
-                          member.eficienciaGlobal >= 50 ? 'bg-orange-100 text-orange-700' :
-                          'bg-red-100 text-red-700'
-                        }`}>{member.eficienciaGlobal}%</span>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* Alertas */}
-        <div className="bg-white rounded-xl border border-[#e5e7eb] p-4">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-[#1c2c4a]">Alertas</h3>
-            <span className="w-5 h-5 rounded-full bg-red-500 text-white text-[10px] flex items-center justify-center font-bold">{alertas.length}</span>
-          </div>
-          {alertasActivas.length > 0 ? (
-            <div className="space-y-2">
-              {alertasActivas.map((alerta, idx) => (
-                <div key={idx} className={`p-2.5 rounded-lg border text-[11px] ${
-                  alerta.prioridad === 'alta' ? 'bg-red-50 border-red-200' :
-                  alerta.prioridad === 'media' ? 'bg-orange-50 border-orange-200' :
-                  'bg-yellow-50 border-yellow-200'
-                }`}>
-                  <div className="font-medium text-[#1c2c4a] mb-0.5">{alerta.mensaje}</div>
-                  <span className={`font-semibold ${alerta.prioridad === 'alta' ? 'text-red-600' : 'text-orange-600'}`}>{alerta.accion}</span>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center py-8 text-[#6b7280]">
-              <CheckSquare size={28} className="mb-2 text-[#2E7D32]" />
-              <span className="text-xs">Sin alertas pendientes</span>
-            </div>
-          )}
-        </div>
-      </div>
 
     </div>
     </div>
     );
   };
 
-  // HubKanbanCard — redesigned for readability (bigger text, no clutter)
+  // HubKanbanCard — extracted from EjecutivoHubView so useSortable is called at component top level (not inside .map())
   const HubKanbanCard = ({ prospecto, onSelect, prospectoNotas: notas, prospectoArchivos: archivos, calcularCamposCompletos: calcCampos }) => {
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
       id: prospecto.id,
@@ -6194,9 +5966,6 @@ const InnovativeDemo = () => {
     const valor = prospecto.propuesta?.ventaTotal || prospecto.facturacionEstimada || 0;
     const primaryService = (prospecto.servicios || [])[0] || 'rme';
     const svc = SERVICE_COLORS[primaryService] || SERVICE_COLORS.rme;
-    const fechaRef = estimarFechaProspecto(prospecto);
-    const diasSinActualizar = fechaRef ? Math.floor((new Date() - new Date(fechaRef)) / (1000 * 60 * 60 * 24)) : null;
-    const diasColor = diasSinActualizar === null ? '#9ca3af' : diasSinActualizar > 30 ? '#EF4444' : diasSinActualizar > 14 ? '#F59E0B' : '#9ca3af';
     return (
       <div
         ref={setNodeRef}
@@ -6204,29 +5973,50 @@ const InnovativeDemo = () => {
           transform: CSS.Transform.toString(transform),
           transition,
           opacity: isDragging ? 0.5 : 1,
+          backgroundColor: svc.bg,
+          borderLeft: `3px solid ${svc.border}`,
         }}
         {...attributes}
         {...listeners}
-        className="bg-white rounded-lg border border-[#e5e7eb] p-3 mb-2 cursor-grab active:cursor-grabbing hover:shadow-md hover:border-[#00a8a8]/40 transition-all"
+        className="rounded-lg p-1.5 mb-1 cursor-grab active:cursor-grabbing hover:shadow-md transition-all"
         onClick={(e) => { if (!isDragging) { e.stopPropagation(); onSelect(prospecto); } }}
       >
-        <div className="flex items-start justify-between gap-2 mb-1.5">
-          <h4 className="text-[13px] font-bold text-[#1c2c4a] leading-snug">{prospecto.empresa}</h4>
-          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap flex-shrink-0" style={{ backgroundColor: `${svc.border}18`, color: svc.text }}>{svc.label}</span>
+        <div className="flex items-center justify-between gap-1 mb-0.5">
+          <h4 className="text-[12px] font-semibold text-[#1c2c4a] truncate leading-tight flex-1 min-w-0">{prospecto.empresa}</h4>
+          <span className="text-[8px] font-bold px-1 py-px rounded-full whitespace-nowrap flex-shrink-0" style={{ backgroundColor: `${svc.border}18`, color: svc.text }}>{svc.label}</span>
         </div>
-        {prospecto.contacto?.nombre && (
-          <div className="text-xs text-[#6b7280] mb-1">{prospecto.contacto.nombre}</div>
-        )}
-        <div className="flex items-center justify-between text-xs text-[#9ca3af]">
-          {prospecto.ciudad && <span className="text-[#6b7280]">{prospecto.ciudad.split(',')[0]}</span>}
-          {valor > 0 && <span className="font-bold text-[#0D47A1]">${(valor / 1000000).toFixed(1)}M</span>}
-        </div>
-        {diasSinActualizar !== null && (
-          <div className="flex items-center gap-1 mt-1.5 text-[11px]" style={{ color: diasColor }}>
-            <Clock size={11} />
-            <span>{diasSinActualizar === 0 ? 'Actualizado hoy' : diasSinActualizar === 1 ? 'Hace 1 día' : `Hace ${diasSinActualizar} días`}</span>
-          </div>
-        )}
+        {(() => {
+          const fechaRef = estimarFechaProspecto(prospecto);
+          return (
+            <div className="flex items-center justify-between text-[10px] text-[#9ca3af]">
+              <div className="flex items-center gap-1">
+                {prospecto.ciudad && <span className="truncate max-w-[50px]">{prospecto.ciudad.split(',')[0]}</span>}
+                <span className="font-semibold px-1 py-px rounded text-[8px]" style={{ color: urgencyColor(fechaRef), backgroundColor: `${urgencyColor(fechaRef)}12` }}>
+                  {timeAgo(fechaRef)}
+                </span>
+              </div>
+              <div className="flex items-center gap-1 flex-shrink-0">
+                {(notas[prospecto.id]?.length > 0) && <span className="flex items-center gap-0.5 text-[#9ca3af]"><MessageSquare size={8} />{notas[prospecto.id].length}</span>}
+                {(archivos[prospecto.id]?.length > 0) && <span className="flex items-center gap-0.5 text-[#9ca3af]"><Paperclip size={8} />{archivos[prospecto.id].length}</span>}
+              </div>
+              {valor > 0 && <span className="font-bold text-[#0D47A1]">${(valor / 1000000).toFixed(1)}M</span>}
+            </div>
+          );
+        })()}
+        {(() => {
+          const campos = calcCampos(prospecto);
+          const completos = campos.filter(c => c.ok).length;
+          const total = campos.length;
+          const pct = (completos / total) * 100;
+          const barColor = completos === total ? '#2E7D32' : pct >= 60 ? '#F57C00' : '#ef4444';
+          return (
+            <div className="mt-1">
+              <div className="w-full h-[2px] bg-black/[0.04] rounded-full overflow-hidden">
+                <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: barColor }} />
+              </div>
+            </div>
+          );
+        })()}
       </div>
     );
   };
@@ -6237,7 +6027,7 @@ const InnovativeDemo = () => {
     return (
       <div
         ref={setNodeRef}
-        className={`min-h-[120px] max-h-[60vh] overflow-y-auto transition-colors rounded-lg flex-1 ${isOver ? 'bg-[#00a8a8]/5 ring-2 ring-[#00a8a8]/30' : ''}`}
+        className={`min-h-[120px] transition-colors rounded-lg flex-1 ${isOver ? 'bg-[#00a8a8]/5 ring-2 ring-[#00a8a8]/30' : ''}`}
       >
         {children}
       </div>
@@ -6260,8 +6050,6 @@ const InnovativeDemo = () => {
     const [selectedProspecto, setSelectedProspecto] = React.useState(null);
     const [copiedField, setCopiedField] = React.useState(null);
     const [hubActiveKanbanId, setHubActiveKanbanId] = React.useState(null);
-    const [showHistorial, setShowHistorial] = React.useState(false);
-    const [historialMesExpandido, setHistorialMesExpandido] = React.useState(null);
     const [showRechazadasModal, setShowRechazadasModal] = React.useState(false);
     const [expandedColumns, setExpandedColumns] = React.useState({});
 
@@ -6458,9 +6246,82 @@ const InnovativeDemo = () => {
                     }`}>{stageInfo?.label || p.status}</span>
                   </div>
                 </div>
-                <button onClick={onClose} className="text-[#999] hover:text-[#333] p-1 -mr-1 -mt-1 transition-colors">
-                  <X size={20} />
-                </button>
+                <div className="flex items-center gap-1.5">
+                  {/* Avanzar Etapa */}
+                  {(() => {
+                    const stageIds = KANBAN_STAGES.map(s => s.id);
+                    const currentIdx = stageIds.indexOf(p.status);
+                    const nextStage = currentIdx >= 0 && currentIdx < stageIds.length - 1 ? KANBAN_STAGES[currentIdx + 1] : null;
+                    if (!nextStage) return null;
+                    return (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const gate = STAGE_GATES[nextStage.id];
+                          if (gate && !gate.validate(p)) {
+                            setPendingMove({ prospecto: p, fromStage: p.status, toStage: nextStage.id });
+                            setShowStageGateModal(true);
+                            return;
+                          }
+                          changeProspectoStage(p.id, nextStage.id);
+                        }}
+                        className="flex items-center gap-1 px-2.5 py-1.5 bg-[#00a8a8] hover:bg-[#008b8b] text-white rounded-lg text-xs font-medium transition-all"
+                      >
+                        <ChevronRight size={14} />
+                        Avanzar a {nextStage.label}
+                      </button>
+                    );
+                  })()}
+                  {/* Editar */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const newEmpresa = prompt('Empresa:', p.empresa);
+                      if (newEmpresa === null) return;
+                      const newIndustria = prompt('Industria:', p.industria || '');
+                      const newVolumen = prompt('Volumen Estimado:', p.volumenEstimado || '');
+                      const newCiudad = prompt('Ciudad:', p.ciudad || '');
+                      const newComentarios = prompt('Comentarios:', p.comentarios || '');
+                      setKanbanProspectos(prev => prev.map(pr => pr.id === p.id ? {
+                        ...pr,
+                        empresa: newEmpresa || pr.empresa,
+                        industria: newIndustria !== null ? newIndustria : pr.industria,
+                        volumenEstimado: newVolumen !== null ? newVolumen : pr.volumenEstimado,
+                        ciudad: newCiudad !== null ? newCiudad : pr.ciudad,
+                        comentarios: newComentarios !== null ? newComentarios : pr.comentarios,
+                      } : pr));
+                      setSelectedProspecto(prev => prev ? {
+                        ...prev,
+                        empresa: newEmpresa || prev.empresa,
+                        industria: newIndustria !== null ? newIndustria : prev.industria,
+                        volumenEstimado: newVolumen !== null ? newVolumen : prev.volumenEstimado,
+                        ciudad: newCiudad !== null ? newCiudad : prev.ciudad,
+                        comentarios: newComentarios !== null ? newComentarios : prev.comentarios,
+                      } : null);
+                    }}
+                    className="p-1.5 text-[#999] hover:text-[#00a8a8] hover:bg-[#00a8a8]/10 rounded-lg transition-all"
+                    title="Editar prospecto"
+                  >
+                    <Edit3 size={16} />
+                  </button>
+                  {/* Eliminar */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (window.confirm(`¿Eliminar prospecto "${p.empresa}"? Esta acción no se puede deshacer.`)) {
+                        setKanbanProspectos(prev => prev.filter(pr => pr.id !== p.id));
+                        onClose();
+                      }
+                    }}
+                    className="p-1.5 text-[#999] hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                    title="Eliminar prospecto"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                  <button onClick={onClose} className="text-[#999] hover:text-[#333] p-1 transition-colors">
+                    <X size={20} />
+                  </button>
+                </div>
               </div>
 
               {/* Tabs - Notion style */}
@@ -6627,7 +6488,7 @@ const InnovativeDemo = () => {
                             )}
                             <button onClick={() => { changeProspectoStage(p.id, 'Lead nuevo'); guardarSeguimiento(p.id, { recoveryStatus: null, fechaSeguimiento: null }); }}
                               className="px-3 py-2 rounded-lg bg-[#00a8a8] text-white text-xs font-semibold hover:bg-[#008080] transition-colors flex items-center justify-center gap-1.5">
-                              <RotateCcw size={12} /> Reactivar en Presupuesto
+                              <RotateCcw size={12} /> Reactivar en Pipeline
                             </button>
                           </div>
                         </div>
@@ -6638,67 +6499,62 @@ const InnovativeDemo = () => {
               );
             })()}
 
-            <div className="p-5 space-y-4">
-              {/* Compact summary row */}
-              <div className="flex items-center flex-wrap gap-x-4 gap-y-2">
-                <span className="text-xl font-bold text-[#0D47A1]">{valor > 0 ? `$${(valor / 1000).toFixed(0)}K` : '—'}</span>
-                <div className="w-px h-5 bg-[#e5e7eb]" />
-                <div className="flex items-center gap-1.5">
-                  <Clock size={14} className="text-[#9ca3af]" />
-                  <span className="text-sm font-semibold text-[#1c2c4a]">{dias !== null ? `${dias} días` : '—'}</span>
+            <div className="p-5 space-y-5">
+              {/* Value + date row */}
+              <div className="flex items-center gap-3">
+                <div className="flex-1 bg-[#EFF6FF] rounded-xl p-3 text-center">
+                  <div className="text-xs text-[#6b7280] mb-0.5">Valor estimado</div>
+                  <div className="text-xl font-bold text-[#0D47A1]">{valor > 0 ? `$${(valor / 1000).toFixed(0)}K` : '—'}</div>
+                </div>
+                <div className="flex-1 bg-[#f3f4f6] rounded-xl p-3 text-center">
+                  <div className="text-xs text-[#6b7280] mb-0.5">Días en pipeline</div>
+                  <div className="text-xl font-bold text-[#1c2c4a]">{dias !== null ? dias : '—'}</div>
                 </div>
                 {p.propuesta?.status && (
-                  <>
-                    <div className="w-px h-5 bg-[#e5e7eb]" />
-                    <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
-                      p.propuesta.status === 'Aceptada' ? 'bg-green-100 text-green-700' : p.propuesta.status === 'Rechazada' ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-600'
-                    }`}>{p.propuesta.status}</span>
-                  </>
-                )}
-                {sc.length > 0 && (
-                  <>
-                    <div className="w-px h-5 bg-[#e5e7eb]" />
-                    <div className="flex gap-1.5">
-                      {sc.map(s => (
-                        <span key={s.id} className="px-2 py-0.5 rounded text-[11px] font-semibold" style={{ backgroundColor: s.bg, color: s.text }}>
-                          {s.nombre}
-                        </span>
-                      ))}
-                    </div>
-                  </>
+                  <div className={`flex-1 rounded-xl p-3 text-center ${
+                    p.propuesta.status === 'Aceptada' ? 'bg-green-50' : p.propuesta.status === 'Rechazada' ? 'bg-red-50' : 'bg-gray-50'
+                  }`}>
+                    <div className="text-xs text-[#6b7280] mb-0.5">Propuesta</div>
+                    <div className={`text-sm font-bold ${
+                      p.propuesta.status === 'Aceptada' ? 'text-green-700' : p.propuesta.status === 'Rechazada' ? 'text-red-600' : 'text-gray-600'
+                    }`}>{p.propuesta.status}</div>
+                  </div>
                 )}
               </div>
 
-              {/* Contact - inline */}
+              {/* Contact section */}
               {p.contacto?.nombre && (
-                <div className="border-t border-[#f0f0f0] pt-3">
-                  <div className="flex items-start justify-between">
+                <div className="bg-white rounded-xl border border-[#e5e7eb] overflow-hidden">
+                  <div className="px-4 py-3 bg-[#f9fafb] border-b border-[#e5e7eb]">
+                    <h3 className="text-sm font-semibold text-[#1c2c4a] flex items-center gap-2"><Users size={14} /> Contacto</h3>
+                  </div>
+                  <div className="p-4 space-y-3">
                     <div>
                       <div className="text-sm font-semibold text-[#1c2c4a]">{p.contacto.nombre}</div>
-                      {p.contacto.puesto && <div className="text-xs text-[#6b7280] mt-0.5">{p.contacto.puesto}</div>}
+                      {p.contacto.puesto && <div className="text-xs text-[#6b7280]">{p.contacto.puesto}</div>}
                     </div>
-                    <div className="flex gap-1.5">
+                    {/* Quick actions */}
+                    <div className="flex flex-wrap gap-2">
                       {p.contacto.telefono && (
-                        <a href={`tel:${p.contacto.telefono}`} className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-green-50 text-green-700 text-xs font-medium hover:bg-green-100 transition-colors">
+                        <a href={`tel:${p.contacto.telefono}`} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-50 text-green-700 text-xs font-medium hover:bg-green-100 transition-colors">
                           <Phone size={12} /> Llamar
                         </a>
                       )}
                       {p.contacto.telefono && (
-                        <a href={`https://wa.me/52${p.contacto.telefono.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-green-50 text-green-700 text-xs font-medium hover:bg-green-100 transition-colors">
-                          <MessageSquare size={12} /> WhatsApp
+                        <a href={`https://wa.me/52${p.contacto.telefono.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-white text-xs font-semibold hover:opacity-90 transition-colors shadow-sm" style={{ backgroundColor: '#25D366' }}>
+                          <MessageSquare size={14} /> WhatsApp
                         </a>
                       )}
                       {p.contacto.correo && (
-                        <a href={`mailto:${p.contacto.correo}`} className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-blue-50 text-blue-700 text-xs font-medium hover:bg-blue-100 transition-colors">
+                        <a href={`mailto:${p.contacto.correo}`} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 text-xs font-medium hover:bg-blue-100 transition-colors">
                           <Mail size={12} /> Email
                         </a>
                       )}
                     </div>
-                  </div>
-                  <div className="mt-2 space-y-1">
+                    {/* Contact details with copy */}
                     {p.contacto.correo && (
-                      <div className="flex items-center justify-between group text-sm text-[#6b7280]">
-                        <div className="flex items-center gap-2">
+                      <div className="flex items-center justify-between group">
+                        <div className="flex items-center gap-2 text-sm text-[#6b7280]">
                           <Mail size={13} className="text-[#9ca3af]" />
                           <span>{p.contacto.correo}</span>
                         </div>
@@ -6708,8 +6564,8 @@ const InnovativeDemo = () => {
                       </div>
                     )}
                     {p.contacto.telefono && (
-                      <div className="flex items-center justify-between group text-sm text-[#6b7280]">
-                        <div className="flex items-center gap-2">
+                      <div className="flex items-center justify-between group">
+                        <div className="flex items-center gap-2 text-sm text-[#6b7280]">
                           <Phone size={13} className="text-[#9ca3af]" />
                           <span>{p.contacto.telefono}</span>
                         </div>
@@ -6722,54 +6578,189 @@ const InnovativeDemo = () => {
                 </div>
               )}
 
-              {/* Services moved to summary row */}
-
-              {/* Details - simple rows */}
-              {(p.volumenEstimado || p.siguientePaso || p.motivoRechazo || p.propuesta || p.fecha) && (
-                <div className="border-t border-[#f0f0f0] pt-3 space-y-2">
-                  {p.fecha && (
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-[#6b7280]">Fecha</span>
-                      <span className="font-medium text-[#1c2c4a]">{p.fecha}</span>
-                    </div>
-                  )}
-                  {p.volumenEstimado && (
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-[#6b7280]">Volumen estimado</span>
-                      <span className="font-medium text-[#1c2c4a]">{p.volumenEstimado}</span>
-                    </div>
-                  )}
-                  {p.propuesta?.ventaMensual && (
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-[#6b7280]">Venta mensual</span>
-                      <span className="font-medium text-[#1c2c4a]">${(p.propuesta.ventaMensual / 1000).toFixed(0)}K</span>
-                    </div>
-                  )}
-                  {p.propuesta?.ventaTotal && (
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-[#6b7280]">Venta total</span>
-                      <span className="font-bold text-[#0D47A1]">${(p.propuesta.ventaTotal / 1000).toFixed(0)}K</span>
-                    </div>
-                  )}
-                  {p.siguientePaso && (
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-[#6b7280]">Siguiente paso</span>
-                      <span className="font-medium text-[#00a8a8]">{p.siguientePaso}</span>
-                    </div>
-                  )}
-                  {p.motivoRechazo && (() => {
-                    const cat = classifyRechazo(p.motivoRechazo);
-                    return (
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-[#6b7280]">Motivo rechazo</span>
-                        <span className="font-medium truncate max-w-[200px]" style={{ color: cat?.color }}>{p.motivoRechazo}</span>
-                      </div>
-                    );
-                  })()}
+              {/* Services */}
+              {sc.length > 0 && (
+                <div className="bg-white rounded-xl border border-[#e5e7eb] overflow-hidden">
+                  <div className="px-4 py-3 bg-[#f9fafb] border-b border-[#e5e7eb]">
+                    <h3 className="text-sm font-semibold text-[#1c2c4a] flex items-center gap-2"><Package size={14} /> Servicios</h3>
+                  </div>
+                  <div className="p-4 flex flex-wrap gap-2">
+                    {sc.map(s => (
+                      <span key={s.id} className="px-3 py-1.5 rounded-lg text-xs font-semibold" style={{ backgroundColor: s.bg, color: s.text, border: `1px solid ${s.border || s.text}20` }}>
+                        {s.nombre}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               )}
 
-              {/* Notes & Files available in their dedicated tabs */}
+              {/* Additional info */}
+              {(p.volumenEstimado || p.siguientePaso || p.motivoRechazo || p.propuesta) && (
+                <div className="bg-white rounded-xl border border-[#e5e7eb] overflow-hidden">
+                  <div className="px-4 py-3 bg-[#f9fafb] border-b border-[#e5e7eb]">
+                    <h3 className="text-sm font-semibold text-[#1c2c4a] flex items-center gap-2"><ClipboardList size={14} /> Detalles</h3>
+                  </div>
+                  <div className="p-4 space-y-2.5">
+                    {p.volumenEstimado && (
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-[#6b7280]">Volumen estimado</span>
+                        <span className="font-medium text-[#1c2c4a]">{p.volumenEstimado}</span>
+                      </div>
+                    )}
+                    {p.propuesta?.ventaMensual && (
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-[#6b7280]">Venta mensual</span>
+                        <span className="font-medium text-[#1c2c4a]">${(p.propuesta.ventaMensual / 1000).toFixed(0)}K</span>
+                      </div>
+                    )}
+                    {p.propuesta?.ventaTotal && (
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-[#6b7280]">Venta total (contrato)</span>
+                        <span className="font-bold text-[#0D47A1]">${(p.propuesta.ventaTotal / 1000).toFixed(0)}K</span>
+                      </div>
+                    )}
+                    {p.siguientePaso && (
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-[#6b7280]">Siguiente paso</span>
+                        <span className="font-medium text-[#00a8a8]">{p.siguientePaso}</span>
+                      </div>
+                    )}
+                    {p.motivoRechazo && (() => {
+                      const cat = classifyRechazo(p.motivoRechazo);
+                      return (
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-[#6b7280]">Motivo rechazo</span>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full" style={{ backgroundColor: `${cat?.color}15`, color: cat?.color }}>{cat?.label}</span>
+                            <span className="font-medium text-sm truncate max-w-[200px]" style={{ color: cat?.color }}>{p.motivoRechazo}</span>
+                          </div>
+                        </div>
+                      );
+                    })()}
+                    {p.fecha && (
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-[#6b7280]">Fecha</span>
+                        <span className="font-medium text-[#1c2c4a]">{p.fecha}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* NOTAS per-prospecto */}
+              <div className="bg-white rounded-xl border border-[#e5e7eb] overflow-hidden">
+                <div className="px-4 py-3 bg-[#f9fafb] border-b border-[#e5e7eb]">
+                  <h3 className="text-sm font-semibold text-[#1c2c4a] flex items-center gap-2">
+                    <MessageSquare size={14} /> Notas
+                    {(prospectoNotas[p.id]?.length > 0) && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#e5e7eb] text-[#6b7280]">{prospectoNotas[p.id].length}</span>
+                    )}
+                  </h3>
+                </div>
+                <div className="p-4 space-y-3">
+                  {/* Input nueva nota */}
+                  <div className="flex gap-2">
+                    <textarea
+                      value={prospectoNuevaNota}
+                      onChange={(e) => setProspectoNuevaNota(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); agregarNota(); }}}
+                      placeholder="Escribe una nota... (Enter para guardar)"
+                      className="flex-1 border border-[#e5e7eb] rounded-lg px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#00a8a8]/30 focus:border-[#00a8a8]"
+                      rows={1}
+                    />
+                    <button
+                      onClick={agregarNota}
+                      disabled={!prospectoNuevaNota.trim()}
+                      className="self-end px-3 py-2 bg-[#00a8a8] hover:bg-[#008080] disabled:opacity-40 text-white rounded-lg text-sm font-medium transition-colors"
+                    >
+                      <Send size={14} />
+                    </button>
+                  </div>
+                  {/* Lista de notas */}
+                  {(prospectoNotas[p.id]?.length > 0) ? (
+                    <div className="space-y-2 max-h-48 overflow-y-auto">
+                      {[...(prospectoNotas[p.id] || [])].reverse().map(nota => (
+                        <div key={nota.id} className="bg-[#f9fafb] rounded-lg p-3 group">
+                          <div className="flex items-start justify-between gap-2">
+                            <p className="text-sm text-[#1c2c4a] flex-1 whitespace-pre-wrap">{nota.text}</p>
+                            <button
+                              onClick={() => eliminarNota(nota.id)}
+                              className="opacity-0 group-hover:opacity-100 text-[#6b7280] hover:text-red-500 transition-all flex-shrink-0 mt-0.5"
+                            >
+                              <Trash2 size={12} />
+                            </button>
+                          </div>
+                          <div className="flex items-center gap-1 mt-1.5 text-[10px] text-[#9ca3af]">
+                            <Clock size={9} />
+                            {timeAgo(nota.date) || 'ahora'}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-[#9ca3af] text-center py-2">Agrega una nota...</p>
+                  )}
+                </div>
+              </div>
+
+              {/* ARCHIVOS per-prospecto */}
+              {(() => {
+                const drawerFileRef = React.createRef();
+                return (
+                  <div className="bg-white rounded-xl border border-[#e5e7eb] overflow-hidden">
+                    <div className="px-4 py-3 bg-[#f9fafb] border-b border-[#e5e7eb]">
+                      <h3 className="text-sm font-semibold text-[#1c2c4a] flex items-center gap-2">
+                        <Paperclip size={14} /> Archivos
+                        {(prospectoArchivos[p.id]?.length > 0) && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#e5e7eb] text-[#6b7280]">{prospectoArchivos[p.id].length}</span>
+                        )}
+                      </h3>
+                    </div>
+                    <div className="p-4 space-y-3">
+                      {/* Upload zone */}
+                      <div
+                        className="border border-dashed border-[#d1d5db] hover:border-[#00a8a8] rounded-lg p-3 text-center transition-colors cursor-pointer"
+                        onClick={() => drawerFileRef.current?.click()}
+                      >
+                        <input
+                          type="file"
+                          ref={drawerFileRef}
+                          className="hidden"
+                          multiple
+                          accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,.xlsx,.xls,.csv,.doc,.docx"
+                          onChange={handleFileUpload}
+                        />
+                        <Upload size={16} className="text-[#d1d5db] mx-auto mb-1" />
+                        <p className="text-xs text-[#6b7280]">Click para subir archivos</p>
+                      </div>
+                      {/* File list */}
+                      {(prospectoArchivos[p.id]?.length > 0) ? (
+                        <div className="space-y-1.5 max-h-40 overflow-y-auto">
+                          {[...(prospectoArchivos[p.id] || [])].reverse().map(archivo => (
+                            <div key={archivo.id} className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-[#f9fafb] group transition-colors">
+                              <div className="w-7 h-7 rounded-md bg-[#f3f4f6] flex items-center justify-center flex-shrink-0">
+                                {getFileIcon(archivo.type)}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="text-xs font-medium text-[#1c2c4a] truncate">{archivo.name}</div>
+                                <div className="text-[10px] text-[#9ca3af]">{formatFileSize(archivo.size)} · {archivo.date}</div>
+                              </div>
+                              <button
+                                onClick={() => eliminarArchivo(archivo.id)}
+                                className="opacity-0 group-hover:opacity-100 text-[#6b7280] hover:text-red-500 transition-all"
+                              >
+                                <Trash2 size={12} />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-[#9ca3af] text-center py-2">Sube un archivo...</p>
+                      )}
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           </>)}
             </div>
@@ -6796,42 +6787,97 @@ const InnovativeDemo = () => {
           <p className="text-sm text-[#6b7280]">{member.role} — {member.zona}</p>
         </div>
         <div className="text-right hidden md:block">
-          <div className="text-sm text-[#6b7280]">Presupuesto Total</div>
-          <div className="text-xl font-bold text-[#0D47A1]">${(totalPipeline / 1000000).toFixed(1)}M</div>
+          <div className="text-sm text-[#6b7280]">Presupuesto Anual</div>
+          <div className="text-xl font-bold text-[#0D47A1]">${(member.presupuestoAnual2026 / 1000000).toFixed(1)}M</div>
+          <div className="text-xs text-[#9ca3af]">${(member.presupuestoMensual / 1000000).toFixed(2)}M / mes</div>
         </div>
+        <button
+          onClick={() => { setNuevoLeadForm(prev => ({ ...prev, ejecutivo: member.codigo })); setShowNuevoLead(true); }}
+          className="flex items-center gap-2 px-4 py-2.5 bg-[#1c2c4a] hover:bg-[#1c2c4a]/90 text-white rounded-lg text-sm font-semibold transition-all shadow-sm hover:shadow-md"
+        >
+          <Plus size={16} />
+          Nuevo Lead
+        </button>
       </div>
 
-      {/* 3 KPIs */}
-      <div className="grid grid-cols-3 gap-3 mb-5">
-        <div className="bg-white rounded-xl border border-[#e5e7eb] p-4 text-center">
-          <div className="text-3xl font-bold text-[#00a8a8]">{memberProspectosActivos.length}</div>
-          <div className="text-xs text-[#6b7280] mt-1">Prospectos Activos</div>
+      {/* KPI ROW — funnel de conversión */}
+      <div className="grid grid-cols-3 md:grid-cols-6 gap-3 mb-5">
+        <div className="bg-white rounded-xl border border-[#e5e7eb] p-3 text-center">
+          <div className="text-2xl font-bold text-[#6b7280]">{memberLeads.length}</div>
+          <div className="text-xs text-[#6b7280] mt-0.5">Leads</div>
         </div>
-        <div className="bg-white rounded-xl border border-[#e5e7eb] p-4 text-center">
-          <div className="text-3xl font-bold text-[#7C3AED]">{memberPropuestas.length}</div>
-          <div className="text-xs text-[#6b7280] mt-1">Propuestas</div>
+        <div className="bg-white rounded-xl border border-[#e5e7eb] p-3 text-center">
+          <div className="text-2xl font-bold text-[#00a8a8]">{memberProspectosActivos.length}</div>
+          <div className="text-xs text-[#6b7280] mt-0.5">Prospectos</div>
         </div>
-        <div className="bg-white rounded-xl border border-[#e5e7eb] p-4 text-center">
-          <div className="text-3xl font-bold" style={{ color: member.cumplimientoPresupuesto >= 70 ? '#2E7D32' : member.cumplimientoPresupuesto >= 40 ? '#F57C00' : '#DC2626' }}>
-            {member.cumplimientoPresupuesto}%
-          </div>
-          <div className="text-xs text-[#6b7280] mt-1">Presupuesto</div>
-          <div className="w-full h-1.5 bg-[#e5e7eb] rounded-full overflow-hidden mt-2">
-            <div className="h-full rounded-full transition-all duration-500" style={{
-              width: `${Math.min(member.cumplimientoPresupuesto, 100)}%`,
-              backgroundColor: member.cumplimientoPresupuesto >= 70 ? '#2E7D32' : member.cumplimientoPresupuesto >= 40 ? '#F57C00' : '#DC2626',
-            }} />
-          </div>
+        <div className="bg-white rounded-xl border border-[#e5e7eb] p-3 text-center">
+          <div className="text-2xl font-bold text-[#7C3AED]">{memberPropuestas.length}</div>
+          <div className="text-xs text-[#6b7280] mt-0.5">Propuestas</div>
         </div>
+        <div className="bg-white rounded-xl border border-[#e5e7eb] p-3 text-center">
+          <div className="text-2xl font-bold text-[#2E7D32]">{memberGanados.length}</div>
+          <div className="text-xs text-[#6b7280] mt-0.5">Cierres</div>
+        </div>
+        {memberRechazados.length > 0 && (() => {
+          const vencidos = memberRechazados.filter(p => getSeguimientoUrgency(prospectoSeguimiento[p.id])?.overdue).length;
+          const conSeg = memberRechazados.filter(p => prospectoSeguimiento[p.id]?.fechaSeguimiento).length;
+          return (
+            <button
+              onClick={() => setShowRechazadasModal(true)}
+              className={`bg-white rounded-xl border p-3 text-center hover:shadow-md transition-all ${vencidos > 0 ? 'border-red-300' : 'border-[#e5e7eb]'}`}
+            >
+              <div className="flex items-center justify-center gap-1">
+                <div className="text-2xl font-bold" style={{ color: vencidos > 0 ? '#EF4444' : '#F59E0B' }}>{memberRechazados.length}</div>
+                {vencidos > 0 && <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />}
+              </div>
+              <div className="text-xs text-[#6b7280] mt-0.5">Rechazadas</div>
+              <div className="text-[9px] text-[#9ca3af] mt-0.5">{conSeg} con seguimiento</div>
+            </button>
+          );
+        })()}
+        {member.presupuestoAnual2026 > 0 && (
+          <button
+            onClick={() => setShowVentasRealesModal(true)}
+            className="bg-white rounded-xl border border-[#e5e7eb] p-3 text-center hover:shadow-md hover:border-[#00a8a8]/50 transition-all cursor-pointer"
+          >
+            <div className="text-2xl font-bold" style={{ color: member.cumplimientoPresupuesto >= 70 ? '#2E7D32' : member.cumplimientoPresupuesto >= 40 ? '#F57C00' : '#DC2626' }}>
+              {member.cumplimientoPresupuesto}%
+            </div>
+            <div className="text-xs text-[#6b7280] mt-0.5">Presupuesto</div>
+            <div className="w-full h-1.5 bg-[#e5e7eb] rounded-full overflow-hidden mt-1.5">
+              <div className="h-full rounded-full transition-all duration-500" style={{
+                width: `${Math.min(member.cumplimientoPresupuesto, 100)}%`,
+                backgroundColor: member.cumplimientoPresupuesto >= 70 ? '#2E7D32' : member.cumplimientoPresupuesto >= 40 ? '#F57C00' : '#DC2626',
+              }} />
+            </div>
+            <div className="text-xs font-medium text-[#0067B0] mt-2 flex items-center justify-center gap-1 underline hover:no-underline">
+              <Edit3 size={14} /> Editar venta real
+            </div>
+          </button>
+        )}
       </div>
+
+
 
       {/* PIPELINE — Kanban personal del ejecutivo */}
         <div className="space-y-4">
           {/* Quick summary bar */}
-          <div className="flex items-center gap-6 text-sm mb-2">
+          <div className="flex items-center gap-4 text-xs">
             <span className="text-[#6b7280]"><strong className="text-[#1c2c4a]">{memberProspectos.filter(p => p.status !== 'Propuesta Rechazada').length}</strong> prospectos</span>
-            <span className="text-[#6b7280]"><strong className="text-[#0D47A1]">${(totalPipeline / 1000000).toFixed(1)}M</strong> presupuesto</span>
-            {memberRechazados.length > 0 && <span className="text-red-500 font-medium"><strong>{memberRechazados.length}</strong> rechazadas</span>}
+            <span className="text-[#6b7280]"><strong className="text-[#0D47A1]">${(totalPipeline / 1000000).toFixed(1)}M</strong> pipeline</span>
+            {memberRechazados.length > 0 && <span className="text-red-500"><strong>{memberRechazados.length}</strong> rechazadas</span>}
+            <div className="flex items-center gap-2 ml-auto">
+              {HUB_KANBAN_STAGES.map(s => {
+                const c = memberProspectos.filter(p => p.status === s.id).length;
+                return c > 0 ? (
+                  <div key={s.id} className="flex items-center gap-1 text-[10px]">
+                    <div className="w-2 h-2 rounded-sm" style={{ backgroundColor: s.color }} />
+                    <span className="text-[#6b7280]">{s.label}</span>
+                    <span className="font-bold text-[#1c2c4a]">{c}</span>
+                  </div>
+                ) : null;
+              })}
+            </div>
           </div>
 
           {/* KANBAN GRID */}
@@ -6850,28 +6896,54 @@ const InnovativeDemo = () => {
                 return (
                   <div key={stage.id} className="flex flex-col">
                     {/* Column Header */}
-                    <div className="rounded-t-lg p-3 mb-2" style={{ borderTop: `4px solid ${stage.color}` }}>
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-sm font-bold text-[#1c2c4a]">{stage.label}</h3>
-                        <span className="text-sm bg-[#f3f4f6] text-[#1c2c4a] px-2 py-0.5 rounded-full font-bold">{stageItems.length}</span>
+                    <div className="rounded-t-lg p-2.5 mb-1.5" style={{ borderTop: `3px solid ${stage.color}` }}>
+                      <div className="flex items-center justify-between mb-0.5">
+                        <div className="flex items-center gap-1.5">
+                          <h3 className="text-xs font-semibold text-[#1c2c4a]">{stage.label}</h3>
+                          <span className="text-[10px] bg-[#f3f4f6] text-[#6b7280] px-1.5 py-0.5 rounded-full font-medium">{stageItems.length}</span>
+                        </div>
+                        {gate && <Lock size={10} className="text-[#9ca3af]" />}
                       </div>
+                      {stageValue > 0 && <div className="text-[10px] text-[#6b7280]">${(stageValue / 1000000).toFixed(1)}M</div>}
                     </div>
 
                     {/* Droppable Area */}
                     <HubDroppableColumn stageId={stage.id}>
                       <SortableContext items={stageItems.map(p => p.id)} strategy={verticalListSortingStrategy}>
-                        <div className="space-y-0">
-                          {stageItems.map(prospecto => (
-                            <HubKanbanCard
-                              key={prospecto.id}
-                              prospecto={prospecto}
-                              onSelect={(p) => { setSelectedProspecto(p); setMostrarDetallesProspecto(true); }}
-                              prospectoNotas={prospectoNotas}
-                              prospectoArchivos={prospectoArchivos}
-                              calcularCamposCompletos={calcularCamposCompletos}
-                            />
-                          ))}
-                        </div>
+                        {(() => {
+                          const MAX_VISIBLE = 3;
+                          const isExpanded = expandedColumns[stage.id];
+                          const visibleItems = isExpanded ? stageItems : stageItems.slice(0, MAX_VISIBLE);
+                          const hiddenCount = stageItems.length - MAX_VISIBLE;
+
+                          return (
+                            <div className="space-y-0">
+                              {visibleItems.map(prospecto => (
+                                <HubKanbanCard
+                                  key={prospecto.id}
+                                  prospecto={prospecto}
+                                  onSelect={(p) => { setSelectedProspecto(p); setMostrarDetallesProspecto(true); }}
+                                  prospectoNotas={prospectoNotas}
+                                  prospectoArchivos={prospectoArchivos}
+                                  calcularCamposCompletos={calcularCamposCompletos}
+                                />
+                              ))}
+                              {/* Ver más / Ver menos button */}
+                              {hiddenCount > 0 && (
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); setExpandedColumns(prev => ({ ...prev, [stage.id]: !isExpanded })); }}
+                                  className="w-full py-1.5 text-[10px] font-medium text-[#0D47A1] hover:bg-[#0D47A1]/5 rounded-lg transition-colors flex items-center justify-center gap-1"
+                                >
+                                  {isExpanded ? (
+                                    <>Ver menos <ChevronUp size={12} /></>
+                                  ) : (
+                                    <>+{hiddenCount} más <ChevronDown size={12} /></>
+                                  )}
+                                </button>
+                              )}
+                            </div>
+                          );
+                        })()}
                       </SortableContext>
                       {stageItems.length === 0 && (
                         <div className="flex items-center justify-center h-16 border-2 border-dashed border-[#e5e7eb] rounded-lg text-[10px] text-[#9ca3af]">
@@ -7109,12 +7181,11 @@ const InnovativeDemo = () => {
     const winRate = calcularWinRate(kanbanProspectos);
     const velocity = calcularPipelineVelocity(kanbanProspectos);
     const oportunidadesActivas = kanbanProspectos.filter(p => !['Propuesta Rechazada', 'Inicio de operación'].includes(p.status)).length;
-    const presupuestoTotal = presupuestoEvolution.reduce((s, m) => s + m.presupuesto, 0);
+    const presupuestoTotal = salesTeamData.reduce((s, m) => s + (m.presupuestoAnual2026 || 0), 0);
     const ventasReales = salesTeamData.reduce((s, m) => s + (m.ventasReales || 0), 0);
 
-    // Mes actual del chart (0-indexed: Marzo = 2)
-    const mesActualIdx = new Date().getMonth();
-    const presupuestoMesEquipo = presupuestoEvolution[mesActualIdx]?.presupuesto || 0;
+    // Métricas de Vero
+    const presupuestoMesEquipo = salesTeamData.reduce((s, m) => s + (m.presupuestoMensual || 0), 0);
     const proyeccionCierre = kanbanProspectos
       .filter(p => ['Propuesta enviada', 'Negociación'].includes(p.status))
       .reduce((s, p) => s + ((p.propuesta?.ventaTotal || p.facturacionEstimada || 0) * (STAGE_PROBABILITY[p.status] || 0)), 0);
@@ -7277,9 +7348,16 @@ const InnovativeDemo = () => {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-xl font-bold text-[#1c2c4a]">{userGreeting}, {currentUserName}</h1>
-          <p className="text-sm text-[#6b7280] mt-0.5">Tu presupuesto comercial al momento</p>
+          <p className="text-sm text-[#6b7280] mt-0.5">Tu pipeline comercial al momento</p>
         </div>
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowNuevoLead(true)}
+            className="flex items-center gap-2 px-4 py-2.5 bg-[#1c2c4a] hover:bg-[#1c2c4a]/90 text-white rounded-lg text-sm font-semibold transition-all shadow-sm hover:shadow-md"
+          >
+            <Plus size={16} />
+            Nuevo Lead
+          </button>
           <button
             onClick={() => { setKpiPanelArea('comercial'); setShowKpiPanel(true); }}
             className="flex items-center gap-2 px-4 py-2.5 bg-[#00a8a8] hover:bg-[#008080] text-white rounded-lg text-sm font-semibold transition-all shadow-sm hover:shadow-md"
@@ -7296,7 +7374,7 @@ const InnovativeDemo = () => {
         <div className="rounded-xl border border-[#00a8a8]/10 card-modern p-5" style={{ backgroundColor: 'rgba(0,168,168,0.04)' }}>
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-[13px] font-medium text-[#6b7280] mb-1">Presupuesto Mes</div>
+              <div className="text-[13px] font-medium text-[#6b7280] mb-1">Presupuesto {new Date().toLocaleDateString('es-MX', { month: 'long' }).replace(/^\w/, c => c.toUpperCase())}</div>
               <div className="text-2xl font-bold text-[#1c2c4a]">${(presupuestoMesEquipo / 1000000).toFixed(1)}M</div>
               <div className="text-xs text-[#6b7280] mt-1">
                 Cierre: <span className="font-semibold text-[#00a8a8]">${(montoPropuestas / 1000000).toFixed(1)}M</span>
@@ -7354,7 +7432,7 @@ const InnovativeDemo = () => {
 
       {/* Presupuesto por Ejecutivo (grid) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
-        {salesTeamData.sort((a, b) => b.presupuestoAnual2026 - a.presupuestoAnual2026).map(member => {
+        {salesTeamData.filter(m => m.codigo !== 'VA').sort((a, b) => b.presupuestoAnual2026 - a.presupuestoAnual2026).map(member => {
           const pct = member.cumplimientoPresupuesto || 0;
           const barColor = pct >= 80 ? '#2E7D32' : pct >= 40 ? '#F57C00' : '#ef4444';
           const memberProspectos = kanbanProspectos.filter(p => p.ejecutivo === member.codigo);
@@ -7380,7 +7458,7 @@ const InnovativeDemo = () => {
               <div className="flex items-center gap-2 mt-2.5 pt-2 border-t border-[#f3f4f6]">
                 <span className="text-[10px] text-[#6b7280]">{memberProspectos.length} opps</span>
                 <span className="text-[10px] text-[#6b7280]">·</span>
-                <span className="text-[10px] text-[#6b7280]">${((memberProspectos.reduce((s, p) => s + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0)) / 1000000).toFixed(1)}M presupuesto</span>
+                <span className="text-[10px] text-[#6b7280]">${((memberProspectos.reduce((s, p) => s + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0)) / 1000000).toFixed(1)}M pipeline</span>
               </div>
             </div>
           );
@@ -7390,6 +7468,7 @@ const InnovativeDemo = () => {
       {/* ═══════ TAB BAR ═══════ */}
       <div className="mt-5 flex items-center gap-1 bg-white rounded-xl border border-[#e5e7eb] p-1">
         {[
+          { id: 'pipeline', label: 'Pipeline', icon: ClipboardList },
           { id: 'presupuesto', label: 'Presupuesto', icon: DollarSign },
           { id: 'rechazadas', label: 'Rechazadas', icon: RotateCcw, badge: kanbanProspectos.filter(p => p.status === 'Propuesta Rechazada').length },
         ].map(tab => (
@@ -7448,7 +7527,7 @@ const InnovativeDemo = () => {
             </div>
           </div>
           <div className="text-center">
-            <div className="text-[10px] text-[#6b7280]">Presupuesto {presupuestoEvolution[mesActualIdx]?.mes || 'Mes'}</div>
+            <div className="text-[10px] text-[#6b7280]">Presupuesto {new Date().toLocaleDateString('es-MX', { month: 'long' }).replace(/^\w/, c => c.toUpperCase())}</div>
             <div className="text-sm font-bold text-[#1c2c4a]">${(presupuestoMesEquipo / 1000000).toFixed(1)}M</div>
           </div>
         </div>
@@ -7494,13 +7573,11 @@ const InnovativeDemo = () => {
               </tr>
             </thead>
             <tbody>
-              {salesTeamData.map(member => {
-                const mesChartPresupuesto = presupuestoEvolution[ventaRealMes - 1]?.presupuesto || 0;
-                const memberMesPresupuesto = Math.round(mesChartPresupuesto / salesTeamData.length);
+              {salesTeamData.filter(m => m.presupuestoMensual > 0).map(member => {
                 const editKey = `${member.id}-${ventaRealMes}-${ventaRealAño}`;
                 const isEditing = editingVentaReal === editKey;
                 const ventaActual = ventasRealesEditadas[editKey] ?? member.ventasReales;
-                const pct = memberMesPresupuesto > 0 ? Math.round((ventaActual / memberMesPresupuesto) * 100) : 0;
+                const pct = member.presupuestoMensual > 0 ? Math.round((ventaActual / member.presupuestoMensual) * 100) : 0;
                 const pctColor = pct >= 80 ? '#2E7D32' : pct >= 40 ? '#F57C00' : '#EF4444';
 
                 return (
@@ -7515,7 +7592,7 @@ const InnovativeDemo = () => {
                       </div>
                     </td>
                     <td className="py-2.5 px-2 text-right">
-                      <span className="text-sm text-[#6b7280]">${(memberMesPresupuesto / 1000000).toFixed(2)}M</span>
+                      <span className="text-sm text-[#6b7280]">${(member.presupuestoMensual / 1000000).toFixed(2)}M</span>
                     </td>
                     <td className="py-2.5 px-2 text-right">
                       {isEditing ? (
@@ -7596,106 +7673,36 @@ const InnovativeDemo = () => {
               })}
             </tbody>
             <tfoot>
-              {(() => {
-                const footerPres = presupuestoEvolution[ventaRealMes - 1]?.presupuesto || 0;
-                const footerReal = salesTeamData.reduce((s, m) => s + Number(ventasRealesEditadas[`${m.id}-${ventaRealMes}-${ventaRealAño}`] ?? m.ventasReales), 0);
-                const footerPct = footerPres > 0 ? Math.round((footerReal / footerPres) * 100) : 0;
-                const footerColor = footerPct >= 80 ? '#2E7D32' : footerPct >= 40 ? '#F57C00' : '#EF4444';
-                return (
-                  <tr className="bg-[#f9fafb]">
-                    <td className="py-2.5 px-2 font-semibold text-[#1c2c4a]">Total Equipo</td>
-                    <td className="py-2.5 px-2 text-right font-semibold text-[#1c2c4a]">
-                      ${(footerPres / 1000000).toFixed(2)}M
-                    </td>
-                    <td className="py-2.5 px-2 text-right font-bold text-[#00a8a8]">
-                      ${(footerReal / 1000000).toFixed(2)}M
-                    </td>
-                    <td className="py-2.5 px-2 text-right font-bold" style={{ color: footerColor }}>
-                      {footerPct}%
-                    </td>
-                    <td></td>
-                  </tr>
-                );
-              })()}
+              <tr className="bg-[#f9fafb]">
+                <td className="py-2.5 px-2 font-semibold text-[#1c2c4a]">Total Equipo</td>
+                <td className="py-2.5 px-2 text-right font-semibold text-[#1c2c4a]">
+                  ${(salesTeamData.reduce((s, m) => s + m.presupuestoMensual, 0) / 1000000).toFixed(2)}M
+                </td>
+                <td className="py-2.5 px-2 text-right font-bold text-[#00a8a8]">
+                  ${(salesTeamData.reduce((s, m) => s + Number(ventasRealesEditadas[`${m.id}-${ventaRealMes}-${ventaRealAño}`] ?? m.ventasReales), 0) / 1000000).toFixed(2)}M
+                </td>
+                <td className="py-2.5 px-2 text-right font-bold" style={{
+                  color: (() => {
+                    const totalPres = salesTeamData.reduce((s, m) => s + m.presupuestoMensual, 0);
+                    const totalReal = salesTeamData.reduce((s, m) => s + Number(ventasRealesEditadas[`${m.id}-${ventaRealMes}-${ventaRealAño}`] ?? m.ventasReales), 0);
+                    const pct = totalPres > 0 ? Math.round((totalReal / totalPres) * 100) : 0;
+                    return pct >= 80 ? '#2E7D32' : pct >= 40 ? '#F57C00' : '#EF4444';
+                  })()
+                }}>
+                  {(() => {
+                    const totalPres = salesTeamData.reduce((s, m) => s + m.presupuestoMensual, 0);
+                    const totalReal = salesTeamData.reduce((s, m) => s + Number(ventasRealesEditadas[`${m.id}-${ventaRealMes}-${ventaRealAño}`] ?? m.ventasReales), 0);
+                    return totalPres > 0 ? Math.round((totalReal / totalPres) * 100) : 0;
+                  })()}%
+                </td>
+                <td></td>
+              </tr>
             </tfoot>
           </table>
         </div>
         <p className="text-[10px] text-[#9ca3af] mt-3 flex items-center gap-1">
           <Edit3 size={10} /> Click en el icono de lápiz para editar la venta real. Presiona Enter para guardar.
         </p>
-      </div>
-
-      {/* ═══════ CUENTAS DEL MES — Prospectos agrupados por mes de cierre ═══════ */}
-      <div className="mt-4 bg-white rounded-xl border border-[#e5e7eb] shadow-sm overflow-hidden">
-        <div className="px-4 py-3 border-b border-[#e5e7eb] flex items-center justify-between bg-[#f9fafb]">
-          <h4 className="text-sm font-semibold text-[#1c2c4a] flex items-center gap-2">
-            <Users size={15} className="text-[#00a8a8]" />
-            Cuentas del Mes
-          </h4>
-          <span className="text-xs text-[#6b7280]">Prospectos activos con propuesta</span>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-[#f3f4f6] border-b border-[#e5e7eb]">
-              <tr>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-[#6b7280]">Empresa</th>
-                <th className="px-3 py-3 text-left text-xs font-semibold text-[#6b7280]">Ejecutivo</th>
-                <th className="px-3 py-3 text-left text-xs font-semibold text-[#6b7280]">Etapa</th>
-                <th className="px-3 py-3 text-left text-xs font-semibold text-[#6b7280]">Mes Cierre</th>
-                <th className="px-3 py-3 text-right text-xs font-semibold text-[#6b7280]">Venta Total</th>
-                <th className="px-3 py-3 text-right text-xs font-semibold text-[#6b7280]">% Margen</th>
-              </tr>
-            </thead>
-            <tbody>
-              {kanbanProspectos
-                .filter(p => p.status !== 'Propuesta Rechazada' && p.propuesta?.mesCierre)
-                .sort((a, b) => (a.propuesta?.mesCierre || '').localeCompare(b.propuesta?.mesCierre || ''))
-                .map(p => {
-                  const ejecutivo = salesTeamData.find(e => e.codigo === p.ejecutivo);
-                  const stage = KANBAN_STAGES.find(s => s.id === p.status);
-                  const [y, m] = (p.propuesta?.mesCierre || '').split('-');
-                  const mesLabel = m ? `${['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'][parseInt(m, 10) - 1]} ${y}` : '—';
-                  return (
-                    <tr key={p.id} className="border-b border-[#e5e7eb] hover:bg-[#f9fafb] cursor-pointer transition-colors"
-                      onClick={() => { setSelectedProspecto(p); setMostrarDetallesProspecto(true); }}>
-                      <td className="px-4 py-2.5">
-                        <div className="text-sm font-semibold text-[#1c2c4a]">{p.empresa}</div>
-                        {p.planta && <div className="text-[11px] text-[#9ca3af]">{p.planta}</div>}
-                      </td>
-                      <td className="px-3 py-2.5 text-xs text-[#6b7280]">{ejecutivo?.name?.split(' ').slice(0, 2).join(' ') || p.ejecutivo}</td>
-                      <td className="px-3 py-2.5">
-                        <span className="inline-flex items-center gap-1.5 text-xs font-medium px-2 py-1 rounded-full"
-                          style={{ backgroundColor: `${stage?.color}15`, color: stage?.color, border: `1px solid ${stage?.color}30` }}>
-                          <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: stage?.color }}></span>
-                          {stage?.label || p.status}
-                        </span>
-                      </td>
-                      <td className="px-3 py-2.5 text-xs font-medium text-[#1c2c4a]">{mesLabel}</td>
-                      <td className="px-3 py-2.5 text-right text-sm font-semibold text-[#0D47A1]">
-                        {p.propuesta?.ventaTotal ? `$${(p.propuesta.ventaTotal / 1000000).toFixed(2)}M` : '—'}
-                      </td>
-                      <td className="px-3 py-2.5 text-right text-sm font-medium text-[#1c2c4a]">
-                        {p.propuesta?.utilidad ? `${(p.propuesta.utilidad * 100).toFixed(1)}%` : '—'}
-                      </td>
-                    </tr>
-                  );
-                })}
-            </tbody>
-            <tfoot className="bg-[#f3f4f6] border-t-2 border-[#e5e7eb]">
-              <tr>
-                <td className="px-4 py-3 text-sm font-bold text-[#1c2c4a]" colSpan={4}>
-                  Total: {kanbanProspectos.filter(p => p.status !== 'Propuesta Rechazada' && p.propuesta?.mesCierre).length} cuentas
-                </td>
-                <td className="px-3 py-3 text-right text-sm font-bold text-[#0D47A1]">
-                  ${(kanbanProspectos
-                    .filter(p => p.status !== 'Propuesta Rechazada' && p.propuesta?.mesCierre)
-                    .reduce((s, p) => s + (p.propuesta?.ventaTotal || 0), 0) / 1000000).toFixed(2)}M
-                </td>
-                <td className="px-3 py-3"></td>
-              </tr>
-            </tfoot>
-          </table>
-        </div>
       </div>
 
       {/* ═══════ VOLUMEN POR MATERIAL (CARTÓN / PLAYO) — Compacto ═══════ */}
@@ -7732,7 +7739,7 @@ const InnovativeDemo = () => {
       {comercialTab === 'pipeline' && (<>
       {/* Distribución de Pipeline por Ejecutivo — Barras apiladas por etapa */}
       <div className="mt-4 bg-white rounded-xl border border-[#e5e7eb] card-modern p-5">
-        <h3 className="text-sm font-semibold text-[#1c2c4a] mb-3">Presupuesto por Ejecutivo</h3>
+        <h3 className="text-sm font-semibold text-[#1c2c4a] mb-3">Pipeline por Ejecutivo</h3>
         <div className="space-y-4">
           {salesTeamData.map(member => {
             const memberProspectos = kanbanProspectos.filter(p => p.ejecutivo === member.codigo);
@@ -7797,18 +7804,67 @@ const InnovativeDemo = () => {
         </div>
       </div>
 
-      <SectionHeader color="#0D47A1" icon={ClipboardList} label="Presupuesto Detallado" />
+      <SectionHeader color="#0D47A1" icon={ClipboardList} label="Pipeline Detallado" />
 
+      {/* VIEW TOGGLE */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2 bg-white rounded-lg border border-[#e5e7eb] p-1">
+          {[
+            { id: 'kanban', label: 'Kanban', icon: ClipboardList },
+            { id: 'tabla', label: 'Tabla', icon: BarChart3 },
+          ].map(view => (
+            <button
+              key={view.id}
+              onClick={() => { setPipelineViewMode(view.id); if (view.id === 'kanban') setFilterEtapa('todos'); }}
+              className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                pipelineViewMode === view.id
+                  ? 'bg-[#00a8a8] text-white shadow-sm'
+                  : 'text-[#6b7280] hover:text-[#1c2c4a] hover:bg-[#f3f4f6]'
+              }`}
+            >
+              <view.icon size={16} />
+              {view.label}
+            </button>
+          ))}
+        </div>
 
-      {/* Filter Bar */}
+        {/* Service Type Summary — how many per service */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {(() => {
+            const counts = {};
+            kanbanProspectos.forEach(p => {
+              const svcId = (p.servicios || [])[0] || 'rme';
+              counts[svcId] = (counts[svcId] || 0) + 1;
+            });
+            return Object.entries(counts)
+              .sort((a, b) => b[1] - a[1])
+              .map(([svcId, count]) => {
+                const svc = SERVICE_COLORS[svcId] || SERVICE_COLORS.rme;
+                return (
+                  <div
+                    key={svcId}
+                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium"
+                    style={{ backgroundColor: svc.bg, color: svc.text, border: `1px solid ${svc.border}30` }}
+                  >
+                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: svc.border }}></div>
+                    {svc.label}
+                    <span className="font-bold">{count}</span>
+                  </div>
+                );
+              });
+          })()}
+        </div>
+      </div>
+
+      {/* Shared Filter Bar — visible in kanban and tabla */}
       {(() => {
         const activeFilters = [filterServicio, filterEjecutivo].filter(f => f !== 'todos').length
-          + (filterEtapa !== 'todos' ? 1 : 0);
+          + (pipelineViewMode === 'tabla' && filterEtapa !== 'todos' ? 1 : 0);
         const totalFiltered = kanbanProspectos
           .filter(p => p.status !== 'Propuesta Rechazada')
           .filter(p => filterServicio === 'todos' || (p.servicios || [])[0] === filterServicio)
           .filter(p => filterEjecutivo === 'todos' || p.ejecutivo === filterEjecutivo)
-          .filter(p => filterEtapa === 'todos' || p.status === filterEtapa)
+          .filter(p => pipelineViewMode !== 'tabla' || filterEtapa === 'todos' || p.status === filterEtapa)
           .length;
 
         return (
@@ -7841,18 +7897,20 @@ const InnovativeDemo = () => {
                 return <option key={m.codigo} value={m.codigo}>{m.name.split(' ').slice(0, 2).join(' ')} ({count})</option>;
               })}
             </select>
-            <select
-              value={filterEtapa}
-              onChange={e => setFilterEtapa(e.target.value)}
-              className="text-xs border border-[#e5e7eb] rounded-lg px-3 py-1.5 bg-white text-[#1c2c4a] focus:outline-none focus:ring-2 focus:ring-[#00a8a8]/30 focus:border-[#00a8a8]"
-            >
-              <option value="todos">Todas las etapas</option>
-              {KANBAN_STAGES.map(s => {
-                const count = kanbanProspectos.filter(p => p.status === s.id).length;
-                if (count === 0) return null;
-                return <option key={s.id} value={s.id}>{s.label} ({count})</option>;
-              })}
-            </select>
+            {pipelineViewMode === 'tabla' && (
+              <select
+                value={filterEtapa}
+                onChange={e => setFilterEtapa(e.target.value)}
+                className="text-xs border border-[#e5e7eb] rounded-lg px-3 py-1.5 bg-white text-[#1c2c4a] focus:outline-none focus:ring-2 focus:ring-[#00a8a8]/30 focus:border-[#00a8a8]"
+              >
+                <option value="todos">Todas las etapas</option>
+                {KANBAN_STAGES.map(s => {
+                  const count = kanbanProspectos.filter(p => p.status === s.id).length;
+                  if (count === 0) return null;
+                  return <option key={s.id} value={s.id}>{s.label} ({count})</option>;
+                })}
+              </select>
+            )}
             {activeFilters > 0 && (
               <button
                 onClick={() => { setFilterServicio('todos'); setFilterEjecutivo('todos'); setFilterEtapa('todos'); }}
@@ -7867,9 +7925,112 @@ const InnovativeDemo = () => {
         );
       })()}
 
+      {/* KANBAN VIEW */}
+      {pipelineViewMode === 'kanban' && (
+        <div className="mt-4">
+          {/* Area labels row */}
+          <div className="grid grid-cols-6 gap-3 mb-1">
+            <div className="col-span-2 flex items-center gap-1.5">
+              <div className="w-1.5 h-1.5 rounded-full bg-[#00a8a8]"></div>
+              <span className="text-[10px] uppercase tracking-wider font-semibold text-[#00a8a8]">Comercial</span>
+              <div className="flex-1 h-px bg-[#00a8a8]/20 ml-1"></div>
+            </div>
+            <div className="col-span-2 flex items-center gap-1.5">
+              <div className="w-1.5 h-1.5 rounded-full bg-[#F57C00]"></div>
+              <span className="text-[10px] uppercase tracking-wider font-semibold text-[#F57C00]">Operaciones</span>
+              <div className="flex-1 h-px bg-[#F57C00]/20 ml-1"></div>
+            </div>
+            <div className="col-span-2 flex items-center gap-1.5">
+              <div className="w-1.5 h-1.5 rounded-full bg-[#2E7D32]"></div>
+              <span className="text-[10px] uppercase tracking-wider font-semibold text-[#2E7D32]">Cierre</span>
+              <div className="flex-1 h-px bg-[#2E7D32]/20 ml-1"></div>
+            </div>
+          </div>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+          >
+            <div className="grid grid-cols-6 gap-3">
+              {KANBAN_STAGES.map(stage => {
+                const stageItems = kanbanProspectos
+                  .filter(p => p.status === stage.id)
+                  .filter(p => filterServicio === 'todos' || (p.servicios || [])[0] === filterServicio)
+                  .filter(p => filterEjecutivo === 'todos' || p.ejecutivo === filterEjecutivo);
+                const stageValue = stageItems.reduce((s, p) => s + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0);
+                const gate = STAGE_GATES[stage.id];
 
+                return (
+                  <div key={stage.id} className="flex flex-col">
+                    {/* Column Header */}
+                    <div className="rounded-t-lg p-3 mb-2" style={{ borderTop: `3px solid ${stage.color}` }}>
+                      <div className="flex items-center justify-between mb-1">
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-sm font-semibold text-[#1c2c4a]">{stage.label}</h3>
+                          <span className="text-xs bg-[#f3f4f6] text-[#6b7280] px-1.5 py-0.5 rounded-full font-medium">
+                            {stageItems.length}
+                          </span>
+                        </div>
+                        {gate && (
+                          <div title={gate.requirement}>
+                            <Lock size={12} className="text-[#6b7280]" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex items-center justify-between text-xs text-[#6b7280]">
+                        <span>${(stageValue / 1000000).toFixed(1)}M</span>
+                        <span className="font-medium" style={{ color: stage.color }}>{stage.prob}</span>
+                      </div>
+                    </div>
+
+                    {/* Droppable Area */}
+                    <DroppableColumn stageId={stage.id}>
+                      <SortableContext items={stageItems.slice(0, 20).map(p => p.id)} strategy={verticalListSortingStrategy}>
+                        <div className="space-y-0">
+                          {stageItems.slice(0, 20).map(prospecto => (
+                            <DraggableCard key={prospecto.id} prospecto={prospecto} />
+                          ))}
+                        </div>
+                      </SortableContext>
+                      {stageItems.length > 20 && (
+                        <button
+                          onClick={() => { setPipelineViewMode('tabla'); }}
+                          className="w-full mt-2 py-2 text-xs font-medium text-[#00a8a8] hover:text-[#008080] bg-[#00a8a8]/5 hover:bg-[#00a8a8]/10 rounded-lg transition-colors flex items-center justify-center gap-1"
+                        >
+                          Ver {stageItems.length - 20} más <ChevronDown size={12} />
+                        </button>
+                      )}
+                      {stageItems.length === 0 && (
+                        <div className="flex items-center justify-center h-20 border-2 border-dashed border-[#e5e7eb] rounded-lg text-xs text-[#6b7280]">
+                          Arrastra aquí
+                        </div>
+                      )}
+                    </DroppableColumn>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Drag Overlay */}
+            <DragOverlay>
+              {activeCard && (
+                <div className="bg-white rounded-lg border-2 border-[#00a8a8] p-2 shadow-xl w-[180px] rotate-2">
+                  <h4 className="text-xs font-semibold text-[#1c2c4a] truncate">{activeCard.empresa}</h4>
+                  <div className="flex items-center justify-between text-[10px] text-[#6b7280] mt-0.5">
+                    <span>{activeCard.ejecutivo}</span>
+                    <span className="font-bold text-[#0D47A1]">${((activeCard.propuesta?.ventaTotal || activeCard.facturacionEstimada || 0) / 1000000).toFixed(1)}M</span>
+                  </div>
+                </div>
+              )}
+            </DragOverlay>
+          </DndContext>
+        </div>
+      )}
+
+      {/* FUNNEL VIEW */}
       {/* TABLE VIEW */}
-      {(() => {
+      {pipelineViewMode === 'tabla' && (() => {
         const filteredProspectos = kanbanProspectos
           .filter(p => p.status !== 'Propuesta Rechazada')
           .filter(p => filterServicio === 'todos' || (p.servicios || [])[0] === filterServicio)
@@ -7892,7 +8053,6 @@ const InnovativeDemo = () => {
                   <th className="px-3 py-3 text-left text-xs font-semibold text-[#6b7280]">Servicio</th>
                   <th className="px-3 py-3 text-left text-xs font-semibold text-[#6b7280]">Stage</th>
                   <th className="px-3 py-3 text-left text-xs font-semibold text-[#6b7280]">Ejecutivo</th>
-                  <th className="px-3 py-3 text-right text-xs font-semibold text-[#6b7280]">Venta Total</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-[#6b7280]">Contacto</th>
                 </tr>
               </thead>
@@ -7933,15 +8093,6 @@ const InnovativeDemo = () => {
                           </span>
                         </td>
                         <td className="px-3 py-2.5 text-xs text-[#6b7280]">{ejecutivo?.name?.split(' ').slice(0, 2).join(' ') || p.ejecutivo}</td>
-                        <td className="px-3 py-2.5 text-right">
-                          <span className="text-sm font-semibold text-[#0D47A1]">
-                            {p.propuesta?.ventaTotal
-                              ? `$${(p.propuesta.ventaTotal / 1000000).toFixed(2)}M`
-                              : p.facturacionEstimada
-                                ? `$${(p.facturacionEstimada / 1000000).toFixed(2)}M`
-                                : '—'}
-                          </span>
-                        </td>
                         <td className="px-4 py-2.5">
                           <div className="text-sm text-[#1c2c4a]">{p.contacto?.nombre || '—'}</div>
                           {p.contacto?.puesto && <div className="text-[11px] text-[#9ca3af] truncate">{p.contacto.puesto}</div>}
@@ -7956,7 +8107,7 @@ const InnovativeDemo = () => {
               </tbody>
               <tfoot className="bg-[#f3f4f6] border-t-2 border-[#e5e7eb]">
                 <tr>
-                  <td className="px-4 py-3 text-sm font-bold text-[#1c2c4a]" colSpan={6}>
+                  <td className="px-4 py-3 text-sm font-bold text-[#1c2c4a]" colSpan={5}>
                     Total: {filteredProspectos.length} oportunidades
                   </td>
                 </tr>
@@ -7977,50 +8128,68 @@ const InnovativeDemo = () => {
           <div className="mt-4 bg-white rounded-xl border border-[#e5e7eb] p-12 text-center">
             <CheckCircle className="mx-auto text-green-400 mb-3" size={40} />
             <h3 className="text-sm font-semibold text-[#1c2c4a] mb-1">Sin oportunidades rechazadas</h3>
-            <p className="text-xs text-[#6b7280]">Todas las oportunidades estan activas en el presupuesto</p>
+            <p className="text-xs text-[#6b7280]">Todas las oportunidades estan activas en el pipeline</p>
           </div>
         );
 
+        const byRecovery = { sin_seguimiento: [], en_seguimiento: [], re_contactada: [] };
+        allRejected.forEach(p => {
+          const seg = prospectoSeguimiento[p.id];
+          const state = getRecoveryState(seg);
+          if (byRecovery[state.id]) byRecovery[state.id].push(p);
+        });
+        const overdue = allRejected.filter(p => getSeguimientoUrgency(prospectoSeguimiento[p.id])?.overdue);
+        const recoverable = allRejected.filter(p => classifyRechazo(p.motivoRechazo)?.recoverable);
         const totalValue = allRejected.reduce((s, p) => s + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0);
         const byCat = { pricing: [], proposal: [], operational: [] };
         allRejected.forEach(p => { const cat = classifyRechazo(p.motivoRechazo); if (byCat[cat.id]) byCat[cat.id].push(p); });
 
         return (
           <div className="mt-4 space-y-4">
-            {/* Summary card */}
-            <div className="bg-white rounded-xl border border-[#e5e7eb] p-4 max-w-xs">
-              <div className="text-[10px] text-[#6b7280] mb-1">Total Rechazadas</div>
-              <div className="text-2xl font-bold text-[#1c2c4a]">{allRejected.length}</div>
-              <div className="text-[10px] text-[#6b7280]">${(totalValue / 1000000).toFixed(1)}M en valor</div>
+            {/* Summary cards */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="bg-white rounded-xl border border-[#e5e7eb] p-4">
+                <div className="text-[10px] text-[#6b7280] mb-1">Total Rechazadas</div>
+                <div className="text-2xl font-bold text-[#1c2c4a]">{allRejected.length}</div>
+                <div className="text-[10px] text-[#6b7280]">${(totalValue / 1000000).toFixed(1)}M en valor</div>
+              </div>
+              <div className="bg-white rounded-xl border border-[#e5e7eb] p-4">
+                <div className="text-[10px] text-[#6b7280] mb-1">Recuperables</div>
+                <div className="text-2xl font-bold text-green-600">{recoverable.length}</div>
+                <div className="text-[10px] text-[#6b7280]">por precio o propuesta</div>
+              </div>
+              <div className="bg-white rounded-xl border border-[#e5e7eb] p-4">
+                <div className="text-[10px] text-[#6b7280] mb-1">En Seguimiento</div>
+                <div className="text-2xl font-bold text-[#F59E0B]">{byRecovery.en_seguimiento.length + byRecovery.re_contactada.length}</div>
+                <div className="text-[10px] text-[#6b7280]">con fecha programada</div>
+              </div>
+              <div className="bg-white rounded-xl border border-[#e5e7eb] p-4">
+                <div className="text-[10px] text-[#6b7280] mb-1">Vencidas</div>
+                <div className="text-2xl font-bold text-red-500">{overdue.length}</div>
+                <div className="text-[10px] text-[#6b7280]">requieren atencion</div>
+              </div>
             </div>
 
-            {/* PIE CHART — Distribución de Rechazos */}
+            {/* Recovery funnel */}
             <div className="bg-white rounded-xl border border-[#e5e7eb] p-4">
-              <h4 className="text-xs font-semibold text-[#1c2c4a] mb-3">Distribución de Rechazos</h4>
-              <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={Object.entries(byCat).map(([catId, items]) => ({
-                        name: RECHAZO_CATEGORIES[catId].label,
-                        value: items.length,
-                        color: RECHAZO_CATEGORIES[catId].color,
-                      })).filter(d => d.value > 0)}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={50}
-                      outerRadius={90}
-                      paddingAngle={3}
-                      dataKey="value"
-                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                    >
-                      {Object.entries(byCat).filter(([, items]) => items.length > 0).map(([catId]) => (
-                        <Cell key={catId} fill={RECHAZO_CATEGORIES[catId].color} />
-                      ))}
-                    </Pie>
-                    <Tooltip formatter={(value) => [`${value} rechazadas`, '']} />
-                  </PieChart>
-                </ResponsiveContainer>
+              <h4 className="text-xs font-semibold text-[#1c2c4a] mb-3 flex items-center gap-2">
+                <RotateCcw size={14} className="text-[#F59E0B]" /> Funnel de Recuperacion
+              </h4>
+              <div className="grid grid-cols-3 gap-3">
+                {Object.entries(byRecovery).map(([stateId, items]) => {
+                  const state = RECOVERY_STATES[stateId];
+                  return (
+                    <div key={stateId} className="rounded-xl p-4 border" style={{ backgroundColor: state.bg, borderColor: `${state.color}25` }}>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs font-semibold" style={{ color: state.color }}>{state.label}</span>
+                        <span className="text-xl font-bold" style={{ color: state.color }}>{items.length}</span>
+                      </div>
+                      <div className="w-full h-2 bg-white/60 rounded-full overflow-hidden">
+                        <div className="h-full rounded-full transition-all" style={{ width: `${allRejected.length ? (items.length / allRejected.length) * 100 : 0}%`, backgroundColor: state.color }} />
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
@@ -8720,7 +8889,7 @@ const InnovativeDemo = () => {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-xl font-bold text-[#1c2c4a]">{userGreeting}, {currentUserName}</h1>
-            <p className="text-sm text-[#6b7280] mt-0.5">Flujo, conversión y velocidad del presupuesto</p>
+            <p className="text-sm text-[#6b7280] mt-0.5">Flujo, conversión y velocidad del pipeline</p>
           </div>
         </div>
 
@@ -8743,7 +8912,7 @@ const InnovativeDemo = () => {
           <div className="bg-white rounded-xl border border-[#e5e7eb] card-modern p-5">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-[13px] font-medium text-[#6b7280] mb-1">Presupuesto Total</div>
+                <div className="text-[13px] font-medium text-[#6b7280] mb-1">Pipeline Total</div>
                 <div className="text-2xl font-bold text-[#1c2c4a]">${(totalPipeline / 1000000).toFixed(1)}M</div>
               </div>
               <div className="w-10 h-10 rounded-xl bg-[#0D47A1]/10 flex items-center justify-center">
@@ -8818,7 +8987,7 @@ const InnovativeDemo = () => {
 
         {/* VELOCIDAD DEL PIPELINE — Full width */}
         <div className="mt-4 bg-white rounded-xl border border-[#e5e7eb] card-modern p-5">
-          <h3 className="text-sm font-semibold text-[#1c2c4a] mb-1">Velocidad del Presupuesto</h3>
+          <h3 className="text-sm font-semibold text-[#1c2c4a] mb-1">Velocidad del Pipeline</h3>
           <ResponsiveContainer width="100%" height={400}>
             <ComposedChart data={metricasPorEtapa.filter(m => m.count > 0)} margin={{ top: 10, right: 50, bottom: 10, left: 10 }}>
               <defs>
@@ -8910,7 +9079,7 @@ const InnovativeDemo = () => {
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-semibold text-[#1c2c4a] flex items-center gap-2">
               <BarChart3 size={16} className="text-[#00a8a8]" />
-              Presupuesto General — Todas las Áreas
+              Pipeline General — Todas las Áreas
             </h3>
             <div className="flex items-center gap-4 text-[10px] text-[#6b7280]">
               <div className="flex items-center gap-1.5">
@@ -9975,7 +10144,7 @@ const InnovativeDemo = () => {
           <div className="bg-[#f3f4f6] border border-[#e5e7eb] rounded-lg p-6 mb-6">
             <h3 className="text-lg font-semibold text-[#1c2c4a] mb-4 flex items-center gap-2">
               <TrendingUp size={20} />
-              Presupuesto Detallado
+              Pipeline Detallado
             </h3>
             <div className="grid grid-cols-4 gap-4">
               <div className="bg-white rounded-lg p-4 text-center border border-[#e5e7eb]">
@@ -10215,7 +10384,7 @@ const InnovativeDemo = () => {
                   })}
                   {/* Pipeline Velocity */}
                   <div className="bg-white rounded-lg border border-[#e5e7eb] p-3 text-center">
-                    <div className="text-[11px] text-[#6b7280] mb-1">Velocidad Presupuesto</div>
+                    <div className="text-[11px] text-[#6b7280] mb-1">Velocidad Pipeline</div>
                     <div className="text-xl font-bold text-[#0D47A1]">${(calcularPipelineVelocity(kanbanProspectos) / 1000).toFixed(0)}K</div>
                     <div className="text-[11px] text-[#6b7280] mt-1">MXN/dia</div>
                   </div>
@@ -10385,7 +10554,7 @@ const InnovativeDemo = () => {
                                         </div>
                                       )}
                                       <div className="ml-auto text-xs font-bold text-[#0D47A1]">
-                                        Presupuesto: ${(memberProspectos.reduce((s, p) => s + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0) / 1000000).toFixed(1)}M
+                                        Pipeline: ${(memberProspectos.reduce((s, p) => s + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0) / 1000000).toFixed(1)}M
                                       </div>
                                     </div>
 
@@ -10977,20 +11146,6 @@ const InnovativeDemo = () => {
                 </div>
               </div>
 
-              {/* SECCIÓN: FECHA */}
-              <div>
-                <h4 className="text-sm font-semibold text-[#1c2c4a] mb-3 flex items-center gap-2">
-                  <Calendar size={16} className="text-[#F59E0B]" />
-                  Fecha
-                </h4>
-                <div>
-                  <label className="text-xs font-medium text-[#6b7280] mb-1 block">Fecha de Primer Contacto *</label>
-                  <input type="date" value={nuevoLeadForm.fechaPrimerContacto}
-                    onChange={e => setNuevoLeadForm(prev => ({...prev, fechaPrimerContacto: e.target.value}))}
-                    className="w-full px-3 py-2 border border-[#e5e7eb] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#00a8a8]/50 focus:border-[#00a8a8]" />
-                </div>
-              </div>
-
               {/* SECCIÓN 3: FUENTE */}
               <div>
                 <label className="text-xs font-medium text-[#6b7280] mb-1 block">Fuente</label>
@@ -11043,11 +11198,54 @@ const InnovativeDemo = () => {
             <div className="p-6 border-b border-[#e5e7eb] flex items-center justify-between bg-[#00a8a8] text-white rounded-t-lg">
               <div>
                 <h2 className="text-xl font-semibold">{selectedProspecto.empresa}</h2>
-                <p className="text-sm text-white/90 mt-1">{selectedProspecto.industria}</p>
+                <p className="text-sm text-white/90 mt-1">{selectedProspecto.industria} — <span className="font-medium">{selectedProspecto.status}</span></p>
               </div>
-              <button onClick={() => { setMostrarDetallesProspecto(false); setDetallesProspectoTab('info'); }} className="text-white hover:text-white/80">
-                <X size={24} />
-              </button>
+              <div className="flex items-center gap-2">
+                {/* Avanzar Etapa */}
+                {(() => {
+                  const stageIds = KANBAN_STAGES.map(s => s.id);
+                  const currentIdx = stageIds.indexOf(selectedProspecto.status);
+                  const nextStage = currentIdx >= 0 && currentIdx < stageIds.length - 1 ? KANBAN_STAGES[currentIdx + 1] : null;
+                  if (!nextStage) return null;
+                  return (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const gate = STAGE_GATES[nextStage.id];
+                        if (gate && !gate.validate(selectedProspecto)) {
+                          setPendingMove({ prospecto: selectedProspecto, fromStage: selectedProspecto.status, toStage: nextStage.id });
+                          setShowStageGateModal(true);
+                          return;
+                        }
+                        setKanbanProspectos(prev => prev.map(p => p.id === selectedProspecto.id ? { ...p, status: nextStage.id } : p));
+                        setSelectedProspecto(prev => prev ? { ...prev, status: nextStage.id } : null);
+                      }}
+                      className="flex items-center gap-1 px-3 py-1.5 bg-white/20 hover:bg-white/30 text-white rounded-lg text-xs font-semibold transition-all"
+                    >
+                      <ChevronRight size={14} />
+                      Avanzar a {nextStage.label}
+                    </button>
+                  );
+                })()}
+                {/* Eliminar */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (window.confirm(`¿Eliminar prospecto "${selectedProspecto.empresa}"? Esta acción no se puede deshacer.`)) {
+                      setKanbanProspectos(prev => prev.filter(p => p.id !== selectedProspecto.id));
+                      setMostrarDetallesProspecto(false);
+                      setSelectedProspecto(null);
+                    }
+                  }}
+                  className="flex items-center gap-1 px-2 py-1.5 bg-white/10 hover:bg-red-500/50 text-white rounded-lg text-xs transition-all"
+                  title="Eliminar prospecto"
+                >
+                  <Trash2 size={14} />
+                </button>
+                <button onClick={() => { setMostrarDetallesProspecto(false); setDetallesProspectoTab('info'); }} className="text-white hover:text-white/80">
+                  <X size={24} />
+                </button>
+              </div>
             </div>
 
             {/* CRM Tabs */}
@@ -11104,6 +11302,39 @@ const InnovativeDemo = () => {
 
             {detallesProspectoTab === 'info' && (
             <div className="p-6">
+              {/* Botón Editar */}
+              <div className="flex justify-end mb-4">
+                <button
+                  onClick={() => {
+                    const newEmpresa = prompt('Empresa:', selectedProspecto.empresa);
+                    if (newEmpresa === null) return;
+                    const newIndustria = prompt('Industria:', selectedProspecto.industria || '');
+                    const newVolumen = prompt('Volumen Estimado:', selectedProspecto.volumenEstimado || '');
+                    const newComentarios = prompt('Comentarios:', selectedProspecto.comentarios || '');
+                    const newCiudad = prompt('Ciudad:', selectedProspecto.ciudad || '');
+                    setKanbanProspectos(prev => prev.map(p => p.id === selectedProspecto.id ? {
+                      ...p,
+                      empresa: newEmpresa || p.empresa,
+                      industria: newIndustria || p.industria,
+                      volumenEstimado: newVolumen || p.volumenEstimado,
+                      comentarios: newComentarios !== null ? newComentarios : p.comentarios,
+                      ciudad: newCiudad || p.ciudad,
+                    } : p));
+                    setSelectedProspecto(prev => prev ? {
+                      ...prev,
+                      empresa: newEmpresa || prev.empresa,
+                      industria: newIndustria || prev.industria,
+                      volumenEstimado: newVolumen || prev.volumenEstimado,
+                      comentarios: newComentarios !== null ? newComentarios : prev.comentarios,
+                      ciudad: newCiudad || prev.ciudad,
+                    } : null);
+                  }}
+                  className="flex items-center gap-2 px-3 py-1.5 bg-[#f3f4f6] hover:bg-[#e5e7eb] text-[#1c2c4a] rounded-lg text-xs font-medium transition-all border border-[#e5e7eb]"
+                >
+                  <Edit3 size={14} />
+                  Editar información
+                </button>
+              </div>
               {/* INFORMACIÓN BÁSICA */}
               <div className="grid grid-cols-2 gap-4 mb-6">
                 <div className="bg-[#f3f4f6] rounded-lg p-4 border border-[#e5e7eb]">
@@ -12107,46 +12338,7 @@ const InnovativeDemo = () => {
                   <div className="text-lg font-bold text-[#1c2c4a]">{selectedProspecto.status}</div>
                 </div>
               </div>
-
-              {/* CAMPOS EDITABLES — Propuesta */}
-              <div className="grid grid-cols-3 gap-4 mb-6">
-                <div>
-                  <label className="text-xs font-medium text-[#6b7280] mb-1 block">Mes de Cierre Estimado</label>
-                  <input type="month"
-                    value={selectedProspecto.propuesta?.mesCierre || ''}
-                    onChange={e => {
-                      const updated = { ...selectedProspecto, propuesta: { ...selectedProspecto.propuesta, mesCierre: e.target.value } };
-                      setSelectedProspecto(updated);
-                      setKanbanProspectos(prev => prev.map(p => p.id === updated.id ? updated : p));
-                    }}
-                    className="w-full px-3 py-2 border border-[#e5e7eb] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#00a8a8]/50 focus:border-[#00a8a8]" />
-                </div>
-                <div>
-                  <label className="text-xs font-medium text-[#6b7280] mb-1 block">Venta Total ($)</label>
-                  <input type="number"
-                    value={selectedProspecto.propuesta?.ventaTotal || ''}
-                    onChange={e => {
-                      const updated = { ...selectedProspecto, propuesta: { ...selectedProspecto.propuesta, ventaTotal: Number(e.target.value) || 0 } };
-                      setSelectedProspecto(updated);
-                      setKanbanProspectos(prev => prev.map(p => p.id === updated.id ? updated : p));
-                    }}
-                    className="w-full px-3 py-2 border border-[#e5e7eb] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#00a8a8]/50 focus:border-[#00a8a8]"
-                    placeholder="0" />
-                </div>
-                <div>
-                  <label className="text-xs font-medium text-[#6b7280] mb-1 block">% Margen de Utilidad</label>
-                  <input type="number" step="0.1" min="0" max="100"
-                    value={selectedProspecto.propuesta?.utilidad != null ? (selectedProspecto.propuesta.utilidad * 100).toFixed(1) : ''}
-                    onChange={e => {
-                      const updated = { ...selectedProspecto, propuesta: { ...selectedProspecto.propuesta, utilidad: Number(e.target.value) / 100 } };
-                      setSelectedProspecto(updated);
-                      setKanbanProspectos(prev => prev.map(p => p.id === updated.id ? updated : p));
-                    }}
-                    className="w-full px-3 py-2 border border-[#e5e7eb] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#00a8a8]/50 focus:border-[#00a8a8]"
-                    placeholder="10.5" />
-                </div>
-              </div>
-
+              
               <div className="space-y-4">
                 <div>
                   <h3 className="text-sm font-semibold text-[#1c2c4a] mb-2">Servicios Propuestos</h3>

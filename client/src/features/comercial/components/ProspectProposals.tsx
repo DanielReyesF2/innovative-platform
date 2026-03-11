@@ -151,7 +151,12 @@ export function ProspectProposals({ prospectId }: ProspectProposalsProps) {
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-between mb-4">
-        <h4 className="font-medium">Propuestas</h4>
+        <div>
+          <h4 className="font-medium">Propuestas</h4>
+          <p className="text-xs text-muted-foreground">
+            Versiones de propuesta comercial con seguimiento de status (borrador → enviada → aceptada)
+          </p>
+        </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button size="sm">

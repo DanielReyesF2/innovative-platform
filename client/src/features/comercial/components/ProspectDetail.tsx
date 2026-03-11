@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,9 +20,12 @@ import {
   Users,
   FileText,
   FileCheck,
-  Lock,
+  Pencil,
+  Save,
+  X,
 } from "lucide-react";
 import { useUpdateProspect, useSendToOperaciones } from "../api";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/components/ui/use-toast";
 import { ProspectTimeline } from "./ProspectTimeline";
 import { ProspectNotes } from "./ProspectNotes";
@@ -36,11 +39,11 @@ const STAGE_LABELS: Record<string, string> = {
   levantamiento: "Levantamiento",
   propuesta: "Propuesta",
   negociacion: "Negociacion",
-  cierre_ganado: "Cierre Ganado",
+  cierre_ganado: "Socio Ambiental",
   cierre_perdido: "Cierre Perdido",
   // Legacy
   lead: "Contacto Inicial",
-  cierre: "Cierre Ganado",
+  cierre: "Socio Ambiental",
   rechazada: "Cierre Perdido",
 };
 
@@ -86,14 +89,6 @@ const TAB_UNLOCK_STAGE: Record<string, string> = {
   propuestas: "propuesta",
 };
 
-function isTabUnlocked(tabId: string, currentStage: string): boolean {
-  const unlockStage = TAB_UNLOCK_STAGE[tabId];
-  if (!unlockStage) return true;
-  const unlockIndex = PIPELINE_STAGES.indexOf(unlockStage as any);
-  const currentIndex = PIPELINE_STAGES.indexOf(currentStage as any);
-  if (currentIndex < 0) return true; // terminal or unknown stage = show all
-  return currentIndex >= unlockIndex;
-}
 
 interface ProspectDetailProps {
   prospect: any;
@@ -107,7 +102,9 @@ export function ProspectDetail({ prospect, onClose }: ProspectDetailProps) {
   const [levData, setLevData] = useState<any>(prospect.levantamientoData || {});
   const [showConfirmSend, setShowConfirmSend] = useState(false);
   const [showAdvanceStage, setShowAdvanceStage] = useState(false);
+  const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const updateProspect = useUpdateProspect();
   const sendToOps = useSendToOperaciones();
@@ -117,12 +114,16 @@ export function ProspectDetail({ prospect, onClose }: ProspectDetailProps) {
   const currentStageIndex = PIPELINE_STAGES.indexOf(currentStage as any);
   const isTerminal = ["cierre_ganado", "cierre_perdido", "cierre", "rechazada"].includes(prospect.stage);
 
-  // Reset to info tab if current tab becomes locked after stage change
-  useEffect(() => {
-    if (!isTabUnlocked(activeTab, currentStage) && !isTerminal) {
-      setActiveTab("info");
-    }
-  }, [currentStage, activeTab, isTerminal]);
+  // Whether a tab belongs to a future stage (used for visual styling only)
+  const isTabFutureStage = (tabId: string): boolean => {
+    if (isTerminal) return false;
+    const unlockStage = TAB_UNLOCK_STAGE[tabId];
+    if (!unlockStage) return false;
+    const unlockIndex = PIPELINE_STAGES.indexOf(unlockStage as any);
+    const currentIdx = PIPELINE_STAGES.indexOf(currentStage as any);
+    if (currentIdx < 0) return false;
+    return currentIdx < unlockIndex;
+  };
 
   const handleAdvanceStage = async () => {
     if (currentStageIndex < 0 || currentStageIndex >= PIPELINE_STAGES.length - 1) return;
@@ -132,8 +133,11 @@ export function ProspectDetail({ prospect, onClose }: ProspectDetailProps) {
       toast({ title: `Avanzado a ${STAGE_LABELS[nextStage]}` });
       setShowAdvanceStage(false);
       onClose();
-    } catch {
-      toast({ title: "Error al avanzar etapa", variant: "destructive" });
+    } catch (err: any) {
+      const msg = err?.message?.includes(":")
+        ? err.message.split(":").slice(1).join(":")
+        : "Error al avanzar etapa";
+      toast({ title: msg, variant: "destructive" });
     }
   };
 
@@ -172,6 +176,21 @@ export function ProspectDetail({ prospect, onClose }: ProspectDetailProps) {
     }
   };
 
+  const handleDeleteProspect = async () => {
+    setIsDeleting(true);
+    try {
+      await apiRequest("DELETE", `/api/comercial/prospects/${prospect.id}`);
+      queryClient.invalidateQueries({ queryKey: ["/api/comercial/prospects"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/comercial/pipeline"] });
+      toast({ title: "Prospecto eliminado" });
+      onClose();
+    } catch {
+      toast({ title: "Error al eliminar prospecto", variant: "destructive" });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   const canSend = ["lead", "contacto_inicial", "presentacion"].includes(prospect.stage) && !prospect.surveyId;
   const wasSent = !!prospect.sentToOpsAt;
 
@@ -195,9 +214,20 @@ export function ProspectDetail({ prospect, onClose }: ProspectDetailProps) {
                 </span>
               )}
             </div>
-            <Button variant="ghost" size="sm" onClick={onClose}>
-              ✕
-            </Button>
+            <div className="flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-destructive hover:text-destructive"
+                onClick={() => setShowConfirmDelete(true)}
+                title="Eliminar prospecto"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+              <Button variant="ghost" size="sm" onClick={onClose}>
+                ✕
+              </Button>
+            </div>
           </div>
 
           {/* Stage progression bar */}
@@ -244,7 +274,6 @@ export function ProspectDetail({ prospect, onClose }: ProspectDetailProps) {
             <div className="mt-2 flex justify-end">
               <Button
                 size="sm"
-                variant="outline"
                 onClick={() => setShowAdvanceStage(true)}
               >
                 <ChevronRight className="mr-1 h-3 w-3" />
@@ -265,28 +294,26 @@ export function ProspectDetail({ prospect, onClose }: ProspectDetailProps) {
             { id: "documentos", label: "Docs", icon: FileText },
             { id: "propuestas", label: "Propuestas", icon: FileCheck },
           ].map((tab) => {
-            const unlocked = isTerminal || isTabUnlocked(tab.id, currentStage);
+            const isFuture = isTabFutureStage(tab.id);
             return (
               <button
                 key={tab.id}
-                onClick={() => unlocked && setActiveTab(tab.id as TabType)}
-                disabled={!unlocked}
+                onClick={() => setActiveTab(tab.id as TabType)}
                 title={
-                  !unlocked
-                    ? `Se desbloquea en ${STAGE_LABELS[TAB_UNLOCK_STAGE[tab.id]] || tab.id}`
+                  isFuture
+                    ? `Se activa en ${STAGE_LABELS[TAB_UNLOCK_STAGE[tab.id]] || tab.id}`
                     : undefined
                 }
                 className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-colors whitespace-nowrap ${
-                  !unlocked
-                    ? "text-muted-foreground/40 cursor-not-allowed"
-                    : activeTab === tab.id
+                  activeTab === tab.id
                     ? "border-b-2 border-primary text-primary"
+                    : isFuture
+                    ? "text-muted-foreground/50 hover:text-muted-foreground"
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 <tab.icon className="h-4 w-4" />
                 {tab.label}
-                {!unlocked && <Lock className="h-3 w-3 ml-1" />}
               </button>
             );
           })}
@@ -294,7 +321,20 @@ export function ProspectDetail({ prospect, onClose }: ProspectDetailProps) {
 
         {/* Content */}
         <div className="flex-1 overflow-auto p-6">
-          {activeTab === "info" && <InfoTab prospect={prospect} />}
+          {activeTab === "info" && (
+            <InfoTab
+              prospect={prospect}
+              onSave={async (data: any) => {
+                try {
+                  await updateProspect.mutateAsync({ id: prospect.id, ...data });
+                  toast({ title: "Datos actualizados" });
+                } catch {
+                  toast({ title: "Error al guardar", variant: "destructive" });
+                }
+              }}
+              isSaving={updateProspect.isPending}
+            />
+          )}
           {activeTab === "timeline" && <ProspectTimeline prospectId={prospect.id} />}
           {activeTab === "notas" && <ProspectNotes prospectId={prospect.id} />}
           {activeTab === "reuniones" && <ProspectMeetings prospectId={prospect.id} />}
@@ -346,6 +386,26 @@ export function ProspectDetail({ prospect, onClose }: ProspectDetailProps) {
         </div>
       )}
 
+      {/* Confirm delete dialog */}
+      {showConfirmDelete && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50">
+          <div className="w-full max-w-md rounded-lg bg-background p-6 shadow-lg">
+            <h3 className="text-lg font-bold">Eliminar prospecto</h3>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Se eliminara permanentemente <strong>{prospect.name}</strong> y todos sus datos asociados. Esta accion no se puede deshacer.
+            </p>
+            <div className="mt-4 flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setShowConfirmDelete(false)}>
+                Cancelar
+              </Button>
+              <Button variant="destructive" onClick={handleDeleteProspect} disabled={isDeleting}>
+                {isDeleting ? "Eliminando..." : "Eliminar"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Confirm advance stage dialog */}
       {showAdvanceStage && currentStageIndex >= 0 && currentStageIndex < PIPELINE_STAGES.length - 1 && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50">
@@ -371,11 +431,126 @@ export function ProspectDetail({ prospect, onClose }: ProspectDetailProps) {
   );
 }
 
-function InfoTab({ prospect }: { prospect: any }) {
+function InfoTab({
+  prospect,
+  onSave,
+  isSaving,
+}: {
+  prospect: any;
+  onSave: (data: any) => Promise<void>;
+  isSaving: boolean;
+}) {
   const isLead = prospect.stage === "lead";
+  const [editing, setEditing] = useState(false);
+  const [form, setForm] = useState({
+    name: prospect.name || "",
+    location: prospect.location || "",
+    contactName: prospect.contactName || "",
+    contactRole: prospect.contactRole || "",
+    contactPhone: prospect.contactPhone || "",
+    contactEmail: prospect.contactEmail || "",
+    industry: prospect.industry || "",
+    potential: prospect.potential || "",
+    probability: prospect.probability || 0,
+    estimatedValue: prospect.estimatedValue || "",
+    estimatedVolume: prospect.estimatedVolume || "",
+    estimatedCloseTime: prospect.estimatedCloseTime || "",
+    priority: prospect.priority || "",
+    nextStep: prospect.nextStep || "",
+    reason: prospect.reason || "",
+    risk: prospect.risk || "",
+    opportunity: prospect.opportunity || "",
+  });
+
+  const set = (key: string, val: any) => setForm({ ...form, [key]: val });
+
+  const handleSave = async () => {
+    await onSave(form);
+    setEditing(false);
+  };
+
+  if (editing) {
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-semibold">Editar informacion</h3>
+          <div className="flex gap-2">
+            <Button variant="ghost" size="sm" onClick={() => setEditing(false)}>
+              <X className="mr-1 h-3 w-3" />
+              Cancelar
+            </Button>
+            <Button size="sm" onClick={handleSave} disabled={isSaving}>
+              <Save className="mr-1 h-3 w-3" />
+              {isSaving ? "Guardando..." : "Guardar"}
+            </Button>
+          </div>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Field label="Empresa" value={form.name} onChange={(v) => set("name", v)} />
+          <Field label="Ubicacion" value={form.location} onChange={(v) => set("location", v)} />
+        </div>
+        <div className="rounded-lg border p-3">
+          <h3 className="mb-2 text-sm font-semibold">Contacto</h3>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Field label="Nombre" value={form.contactName} onChange={(v) => set("contactName", v)} />
+            {!isLead && <Field label="Rol" value={form.contactRole} onChange={(v) => set("contactRole", v)} />}
+            <Field label="Telefono" value={form.contactPhone} onChange={(v) => set("contactPhone", v)} />
+            {!isLead && <Field label="Email" value={form.contactEmail} onChange={(v) => set("contactEmail", v)} />}
+          </div>
+        </div>
+        {!isLead && (
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Field label="Industria" value={form.industry} onChange={(v) => set("industry", v)} />
+            <div>
+              <Label className="text-xs">Potencial</Label>
+              <select
+                value={form.potential}
+                onChange={(e) => set("potential", e.target.value)}
+                className="mt-1 h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+              >
+                <option value="">Seleccionar</option>
+                <option value="Bajo">Bajo</option>
+                <option value="Medio">Medio</option>
+                <option value="Alto">Alto</option>
+                <option value="Muy Alto">Muy Alto</option>
+              </select>
+            </div>
+            <Field label="Probabilidad %" value={String(form.probability)} onChange={(v) => set("probability", Number(v))} type="number" />
+            <Field label="Valor Estimado" value={form.estimatedValue} onChange={(v) => set("estimatedValue", v)} type="number" />
+            <Field label="Volumen Estimado" value={form.estimatedVolume} onChange={(v) => set("estimatedVolume", v)} />
+            <Field label="Tiempo Cierre" value={form.estimatedCloseTime} onChange={(v) => set("estimatedCloseTime", v)} />
+            <div>
+              <Label className="text-xs">Prioridad</Label>
+              <select
+                value={form.priority}
+                onChange={(e) => set("priority", e.target.value)}
+                className="mt-1 h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+              >
+                <option value="">Seleccionar</option>
+                <option value="baja">Baja</option>
+                <option value="media">Media</option>
+                <option value="alta">Alta</option>
+                <option value="muy_alta">Muy Alta</option>
+              </select>
+            </div>
+            <Field label="Siguiente paso" value={form.nextStep} onChange={(v) => set("nextStep", v)} />
+            <Field label="Razon de interes" value={form.reason} onChange={(v) => set("reason", v)} />
+            <Field label="Riesgo" value={form.risk} onChange={(v) => set("risk", v)} />
+            <Field label="Oportunidad" value={form.opportunity} onChange={(v) => set("opportunity", v)} />
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
+      <div className="flex justify-end">
+        <Button variant="outline" size="sm" onClick={() => setEditing(true)}>
+          <Pencil className="mr-1 h-3 w-3" />
+          Editar
+        </Button>
+      </div>
       {/* Always shown: basic info */}
       <div className="grid gap-4 sm:grid-cols-2">
         <InfoRow label="Empresa" value={prospect.name} />

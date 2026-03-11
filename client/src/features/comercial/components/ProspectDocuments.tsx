@@ -40,6 +40,7 @@ import {
 import { useToast } from "@/components/ui/use-toast";
 import { useProspectDocuments, useCreateDocument, useDeleteDocument } from "../api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { getAuthToken } from "@/lib/queryClient";
 
 interface ProspectDocumentsProps {
   prospectId: number;
@@ -115,8 +116,15 @@ export function ProspectDocuments({ prospectId }: ProspectDocumentsProps) {
       formData.append("tipo", tipo);
       formData.append("markAsClosed", markAsClosed.toString());
 
+      const headers: Record<string, string> = {};
+      const token = getAuthToken();
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+
       const response = await fetch(`/api/comercial/prospects/${prospectId}/documents/upload`, {
         method: "POST",
+        headers,
         body: formData,
         credentials: "include",
       });
@@ -237,7 +245,12 @@ export function ProspectDocuments({ prospectId }: ProspectDocumentsProps) {
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-between mb-4">
-        <h4 className="font-medium">Documentos</h4>
+        <div>
+          <h4 className="font-medium">Documentos</h4>
+          <p className="text-xs text-muted-foreground">
+            Archivos generales: contratos, cotizaciones, presentaciones, ordenes de compra
+          </p>
+        </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button size="sm" variant="outline">

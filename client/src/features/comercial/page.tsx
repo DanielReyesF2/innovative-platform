@@ -21,7 +21,6 @@ import { Label } from "@/components/ui/label";
 import { KpiSection } from "@/features/kpis/components/KpiSection";
 import { ProspectDetail } from "./components/ProspectDetail";
 import { ComercialReports } from "./components/ComercialReports";
-import { AlertsDropdown } from "./components/AlertsDropdown";
 import { LeadsView } from "./components/LeadsView";
 
 const STAGE_LABELS: Record<string, string> = {
@@ -30,11 +29,11 @@ const STAGE_LABELS: Record<string, string> = {
   levantamiento: "Levantamiento",
   propuesta: "Propuesta",
   negociacion: "Negociacion",
-  cierre_ganado: "Cierre Ganado",
+  cierre_ganado: "Socio Ambiental",
   cierre_perdido: "Cierre Perdido",
   // Legacy
   lead: "Contacto Inicial",
-  cierre: "Cierre Ganado",
+  cierre: "Socio Ambiental",
   rechazada: "Cierre Perdido",
 };
 
@@ -62,19 +61,35 @@ const PRIORITY_COLORS: Record<string, string> = {
 export default function ComercialPage() {
   const { user } = useAuth();
   const [mainTab, setMainTab] = useState<"leads" | "pipeline" | "kpis" | "reportes">("leads");
+  const [showNewLead, setShowNewLead] = useState(false);
+  const createProspectFromHeader = useCreateProspect();
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Presupuesto Comercial</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Pipeline Comercial</h1>
           <p className="text-muted-foreground">
             Gestion de leads, prospectos y embudo de ventas
           </p>
         </div>
-        <AlertsDropdown />
+        <Button onClick={() => setShowNewLead(true)}>
+          <Plus className="mr-2 h-4 w-4" />
+          Nuevo Lead
+        </Button>
       </div>
+
+      {showNewLead && (
+        <NewLeadModal
+          onClose={() => setShowNewLead(false)}
+          isPending={createProspectFromHeader.isPending}
+          onSubmit={async (data) => {
+            await createProspectFromHeader.mutateAsync(data);
+            setShowNewLead(false);
+          }}
+        />
+      )}
 
       {/* Main tab selector */}
       <div className="flex gap-2 border-b pb-2">
@@ -98,7 +113,7 @@ export default function ComercialPage() {
           }`}
         >
           <TrendingUp className="h-4 w-4" />
-          Presupuesto
+          Pipeline
         </button>
         <button
           onClick={() => setMainTab("kpis")}
@@ -140,8 +155,6 @@ function PipelineView() {
   const [searchTerm, setSearchTerm] = useState("");
   const [stageFilter, setStageFilter] = useState<string>("all");
   const [selectedProspect, setSelectedProspect] = useState<any>(null);
-  const [showNewLead, setShowNewLead] = useState(false);
-  const createProspect = useCreateProspect();
 
   // Calculate metrics
   const activeProspects = prospects.filter((p: any) => !["rechazada", "cierre_perdido"].includes(p.stage));
@@ -184,7 +197,7 @@ function PipelineView() {
       {/* KPI Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <MetricCard
-          title="Presupuesto Total"
+          title="Pipeline Total"
           value={`$${(totalPipelineValue / 1_000_000).toFixed(1)}M`}
           description={`${activeProspects.length} prospectos activos`}
           icon={<DollarSign className="h-4 w-4 text-muted-foreground" />}
@@ -236,14 +249,6 @@ function PipelineView() {
           </div>
         </CardContent>
       </Card>
-
-      {/* New Lead button */}
-      <div className="flex justify-end">
-        <Button onClick={() => setShowNewLead(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Nuevo Lead
-        </Button>
-      </div>
 
       {/* Search and filters */}
       <div className="flex items-center gap-3">
@@ -353,17 +358,6 @@ function PipelineView() {
         <ProspectDetail
           prospect={selectedProspect}
           onClose={() => setSelectedProspect(null)}
-        />
-      )}
-
-      {showNewLead && (
-        <NewLeadModal
-          onClose={() => setShowNewLead(false)}
-          isPending={createProspect.isPending}
-          onSubmit={async (data) => {
-            await createProspect.mutateAsync(data);
-            setShowNewLead(false);
-          }}
         />
       )}
     </>
