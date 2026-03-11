@@ -1542,7 +1542,7 @@ const InnovativeDemo = () => {
   const [clienteSeleccionadoVista, setClienteSeleccionadoVista] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [expandedSections, setExpandedSections] = useState({
-    comercial: false, operacion: false, trazabilidad: false, subproductos: false
+    comercial: true, operacion: false, trazabilidad: false, subproductos: false
   });
   const [showKpiPanel, setShowKpiPanel] = useState(false);
   const [kpiPanelArea, setKpiPanelArea] = useState(null); // 'comercial' | 'operacion' | 'subproductos'
@@ -2113,6 +2113,12 @@ const InnovativeDemo = () => {
                 onClick={() => {
                   if (sidebarOpen) {
                     toggleSection(navItem.key);
+                    // If only one sub-item, navigate directly
+                    if (navItem.items.length === 1) {
+                      setCurrentView(navItem.items[0].id);
+                      setSelectedClient(null);
+                      setSelectedTeamMember(null);
+                    }
                   } else {
                     const mainItem = navItem.items[0];
                     if (mainItem) {
