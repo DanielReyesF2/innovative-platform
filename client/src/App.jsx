@@ -2029,11 +2029,7 @@ const InnovativeDemo = () => {
     { type: 'category', label: 'PRINCIPAL' },
     { type: 'item', id: 'dashboard', icon: Home, label: 'Dashboard' },
     { type: 'category', label: 'COMERCIAL' },
-    { type: 'section', key: 'comercial', icon: TrendingUp, label: 'Nuevas Cuentas',
-      items: [
-        { id: 'comercial', icon: Briefcase, label: 'Presupuesto & Prospectos' },
-      ]
-    },
+    { type: 'item', id: 'comercial', icon: TrendingUp, label: 'Nuevas Cuentas' },
   ];
 
   const Sidebar = () => {
