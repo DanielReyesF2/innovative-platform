@@ -43,6 +43,13 @@
       "role": "comercial",
       "area": "Comercial",
       "password": "Innovative2026!"
+    },
+    {
+      "name": "Veronica Arias",
+      "email": "vero@innovative-la.com",
+      "role": "director",
+      "area": "Dirección",
+      "password": "Innovative2026!"
     }
   ]
 }

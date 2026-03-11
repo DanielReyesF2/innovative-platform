@@ -62,6 +62,19 @@ export function useUpdateProspect() {
   });
 }
 
+export function useDeleteProspect() {
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const res = await apiRequest("DELETE", `/api/comercial/prospects/${id}`);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/comercial/prospects"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/comercial/pipeline"] });
+    },
+  });
+}
+
 export function useRejectProspect() {
   return useMutation({
     mutationFn: async ({ id, ...data }: { id: number; rejectionReasonId: number; rejectionDetail?: string }) => {

@@ -48,28 +48,12 @@ export default function LoginPage() {
           <div className="absolute bottom-40 right-10 w-32 h-32 rounded-full border-2 border-white"></div>
         </div>
 
-        <div className="flex flex-col items-center justify-center w-full relative z-10">
+        <div className="flex items-center justify-center w-full relative z-10">
           <img
             src="/IGMexico-Blanco.png"
             alt="Innovative Group Mexico"
-            className="w-80 drop-shadow-lg"
+            className="w-96 drop-shadow-lg"
           />
-          <div className="mt-12 text-center text-white">
-            <h2 className="text-2xl font-bold mb-3">Hub Digital</h2>
-            <p className="text-white/80 text-sm max-w-sm mx-auto leading-relaxed">
-              Gestion integral de presupuesto comercial, operaciones, trazabilidad y KPIs del equipo.
-            </p>
-          </div>
-          <div className="mt-8 flex flex-wrap justify-center gap-3 max-w-md">
-            {["Presupuesto Comercial", "Kanban Board", "Trazabilidad", "KPIs en Tiempo Real", "Economia Circular"].map((feature) => (
-              <span
-                key={feature}
-                className="px-4 py-2 bg-white/10 border border-white/20 rounded-full text-white/90 text-xs font-medium"
-              >
-                {feature}
-              </span>
-            ))}
-          </div>
         </div>
       </div>
 
