@@ -122,8 +122,10 @@ export const prospects = pgTable("prospects", {
   lastContactAt: timestamp("last_contact_at"),
   nextFollowUpAt: timestamp("next_follow_up_at"),
   competitors: text("competitors").array(),
-  // Rejected prospects: contract expiration date for follow-up
+  // Rejected prospects: follow-up tracking
   fechaVencimientoContrato: timestamp("fecha_vencimiento_contrato"),
+  followUpAction: text("follow_up_action"),
+  recoveryStatus: text("recovery_status"), // sin_seguimiento, en_seguimiento, re_contactada
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

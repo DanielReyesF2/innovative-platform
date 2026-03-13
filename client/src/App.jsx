@@ -307,6 +307,11 @@ const dbProspectToKanban = (prospect, usersMap = {}) => {
     volumenEstimado: prospect.estimatedVolume || null,
     facturacionEstimada: prospect.estimatedValue ? Number(prospect.estimatedValue) : null,
     fuente: prospect.source || 'otro',
+    // Seguimiento fields
+    fechaSeguimiento: prospect.nextFollowUpAt ? new Date(prospect.nextFollowUpAt).toISOString().split('T')[0] : null,
+    followUpAction: prospect.followUpAction || null,
+    recoveryStatus: prospect.recoveryStatus || null,
+    fechaVencimientoContrato: prospect.fechaVencimientoContrato ? new Date(prospect.fechaVencimientoContrato).toISOString().split('T')[0] : null,
   };
 };
 
@@ -976,6 +981,55 @@ const InnovativeDemo = () => {
     },
   });
 
+  // Notes and documents queries (per selected prospect)
+  const [activeProspectoId, setActiveProspectoId] = useState(null);
+  const { data: apiNotas = [] } = useQuery({
+    queryKey: [`/api/comercial/prospects/${activeProspectoId}/notes`],
+    enabled: !!activeProspectoId,
+    staleTime: 10 * 1000,
+  });
+  const { data: apiDocumentos = [] } = useQuery({
+    queryKey: [`/api/comercial/prospects/${activeProspectoId}/documents`],
+    enabled: !!activeProspectoId,
+    staleTime: 10 * 1000,
+  });
+  const createNoteMutation = useMutation({
+    mutationFn: async ({ prospectId, content }) => {
+      const res = await apiRequest("POST", `/api/comercial/prospects/${prospectId}/notes`, { content, createdById: authUser?.id });
+      return res.json();
+    },
+    onSettled: (_, __, variables) => {
+      queryClient.invalidateQueries({ queryKey: [`/api/comercial/prospects/${variables.prospectId}/notes`] });
+    },
+  });
+  const deleteNoteMutation = useMutation({
+    mutationFn: async ({ prospectId, noteId }) => {
+      const res = await apiRequest("DELETE", `/api/comercial/prospects/${prospectId}/notes/${noteId}`);
+      return res.json();
+    },
+    onSettled: (_, __, variables) => {
+      queryClient.invalidateQueries({ queryKey: [`/api/comercial/prospects/${variables.prospectId}/notes`] });
+    },
+  });
+  const createDocumentMutation = useMutation({
+    mutationFn: async ({ prospectId, ...data }) => {
+      const res = await apiRequest("POST", `/api/comercial/prospects/${prospectId}/documents`, data);
+      return res.json();
+    },
+    onSettled: (_, __, variables) => {
+      queryClient.invalidateQueries({ queryKey: [`/api/comercial/prospects/${variables.prospectId}/documents`] });
+    },
+  });
+  const deleteDocumentMutation = useMutation({
+    mutationFn: async ({ prospectId, docId }) => {
+      const res = await apiRequest("DELETE", `/api/comercial/prospects/${prospectId}/documents/${docId}`);
+      return res.json();
+    },
+    onSettled: (_, __, variables) => {
+      queryClient.invalidateQueries({ queryKey: [`/api/comercial/prospects/${variables.prospectId}/documents`] });
+    },
+  });
+
   const [currentView, setCurrentView] = useState('dashboard');
 
   // Toast notification system
@@ -1031,10 +1085,9 @@ const InnovativeDemo = () => {
 
   // Ejecutivo Hub states
   const [hubEjecutivo, setHubEjecutivo] = useState(null); // salesTeamData member
-  const [prospectoNotas, setProspectoNotas] = useState({}); // { prospectoId: [{text, date, id}] }
+  const prospectoNotas = {}; // Badge counts — actual data loaded per-prospect from API
   const [prospectoNuevaNota, setProspectoNuevaNota] = useState('');
-  const [prospectoArchivos, setProspectoArchivos] = useState({}); // { prospectoId: [{name, type, size, date, id}] }
-  const [prospectoSeguimiento, setProspectoSeguimiento] = useState({}); // { prospectoId: { fechaSeguimiento, accion, notas, fechaCreacion } }
+  const prospectoArchivos = {}; // Badge counts — actual data loaded per-prospect from API
 
   // Ventas Reales Modal states (Post-reunion Vero Feb 2026)
   const [showVentasRealesModal, setShowVentasRealesModal] = useState(false);
@@ -1165,6 +1218,11 @@ const InnovativeDemo = () => {
     setActiveKanbanId(event.active.id);
   }, []);
 
+  // Sync activeProspectoId for notes/docs queries
+  useEffect(() => {
+    setActiveProspectoId(selectedProspecto?.id || null);
+  }, [selectedProspecto?.id]);
+
   // Calcular alertas automáticamente
   useEffect(() => {
     const nuevasAlertas = [];
@@ -1239,7 +1297,7 @@ const InnovativeDemo = () => {
 
     // Seguimiento de rechazadas con fecha próxima o vencida
     kanbanProspectos.filter(p => p.status === 'cierre_perdido').forEach(p => {
-      const seg = prospectoSeguimiento[p.id];
+      const seg = { fechaSeguimiento: p.fechaSeguimiento, accion: p.followUpAction, recoveryStatus: p.recoveryStatus, fechaVencimientoContrato: p.fechaVencimientoContrato };
       if (!seg?.fechaSeguimiento) return;
       const urgency = getSeguimientoUrgency(seg);
       if (!urgency) return;
@@ -1257,7 +1315,7 @@ const InnovativeDemo = () => {
     });
 
     setAlertas(nuevasAlertas);
-  }, [kanbanProspectos, documentos, prospectoSeguimiento]);
+  }, [kanbanProspectos, documentos]);
 
   // Componente Panel de Notificaciones
   const NotificationsPanel = ({ alertas, onClose, onAction }) => (
@@ -2053,58 +2111,49 @@ const InnovativeDemo = () => {
       if (!selectedProspecto) return;
       const files = Array.from(e.target.files || []);
       if (files.length === 0) return;
-      const nuevosArchivos = files.map((f, idx) => ({
-        id: Date.now() + idx,
-        name: f.name,
-        type: f.type,
-        size: f.size,
-        date: new Date().toISOString().split('T')[0],
-      }));
-      setProspectoArchivos(prev => ({
-        ...prev,
-        [selectedProspecto.id]: [...(prev[selectedProspecto.id] || []), ...nuevosArchivos]
-      }));
+      files.forEach(f => {
+        createDocumentMutation.mutate({
+          prospectId: selectedProspecto.id,
+          name: f.name,
+          type: 'otro',
+          url: `local://${f.name}`,
+          fileSize: f.size,
+          mimeType: f.type,
+          uploadedById: authUser?.id,
+        });
+      });
       e.target.value = '';
+      addToast('Archivo(s) guardado(s)', 'success');
     };
 
     const agregarNota = () => {
       if (!prospectoNuevaNota.trim() || !selectedProspecto) return;
-      setProspectoNotas(prev => ({
-        ...prev,
-        [selectedProspecto.id]: [...(prev[selectedProspecto.id] || []), {
-          id: Date.now(),
-          text: prospectoNuevaNota.trim(),
-          date: new Date().toISOString(),
-        }]
-      }));
+      createNoteMutation.mutate({
+        prospectId: selectedProspecto.id,
+        content: prospectoNuevaNota.trim(),
+      });
       setProspectoNuevaNota('');
     };
 
     const eliminarNota = (notaId) => {
       if (!selectedProspecto) return;
-      setProspectoNotas(prev => ({
-        ...prev,
-        [selectedProspecto.id]: (prev[selectedProspecto.id] || []).filter(n => n.id !== notaId)
-      }));
+      deleteNoteMutation.mutate({ prospectId: selectedProspecto.id, noteId: notaId });
     };
 
     const eliminarArchivo = (archivoId) => {
       if (!selectedProspecto) return;
-      setProspectoArchivos(prev => ({
-        ...prev,
-        [selectedProspecto.id]: (prev[selectedProspecto.id] || []).filter(a => a.id !== archivoId)
-      }));
+      deleteDocumentMutation.mutate({ prospectId: selectedProspecto.id, docId: archivoId });
     };
 
     const guardarSeguimiento = (prospectoId, data) => {
-      setProspectoSeguimiento(prev => ({
-        ...prev,
-        [prospectoId]: {
-          ...prev[prospectoId],
-          ...data,
-          fechaCreacion: prev[prospectoId]?.fechaCreacion || new Date().toISOString().split('T')[0],
-        }
-      }));
+      const updates = {};
+      if (data.fechaSeguimiento !== undefined) updates.nextFollowUpAt = data.fechaSeguimiento || null;
+      if (data.accion !== undefined) updates.followUpAction = data.accion || null;
+      if (data.recoveryStatus !== undefined) updates.recoveryStatus = data.recoveryStatus || null;
+      if (data.fechaVencimientoContrato !== undefined) updates.fechaVencimientoContrato = data.fechaVencimientoContrato || null;
+      if (Object.keys(updates).length > 0) {
+        updateProspectMutation.mutate({ id: prospectoId, ...updates });
+      }
     };
 
     const getFileIcon = (type) => {
@@ -2343,7 +2392,7 @@ const InnovativeDemo = () => {
                   {/* REJECTION BANNER + FOLLOW-UP FORM */}
                   {p.status === 'cierre_perdido' && (() => {
               const cat = classifyRechazo(p.motivoRechazo);
-              const seg = prospectoSeguimiento[p.id];
+              const seg = { fechaSeguimiento: p.fechaSeguimiento, accion: p.followUpAction, recoveryStatus: p.recoveryStatus, fechaVencimientoContrato: p.fechaVencimientoContrato };
               const urgency = getSeguimientoUrgency(seg);
               return (
                 <div className="mx-5 mt-4 rounded-xl border-2 overflow-hidden" style={{ borderColor: cat?.color || '#EF4444' }}>
@@ -2434,7 +2483,7 @@ const InnovativeDemo = () => {
                     )}
                     {/* Recovery state actions */}
                     {(() => {
-                      const recovery = getRecoveryState(prospectoSeguimiento[p.id]);
+                      const recovery = getRecoveryState({ fechaSeguimiento: p.fechaSeguimiento, accion: p.followUpAction, recoveryStatus: p.recoveryStatus, fechaVencimientoContrato: p.fechaVencimientoContrato });
                       return (
                         <div className="space-y-2 pt-1 border-t border-[#f3f4f6]">
                           <div className="flex items-center gap-2">
@@ -2615,8 +2664,8 @@ const InnovativeDemo = () => {
                 <div className="px-4 py-3 bg-[#f9fafb] border-b border-[#e5e7eb]">
                   <h3 className="text-sm font-semibold text-[#1c2c4a] flex items-center gap-2">
                     <MessageSquare size={14} /> Notas
-                    {(prospectoNotas[p.id]?.length > 0) && (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#e5e7eb] text-[#6b7280]">{prospectoNotas[p.id].length}</span>
+                    {(apiNotas.length > 0) && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#e5e7eb] text-[#6b7280]">{apiNotas.length}</span>
                     )}
                   </h3>
                 </div>
@@ -2640,12 +2689,12 @@ const InnovativeDemo = () => {
                     </button>
                   </div>
                   {/* Lista de notas */}
-                  {(prospectoNotas[p.id]?.length > 0) ? (
+                  {(apiNotas.length > 0) ? (
                     <div className="space-y-2 max-h-48 overflow-y-auto">
-                      {[...(prospectoNotas[p.id] || [])].reverse().map(nota => (
+                      {[...apiNotas].reverse().map(nota => (
                         <div key={nota.id} className="bg-[#f9fafb] rounded-lg p-3 group">
                           <div className="flex items-start justify-between gap-2">
-                            <p className="text-sm text-[#1c2c4a] flex-1 whitespace-pre-wrap">{nota.text}</p>
+                            <p className="text-sm text-[#1c2c4a] flex-1 whitespace-pre-wrap">{nota.content}</p>
                             <button
                               onClick={() => eliminarNota(nota.id)}
                               className="opacity-0 group-hover:opacity-100 text-[#6b7280] hover:text-red-500 transition-all flex-shrink-0 mt-0.5"
@@ -2655,7 +2704,7 @@ const InnovativeDemo = () => {
                           </div>
                           <div className="flex items-center gap-1 mt-1.5 text-[10px] text-[#9ca3af]">
                             <Clock size={9} />
-                            {timeAgo(nota.date) || 'ahora'}
+                            {timeAgo(nota.createdAt) || 'ahora'}
                           </div>
                         </div>
                       ))}
@@ -2674,8 +2723,8 @@ const InnovativeDemo = () => {
                     <div className="px-4 py-3 bg-[#f9fafb] border-b border-[#e5e7eb]">
                       <h3 className="text-sm font-semibold text-[#1c2c4a] flex items-center gap-2">
                         <Paperclip size={14} /> Archivos
-                        {(prospectoArchivos[p.id]?.length > 0) && (
-                          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#e5e7eb] text-[#6b7280]">{prospectoArchivos[p.id].length}</span>
+                        {(apiDocumentos.length > 0) && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#e5e7eb] text-[#6b7280]">{apiDocumentos.length}</span>
                         )}
                       </h3>
                     </div>
@@ -2697,16 +2746,16 @@ const InnovativeDemo = () => {
                         <p className="text-xs text-[#6b7280]">Click para subir archivos</p>
                       </div>
                       {/* File list */}
-                      {(prospectoArchivos[p.id]?.length > 0) ? (
+                      {(apiDocumentos.length > 0) ? (
                         <div className="space-y-1.5 max-h-40 overflow-y-auto">
-                          {[...(prospectoArchivos[p.id] || [])].reverse().map(archivo => (
+                          {[...apiDocumentos].reverse().map(archivo => (
                             <div key={archivo.id} className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-[#f9fafb] group transition-colors">
                               <div className="w-7 h-7 rounded-md bg-[#f3f4f6] flex items-center justify-center flex-shrink-0">
-                                {getFileIcon(archivo.type)}
+                                {getFileIcon(archivo.mimeType)}
                               </div>
                               <div className="flex-1 min-w-0">
                                 <div className="text-xs font-medium text-[#1c2c4a] truncate">{archivo.name}</div>
-                                <div className="text-[10px] text-[#9ca3af]">{formatFileSize(archivo.size)} · {archivo.date}</div>
+                                <div className="text-[10px] text-[#9ca3af]">{formatFileSize(archivo.fileSize)} · {timeAgo(archivo.createdAt)}</div>
                               </div>
                               <button
                                 onClick={() => eliminarArchivo(archivo.id)}
@@ -2782,8 +2831,8 @@ const InnovativeDemo = () => {
           <div className="text-xs text-[#6b7280] mt-0.5">Cierres</div>
         </div>
         {memberRechazados.length > 0 && (() => {
-          const vencidos = memberRechazados.filter(p => getSeguimientoUrgency(prospectoSeguimiento[p.id])?.overdue).length;
-          const conSeg = memberRechazados.filter(p => prospectoSeguimiento[p.id]?.fechaSeguimiento).length;
+          const vencidos = memberRechazados.filter(p => getSeguimientoUrgency({ fechaSeguimiento: p.fechaSeguimiento, accion: p.followUpAction, recoveryStatus: p.recoveryStatus, fechaVencimientoContrato: p.fechaVencimientoContrato })?.overdue).length;
+          const conSeg = memberRechazados.filter(p => ({ fechaSeguimiento: p.fechaSeguimiento, accion: p.followUpAction, recoveryStatus: p.recoveryStatus, fechaVencimientoContrato: p.fechaVencimientoContrato })?.fechaSeguimiento).length;
           return (
             <button
               onClick={() => setShowRechazadasModal(true)}
@@ -2943,7 +2992,7 @@ const InnovativeDemo = () => {
                     <div>
                       <h2 className="text-lg font-bold text-[#1c2c4a]">Oportunidades Rechazadas</h2>
                       <p className="text-xs text-[#6b7280]">
-                        {memberRechazados.filter(p => prospectoSeguimiento[p.id]?.fechaSeguimiento).length}/{memberRechazados.length} con seguimiento
+                        {memberRechazados.filter(p => ({ fechaSeguimiento: p.fechaSeguimiento, accion: p.followUpAction, recoveryStatus: p.recoveryStatus, fechaVencimientoContrato: p.fechaVencimientoContrato })?.fechaSeguimiento).length}/{memberRechazados.length} con seguimiento
                       </p>
                     </div>
                   </div>
@@ -2957,7 +3006,7 @@ const InnovativeDemo = () => {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {memberRechazados.map(p => {
                       const cat = classifyRechazo(p.motivoRechazo);
-                      const seg = prospectoSeguimiento[p.id];
+                      const seg = { fechaSeguimiento: p.fechaSeguimiento, accion: p.followUpAction, recoveryStatus: p.recoveryStatus, fechaVencimientoContrato: p.fechaVencimientoContrato };
                       const urgency = getSeguimientoUrgency(seg);
                       return (
                         <div key={p.id}
@@ -4097,11 +4146,11 @@ const InnovativeDemo = () => {
 
         const byRecovery = { sin_seguimiento: [], en_seguimiento: [], re_contactada: [] };
         allRejected.forEach(p => {
-          const seg = prospectoSeguimiento[p.id];
+          const seg = { fechaSeguimiento: p.fechaSeguimiento, accion: p.followUpAction, recoveryStatus: p.recoveryStatus, fechaVencimientoContrato: p.fechaVencimientoContrato };
           const state = getRecoveryState(seg);
           if (byRecovery[state.id]) byRecovery[state.id].push(p);
         });
-        const overdue = allRejected.filter(p => getSeguimientoUrgency(prospectoSeguimiento[p.id])?.overdue);
+        const overdue = allRejected.filter(p => getSeguimientoUrgency({ fechaSeguimiento: p.fechaSeguimiento, accion: p.followUpAction, recoveryStatus: p.recoveryStatus, fechaVencimientoContrato: p.fechaVencimientoContrato })?.overdue);
         const recoverable = allRejected.filter(p => classifyRechazo(p.motivoRechazo)?.recoverable);
         const totalValue = allRejected.reduce((s, p) => s + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0);
         const byCat = { pricing: [], proposal: [], operational: [] };
@@ -4172,7 +4221,7 @@ const InnovativeDemo = () => {
                     </div>
                     <div className="divide-y divide-[#f3f4f6]">
                       {items.map(p => {
-                        const seg = prospectoSeguimiento[p.id];
+                        const seg = { fechaSeguimiento: p.fechaSeguimiento, accion: p.followUpAction, recoveryStatus: p.recoveryStatus, fechaVencimientoContrato: p.fechaVencimientoContrato };
                         const urgency = getSeguimientoUrgency(seg);
                         const recovery = getRecoveryState(seg);
                         return (
@@ -4883,7 +4932,7 @@ const InnovativeDemo = () => {
               <div>
                 <div className="text-[13px] font-medium text-[#6b7280] mb-1">Tiempo Promedio</div>
                 <div className="text-2xl font-bold text-[#1c2c4a]">
-                  {metricasPorEtapa.length > 0 ? Math.round(metricasPorEtapa.reduce((s, m) => s + m.diasPromedio, 0) / metricasPorEtapa.filter(m => m.count > 0).length || 1) : 0} <span className="text-lg">días</span>
+                  {metricasPorEtapa.length > 0 ? Math.round(metricasPorEtapa.reduce((s, m) => s + m.diasPromedio, 0) / (metricasPorEtapa.filter(m => m.count > 0).length || 1)) : 0} <span className="text-lg">días</span>
                 </div>
               </div>
               <div className="w-10 h-10 rounded-xl bg-[#F57C00]/10 flex items-center justify-center">
