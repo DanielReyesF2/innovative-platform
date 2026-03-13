@@ -274,7 +274,9 @@ const camposFaltantes = (lead) => {
 // Mapeo DB prospect → formato kanban UI
 const dbProspectToKanban = (prospect, usersMap = {}) => {
   const user = usersMap[prospect.assignedToId];
-  const ejecutivoCode = user?.name ? user.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : '';
+  // Match by dbUserId for reliable codigo lookup, fallback to name initials
+  const teamMember = salesTeamData.find(m => m.dbUserId === prospect.assignedToId);
+  const ejecutivoCode = teamMember?.codigo || (user?.name ? user.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : '');
   return {
     id: prospect.id,
     empresa: prospect.name,
