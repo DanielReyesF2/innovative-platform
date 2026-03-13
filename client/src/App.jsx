@@ -556,329 +556,26 @@ const salesTeamData = [
 ];
 
 // DATOS DETALLADOS DE LEVANTAMIENTOS
-const levantamientosDetallados = [
-  {
-    id: 1,
-    cliente: 'Walmart Satélite',
-    fecha: '2025-11-08',
-    fechaCompletado: '2025-11-08',
-    ejecutivo: 'Ana Ruiz',
-    tipo: 'Levantamiento',
-    status: 'Completado',
-    tieneReporte: false,
-    siguientePaso: 'Generar propuesta',
-    volumenEstimado: '35 ton/mes',
-    valorEstimado: 1050000,
-    // Información detallada del levantamiento
-    informacionGeneral: {
-      razonSocial: 'Walmart de México y Centroamérica S.A. de C.V.',
-      rfc: 'WME850101ABC',
-      direccion: 'Av. Gustavo Baz Prada 95, Satélite, Naucalpan, Estado de México',
-      contacto: 'María González - Gerente de Operaciones',
-      telefono: '55-1234-5678',
-      email: 'maria.gonzalez@walmart.com.mx',
-      superficie: '8,500 m²',
-      numeroEmpleados: 120,
-      horarioOperacion: 'Lun-Dom: 7:00 AM - 11:00 PM',
-      requisitosReporte: ['GRI', 'SASB', 'ESR', 'ISO 14001']
-    },
-    tiposResiduos: [
-      { tipo: 'Orgánicos', cantidad: '18 ton/mes', porcentaje: 51, destino: 'Relleno sanitario', costo: 45000 },
-      { tipo: 'Cartón', cantidad: '8 ton/mes', porcentaje: 23, destino: 'Reciclaje externo', costo: 12000 },
-      { tipo: 'Plástico', cantidad: '5 ton/mes', porcentaje: 14, destino: 'Reciclaje externo', costo: 8000 },
-      { tipo: 'Vidrio', cantidad: '2 ton/mes', porcentaje: 6, destino: 'Relleno sanitario', costo: 3000 },
-      { tipo: 'Otros', cantidad: '2 ton/mes', porcentaje: 6, destino: 'Relleno sanitario', costo: 3000 }
-    ],
-    generacion: {
-      frecuencia: 'Diaria',
-      diasSemana: 7,
-      horariosRecoleccion: ['6:00 AM', '2:00 PM', '10:00 PM'],
-      volumenDiario: '1.2 ton/día',
-      volumenSemanal: '8.4 ton/semana',
-      volumenMensual: '35 ton/mes',
-      variacionesEstacionales: 'Aumento 15% en Diciembre y Enero'
-    },
-    serviciosActuales: {
-      proveedor: 'Servicios Ambientales del Valle S.A.',
-      contratoVigente: true,
-      fechaInicio: '2023-01-15',
-      fechaVencimiento: '2025-12-31',
-      costoMensual: 52000,
-      frecuenciaRecoleccion: '3 veces por día',
-      tipoServicio: 'Recolección y transporte',
-      incluyeSeparacion: false,
-      incluyeValorizacion: false,
-      incluyeReporteo: false,
-      nivelSatisfaccion: 6,
-      razonCambio: 'Necesidad de trazabilidad y valorización de residuos'
-    },
-    infraestructura: {
-      tieneAreaAlmacenamiento: true,
-      areaAlmacenamiento: '120 m²',
-      tipoAlmacenamiento: 'Contenedores de 1.1 m³',
-      numeroContenedores: 45,
-      tieneCompactadora: false,
-      tieneBodega: true,
-      accesoVehiculos: 'Fácil - Patio trasero',
-      restriccionesHorario: 'Recolección solo entre 6:00 AM - 8:00 PM',
-      espacioDisponible: 'Suficiente para segregación'
-    },
-    necesidades: {
-      separacionResiduos: true,
-      valorizacionResiduos: true,
-      trazabilidad: true,
-      reporteoMensual: true,
-      certificaciones: ['ISO 14001', 'RME'],
-      objetivosAmbientales: 'Reducir envío a relleno sanitario en 60%',
-      presupuestoDisponible: 65000,
-      urgencia: 'Media',
-      decisionMaker: 'María González - Gerente de Operaciones'
-    },
-    observaciones: 'Cliente interesado en programa de economía circular. Tienen programa interno de reciclaje básico pero buscan profesionalización. Área de almacenamiento bien organizada. Buena disposición del personal.'
-  },
-  {
-    id: 2,
-    cliente: 'Soriana Naucalpan',
-    fecha: '2025-11-10',
-    fechaCompletado: null,
-    ejecutivo: 'Carlos Mendoza',
-    tipo: 'Levantamiento',
-    status: 'En proceso',
-    siguientePaso: 'Completar análisis de residuos',
-    volumenEstimado: '28 ton/mes',
-    valorEstimado: 840000,
-    informacionGeneral: {
-      razonSocial: 'Organización Soriana S.A. de C.V.',
-      rfc: 'OSO850101DEF',
-      direccion: 'Av. Gustavo Baz Prada 200, Naucalpan, Estado de México',
-      contacto: 'Roberto Martínez - Director de Sostenibilidad',
-      telefono: '55-2345-6789',
-      email: 'roberto.martinez@soriana.com.mx',
-      superficie: '7,200 m²',
-      numeroEmpleados: 95,
-      horarioOperacion: 'Lun-Dom: 8:00 AM - 10:00 PM',
-      requisitosReporte: ['NIS', 'GRI', 'ESR']
-    },
-    tiposResiduos: [
-      { tipo: 'Orgánicos', cantidad: '14 ton/mes', porcentaje: 50, destino: 'Relleno sanitario', costo: 35000 },
-      { tipo: 'Cartón', cantidad: '7 ton/mes', porcentaje: 25, destino: 'Reciclaje externo', costo: 10500 },
-      { tipo: 'Plástico', cantidad: '4 ton/mes', porcentaje: 14, destino: 'Reciclaje externo', costo: 6000 },
-      { tipo: 'Vidrio', cantidad: '2 ton/mes', porcentaje: 7, destino: 'Relleno sanitario', costo: 3000 },
-      { tipo: 'Otros', cantidad: '1 ton/mes', porcentaje: 4, destino: 'Relleno sanitario', costo: 1500 }
-    ],
-    generacion: {
-      frecuencia: 'Diaria',
-      diasSemana: 7,
-      horariosRecoleccion: ['7:00 AM', '3:00 PM'],
-      volumenDiario: '0.9 ton/día',
-      volumenSemanal: '6.3 ton/semana',
-      volumenMensual: '28 ton/mes',
-      variacionesEstacionales: 'Aumento 10% en temporada navideña'
-    },
-    serviciosActuales: {
-      proveedor: 'EcoServicios México',
-      contratoVigente: true,
-      fechaInicio: '2024-03-01',
-      fechaVencimiento: '2026-02-28',
-      costoMensual: 45000,
-      frecuenciaRecoleccion: '2 veces por día',
-      tipoServicio: 'Solo recolección',
-      incluyeSeparacion: false,
-      incluyeValorizacion: false,
-      incluyeReporteo: false,
-      nivelSatisfaccion: 5,
-      razonCambio: 'Cumplimiento normativo RME y mejora de imagen corporativa'
-    },
-    infraestructura: {
-      tieneAreaAlmacenamiento: true,
-      areaAlmacenamiento: '95 m²',
-      tipoAlmacenamiento: 'Contenedores de 1.1 m³',
-      numeroContenedores: 35,
-      tieneCompactadora: false,
-      tieneBodega: true,
-      accesoVehiculos: 'Moderado - Calle lateral',
-      restriccionesHorario: 'Recolección preferentemente en horario matutino',
-      espacioDisponible: 'Limitado, requiere optimización'
-    },
-    necesidades: {
-      separacionResiduos: true,
-      valorizacionResiduos: true,
-      trazabilidad: true,
-      reporteoMensual: true,
-      certificaciones: ['RME'],
-      objetivosAmbientales: 'Cumplir normativa RME y obtener certificaciones',
-      presupuestoDisponible: 55000,
-      urgencia: 'Alta',
-      decisionMaker: 'Roberto Martínez - Director de Sostenibilidad'
-    },
-    observaciones: 'Cliente con presión normativa. Necesitan solución rápida. Área de almacenamiento limitada, requiere propuesta de optimización de espacio.'
-  }
-];
+const levantamientosDetallados = [];
 
 // LEVANTAMIENTOS Y PROPUESTAS ACTIVAS
-const levantamientosActivos = [
-  { 
-    id: 1, 
-    cliente: 'Walmart Satélite', 
-    fecha: '2025-11-08', 
-    fechaCompletado: '2025-11-08',
-    ejecutivo: 'Jose Armando Martínez',
-    tipo: 'Levantamiento',
-    status: 'Completado',
-    tieneReporte: false,
-    siguientePaso: 'Generar propuesta',
-    volumenEstimado: '35 ton/mes',
-    valorEstimado: 1050000
-  },
-  {
-    id: 2,
-    cliente: 'Soriana Naucalpan',
-    fecha: '2025-11-10',
-    fechaCompletado: null,
-    ejecutivo: 'Carmen Rodríguez',
-    tipo: 'Propuesta',
-    status: 'Enviada',
-    tieneReporte: false,
-    siguientePaso: 'Seguimiento telefónico',
-    volumenEstimado: '28 ton/mes',
-    valorEstimado: 840000
-  },
-  {
-    id: 3,
-    cliente: 'Chedraui Lindavista',
-    fecha: '2025-11-09',
-    fechaCompletado: null,
-    ejecutivo: 'Mariana Olmos',
-    tipo: 'Levantamiento',
-    status: 'Agendado',
-    tieneReporte: false,
-    siguientePaso: 'Visita programada 14/Nov',
-    volumenEstimado: '22 ton/mes',
-    valorEstimado: 660000
-  },
-  {
-    id: 4,
-    cliente: 'La Comer Mixcoac',
-    fecha: '2025-11-07',
-    fechaCompletado: null,
-    ejecutivo: 'Laura Mesa',
-    tipo: 'Propuesta',
-    status: 'En revisión',
-    tieneReporte: false,
-    siguientePaso: 'Respuesta esperada 15/Nov',
-    volumenEstimado: '18 ton/mes',
-    valorEstimado: 540000
-  },
-  {
-    id: 5,
-    cliente: 'Liverpool Insurgentes',
-    fecha: '2025-11-11',
-    fechaCompletado: null,
-    ejecutivo: 'Laura Mesa',
-    tipo: 'Levantamiento',
-    status: 'En proceso',
-    tieneReporte: false,
-    siguientePaso: 'Análisis de datos',
-    volumenEstimado: '30 ton/mes',
-    valorEstimado: 900000
-  },
-  {
-    id: 6,
-    cliente: 'Costco Santa Fe',
-    fecha: '2025-11-05',
-    fechaCompletado: '2025-11-05',
-    ejecutivo: 'Cristina Sescosse',
-    tipo: 'Levantamiento',
-    status: 'Completado',
-    tieneReporte: false,
-    siguientePaso: 'Generar reporte',
-    volumenEstimado: '42 ton/mes',
-    valorEstimado: 1260000
-  },
-  {
-    id: 7,
-    cliente: 'Sam\'s Club Polanco',
-    fecha: '2025-11-04',
-    fechaCompletado: '2025-11-04',
-    ejecutivo: 'Jose Armando Martínez',
-    tipo: 'Levantamiento',
-    status: 'Completado',
-    tieneReporte: true,
-    siguientePaso: 'Enviar propuesta',
-    volumenEstimado: '38 ton/mes',
-    valorEstimado: 1140000
-  },
-  {
-    id: 8,
-    cliente: 'Bodega Aurrerá Insurgentes',
-    fecha: '2025-11-12',
-    fechaCompletado: null,
-    ejecutivo: 'Mariana Olmos',
-    tipo: 'Levantamiento',
-    status: 'Agendado',
-    tieneReporte: false,
-    siguientePaso: 'Visita programada 15/Nov',
-    volumenEstimado: '25 ton/mes',
-    valorEstimado: 750000
-  },
-  {
-    id: 9,
-    cliente: 'Superama Lomas',
-    fecha: '2025-10-28',
-    fechaCompletado: '2025-10-28',
-    ejecutivo: 'Laura Mesa',
-    tipo: 'Levantamiento',
-    status: 'Completado',
-    tieneReporte: false,
-    siguientePaso: 'Generar reporte',
-    volumenEstimado: '20 ton/mes',
-    valorEstimado: 600000
-  },
-  {
-    id: 10,
-    cliente: 'Chedraui Coyoacán',
-    fecha: '2025-10-25',
-    fechaCompletado: '2025-10-25',
-    ejecutivo: 'Carmen Rodríguez',
-    tipo: 'Levantamiento',
-    status: 'Completado',
-    tieneReporte: true,
-    siguientePaso: 'Seguimiento',
-    volumenEstimado: '33 ton/mes',
-    valorEstimado: 990000
-  }
-];
+const levantamientosActivos = [];
 
 // DATOS DE TRAZABILIDAD
 const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
-// Función para generar datos de trazabilidad por cliente
-const generarDatosTrazabilidadCliente = (clienteId, variacion = 0) => {
-  const factor = 1 + (variacion * 0.1);
+// Función para generar datos de trazabilidad por cliente — vacío hasta conectar módulo Operaciones
+const generarDatosTrazabilidadCliente = () => {
   return {
-    reciclaje: [
-      { material: 'Papel Mixto', Ene: Math.round(100 * factor), Feb: 0, Mar: 0, Abr: 0, May: 0, Jun: 0, Jul: Math.round(41 * factor), Ago: Math.round(112 * factor), Sep: 0, Oct: 0, Nov: 0, Dic: 0 },
-      { material: 'Papel de oficina', Ene: 0, Feb: 0, Mar: 0, Abr: Math.round(36.8 * factor), May: Math.round(116 * factor), Jun: 0, Jul: Math.round(5.6 * factor), Ago: Math.round(2.5 * factor), Sep: Math.round(80 * factor), Oct: 0, Nov: 0, Dic: 0 },
-      { material: 'Revistas', Ene: 0, Feb: 0, Mar: 0, Abr: 0, May: Math.round(437 * factor), Jun: 0, Jul: 0, Ago: 0, Sep: Math.round(35 * factor), Oct: 0, Nov: 0, Dic: 0 }
-    ],
-    composta: [
-      { material: 'Residuos Orgánicos', Ene: Math.round(250 * factor), Feb: Math.round(180 * factor), Mar: Math.round(200 * factor), Abr: Math.round(260 * factor), May: Math.round(220 * factor), Jun: Math.round(190 * factor), Jul: Math.round(240 * factor), Ago: Math.round(230 * factor), Sep: Math.round(210 * factor), Oct: 0, Nov: 0, Dic: 0 }
-    ],
-    reuso: [
-      { material: 'Material Reutilizable', Ene: Math.round(5 * factor), Feb: Math.round(3 * factor), Mar: Math.round(2 * factor), Abr: Math.round(4 * factor), May: Math.round(6 * factor), Jun: Math.round(3 * factor), Jul: Math.round(4 * factor), Ago: Math.round(5 * factor), Sep: 0, Oct: 0, Nov: 0, Dic: 0 }
-    ],
-    rellenoSanitario: [
-      { material: 'Residuos No Reciclables', Ene: Math.round(15 * factor), Feb: Math.round(20 * factor), Mar: Math.round(18 * factor), Abr: Math.round(12 * factor), May: Math.round(16 * factor), Jun: Math.round(22 * factor), Jul: Math.round(14 * factor), Ago: Math.round(18 * factor), Sep: 0, Oct: 0, Nov: 0, Dic: 0 }
-    ]
+    reciclaje: [],
+    composta: [],
+    reuso: [],
+    rellenoSanitario: []
   };
 };
 
 // Datos de trazabilidad por cliente
-const trazabilidadPorCliente = {
-  1: generarDatosTrazabilidadCliente(1, 0.2), // Walmart - más volumen
-  2: generarDatosTrazabilidadCliente(2, -0.1), // Soriana - menos volumen
-  3: generarDatosTrazabilidadCliente(3, 0.05) // Chedraui - similar
-};
+const trazabilidadPorCliente = {};
 
 // Datos base para gráficas generales
 const datosTrazabilidad = generarDatosTrazabilidadCliente(0, 0);
@@ -1036,129 +733,7 @@ const generarDatosSankeyCliente = (cliente, datosTrazabilidadCliente) => {
 };
 
 // CLIENTES CON REPORTES DE TRAZABILIDAD ENTREGADOS
-const clientesConReportes = [
-  { 
-    id: 1, 
-    name: 'Walmart México', 
-    logo: '🛒',
-    sucursales: 12,
-    ultimoReporte: '2025-11-01',
-    proximoReporte: '2025-12-01',
-    statusReporte: 'Enviado',
-    // Datos para conciliación
-    serviciosContratados: ['Recolección', 'Transporte', 'Valorización', 'Reporteo'],
-    rmeGestionado: 45.8,
-    valoracionLograda: 96,
-    ingresosMes: 1374000,
-    // Impacto
-    impactoMensual: {
-      arboles: 892,
-      co2: 23.4,
-      agua: 125000
-    },
-    contacto: 'Laura Sánchez',
-    email: 'laura.sanchez@walmart.com.mx',
-    // Información operativa
-    fechaInicioOperacion: '2023-03-15',
-    promedioMensual: 42.5,
-    tiposResiduos: ['Papel y Cartón', 'Plástico', 'Orgánicos', 'Vidrio', 'Metal'],
-    destinosFinales: {
-      reciclaje: 'Planta de Reciclaje CDMX',
-      composta: 'Centro de Compostaje Estado de México',
-      reuso: 'Centros de Reutilización',
-      rellenoSanitario: 'Relleno Sanitario Bordo Poniente'
-    },
-    registrosAmbientales: {
-      reciclaje: 'RA-REC-2023-0456',
-      composta: 'RA-COM-2023-0234',
-      reuso: 'RA-REU-2023-0123',
-      rellenoSanitario: 'RA-RS-2023-0789'
-    },
-    frecuenciaRecoleccion: 'Diaria',
-    volumenPromedioMensual: 42.5,
-    tasaValorizacion: 96,
-    requisitosReporte: ['GRI', 'SASB', 'ESR', 'ISO 14001']
-  },
-  { 
-    id: 2, 
-    name: 'Soriana', 
-    logo: '🏬',
-    sucursales: 9,
-    ultimoReporte: '2025-11-01',
-    proximoReporte: '2025-12-01',
-    statusReporte: 'Enviado',
-    serviciosContratados: ['Recolección', 'Transporte', 'Valorización'],
-    rmeGestionado: 38.2,
-    valoracionLograda: 94,
-    ingresosMes: 1146000,
-    impactoMensual: {
-      arboles: 743,
-      co2: 19.5,
-      agua: 104000
-    },
-    contacto: 'Jorge Ramírez',
-    email: 'jorge.ramirez@soriana.com',
-    // Información operativa
-    fechaInicioOperacion: '2023-06-20',
-    promedioMensual: 35.8,
-    tiposResiduos: ['Papel y Cartón', 'Plástico', 'Orgánicos', 'Vidrio'],
-    destinosFinales: {
-      reciclaje: 'Planta de Reciclaje Guadalajara',
-      composta: 'Centro de Compostaje Jalisco',
-      reuso: 'Centros de Reutilización',
-      rellenoSanitario: 'Relleno Sanitario Los Laureles'
-    },
-    registrosAmbientales: {
-      reciclaje: 'RA-REC-2023-0521',
-      composta: 'RA-COM-2023-0312',
-      reuso: 'RA-REU-2023-0189',
-      rellenoSanitario: 'RA-RS-2023-0845'
-    },
-    frecuenciaRecoleccion: '3 veces por semana',
-    volumenPromedioMensual: 35.8,
-    tasaValorizacion: 94,
-    requisitosReporte: ['NIS', 'GRI', 'ESR']
-  },
-  { 
-    id: 3, 
-    name: 'Chedraui', 
-    logo: '🏪',
-    sucursales: 8,
-    ultimoReporte: '2025-11-01',
-    proximoReporte: '2025-12-01',
-    statusReporte: 'Pendiente',
-    serviciosContratados: ['Recolección', 'Valorización', 'Reporteo'],
-    rmeGestionado: 32.6,
-    valoracionLograda: 91,
-    ingresosMes: 978000,
-    impactoMensual: {
-      arboles: 634,
-      co2: 16.6,
-      agua: 88700
-    },
-    contacto: 'María López',
-    email: 'maria.lopez@chedraui.com.mx',
-    // Información operativa
-    fechaInicioOperacion: '2023-09-10',
-    promedioMensual: 30.2,
-    tiposResiduos: ['Papel y Cartón', 'Plástico', 'Orgánicos'],
-    destinosFinales: {
-      reciclaje: 'Planta de Reciclaje Puebla',
-      composta: 'Centro de Compostaje Puebla',
-      reuso: 'Centros de Reutilización',
-      rellenoSanitario: 'Relleno Sanitario Chiltepeque'
-    },
-    registrosAmbientales: {
-      reciclaje: 'RA-REC-2023-0612',
-      composta: 'RA-COM-2023-0398',
-      reuso: 'RA-REU-2023-0256',
-      rellenoSanitario: 'RA-RS-2023-0912'
-    },
-    frecuenciaRecoleccion: '2 veces por semana',
-    volumenPromedioMensual: 30.2,
-    tasaValorizacion: 91
-  }
-];
+const clientesConReportes = [];
 
 // EVOLUCIÓN PRESUPUESTO VS REAL — DATOS REALES 2026
 const presupuestoEvolution = [
@@ -1219,118 +794,7 @@ const CATEGORIAS_DOCUMENTO = [
 ];
 
 // DATOS DE DOCUMENTOS
-const documentosIniciales = [
-  {
-    id: 1,
-    nombre: 'Licencia Ambiental CDMX',
-    tipo: 'Permiso Ambiental',
-    categoria: 'Licencias',
-    fechaEmision: '2024-01-15',
-    fechaVencimiento: '2025-01-15',
-    archivo: 'licencia_cdmx.pdf',
-    status: 'Por Vencer',
-    notas: 'Aplica para operaciones en CDMX - Renovar antes del 15/Ene'
-  },
-  {
-    id: 2,
-    nombre: 'Autorización Transporte Residuos Peligrosos',
-    tipo: 'Autorización de Transporte',
-    categoria: 'Permisos',
-    fechaEmision: '2023-06-20',
-    fechaVencimiento: '2026-06-20',
-    archivo: 'autorizacion_transporte.pdf',
-    status: 'Vigente',
-    notas: 'Válido para toda la República Mexicana'
-  },
-  {
-    id: 3,
-    nombre: 'Certificado ISO 14001:2015',
-    tipo: 'Certificado ISO',
-    categoria: 'Certificaciones',
-    fechaEmision: '2023-09-10',
-    fechaVencimiento: '2026-09-10',
-    archivo: 'iso_14001.pdf',
-    status: 'Vigente',
-    notas: 'Gestión Ambiental - Auditoría anual requerida'
-  },
-  {
-    id: 4,
-    nombre: 'Registro Ambiental Estatal EdoMex',
-    tipo: 'Registro Ambiental',
-    categoria: 'Permisos',
-    fechaEmision: '2024-03-01',
-    fechaVencimiento: '2025-03-01',
-    archivo: 'registro_edomex.pdf',
-    status: 'Vigente',
-    notas: 'Aplica para operaciones en Estado de México'
-  },
-  {
-    id: 5,
-    nombre: 'Póliza Responsabilidad Civil',
-    tipo: 'Póliza de Seguro',
-    categoria: 'Seguros',
-    fechaEmision: '2024-07-01',
-    fechaVencimiento: '2025-07-01',
-    archivo: 'poliza_rc.pdf',
-    status: 'Vigente',
-    notas: 'Cobertura: $10M MXN - Renovación automática'
-  },
-  {
-    id: 6,
-    nombre: 'Licencia Funcionamiento Planta Guadalajara',
-    tipo: 'Licencia de Funcionamiento',
-    categoria: 'Licencias',
-    fechaEmision: '2023-11-15',
-    fechaVencimiento: '2025-11-15',
-    archivo: 'licencia_gdl.pdf',
-    status: 'Vigente',
-    notas: 'Planta de reciclaje Guadalajara'
-  },
-  {
-    id: 7,
-    nombre: 'Permiso Ambiental Monterrey',
-    tipo: 'Permiso Ambiental',
-    categoria: 'Permisos',
-    fechaEmision: '2024-02-20',
-    fechaVencimiento: '2024-12-20',
-    archivo: 'permiso_mty.pdf',
-    status: 'Vencido',
-    notas: '¡URGENTE! Vencido - Iniciar renovación inmediatamente'
-  },
-  {
-    id: 8,
-    nombre: 'Certificado ISO 9001:2015',
-    tipo: 'Certificado ISO',
-    categoria: 'Certificaciones',
-    fechaEmision: '2023-08-05',
-    fechaVencimiento: '2026-08-05',
-    archivo: 'iso_9001.pdf',
-    status: 'Vigente',
-    notas: 'Gestión de Calidad - Próxima auditoría: Ago 2025'
-  },
-  {
-    id: 9,
-    nombre: 'Manifiesto Generación Residuos 2024',
-    tipo: 'Manifiesto de Residuos',
-    categoria: 'Permisos',
-    fechaEmision: '2024-01-01',
-    fechaVencimiento: '2024-12-31',
-    archivo: 'manifiesto_2024.pdf',
-    status: 'Por Vencer',
-    notas: 'Generar manifiesto 2025 en Diciembre'
-  },
-  {
-    id: 10,
-    nombre: 'Registro SEMARNAT Nacional',
-    tipo: 'Registro Ambiental',
-    categoria: 'Permisos',
-    fechaEmision: '2022-05-10',
-    fechaVencimiento: '2027-05-10',
-    archivo: 'registro_semarnat.pdf',
-    status: 'Vigente',
-    notas: 'Registro federal - Renovación cada 5 años'
-  }
-];
+const documentosIniciales = [];
 
 // Función para calcular el status de un documento
 const calcularStatusDocumento = (fechaVencimiento) => {
@@ -1461,7 +925,7 @@ const InnovativeDemo = () => {
 
   // Fetch users for assignedToId → ejecutivo code mapping
   const { data: dbUsers = [] } = useQuery({
-    queryKey: ['/api/settings/users'],
+    queryKey: ['/api/auth/team'],
     staleTime: 5 * 60 * 1000,
   });
   const usersMap = useMemo(() => {
@@ -1560,6 +1024,7 @@ const InnovativeDemo = () => {
   const [prospectoParaRechazar, setProspectoParaRechazar] = useState(null);
   const [motivoRechazoSeleccionado, setMotivoRechazoSeleccionado] = useState('');
   const [detalleRechazo, setDetalleRechazo] = useState('');
+  const [editProspecto, setEditProspecto] = useState(null); // { id, empresa, industria, volumenEstimado, ciudad, comentarios }
   const [documentos, setDocumentos] = useState(documentosIniciales);
   const [mostrarNuevoDocumento, setMostrarNuevoDocumento] = useState(false);
   const [filtroDocumentos, setFiltroDocumentos] = useState({ tipo: '', categoria: '', status: '' });
@@ -2392,7 +1857,7 @@ const InnovativeDemo = () => {
       </div>
 
       {/* ═══════ SECTION B: OPERACIONES ═══════ */}
-      <SectionHeader color="#F57C00" icon={Truck} label="Operaciones" linkLabel="Ver Levantamientos" onLinkClick={() => setCurrentView('operacion')} />
+      <SectionHeader color="#F57C00" icon={Truck} label="Operaciones" />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <div className="bg-white rounded-xl border border-[#e5e7eb] p-4">
@@ -2426,7 +1891,9 @@ const InnovativeDemo = () => {
         <div className="lg:col-span-2 bg-white rounded-xl border border-[#e5e7eb] p-4">
           <h3 className="text-sm font-semibold text-[#1c2c4a] mb-3">Levantamientos y Propuestas</h3>
           <div className="space-y-1.5">
-            {levantamientosActivos.slice(0, 6).map(lev => {
+            {levantamientosActivos.length === 0 ? (
+              <div className="text-center py-6 text-[#6b7280] text-xs">Sin levantamientos activos</div>
+            ) : levantamientosActivos.slice(0, 6).map(lev => {
               const statusColor = lev.status === 'Completado' ? '#2E7D32' : lev.status === 'Enviada' ? '#0D47A1' : lev.status === 'Agendado' ? '#7C3AED' : '#F57C00';
               return (
                 <div key={lev.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-[#f9fafb] text-xs">
@@ -2793,30 +2260,7 @@ const InnovativeDemo = () => {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      const newEmpresa = prompt('Empresa:', p.empresa);
-                      if (newEmpresa === null) return;
-                      const newIndustria = prompt('Industria:', p.industria || '');
-                      const newVolumen = prompt('Volumen Estimado:', p.volumenEstimado || '');
-                      const newCiudad = prompt('Ciudad:', p.ciudad || '');
-                      const newComentarios = prompt('Comentarios:', p.comentarios || '');
-                      const updates = {};
-                      if (newEmpresa && newEmpresa !== p.empresa) updates.name = newEmpresa;
-                      if (newIndustria !== null && newIndustria !== p.industria) updates.industry = newIndustria;
-                      if (newVolumen !== null && newVolumen !== p.volumenEstimado) updates.estimatedVolume = newVolumen;
-                      if (newCiudad !== null && newCiudad !== p.ciudad) updates.location = newCiudad;
-                      if (newComentarios !== null && newComentarios !== p.comentarios) updates.reason = newComentarios;
-                      if (Object.keys(updates).length > 0) {
-                        updateProspectMutation.mutate({ id: p.id, ...updates });
-                      }
-                      // Optimistic local update for selectedProspecto
-                      setSelectedProspecto(prev => prev ? {
-                        ...prev,
-                        empresa: newEmpresa || prev.empresa,
-                        industria: newIndustria !== null ? newIndustria : prev.industria,
-                        volumenEstimado: newVolumen !== null ? newVolumen : prev.volumenEstimado,
-                        ciudad: newCiudad !== null ? newCiudad : prev.ciudad,
-                        comentarios: newComentarios !== null ? newComentarios : prev.comentarios,
-                      } : null);
+                      setEditProspecto({ id: p.id, empresa: p.empresa, industria: p.industria || '', volumenEstimado: p.volumenEstimado || '', ciudad: p.ciudad || '', comentarios: p.comentarios || '' });
                     }}
                     className="p-1.5 text-[#999] hover:text-[#00a8a8] hover:bg-[#00a8a8]/10 rounded-lg transition-all"
                     title="Editar prospecto"
@@ -5084,13 +4528,6 @@ const InnovativeDemo = () => {
               )}
             </button>
           </div>
-          <button 
-            onClick={() => setMostrarNuevoLevantamiento(true)}
-            className="bg-[#00a8a8] hover:bg-[#1e4a37] text-white px-6 py-2 rounded-md font-medium text-sm shadow-sm hover:shadow-md flex items-center gap-2 transition-all"
-          >
-            <ClipboardList size={18} />
-            Nuevo Levantamiento
-          </button>
         </div>
         
         {/* PANEL DE FILTROS */}
@@ -6542,10 +5979,6 @@ const InnovativeDemo = () => {
               </div>
             ))}
           </div>
-          <button className="mt-4 w-full py-2.5 border-2 border-dashed border-[#e5e7eb] rounded-lg text-sm font-medium text-[#6b7280] hover:text-[#00a8a8] hover:border-[#00a8a8] transition-colors flex items-center justify-center gap-2">
-            <Users size={16} />
-            Agregar Usuario
-          </button>
         </div>
 
         {/* Configuración General */}
@@ -7821,29 +7254,7 @@ const InnovativeDemo = () => {
               <div className="flex justify-end mb-4">
                 <button
                   onClick={() => {
-                    const newEmpresa = prompt('Empresa:', selectedProspecto.empresa);
-                    if (newEmpresa === null) return;
-                    const newIndustria = prompt('Industria:', selectedProspecto.industria || '');
-                    const newVolumen = prompt('Volumen Estimado:', selectedProspecto.volumenEstimado || '');
-                    const newComentarios = prompt('Comentarios:', selectedProspecto.comentarios || '');
-                    const newCiudad = prompt('Ciudad:', selectedProspecto.ciudad || '');
-                    const updates = {};
-                    if (newEmpresa && newEmpresa !== selectedProspecto.empresa) updates.name = newEmpresa;
-                    if (newIndustria !== null && newIndustria !== selectedProspecto.industria) updates.industry = newIndustria;
-                    if (newVolumen !== null && newVolumen !== selectedProspecto.volumenEstimado) updates.estimatedVolume = newVolumen;
-                    if (newComentarios !== null && newComentarios !== selectedProspecto.comentarios) updates.reason = newComentarios;
-                    if (newCiudad !== null && newCiudad !== selectedProspecto.ciudad) updates.location = newCiudad;
-                    if (Object.keys(updates).length > 0) {
-                      updateProspectMutation.mutate({ id: selectedProspecto.id, ...updates });
-                    }
-                    setSelectedProspecto(prev => prev ? {
-                      ...prev,
-                      empresa: newEmpresa || prev.empresa,
-                      industria: newIndustria || prev.industria,
-                      volumenEstimado: newVolumen || prev.volumenEstimado,
-                      comentarios: newComentarios !== null ? newComentarios : prev.comentarios,
-                      ciudad: newCiudad || prev.ciudad,
-                    } : null);
+                    setEditProspecto({ id: selectedProspecto.id, empresa: selectedProspecto.empresa, industria: selectedProspecto.industria || '', volumenEstimado: selectedProspecto.volumenEstimado || '', ciudad: selectedProspecto.ciudad || '', comentarios: selectedProspecto.comentarios || '' });
                   }}
                   className="flex items-center gap-2 px-3 py-1.5 bg-[#f3f4f6] hover:bg-[#e5e7eb] text-[#1c2c4a] rounded-lg text-xs font-medium transition-all border border-[#e5e7eb]"
                 >
@@ -7960,22 +7371,6 @@ const InnovativeDemo = () => {
 
               {/* BOTONES DE ACCIÓN */}
               <div className="flex gap-3 pt-4 border-t border-[#e5e7eb]">
-                {(selectedProspecto.status === 'levantamiento' || selectedProspecto.status === 'propuesta' || selectedProspecto.status === 'cierre_ganado') && (
-                  <button
-                    onClick={() => {
-                      const levantamiento = levantamientosActivos.find(l => l.id === null);
-                      if (levantamiento) {
-                        setSelectedLevantamiento(levantamiento);
-                        setMostrarLevantamiento(true);
-                        setMostrarDetallesProspecto(false);
-                      }
-                    }}
-                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-[#f3f4f6] hover:bg-[#e5e7eb] text-[#1c2c4a] rounded-md text-sm font-medium transition-all border border-[#e5e7eb]"
-                  >
-                    <Eye size={16} />
-                    Ver Levantamiento
-                  </button>
-                )}
                 {(selectedProspecto.status === 'propuesta' || selectedProspecto.status === 'cierre_ganado' || selectedProspecto.status === 'cierre_perdido') && (
                   <button
                     onClick={() => {
@@ -8491,16 +7886,6 @@ const InnovativeDemo = () => {
                   )}
 
                   {/* BOTONES DE ACCIÓN */}
-                  <div className="flex gap-3 pt-4 border-t border-[#e5e7eb]">
-                    <button className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-[#0D47A1] hover:bg-[#0D47A1] text-white rounded-md text-sm font-medium transition-all">
-                      <Download size={16} />
-                      Descargar PDF
-                    </button>
-                    <button className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-[#00a8a8] hover:bg-[#008080] text-white rounded-md text-sm font-medium transition-all">
-                      <FileText size={16} />
-                      Generar Propuesta
-                    </button>
-                  </div>
                 </div>
               </>
             )}
@@ -8892,15 +8277,6 @@ const InnovativeDemo = () => {
                 </div>
               </div>
               
-              <div className="mt-6 flex gap-3">
-                <button className="flex-1 bg-[#0D47A1] hover:bg-[#0D47A1] text-white py-2 rounded-md font-medium text-sm flex items-center justify-center gap-2">
-                  <Download size={16} />
-                  Descargar Propuesta PDF
-                </button>
-                <button className="flex-1 border border-[#0D47A1] text-[#0D47A1] hover:bg-[#f3f4f6] py-2 rounded-md font-medium text-sm">
-                  Enviar por Email
-                </button>
-              </div>
             </div>
           </div>
         </div>
@@ -9233,6 +8609,65 @@ const InnovativeDemo = () => {
                   </>
                 );
               })()}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DE EDITAR PROSPECTO */}
+      {editProspecto && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setEditProspecto(null)}>
+          <div className="bg-white rounded-xl max-w-lg w-full shadow-xl" onClick={e => e.stopPropagation()}>
+            <div className="p-5 border-b border-[#e5e7eb] flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-[#1c2c4a]">Editar Prospecto</h2>
+              <button onClick={() => setEditProspecto(null)} className="text-[#6b7280] hover:text-[#1c2c4a]"><X size={20} /></button>
+            </div>
+            <div className="p-5 space-y-4">
+              {[
+                { key: 'empresa', label: 'Empresa' },
+                { key: 'industria', label: 'Industria' },
+                { key: 'ciudad', label: 'Ciudad' },
+                { key: 'volumenEstimado', label: 'Volumen Estimado' },
+                { key: 'comentarios', label: 'Comentarios' },
+              ].map(field => (
+                <div key={field.key}>
+                  <label className="block text-sm font-medium text-[#1c2c4a] mb-1">{field.label}</label>
+                  <input
+                    type="text"
+                    value={editProspecto[field.key] || ''}
+                    onChange={e => setEditProspecto(prev => ({ ...prev, [field.key]: e.target.value }))}
+                    className="w-full px-3 py-2 border border-[#e5e7eb] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#00a8a8]/30 focus:border-[#00a8a8]"
+                  />
+                </div>
+              ))}
+            </div>
+            <div className="p-5 border-t border-[#e5e7eb] flex justify-end gap-3">
+              <button onClick={() => setEditProspecto(null)} className="px-4 py-2 text-sm text-[#6b7280] hover:text-[#1c2c4a]">Cancelar</button>
+              <button
+                onClick={() => {
+                  const updates = {};
+                  if (editProspecto.empresa) updates.name = editProspecto.empresa;
+                  if (editProspecto.industria !== undefined) updates.industry = editProspecto.industria;
+                  if (editProspecto.volumenEstimado !== undefined) updates.estimatedVolume = editProspecto.volumenEstimado;
+                  if (editProspecto.ciudad !== undefined) updates.location = editProspecto.ciudad;
+                  if (editProspecto.comentarios !== undefined) updates.reason = editProspecto.comentarios;
+                  if (Object.keys(updates).length > 0) {
+                    updateProspectMutation.mutate({ id: editProspecto.id, ...updates }, {
+                      onSuccess: () => addToast('Prospecto actualizado', 'success'),
+                      onError: () => addToast('Error al actualizar', 'error'),
+                    });
+                  }
+                  setSelectedProspecto(prev => prev && prev.id === editProspecto.id ? {
+                    ...prev, empresa: editProspecto.empresa, industria: editProspecto.industria,
+                    volumenEstimado: editProspecto.volumenEstimado, ciudad: editProspecto.ciudad,
+                    comentarios: editProspecto.comentarios,
+                  } : prev);
+                  setEditProspecto(null);
+                }}
+                className="px-4 py-2 bg-[#00a8a8] hover:bg-[#008080] text-white text-sm font-medium rounded-lg"
+              >
+                Guardar
+              </button>
             </div>
           </div>
         </div>

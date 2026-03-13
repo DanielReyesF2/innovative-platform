@@ -4,8 +4,8 @@ import { useToast } from "@/components/ui/use-toast";
 import { Send, Lock, Eye, EyeOff, AlertCircle, ChevronRight } from "lucide-react";
 
 export default function LoginPage() {
-  const [username, setUsername] = useState("Pruebas");
-  const [password, setPassword] = useState("Pruebas2026");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -139,12 +139,8 @@ export default function LoginPage() {
                 />
                 <span className="text-sm text-[#6b7280]">Recordarme</span>
               </label>
-              <button
-                type="button"
-                className="text-sm text-[#2E7D32] hover:text-[#1B5E20] font-medium transition-colors"
-              >
-                Olvide mi contrasena
-              </button>
+              <span />
+
             </div>
 
             {/* Submit */}
