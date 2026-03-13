@@ -291,7 +291,7 @@ export function ProspectDetail({ prospect, onClose }: ProspectDetailProps) {
             { id: "notas", label: "Notas", icon: StickyNote },
             { id: "reuniones", label: "Reuniones", icon: Users },
             { id: "levantamiento", label: "Levantamiento", icon: Target },
-            { id: "documentos", label: "Docs", icon: FileText },
+            { id: "documentos", label: "Archivos", icon: FileText },
             { id: "propuestas", label: "Propuestas", icon: FileCheck },
           ].map((tab) => {
             const isFuture = isTabFutureStage(tab.id);

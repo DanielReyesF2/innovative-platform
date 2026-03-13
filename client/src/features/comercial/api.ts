@@ -148,6 +148,15 @@ export function useConvertLead() {
   });
 }
 
+// --- Comercial Team ---
+
+export function useComercialTeam() {
+  return useQuery<any[]>({
+    queryKey: ["/api/comercial/team"],
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
 // --- Pipeline ---
 
 export function usePipeline() {

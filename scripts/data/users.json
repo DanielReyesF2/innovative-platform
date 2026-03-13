@@ -3,24 +3,27 @@
   "areas": ["Dirección", "Comercial", "Operaciones", "Subproductos"],
   "users": [
     {
-      "name": "Carmen Rodríguez",
-      "email": "carmen@innovative-la.com",
+      "name": "Carmen Rodriguez",
+      "email": "ccruz@ig-la.com",
       "role": "comercial",
       "area": "Comercial",
+      "codigo": "CR",
       "password": "Innovative2026!"
     },
     {
-      "name": "Armando Martínez",
-      "email": "armando@innovative-la.com",
+      "name": "Jose Armando Martínez",
+      "email": "jamartinez@ig-la.com",
       "role": "comercial",
       "area": "Comercial",
+      "codigo": "AM",
       "password": "Innovative2026!"
     },
     {
       "name": "Cristina Sescosse",
-      "email": "cristina@innovative-la.com",
+      "email": "csescosse@ig-la.com",
       "role": "comercial",
       "area": "Comercial",
+      "codigo": "CS",
       "password": "Innovative2026!"
     },
     {
@@ -28,6 +31,7 @@
       "email": "lmesa@ig-la.com",
       "role": "comercial",
       "area": "Comercial",
+      "codigo": "LM",
       "password": "Innovative2026!"
     },
     {
@@ -35,20 +39,23 @@
       "email": "molmos@ig-la.com",
       "role": "comercial",
       "area": "Comercial",
+      "codigo": "MO",
       "password": "Innovative2026!"
     },
     {
       "name": "Laura Sobrino",
-      "email": "laura.sobrino@innovative-la.com",
+      "email": "lsobrino@ig-la.com",
       "role": "comercial",
       "area": "Comercial",
+      "codigo": "LS",
       "password": "Innovative2026!"
     },
     {
       "name": "Veronica Arias",
-      "email": "vero@innovative-la.com",
+      "email": "varias@ig-la.com",
       "role": "director",
       "area": "Dirección",
+      "codigo": "VA",
       "password": "Innovative2026!"
     }
   ]

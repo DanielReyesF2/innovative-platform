@@ -60,7 +60,7 @@ const PRIORITY_COLORS: Record<string, string> = {
 
 export default function ComercialPage() {
   const { user } = useAuth();
-  const [mainTab, setMainTab] = useState<"leads" | "pipeline" | "kpis" | "reportes">("leads");
+  const [mainTab, setMainTab] = useState<"leads" | "pipeline" | "kpis" | "reportes">("pipeline");
   const [showNewLead, setShowNewLead] = useState(false);
   const createProspectFromHeader = useCreateProspect();
 

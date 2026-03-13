@@ -1,4 +1,4 @@
-import { pgTable, serial, text, integer, timestamp, boolean, numeric, jsonb, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, integer, timestamp, boolean, numeric, jsonb, pgEnum, uniqueIndex } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { users } from "./common";
@@ -350,7 +350,9 @@ export const ventasReales = pgTable("ventas_reales", {
   monto: numeric("monto", { precision: 14, scale: 2 }).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => ({
+  uniqueUserMesAño: uniqueIndex("ventas_reales_user_mes_año_idx").on(table.userId, table.mes, table.año),
+}));
 
 // KPIs Mensuales (historical data structure for year-over-year comparisons)
 export const kpisMensuales = pgTable("kpis_mensuales", {

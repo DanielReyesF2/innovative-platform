@@ -30,6 +30,7 @@ import {
   surveyWasteTypes,
   surveyCurrentServices,
 } from "../../../shared/schema/operaciones";
+import { users } from "../../../shared/schema/common";
 
 // --- Prospects ---
 
@@ -58,15 +59,19 @@ export async function createProspect(data: InsertProspect) {
 }
 
 export async function deleteProspect(id: number) {
-  // Delete related records first
-  await db.delete(prospectActivities).where(eq(prospectActivities.prospectId, id));
-  await db.delete(prospectNotes).where(eq(prospectNotes.prospectId, id));
-  await db.delete(prospectMeetings).where(eq(prospectMeetings.prospectId, id));
-  await db.delete(prospectDocuments).where(eq(prospectDocuments.prospectId, id));
-  await db.delete(proposalVersions).where(eq(proposalVersions.prospectId, id));
-  await db.delete(followUpAlerts).where(eq(followUpAlerts.prospectId, id));
-  const [deleted] = await db.delete(prospects).where(eq(prospects.id, id)).returning();
-  return deleted;
+  return db.transaction(async (tx) => {
+    // Delete related records first
+    await tx.delete(prospectActivities).where(eq(prospectActivities.prospectId, id));
+    await tx.delete(prospectNotes).where(eq(prospectNotes.prospectId, id));
+    await tx.delete(prospectMeetings).where(eq(prospectMeetings.prospectId, id));
+    await tx.delete(prospectDocuments).where(eq(prospectDocuments.prospectId, id));
+    await tx.delete(proposalVersions).where(eq(proposalVersions.prospectId, id));
+    await tx.delete(followUpAlerts).where(eq(followUpAlerts.prospectId, id));
+    // Clear FK from leads that were converted to this prospect
+    await tx.update(leads).set({ convertedToProspectId: null }).where(eq(leads.convertedToProspectId, id));
+    const [deleted] = await tx.delete(prospects).where(eq(prospects.id, id)).returning();
+    return deleted;
+  });
 }
 
 export async function updateProspect(id: number, data: Partial<InsertProspect>) {
@@ -942,5 +947,53 @@ export async function getRechazadasProximasAVencer(diasAnticipacion: number = 30
       lte(prospects.fechaVencimientoContrato, fechaLimite)
     ),
     orderBy: [prospects.fechaVencimientoContrato],
+  });
+}
+
+// --- Comercial Team (replaces hardcoded salesTeamData) ---
+
+export async function getComercialTeam() {
+  const now = new Date();
+  const currentMonth = now.getMonth() + 1;
+  const currentYear = now.getFullYear();
+
+  // Get all active users with comercial/director roles (or who have a codigo set)
+  const allUsers = await db.query.users.findMany({
+    where: eq(users.isActive, true),
+  });
+  const comercialUsers = allUsers.filter(
+    u => u.codigo && (u.role === "comercial" || u.role === "director" || u.role === "admin")
+  );
+
+  // Get current month sales metrics
+  const currentPeriod = `${currentYear}-${String(currentMonth).padStart(2, "0")}`;
+  const metricsRows = await db.query.salesMetrics.findMany({
+    where: eq(salesMetrics.period, currentPeriod),
+  });
+  const metricsMap = new Map(metricsRows.map(m => [m.userId, m]));
+
+  // Get current month ventas reales
+  const ventasRows = await db.query.ventasReales.findMany({
+    where: and(
+      eq(ventasReales.mes, currentMonth),
+      eq(ventasReales.año, currentYear),
+    ),
+  });
+  const ventasMap = new Map(ventasRows.map(v => [v.userId, Number(v.monto)]));
+
+  return comercialUsers.map(u => {
+    const metrics = metricsMap.get(u.id);
+    const monthlyBudget = metrics ? Number(metrics.monthlyBudget) || 0 : 0;
+    const ventaReal = ventasMap.get(u.id) || 0;
+    return {
+      id: u.id,
+      codigo: u.codigo,
+      name: u.name,
+      email: u.email,
+      role: u.role,
+      presupuestoMensual: monthlyBudget,
+      presupuestoAnual: monthlyBudget * 12,
+      ventasReales: ventaReal,
+    };
   });
 }

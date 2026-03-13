@@ -233,7 +233,7 @@ const calcularWeightedPipeline = (prospectos) => {
   }, 0);
 };
 
-// FUNCIÓN: Calcular Win Rate
+// FUNCIÓN: Calcular Tasa de Cierre
 const calcularWinRate = (prospectos) => {
   const ganadas = prospectos.filter(p => p.status === 'cierre_ganado').length;
   const perdidas = prospectos.filter(p => p.status === 'cierre_perdido').length;
@@ -274,9 +274,8 @@ const camposFaltantes = (lead) => {
 // Mapeo DB prospect → formato kanban UI
 const dbProspectToKanban = (prospect, usersMap = {}) => {
   const user = usersMap[prospect.assignedToId];
-  // Match by dbUserId for reliable codigo lookup, fallback to name initials
-  const teamMember = salesTeamData.find(m => m.dbUserId === prospect.assignedToId);
-  const ejecutivoCode = teamMember?.codigo || (user?.name ? user.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : '');
+  // Use codigo from users table, fallback to name initials
+  const ejecutivoCode = user?.codigo || (user?.name ? user.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : '');
   return {
     id: prospect.id,
     empresa: prospect.name,
@@ -317,248 +316,23 @@ const dbProspectToKanban = (prospect, usersMap = {}) => {
 
 // Pipeline se calcula dinámicamente desde los datos reales
 const calcularPipelineData = (prospectos) => {
-  const stages = ['contacto_inicial', 'presentacion', 'levantamiento', 'propuesta', 'cierre_ganado'];
-  const labels = { contacto_inicial: 'Lead nuevo', presentacion: 'Reunión', levantamiento: 'Levantamiento', propuesta: 'Propuesta', cierre_ganado: 'Ganada' };
+  const stages = ['contacto_inicial', 'presentacion', 'levantamiento', 'propuesta', 'negociacion', 'cierre_ganado'];
+  const labels = { contacto_inicial: 'Lead nuevo', presentacion: 'Reunión', levantamiento: 'Levantamiento', propuesta: 'Propuesta', negociacion: 'Negociación', cierre_ganado: 'Socio Ambiental' };
+  const objetivos = { contacto_inicial: 50, presentacion: 30, levantamiento: 20, propuesta: 15, negociacion: 10, cierre_ganado: 5 };
   return stages.map(stage => {
     const items = prospectos.filter(p => p.status === stage);
     return {
       etapa: labels[stage] || stage,
       cantidad: items.length,
       valor: items.reduce((sum, p) => sum + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0),
-      objetivo: stage === 'contacto_inicial' ? 50 : stage === 'presentacion' ? 30 : stage === 'levantamiento' ? 20 : stage === 'propuesta' ? 15 : 5
+      objetivo: objetivos[stage] || 5
     };
   });
 };
 
 // leadsData and pipelineData are now derived from kanbanProspectos inside the component
 
-// DATOS DEL EQUIPO REAL - INNOVATIVE GROUP
-const salesTeamData = [
-  {
-    id: 1,
-    dbUserId: 16,
-    codigo: 'VA',
-    name: 'Veronica Arias',
-    role: 'Directora Comercial',
-    ubicacion: 'CDMX',
-    zona: 'Nacional (Dirección)',
-    leads: 4,
-    levantamientos: 4,
-    propuestasEnviadas: 5,
-    reuniones: 4,
-    cierres: 2,
-    tasaConversion: 125,
-    presupuestoAnual2026: 130130812,
-    presupuestoMensual: 10844234,
-    ventasReales: 4200000,
-    cumplimientoPresupuesto: 31,
-    tiempoRespuesta: '1.5 hrs',
-    satisfaccionCliente: 4.9,
-    activitiesSemanal: 35,
-    eficienciaGlobal: 90,
-    avatar: '👩‍💼',
-    ultimaActividad: 'Kick Off Hub Digital Comercial',
-    notas: 'Directora del equipo comercial. Presupuesto = total equipo ($164.5M). Prospectos directos con cuentas estratégicas.',
-    // KPIs semanales reales del Excel (semana 31)
-    kpisSemanales: [
-      { semana: 31, leadsNuevos: 4, reunionesAgendadas: 4, levantamientos: 4, propuestasEnviadas: 5, propuestasRechazadas: 0 }
-    ]
-  },
-  {
-    id: 2,
-    dbUserId: 9,
-    codigo: 'CR',
-    name: 'Carmen Rodríguez',
-    role: 'Ejecutiva Senior',
-    ubicacion: 'León, Guanajuato',
-    zona: 'Bajío',
-    leads: 37,
-    levantamientos: 2,
-    propuestasEnviadas: 7,
-    reuniones: 22,
-    cierres: 0,
-    tasaConversion: 19,
-    presupuestoAnual2026: 47135000,
-    presupuestoMensual: 3928000,
-    ventasReales: 0,
-    cumplimientoPresupuesto: 0,
-    tiempoRespuesta: '1.5 hrs',
-    satisfaccionCliente: 4.9,
-    activitiesSemanal: 35,
-    eficienciaGlobal: 85,
-    avatar: '👩‍💼',
-    ultimaActividad: 'Propuesta HOPE GLOBAL enviada 05/feb',
-    notas: 'Ejecutiva más activa del equipo. 37 prospectos en seguimiento (zona Bajío/SLP). 7 propuestas enviadas en espera de fallo. 19 oportunidades rechazadas documentadas.',
-    kpisSemanales: [
-      { semana: 31, leadsNuevos: 6, reunionesAgendadas: 1, levantamientos: 0, propuestasEnviadas: 0, propuestasRechazadas: 2, comentario: 'MARQUARDT, NSK Warner – propuestas rechazadas' },
-      { semana: 32, leadsNuevos: 2, reunionesAgendadas: 2, levantamientos: 1, propuestasEnviadas: 0, propuestasRechazadas: 2, comentario: 'NSK Bearings, Continental FIPASI – rechazadas' },
-      { semana: 33, leadsNuevos: 5, reunionesAgendadas: 2, levantamientos: 0, propuestasEnviadas: 0, propuestasRechazadas: 5, comentario: 'Continental Contitech 5 plantas SLP – rechazadas' },
-      { semana: 34, leadsNuevos: 6, reunionesAgendadas: 2, levantamientos: 0, propuestasEnviadas: 0, propuestasRechazadas: 5, comentario: 'Grupo FLEXI 5 plantas – costos +136%' },
-      { semana: 35, leadsNuevos: 1, reunionesAgendadas: 2, levantamientos: 0, propuestasEnviadas: 1, propuestasRechazadas: 3, comentario: 'Schreiber, AGRIZAR, BOS – rechazadas. SARRELMEX propuesta enviada' },
-      { semana: 36, leadsNuevos: 2, reunionesAgendadas: 2, levantamientos: 0, propuestasEnviadas: 1, propuestasRechazadas: 2, comentario: 'ArcelorMittal 2 plantas – declinamos. Hutchinson propuesta RSU enviada' },
-      { semana: 37, leadsNuevos: 14, reunionesAgendadas: 5, levantamientos: 0, propuestasEnviadas: 3, propuestasRechazadas: 0, comentario: "L'Oréal 3 plantas – licitación segundo round" },
-      { semana: 38, leadsNuevos: 1, reunionesAgendadas: 2, levantamientos: 2, propuestasEnviadas: 0, propuestasRechazadas: 0, comentario: 'SOVERE 2 plantas – levantamiento para propuesta' },
-      { semana: 39, leadsNuevos: 0, reunionesAgendadas: 2, levantamientos: 0, propuestasEnviadas: 1, propuestasRechazadas: 0, comentario: 'MAGNA COSMA SLP – propuesta licitación RP' },
-      { semana: 40, leadsNuevos: 0, reunionesAgendadas: 2, levantamientos: 0, propuestasEnviadas: 1, propuestasRechazadas: 0, comentario: 'HOPE GLOBAL – propuesta enviada 05/feb/2026' }
-    ]
-  },
-  {
-    id: 3,
-    dbUserId: 10,
-    codigo: 'AM',
-    name: 'Jose Armando Martínez',
-    role: 'Ejecutivo Senior',
-    ubicacion: 'Monterrey, NL',
-    zona: 'Norte',
-    leads: 40,
-    levantamientos: 2,
-    propuestasEnviadas: 4,
-    reuniones: 15,
-    cierres: 0,
-    tasaConversion: 10,
-    presupuestoAnual2026: 79577000,
-    presupuestoMensual: 6631000,
-    ventasReales: 0,
-    cumplimientoPresupuesto: 0,
-    tiempoRespuesta: '4.2 hrs',
-    satisfaccionCliente: 4.2,
-    activitiesSemanal: 45,
-    eficienciaGlobal: 45,
-    avatar: '👨‍💼',
-    ultimaActividad: 'Propuestas enviadas: Givaudan, Gonher, Xignux, Pepsico',
-    notas: '40 prospectos en pipeline. 4 propuestas enviadas, 2 en levantamiento (Panduit, Genomma Lab), 15 reuniones agendadas, 19 rechazadas por precio. Zona Norte.',
-    kpisSemanales: [
-      { semana: 31, leadsNuevos: 11, reunionesAgendadas: 5, levantamientos: 1, propuestasEnviadas: 0, propuestasRechazadas: 0 },
-      { semana: 32, leadsNuevos: 3, reunionesAgendadas: 3, levantamientos: 1, propuestasEnviadas: 0, propuestasRechazadas: 0 },
-      { semana: 33, leadsNuevos: 5, reunionesAgendadas: 4, levantamientos: 3, propuestasEnviadas: 0, propuestasRechazadas: 0 },
-      { semana: 34, leadsNuevos: 4, reunionesAgendadas: 2, levantamientos: 2, propuestasEnviadas: 0, propuestasRechazadas: 0 },
-      { semana: 35, leadsNuevos: 2, reunionesAgendadas: 2, levantamientos: 0, propuestasEnviadas: 0, propuestasRechazadas: 0 },
-      { semana: 36, leadsNuevos: 4, reunionesAgendadas: 0, levantamientos: 0, propuestasEnviadas: 0, propuestasRechazadas: 0 },
-      { semana: 37, leadsNuevos: 6, reunionesAgendadas: 2, levantamientos: 0, propuestasEnviadas: 0, propuestasRechazadas: 0 },
-      { semana: 39, leadsNuevos: 7, reunionesAgendadas: 5, levantamientos: 3, propuestasEnviadas: 0, propuestasRechazadas: 0 },
-      { semana: 40, leadsNuevos: 2, reunionesAgendadas: 1, levantamientos: 2, propuestasEnviadas: 0, propuestasRechazadas: 0 },
-      { semana: 41, leadsNuevos: 2, reunionesAgendadas: 2, levantamientos: 5, propuestasEnviadas: 0, propuestasRechazadas: 0 },
-      { semana: 42, leadsNuevos: 2, reunionesAgendadas: 2, levantamientos: 1, propuestasEnviadas: 0, propuestasRechazadas: 0 },
-      { semana: 43, leadsNuevos: 2, reunionesAgendadas: 2, levantamientos: 1, propuestasEnviadas: 0, propuestasRechazadas: 0 },
-      { semana: 44, leadsNuevos: 3, reunionesAgendadas: 3, levantamientos: 1, propuestasEnviadas: 0, propuestasRechazadas: 0 },
-      { semana: 45, leadsNuevos: 2, reunionesAgendadas: 2, levantamientos: 1, propuestasEnviadas: 0, propuestasRechazadas: 0 },
-      { semana: 46, leadsNuevos: 2, reunionesAgendadas: 2, levantamientos: 1, propuestasEnviadas: 2, propuestasRechazadas: 0 }
-    ]
-  },
-  {
-    id: 4,
-    dbUserId: 12,
-    codigo: 'LM',
-    name: 'Laura Mesa',
-    role: 'Ejecutiva',
-    ubicacion: 'CDMX',
-    zona: 'CDMX / Edo Mex',
-    leads: 19,
-    levantamientos: 0,
-    propuestasEnviadas: 0,
-    reuniones: 4,
-    cierres: 2,
-    tasaConversion: 0,
-    presupuestoAnual2026: 10513000,
-    presupuestoMensual: 876000,
-    ventasReales: 0,
-    cumplimientoPresupuesto: 0,
-    tiempoRespuesta: '5.5 hrs',
-    satisfaccionCliente: 4.0,
-    activitiesSemanal: 12,
-    eficienciaGlobal: 25,
-    avatar: '👩‍💼',
-    ultimaActividad: 'Office Depot - inicio de operación',
-    notas: 'Contactos personales, necesita coaching en cierre. Contratos ganados: Office Depot, Mercado Libre.',
-    kpisSemanales: [
-      { semana: 31, leadsNuevos: 5, reunionesAgendadas: 1, levantamientos: 0, propuestasEnviadas: 0, propuestasRechazadas: 0 },
-      { semana: 32, leadsNuevos: 5, reunionesAgendadas: 1, levantamientos: 0, propuestasEnviadas: 0, propuestasRechazadas: 0 },
-      { semana: 33, leadsNuevos: 4, reunionesAgendadas: 0, levantamientos: 0, propuestasEnviadas: 0, propuestasRechazadas: 0 },
-      { semana: 34, leadsNuevos: 5, reunionesAgendadas: 2, levantamientos: 0, propuestasEnviadas: 0, propuestasRechazadas: 0 }
-    ]
-  },
-  {
-    id: 6,
-    dbUserId: 11,
-    codigo: 'CS',
-    name: 'Cristina Sescosse',
-    role: 'Ejecutiva',
-    ubicacion: 'Guadalajara, Jalisco',
-    zona: 'Occidente',
-    leads: 0,
-    levantamientos: 0,
-    propuestasEnviadas: 0,
-    reuniones: 0,
-    cierres: 0,
-    tasaConversion: 0,
-    presupuestoAnual2026: 18107320,
-    presupuestoMensual: 1509000,
-    ventasReales: 0,
-    cumplimientoPresupuesto: 0,
-    tiempoRespuesta: '2.0 hrs',
-    satisfaccionCliente: 4.7,
-    activitiesSemanal: 15,
-    eficienciaGlobal: 70,
-    avatar: '👩‍💼',
-    ultimaActividad: 'Seguimiento Farmacias Guadalajara / Amazon',
-    notas: 'Nueva pero trajo cuenta grande por contactos personales. Zona Occidente con biodigestores.',
-    kpisSemanales: []
-  },
-  {
-    id: 7,
-    dbUserId: 15,
-    codigo: 'MO',
-    name: 'Mariana Olmos',
-    role: 'Ejecutiva',
-    ubicacion: 'CDMX',
-    zona: 'CDMX / Nacional',
-    leads: 19,
-    levantamientos: 6,
-    propuestasEnviadas: 4,
-    reuniones: 3,
-    cierres: 0,
-    tasaConversion: 0,
-    presupuestoAnual2026: 0,
-    presupuestoMensual: 0,
-    ventasReales: 0,
-    cumplimientoPresupuesto: 0,
-    tiempoRespuesta: '3.0 hrs',
-    satisfaccionCliente: 4.5,
-    activitiesSemanal: 20,
-    eficienciaGlobal: 60,
-    avatar: '👩‍💼',
-    ultimaActividad: 'Licitación Stellantis y FEMSA/Coca-Cola',
-    notas: 'Cuentas grandes: Stellantis (6 plantas), FEMSA (5 plantas), PPG. Licitaciones activas feb-2026.',
-    kpisSemanales: []
-  },
-  {
-    id: 5,
-    dbUserId: 19,
-    codigo: 'LS',
-    name: 'Laura Sobrino',
-    role: 'Ejecutiva',
-    ubicacion: 'CDMX',
-    zona: 'CDMX / Centro',
-    leads: 0,
-    levantamientos: 0,
-    propuestasEnviadas: 0,
-    reuniones: 0,
-    cierres: 0,
-    tasaConversion: 0,
-    presupuestoAnual2026: 0,
-    presupuestoMensual: 0,
-    ventasReales: 0,
-    cumplimientoPresupuesto: 0,
-    tiempoRespuesta: '3.0 hrs',
-    satisfaccionCliente: 4.3,
-    activitiesSemanal: 10,
-    eficienciaGlobal: 50,
-    avatar: '👩‍💼',
-    ultimaActividad: 'Prospección inicial',
-    notas: 'Nueva ejecutiva en el equipo.',
-    kpisSemanales: []
-  }
-];
+// salesTeamData is now fetched from /api/comercial/team inside InnovativeDemo component
 
 // DATOS DETALLADOS DE LEVANTAMIENTOS
 const levantamientosDetallados = [];
@@ -740,20 +514,20 @@ const generarDatosSankeyCliente = (cliente, datosTrazabilidadCliente) => {
 // CLIENTES CON REPORTES DE TRAZABILIDAD ENTREGADOS
 const clientesConReportes = [];
 
-// EVOLUCIÓN PRESUPUESTO VS REAL — DATOS REALES 2026
-const presupuestoEvolution = [
-  { mes: 'Ene', presupuesto: 2774200, real: 0 },
-  { mes: 'Feb', presupuesto: 2769810, real: 0 },
-  { mes: 'Mar', presupuesto: 4009709, real: 0 },
-  { mes: 'Abr', presupuesto: 11011618, real: 0 },
-  { mes: 'May', presupuesto: 12452161, real: 0 },
-  { mes: 'Jun', presupuesto: 14121018, real: 0 },
-  { mes: 'Jul', presupuesto: 14216418, real: 0 },
-  { mes: 'Ago', presupuesto: 15603961, real: 0 },
-  { mes: 'Sep', presupuesto: 14951318, real: 0 },
-  { mes: 'Oct', presupuesto: 14352318, real: 0 },
-  { mes: 'Nov', presupuesto: 13006777, real: 0 },
-  { mes: 'Dic', presupuesto: 10861507, real: 0 }
+// EVOLUCIÓN PRESUPUESTO — solo targets, "real" se calcula desde DB
+const presupuestoEvolutionBase = [
+  { mes: 'Ene', mesNum: 1, presupuesto: 2774200 },
+  { mes: 'Feb', mesNum: 2, presupuesto: 2769810 },
+  { mes: 'Mar', mesNum: 3, presupuesto: 4009709 },
+  { mes: 'Abr', mesNum: 4, presupuesto: 11011618 },
+  { mes: 'May', mesNum: 5, presupuesto: 12452161 },
+  { mes: 'Jun', mesNum: 6, presupuesto: 14121018 },
+  { mes: 'Jul', mesNum: 7, presupuesto: 14216418 },
+  { mes: 'Ago', mesNum: 8, presupuesto: 15603961 },
+  { mes: 'Sep', mesNum: 9, presupuesto: 14951318 },
+  { mes: 'Oct', mesNum: 10, presupuesto: 14352318 },
+  { mes: 'Nov', mesNum: 11, presupuesto: 13006777 },
+  { mes: 'Dic', mesNum: 12, presupuesto: 10861507 }
 ];
 
 // HISTORIAL ANUAL DE VENTAS
@@ -939,6 +713,33 @@ const InnovativeDemo = () => {
     return map;
   }, [dbUsers]);
 
+  // Fetch comercial team from API (replaces hardcoded salesTeamData)
+  const { data: dbTeamRaw = [], isLoading: teamLoading } = useQuery({
+    queryKey: ['/api/comercial/team'],
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Fetch ventas reales from DB to overlay on salesTeamData
+  const { data: dbVentasReales = [] } = useQuery({
+    queryKey: ['/api/comercial/ventas-reales'],
+    staleTime: 60 * 1000,
+  });
+
+  // presupuestoEvolution: base targets + real from DB
+  const presupuestoEvolution = useMemo(() => {
+    const realPorMes = {};
+    dbVentasReales.forEach(vr => {
+      const key = `${vr.año}-${vr.mes}`;
+      realPorMes[key] = (realPorMes[key] || 0) + Number(vr.monto);
+    });
+    const currentYear = new Date().getFullYear();
+    return presupuestoEvolutionBase.map(row => ({
+      mes: row.mes,
+      presupuesto: row.presupuesto,
+      real: realPorMes[`${currentYear}-${row.mesNum}`] || 0,
+    }));
+  }, [dbVentasReales]);
+
   // API mutations
   const updateProspectMutation = useMutation({
     mutationFn: async ({ id, ...data }) => {
@@ -964,6 +765,12 @@ const InnovativeDemo = () => {
     mutationFn: async (id) => {
       const res = await apiRequest("DELETE", `/api/comercial/prospects/${id}`);
       return res.json();
+    },
+    onSuccess: () => {
+      addToast('Prospecto eliminado', 'success');
+    },
+    onError: () => {
+      addToast('Error al eliminar prospecto', 'error');
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/comercial/prospects'] });
@@ -1095,7 +902,7 @@ const InnovativeDemo = () => {
   const [ventaRealMes, setVentaRealMes] = useState(new Date().getMonth() + 1);
   const [ventaRealAño, setVentaRealAño] = useState(new Date().getFullYear());
   const [editingVentaReal, setEditingVentaReal] = useState(null); // { memberId, mes }
-  const [ventasRealesEditadas, setVentasRealesEditadas] = useState({}); // { `${memberId}-${mes}`: monto }
+  const [ventasRealesEditadas, setVentasRealesEditadas] = useState({}); // { `${memberId}-${mes}-${año}`: monto }
 
   // Pipeline view states
   const [pipelineViewMode, setPipelineViewMode] = useState('kanban'); // 'kanban' | 'funnel' | 'tabla'
@@ -1104,6 +911,43 @@ const InnovativeDemo = () => {
   const kanbanProspectos = useMemo(() => {
     return dbProspectsRaw.map(p => dbProspectToKanban(p, usersMap));
   }, [dbProspectsRaw, usersMap]);
+
+  // salesTeamData derived from API team data (replaces hardcoded array)
+  const salesTeamData = useMemo(() => {
+    return dbTeamRaw.map(m => ({
+      id: m.id,
+      dbUserId: m.id,
+      codigo: m.codigo || '',
+      name: m.name,
+      role: m.role === 'director' ? 'Directora Comercial' : 'Ejecutiva',
+      ubicacion: '',
+      zona: '',
+      avatar: '👤',
+      presupuestoAnual2026: m.presupuestoAnual || 0,
+      presupuestoMensual: m.presupuestoMensual || 0,
+      ventasReales: m.ventasReales || 0,
+      cumplimientoPresupuesto: m.presupuestoMensual > 0
+        ? Math.round((m.ventasReales / m.presupuestoMensual) * 100) : 0,
+      leads: 0, levantamientos: 0, propuestasEnviadas: 0, reuniones: 0, cierres: 0,
+      tasaConversion: 0, tiempoRespuesta: '', satisfaccionCliente: 0,
+      activitiesSemanal: 0, eficienciaGlobal: 0,
+      ultimaActividad: '', notas: '', kpisSemanales: [],
+    }));
+  }, [dbTeamRaw]);
+
+  // Sync ventasRealesEditadas from DB on load (full replace to avoid stale data across months)
+  useEffect(() => {
+    if (salesTeamData.length > 0) {
+      const map = {};
+      dbVentasReales.forEach(vr => {
+        const member = salesTeamData.find(m => m.dbUserId === vr.userId);
+        if (member) {
+          map[`${member.id}-${vr.mes}-${vr.año}`] = Number(vr.monto);
+        }
+      });
+      setVentasRealesEditadas(map);
+    }
+  }, [dbVentasReales, salesTeamData]);
   const pipelineData = useMemo(() => calcularPipelineData(kanbanProspectos), [kanbanProspectos]);
   const leadsData = useMemo(() => kanbanProspectos.map(p => ({
     id: p.id,
@@ -1131,7 +975,7 @@ const InnovativeDemo = () => {
     { id: 'levantamiento', label: 'Levantamiento', color: '#F57C00', prob: '35%' },
     { id: 'propuesta', label: 'Propuesta', color: '#00a8a8', prob: '50%' },
     { id: 'negociacion', label: 'Negociación', color: '#7C3AED', prob: '70%' },
-    { id: 'cierre_ganado', label: 'Ganada', color: '#2E7D32', prob: '100%' },
+    { id: 'cierre_ganado', label: 'Socio Ambiental', color: '#2E7D32', prob: '100%' },
   ];
 
   // Etapas del Kanban personal en Hub Ejecutivo (labels personalizados)
@@ -1223,138 +1067,11 @@ const InnovativeDemo = () => {
     setActiveProspectoId(selectedProspecto?.id || null);
   }, [selectedProspecto?.id]);
 
-  // Calcular alertas automáticamente
-  useEffect(() => {
-    const nuevasAlertas = [];
+  // Alertas desactivadas — useEffect comentado
+  // useEffect(() => { ... alertas auto-calculation removed ... }, [kanbanProspectos, documentos]);
 
-    // Propuestas sin seguimiento (> 5 días hábiles)
-    kanbanProspectos.filter(p =>
-      p.status === 'propuesta' &&
-      p.fecha &&
-      calcularDiasHabiles(p.fecha) >= 5
-    ).forEach(p => {
-      nuevasAlertas.push({
-        tipo: 'seguimiento_propuesta',
-        mensaje: `Propuesta a ${p.empresa} sin respuesta hace ${calcularDiasHabiles(p.fecha)} días hábiles`,
-        prioridad: 'alta',
-        prospecto: p,
-        accion: 'Dar seguimiento'
-      });
-    });
-
-    // Levantamientos completados sin reporte
-    // TODO: Connect to operaciones survey API when available
-    // For now, derive from pipeline prospects in levantamiento stage
-    kanbanProspectos.filter(p => p.status === 'levantamiento').forEach(p => {
-      // Alert if prospect has been in levantamiento stage for > 10 days
-      if (p.fecha && calcularDiasSinRespuesta(p.fecha) > 10) {
-        nuevasAlertas.push({
-          tipo: 'levantamiento_sin_reporte',
-          mensaje: `Levantamiento de ${p.empresa} pendiente hace ${calcularDiasSinRespuesta(p.fecha)} días`,
-          prioridad: 'media',
-          levantamiento: p,
-          accion: 'Completar levantamiento'
-        });
-      }
-    });
-
-    // Leads inactivos (> 14 días sin actividad)
-    kanbanProspectos.filter(p => {
-      if (p.status !== 'contacto_inicial') return false;
-      const diasSinActividad = calcularDiasSinRespuesta(p.fecha);
-      return diasSinActividad > 14;
-    }).forEach(p => {
-      nuevasAlertas.push({
-        tipo: 'lead_inactivo',
-        mensaje: `Lead "${p.empresa}" sin actividad hace ${calcularDiasSinRespuesta(p.fecha)} días`,
-        prioridad: 'media',
-        lead: p,
-        accion: 'Reactivar contacto'
-      });
-    });
-
-    // Documentos vencidos o por vencer (< 30 días)
-    documentos.filter(doc => {
-      const hoy = new Date();
-      const vencimiento = new Date(doc.fechaVencimiento);
-      const diasRestantes = Math.floor((vencimiento - hoy) / (1000 * 60 * 60 * 24));
-      return diasRestantes <= 30;
-    }).forEach(doc => {
-      const hoy = new Date();
-      const vencimiento = new Date(doc.fechaVencimiento);
-      const diasRestantes = Math.floor((vencimiento - hoy) / (1000 * 60 * 60 * 24));
-      const prioridad = diasRestantes < 0 ? 'alta' : 'media';
-      const estado = diasRestantes < 0 ? 'vencido' : `vence en ${diasRestantes} días`;
-
-      nuevasAlertas.push({
-        tipo: 'documento_vencimiento',
-        mensaje: `Documento "${doc.nombre}" ${estado}`,
-        prioridad: prioridad,
-        documento: doc,
-        accion: diasRestantes < 0 ? 'Renovar urgente' : 'Programar renovación'
-      });
-    });
-
-    // Seguimiento de rechazadas con fecha próxima o vencida
-    kanbanProspectos.filter(p => p.status === 'cierre_perdido').forEach(p => {
-      const seg = { fechaSeguimiento: p.fechaSeguimiento, accion: p.followUpAction, recoveryStatus: p.recoveryStatus, fechaVencimientoContrato: p.fechaVencimientoContrato };
-      if (!seg?.fechaSeguimiento) return;
-      const urgency = getSeguimientoUrgency(seg);
-      if (!urgency) return;
-      if (urgency.overdue || urgency.days <= 7) {
-        nuevasAlertas.push({
-          tipo: 'seguimiento_rechazada',
-          mensaje: urgency.overdue
-            ? `Seguimiento vencido: ${p.empresa} — ${seg.accion || 'Dar seguimiento'} (hace ${urgency.days}d)`
-            : `Seguimiento proximo: ${p.empresa} — ${seg.accion || 'Dar seguimiento'} (en ${urgency.days}d)`,
-          prioridad: urgency.overdue ? 'alta' : 'media',
-          prospecto: p,
-          accion: seg.accion || 'Dar seguimiento',
-        });
-      }
-    });
-
-    setAlertas(nuevasAlertas);
-  }, [kanbanProspectos, documentos]);
-
-  // Componente Panel de Notificaciones
-  const NotificationsPanel = ({ alertas, onClose, onAction }) => (
-    <div className="absolute right-0 top-12 w-96 bg-white rounded-lg shadow-lg border border-[#e5e7eb] z-50">
-      <div className="p-4 border-b border-[#e5e7eb] flex justify-between items-center">
-        <h3 className="font-semibold text-[#1c2c4a]">Alertas ({alertas.length})</h3>
-        <button onClick={onClose}><X size={18} /></button>
-      </div>
-      <div className="max-h-96 overflow-y-auto">
-        {alertas.length === 0 ? (
-          <div className="p-8 text-center text-[#6b7280]">
-            <CheckSquare size={48} className="mx-auto mb-3 opacity-50" />
-            <p className="text-sm">No hay alertas pendientes</p>
-          </div>
-        ) : (
-          alertas.map((alerta, idx) => (
-            <div key={idx} className={`p-4 border-b border-[#e5e7eb] ${
-              alerta.prioridad === 'alta' ? 'bg-red-50' : 'bg-yellow-50'
-            }`}>
-              <div className="flex items-start gap-2">
-                <AlertCircle size={16} className={`mt-0.5 flex-shrink-0 ${
-                  alerta.prioridad === 'alta' ? 'text-red-600' : 'text-yellow-600'
-                }`} />
-                <div className="flex-1">
-                  <div className="text-sm font-medium text-[#1c2c4a]">{alerta.mensaje}</div>
-                  <button
-                    onClick={() => onAction(alerta)}
-                    className="mt-2 text-xs text-[#00a8a8] font-medium hover:text-[#008080]"
-                  >
-                    {alerta.accion} →
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))
-        )}
-      </div>
-    </div>
-  );
+  // NotificationsPanel desactivado
+  // const NotificationsPanel = ({ alertas, onClose, onAction }) => ( ... );
 
   // Modal de Motivo de Rechazo
   const ModalMotivoRechazo = ({ prospecto, onClose, onSave }) => {
@@ -1463,7 +1180,7 @@ const InnovativeDemo = () => {
     if (!authUser) return 'VA';
     const member = salesTeamData.find(m => m.dbUserId === authUser.id);
     return member?.codigo || 'VA';
-  }, [authUser]);
+  }, [authUser, salesTeamData]);
 
   const currentUserName = useMemo(() => {
     if (!authUser) return 'Usuario';
@@ -1511,8 +1228,8 @@ const InnovativeDemo = () => {
     if (!nuevoLeadForm.empresa.trim() || !nuevoLeadForm.contactoNombre.trim() || !nuevoLeadForm.ejecutivo) {
       return;
     }
-    // Find user ID by ejecutivo code
-    const assignedUser = dbUsers.find(u => u.name && u.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() === nuevoLeadForm.ejecutivo);
+    // Find user ID by ejecutivo code (using codigo from DB)
+    const assignedUser = dbUsers.find(u => u.codigo === nuevoLeadForm.ejecutivo);
     createProspectMutation.mutate({
       name: nuevoLeadForm.empresa.trim(),
       location: nuevoLeadForm.ciudad.trim() || null,
@@ -1746,7 +1463,7 @@ const InnovativeDemo = () => {
     const propuestasEnviadas = kanbanProspectos.filter(p => p.status === 'propuesta');
     const ganadas = kanbanProspectos.filter(p => p.status === 'cierre_ganado');
     const rechazadas = kanbanProspectos.filter(p => p.status === 'cierre_perdido');
-    const pipelineBruto = kanbanProspectos.reduce((s, p) => s + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0);
+    const pipelineBruto = kanbanProspectos.filter(p => p.status !== 'cierre_perdido').reduce((s, p) => s + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0);
     const pipelinePonderado = calcularWeightedPipeline(kanbanProspectos);
     const winRate = calcularWinRate(kanbanProspectos);
     const presupuestoTotal = salesTeamData.reduce((s, m) => s + m.presupuestoAnual2026, 0);
@@ -1782,8 +1499,8 @@ const InnovativeDemo = () => {
     const co2Evitado = (toneladasCirculares * 2.5);
     const ingresosOperativos = clientesConReportes.reduce((s, c) => s + c.ingresosMes, 0);
 
-    // Alertas
-    const alertasActivas = alertas.slice(0, 5);
+    // Alertas desactivadas
+    // const alertasActivas = alertas.slice(0, 5);
 
     return (
     <div className="p-4 md:p-6 lg:p-8 bg-[#faf7f2] min-h-screen">
@@ -1832,7 +1549,7 @@ const InnovativeDemo = () => {
           <div className="text-[10px] text-[#6b7280]">{rechazadas.length} rechazadas</div>
         </div>
         <div className="bg-white rounded-xl border border-[#e5e7eb] p-4">
-          <div className="text-xs text-[#6b7280] mb-1">Win Rate</div>
+          <div className="text-xs text-[#6b7280] mb-1">Tasa de Cierre</div>
           <div className="text-xl font-bold text-[#1c2c4a]">{winRate.toFixed(0)}%</div>
           <div className="text-[10px] text-[#2E7D32]">{ganadas.length} ganadas</div>
         </div>
@@ -2098,7 +1815,7 @@ const InnovativeDemo = () => {
     const memberRechazados = memberProspectos.filter(p => p.status === 'cierre_perdido');
     const memberGanados = memberProspectos.filter(p => p.status === 'cierre_ganado');
     const memberPropuestas = memberProspectos.filter(p => ['propuesta', 'negociacion'].includes(p.status));
-    const totalPipeline = memberProspectos.reduce((s, p) => s + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0);
+    const totalPipeline = memberProspectos.filter(p => p.status !== 'cierre_perdido').reduce((s, p) => s + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0);
 
     // Interactive state
     const [selectedProspecto, setSelectedProspecto] = React.useState(null);
@@ -2316,7 +2033,8 @@ const InnovativeDemo = () => {
                   >
                     <Edit3 size={16} />
                   </button>
-                  {/* Eliminar */}
+                  {/* Eliminar — solo admin/comercial */}
+                  {(authUser?.role === 'admin' || authUser?.role === 'comercial' || authUser?.role === 'director') && (
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -2330,6 +2048,7 @@ const InnovativeDemo = () => {
                   >
                     <Trash2 size={16} />
                   </button>
+                  )}
                   <button onClick={onClose} className="text-[#999] hover:text-[#333] p-1 transition-colors">
                     <X size={20} />
                   </button>
@@ -2500,7 +2219,7 @@ const InnovativeDemo = () => {
                             )}
                             <button onClick={() => { changeProspectoStage(p.id, 'contacto_inicial'); guardarSeguimiento(p.id, { recoveryStatus: null, fechaSeguimiento: null }); }}
                               className="px-3 py-2 rounded-lg bg-[#00a8a8] text-white text-xs font-semibold hover:bg-[#008080] transition-colors flex items-center justify-center gap-1.5">
-                              <RotateCcw size={12} /> Reactivar en Pipeline
+                              <RotateCcw size={12} /> Reactivar en Presupuesto
                             </button>
                           </div>
                         </div>
@@ -2519,7 +2238,7 @@ const InnovativeDemo = () => {
                   <div className="text-xl font-bold text-[#0D47A1]">{valor > 0 ? `$${(valor / 1000).toFixed(0)}K` : '—'}</div>
                 </div>
                 <div className="flex-1 bg-[#f3f4f6] rounded-xl p-3 text-center">
-                  <div className="text-xs text-[#6b7280] mb-0.5">Días en pipeline</div>
+                  <div className="text-xs text-[#6b7280] mb-0.5">Días en seguimiento</div>
                   <div className="text-xl font-bold text-[#1c2c4a]">{dias !== null ? dias : '—'}</div>
                 </div>
                 {p.propuesta?.status && (
@@ -2796,7 +2515,7 @@ const InnovativeDemo = () => {
         <ExecutiveAvatar codigo={member.codigo} name={member.name} size="xl" />
         <div className="flex-1 min-w-0">
           <h1 className="text-xl font-bold text-[#1c2c4a]">{member.name}</h1>
-          <p className="text-sm text-[#6b7280]">{member.role} — {member.zona}</p>
+          <p className="text-sm text-[#6b7280]">{member.role}{member.zona ? ` — ${member.zona}` : ''}</p>
         </div>
         <div className="text-right hidden md:block">
           <div className="text-sm text-[#6b7280]">Presupuesto Anual</div>
@@ -2862,8 +2581,8 @@ const InnovativeDemo = () => {
                 backgroundColor: member.cumplimientoPresupuesto >= 70 ? '#2E7D32' : member.cumplimientoPresupuesto >= 40 ? '#F57C00' : '#DC2626',
               }} />
             </div>
-            <div className="text-xs font-medium text-[#0067B0] mt-2 flex items-center justify-center gap-1 underline hover:no-underline">
-              <Edit3 size={14} /> Editar venta real
+            <div className="mt-3 bg-[#0067B0] hover:bg-[#005a9e] text-white text-sm font-semibold px-4 py-2 rounded-lg flex items-center justify-center gap-2 transition-colors shadow-sm">
+              <Edit3 size={15} /> Editar venta real
             </div>
           </button>
         )}
@@ -2876,7 +2595,7 @@ const InnovativeDemo = () => {
           {/* Quick summary bar */}
           <div className="flex items-center gap-4 text-xs">
             <span className="text-[#6b7280]"><strong className="text-[#1c2c4a]">{memberProspectos.filter(p => p.status !== 'cierre_perdido').length}</strong> prospectos</span>
-            <span className="text-[#6b7280]"><strong className="text-[#0D47A1]">${(totalPipeline / 1000000).toFixed(1)}M</strong> pipeline</span>
+            <span className="text-[#6b7280]"><strong className="text-[#0D47A1]">${(totalPipeline / 1000000).toFixed(1)}M</strong> presupuesto</span>
             {memberRechazados.length > 0 && <span className="text-red-500"><strong>{memberRechazados.length}</strong> rechazadas</span>}
             <div className="flex items-center gap-2 ml-auto">
               {HUB_KANBAN_STAGES.map(s => {
@@ -3134,20 +2853,16 @@ const InnovativeDemo = () => {
                     onClick={async () => {
                       if (!ventaRealMonto) return;
                       try {
-                        const res = await fetch('/api/comercial/ventas-reales', {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          credentials: 'include',
-                          body: JSON.stringify({
-                            userId: member.id,
+                        const res = await apiRequest('POST', '/api/comercial/ventas-reales', {
+                            userId: member.dbUserId,
                             mes: ventaRealMes,
                             año: ventaRealAño,
                             monto: Number(ventaRealMonto)
-                          })
                         });
-                        if (!res.ok) throw new Error('Error del servidor');
                         const editKey = `${member.id}-${ventaRealMes}-${ventaRealAño}`;
                         setVentasRealesEditadas(prev => ({ ...prev, [editKey]: Number(ventaRealMonto) }));
+                        queryClient.invalidateQueries({ queryKey: ['/api/comercial/ventas-reales'] });
+                                queryClient.invalidateQueries({ queryKey: ['/api/comercial/team'] });
                         setShowVentasRealesModal(false);
                         setVentaRealMonto('');
                         addToast(`Venta real registrada: ${member.name.split(' ')[0]}`, 'success');
@@ -3360,7 +3075,7 @@ const InnovativeDemo = () => {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-xl font-bold text-[#1c2c4a]">{userGreeting}, {currentUserName}</h1>
-          <p className="text-sm text-[#6b7280] mt-0.5">Tu pipeline comercial al momento</p>
+          <p className="text-sm text-[#6b7280] mt-0.5">Tu presupuesto comercial al momento</p>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -3470,7 +3185,7 @@ const InnovativeDemo = () => {
               <div className="flex items-center gap-2 mt-2.5 pt-2 border-t border-[#f3f4f6]">
                 <span className="text-[10px] text-[#6b7280]">{memberProspectos.length} opps</span>
                 <span className="text-[10px] text-[#6b7280]">·</span>
-                <span className="text-[10px] text-[#6b7280]">${((memberProspectos.reduce((s, p) => s + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0)) / 1000000).toFixed(1)}M pipeline</span>
+                <span className="text-[10px] text-[#6b7280]">${((memberProspectos.filter(p => p.status !== 'cierre_perdido').reduce((s, p) => s + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0)) / 1000000).toFixed(1)}M presupuesto</span>
               </div>
             </div>
           );
@@ -3480,7 +3195,7 @@ const InnovativeDemo = () => {
       {/* ═══════ TAB BAR ═══════ */}
       <div className="mt-5 flex items-center gap-1 bg-white rounded-xl border border-[#e5e7eb] p-1">
         {[
-          { id: 'pipeline', label: 'Pipeline', icon: ClipboardList },
+          { id: 'pipeline', label: 'Presupuesto', icon: ClipboardList },
           { id: 'presupuesto', label: 'Presupuesto', icon: DollarSign },
           { id: 'rechazadas', label: 'Rechazadas', icon: RotateCcw, badge: kanbanProspectos.filter(p => p.status === 'cierre_perdido').length },
         ].map(tab => (
@@ -3599,7 +3314,7 @@ const InnovativeDemo = () => {
                         <ExecutiveAvatar codigo={member.codigo} name={member.name} size="sm" />
                         <div>
                           <div className="text-sm font-medium text-[#1c2c4a]">{member.name.split(' ').slice(0, 2).join(' ')}</div>
-                          <div className="text-[10px] text-[#9ca3af]">{member.zona}</div>
+                          {member.zona && <div className="text-[10px] text-[#9ca3af]">{member.zona}</div>}
                         </div>
                       </div>
                     </td>
@@ -3620,13 +3335,10 @@ const InnovativeDemo = () => {
                               const monto = Number(ventasRealesEditadas[editKey] || 0);
                               setVentasRealesEditadas(prev => ({ ...prev, [editKey]: monto }));
                               setEditingVentaReal(null);
-                              fetch('/api/comercial/ventas-reales', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                credentials: 'include',
-                                body: JSON.stringify({ userId: member.id, mes: ventaRealMes, año: ventaRealAño, monto })
-                              }).then(res => {
-                                if (!res.ok) throw new Error('Error del servidor');
+                              apiRequest('POST', '/api/comercial/ventas-reales', { userId: member.dbUserId, mes: ventaRealMes, año: ventaRealAño, monto })
+                              .then(() => {
+                                queryClient.invalidateQueries({ queryKey: ['/api/comercial/ventas-reales'] });
+                                queryClient.invalidateQueries({ queryKey: ['/api/comercial/team'] });
                                 addToast(`Venta real actualizada: ${member.name.split(' ')[0]}`, 'success');
                               }).catch(() => {
                                 addToast('Error al guardar venta real', 'error');
@@ -3643,13 +3355,10 @@ const InnovativeDemo = () => {
                             setVentasRealesEditadas(prev => ({ ...prev, [editKey]: monto }));
                             setEditingVentaReal(null);
                             if (monto > 0) {
-                              fetch('/api/comercial/ventas-reales', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                credentials: 'include',
-                                body: JSON.stringify({ userId: member.id, mes: ventaRealMes, año: ventaRealAño, monto })
-                              }).then(res => {
-                                if (!res.ok) throw new Error('Error del servidor');
+                              apiRequest('POST', '/api/comercial/ventas-reales', { userId: member.dbUserId, mes: ventaRealMes, año: ventaRealAño, monto })
+                              .then(() => {
+                                queryClient.invalidateQueries({ queryKey: ['/api/comercial/ventas-reales'] });
+                                queryClient.invalidateQueries({ queryKey: ['/api/comercial/team'] });
                                 addToast(`Venta real actualizada: ${member.name.split(' ')[0]}`, 'success');
                               }).catch(() => {
                                 addToast('Error al guardar venta real', 'error');
@@ -3749,13 +3458,13 @@ const InnovativeDemo = () => {
 
       {/* ═══════ TAB: PIPELINE ═══════ */}
       {comercialTab === 'pipeline' && (<>
-      {/* Distribución de Pipeline por Ejecutivo — Barras apiladas por etapa */}
+      {/* Distribución de Presupuesto por Ejecutivo — Barras apiladas por etapa */}
       <div className="mt-4 bg-white rounded-xl border border-[#e5e7eb] card-modern p-5">
-        <h3 className="text-sm font-semibold text-[#1c2c4a] mb-3">Pipeline por Ejecutivo</h3>
+        <h3 className="text-sm font-semibold text-[#1c2c4a] mb-3">Presupuesto por Ejecutivo</h3>
         <div className="space-y-4">
           {salesTeamData.map(member => {
             const memberProspectos = kanbanProspectos.filter(p => p.ejecutivo === member.codigo);
-            const memberPipeline = memberProspectos.reduce((s, p) => s + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0);
+            const memberPipeline = memberProspectos.filter(p => p.status !== 'cierre_perdido').reduce((s, p) => s + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0);
             const leads = memberProspectos.filter(p => ['contacto_inicial', 'presentacion'].includes(p.status)).length;
             const prospectos = memberProspectos.filter(p => !['contacto_inicial', 'presentacion', 'cierre_perdido'].includes(p.status)).length;
             const porEtapa = KANBAN_STAGES.map(s => memberProspectos.filter(p => p.status === s.id).length);
@@ -3800,7 +3509,7 @@ const InnovativeDemo = () => {
                   <span className="text-[#6b7280]">Total: <span className="font-bold text-[#1c2c4a]">{kanbanProspectos.length}</span></span>
                   <span className="text-[#6b7280]">Leads: <span className="font-bold text-[#6b7280]">{totalLeads}</span></span>
                   <span className="text-[#00a8a8]">Prospectos: <span className="font-bold">{totalProspectos}</span></span>
-                  <span className="text-[#0D47A1] font-bold">${(kanbanProspectos.reduce((s, p) => s + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0) / 1000000).toFixed(1)}M</span>
+                  <span className="text-[#0D47A1] font-bold">${(kanbanProspectos.filter(p => p.status !== 'cierre_perdido').reduce((s, p) => s + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0) / 1000000).toFixed(1)}M</span>
                 </div>
                 <div className="flex gap-2">
                   {KANBAN_STAGES.map(s => (
@@ -3816,7 +3525,7 @@ const InnovativeDemo = () => {
         </div>
       </div>
 
-      <SectionHeader color="#0D47A1" icon={ClipboardList} label="Pipeline Detallado" />
+      <SectionHeader color="#0D47A1" icon={ClipboardList} label="Presupuesto Detallado" />
 
       {/* VIEW TOGGLE */}
       <div className="flex items-center justify-between">
@@ -4140,7 +3849,7 @@ const InnovativeDemo = () => {
           <div className="mt-4 bg-white rounded-xl border border-[#e5e7eb] p-12 text-center">
             <CheckCircle className="mx-auto text-green-400 mb-3" size={40} />
             <h3 className="text-sm font-semibold text-[#1c2c4a] mb-1">Sin oportunidades rechazadas</h3>
-            <p className="text-xs text-[#6b7280]">Todas las oportunidades estan activas en el pipeline</p>
+            <p className="text-xs text-[#6b7280]">Todas las oportunidades estan activas en el presupuesto</p>
           </div>
         );
 
@@ -4876,9 +4585,9 @@ const InnovativeDemo = () => {
       return dias > 30 && !['cierre_ganado', 'cierre_perdido'].includes(p.status);
     });
 
-    // Total pipeline
-    const totalPipeline = kanbanProspectos.reduce((s, p) => s + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0);
-    const totalProspectos = kanbanProspectos.length;
+    // Total pipeline (excluye perdidos)
+    const totalPipeline = kanbanProspectos.filter(p => p.status !== 'cierre_perdido').reduce((s, p) => s + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0);
+    const totalProspectos = kanbanProspectos.filter(p => p.status !== 'cierre_perdido').length;
 
     // Ejecutivo lookup
     const getEjecutivoNombre = (codigo) => {
@@ -4894,7 +4603,7 @@ const InnovativeDemo = () => {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-xl font-bold text-[#1c2c4a]">{userGreeting}, {currentUserName}</h1>
-            <p className="text-sm text-[#6b7280] mt-0.5">Flujo, conversión y velocidad del pipeline</p>
+            <p className="text-sm text-[#6b7280] mt-0.5">Flujo, conversión y velocidad comercial</p>
           </div>
         </div>
 
@@ -4913,11 +4622,11 @@ const InnovativeDemo = () => {
             </div>
           </div>
 
-          {/* Pipeline Total */}
+          {/* Presupuesto Total */}
           <div className="bg-white rounded-xl border border-[#e5e7eb] card-modern p-5">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-[13px] font-medium text-[#6b7280] mb-1">Pipeline Total</div>
+                <div className="text-[13px] font-medium text-[#6b7280] mb-1">Presupuesto Total</div>
                 <div className="text-2xl font-bold text-[#1c2c4a]">${(totalPipeline / 1000000).toFixed(1)}M</div>
               </div>
               <div className="w-10 h-10 rounded-xl bg-[#0D47A1]/10 flex items-center justify-center">
@@ -4992,7 +4701,7 @@ const InnovativeDemo = () => {
 
         {/* VELOCIDAD DEL PIPELINE — Full width */}
         <div className="mt-4 bg-white rounded-xl border border-[#e5e7eb] card-modern p-5">
-          <h3 className="text-sm font-semibold text-[#1c2c4a] mb-1">Velocidad del Pipeline</h3>
+          <h3 className="text-sm font-semibold text-[#1c2c4a] mb-1">Velocidad Comercial</h3>
           <ResponsiveContainer width="100%" height={400}>
             <ComposedChart data={metricasPorEtapa.filter(m => m.count > 0)} margin={{ top: 10, right: 50, bottom: 10, left: 10 }}>
               <defs>
@@ -5040,51 +4749,14 @@ const InnovativeDemo = () => {
           </div>
         </div>
 
-        {/* ALERTAS — Estilo notificaciones */}
-        {estancados.length > 0 && (
-          <div className="mt-3 bg-white rounded-xl border border-[#e5e7eb] card-modern px-4 py-3">
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 flex-shrink-0">
-                <div className="relative">
-                  <Bell size={14} className="text-[#F57C00]" />
-                  <div className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-[#EF4444] text-white text-[7px] font-bold flex items-center justify-center">{estancados.length}</div>
-                </div>
-                <span className="text-xs font-semibold text-[#1c2c4a] ml-1">Alertas</span>
-              </div>
-              <div className="h-4 w-px bg-[#e5e7eb] flex-shrink-0"></div>
-              <div className="flex-1 overflow-x-auto scrollbar-hide">
-                <div className="flex items-center gap-2">
-                  {[...estancados].sort((a, b) => {
-                    const dA = Math.floor((hoy - new Date(a.fecha)) / (1000 * 60 * 60 * 24));
-                    const dB = Math.floor((hoy - new Date(b.fecha)) / (1000 * 60 * 60 * 24));
-                    return dB - dA;
-                  }).map(p => {
-                    const dias = Math.floor((hoy - new Date(p.fecha)) / (1000 * 60 * 60 * 24));
-                    const stage = KANBAN_STAGES.find(s => s.id === p.status);
-                    const severidad = Math.min(dias / 30, 2.5);
-                    const color = severidad >= 2 ? '#DC2626' : severidad >= 1.5 ? '#EF4444' : '#F59E0B';
-                    return (
-                      <div key={p.id} className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs border transition-colors hover:shadow-sm"
-                        style={{ backgroundColor: `${color}08`, borderColor: `${color}25` }}>
-                        <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: color }}></div>
-                        <span className="font-medium text-[#1c2c4a] whitespace-nowrap">{p.empresa}{p.planta ? ` - ${p.planta}` : ''}</span>
-                        <span className="text-[#6b7280] whitespace-nowrap">{dias}d</span>
-                        <span className="text-[#6b7280] whitespace-nowrap">· {stage?.label}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+        {/* ALERTAS — Sección desactivada */}
 
         {/* KANBAN SOLO LECTURA */}
         <div className="mt-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-semibold text-[#1c2c4a] flex items-center gap-2">
               <BarChart3 size={16} className="text-[#00a8a8]" />
-              Pipeline General — Todas las Áreas
+              Presupuesto General — Todas las Áreas
             </h3>
             <div className="flex items-center gap-4 text-[10px] text-[#6b7280]">
               <div className="flex items-center gap-1.5">
@@ -6019,7 +5691,7 @@ const InnovativeDemo = () => {
                   <ExecutiveAvatar codigo={member.codigo} name={member.name} size="md" />
                   <div>
                     <div className="text-sm font-semibold text-[#1c2c4a]">{member.name}</div>
-                    <div className="text-xs text-[#6b7280]">{member.role} • {member.zona}</div>
+                    <div className="text-xs text-[#6b7280]">{member.role}{member.zona ? ` • ${member.zona}` : ''}</div>
                   </div>
                 </div>
                 <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-50 text-green-700 border border-green-200">
@@ -6145,7 +5817,7 @@ const InnovativeDemo = () => {
           <div className="bg-[#f3f4f6] border border-[#e5e7eb] rounded-lg p-6 mb-6">
             <h3 className="text-lg font-semibold text-[#1c2c4a] mb-4 flex items-center gap-2">
               <TrendingUp size={20} />
-              Pipeline Detallado
+              Presupuesto Detallado
             </h3>
             <div className="grid grid-cols-4 gap-4">
               <div className="bg-white rounded-lg p-4 text-center border border-[#e5e7eb]">
@@ -6221,11 +5893,23 @@ const InnovativeDemo = () => {
     </div>
   );
 
+  // Loading state while data loads from API
+  if (prospectsLoading || teamLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-[#f5f5f5]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#00a8a8] mx-auto mb-3"></div>
+          <p className="text-[#6b7280] text-sm">Cargando datos...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
       <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
       <style>{`* { font-family: 'Inter', sans-serif; } @keyframes toastSlideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }`}</style>
-      
+
       {(
         <div className="flex h-screen overflow-hidden bg-[#f5f5f5]">
           <Sidebar />
@@ -6351,7 +6035,7 @@ const InnovativeDemo = () => {
                 </div>
               </div>
 
-              {/* Resumen Rápido — KPIs + Velocity + Win Rate */}
+              {/* Resumen Rápido — KPIs + Velocity + Tasa de Cierre */}
               <div className="px-6 py-4 bg-[#faf7f2] border-b border-[#e5e7eb]">
                 <div className="grid grid-cols-4 lg:grid-cols-7 gap-3">
                   {kpiKeys.map(kpiKey => {
@@ -6381,13 +6065,13 @@ const InnovativeDemo = () => {
                   })}
                   {/* Pipeline Velocity */}
                   <div className="bg-white rounded-lg border border-[#e5e7eb] p-3 text-center">
-                    <div className="text-[11px] text-[#6b7280] mb-1">Velocidad Pipeline</div>
+                    <div className="text-[11px] text-[#6b7280] mb-1">Velocidad Comercial</div>
                     <div className="text-xl font-bold text-[#0D47A1]">${(calcularPipelineVelocity(kanbanProspectos) / 1000).toFixed(0)}K</div>
                     <div className="text-[11px] text-[#6b7280] mt-1">MXN/dia</div>
                   </div>
-                  {/* Win Rate */}
+                  {/* Tasa de Cierre */}
                   <div className="bg-white rounded-lg border border-[#e5e7eb] p-3 text-center">
-                    <div className="text-[11px] text-[#6b7280] mb-1">Win Rate</div>
+                    <div className="text-[11px] text-[#6b7280] mb-1">Tasa de Cierre</div>
                     <div className="text-xl font-bold" style={{ color: calcularWinRate(kanbanProspectos) >= 30 ? '#2E7D32' : '#F57C00' }}>{calcularWinRate(kanbanProspectos).toFixed(0)}%</div>
                     <div className="text-[11px] text-[#6b7280] mt-1">ganadas/total</div>
                   </div>
@@ -6448,7 +6132,7 @@ const InnovativeDemo = () => {
                                   <div className="text-sm font-semibold text-[#1c2c4a] flex items-center gap-1.5 truncate">{member.name.split(' ').slice(0, 2).join(' ')}
                                     <ChevronRight size={12} className={`text-[#6b7280] transition-transform flex-shrink-0 ${kpiSelectedEjecutivo?.id === member.id ? 'rotate-90' : ''}`} />
                                   </div>
-                                  <div className="text-[11px] text-[#9ca3af]">{member.zona}</div>
+                                  {member.zona && <div className="text-[11px] text-[#9ca3af]">{member.zona}</div>}
                                 </div>
                               </div>
                             </td>
@@ -6551,7 +6235,7 @@ const InnovativeDemo = () => {
                                         </div>
                                       )}
                                       <div className="ml-auto text-xs font-bold text-[#0D47A1]">
-                                        Pipeline: ${(memberProspectos.reduce((s, p) => s + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0) / 1000000).toFixed(1)}M
+                                        Presupuesto: ${(memberProspectos.filter(p => p.status !== 'cierre_perdido').reduce((s, p) => s + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0) / 1000000).toFixed(1)}M
                                       </div>
                                     </div>
 
@@ -7086,10 +6770,9 @@ const InnovativeDemo = () => {
                 <select value={nuevoLeadForm.ejecutivo} onChange={e => setNuevoLeadForm(prev => ({...prev, ejecutivo: e.target.value}))}
                   className="w-full px-3 py-2 border border-[#e5e7eb] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#00a8a8]/50 focus:border-[#00a8a8]">
                   <option value="">Seleccionar asesor...</option>
-                  {salesTeamData.filter(m => m.codigo !== 'VA').map(member => (
-                    <option key={member.codigo} value={member.codigo}>{member.name} — {member.zona}</option>
+                  {salesTeamData.map(member => (
+                    <option key={member.codigo} value={member.codigo}>{member.name}</option>
                   ))}
-                  <option value="VA">Veronica Arias — Nacional (Dirección)</option>
                 </select>
               </div>
 
@@ -7224,7 +6907,8 @@ const InnovativeDemo = () => {
                     </button>
                   );
                 })()}
-                {/* Eliminar */}
+                {/* Eliminar — solo admin/comercial */}
+                {(authUser?.role === 'admin' || authUser?.role === 'comercial' || authUser?.role === 'director') && (
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
@@ -7239,6 +6923,7 @@ const InnovativeDemo = () => {
                 >
                   <Trash2 size={14} />
                 </button>
+                )}
                 <button onClick={() => { setMostrarDetallesProspecto(false); setDetallesProspectoTab('info'); }} className="text-white hover:text-white/80">
                   <X size={24} />
                 </button>

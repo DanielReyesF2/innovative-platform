@@ -114,7 +114,7 @@ router.get("/user", requireAuth, async (req, res) => {
 router.get("/team", requireAuth, async (_req, res) => {
   try {
     const allUsers = await db.query.users.findMany({
-      columns: { id: true, name: true, role: true, areaId: true, isActive: true },
+      columns: { id: true, name: true, role: true, codigo: true, areaId: true, isActive: true },
     });
     res.json(allUsers.filter(u => u.isActive));
   } catch (error) {

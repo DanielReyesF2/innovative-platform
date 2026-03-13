@@ -50,6 +50,7 @@ import {
   getSalesForecast,
   getWinLossAnalysis,
   getCompetitorAnalysis,
+  getComercialTeam,
   // Post-reunion Vero
   getVentasReales,
   getVentasRealesByUser,
@@ -160,7 +161,12 @@ router.post("/prospects", async (req, res) => {
 
 router.patch("/prospects/:id", async (req, res) => {
   try {
-    const updated = await updateProspect(Number(req.params.id), req.body);
+    // Validate: only allow known prospect fields
+    const allowed = insertProspectSchema.partial().safeParse(req.body);
+    if (!allowed.success) {
+      return res.status(400).json({ message: "Datos invalidos", errors: allowed.error.errors });
+    }
+    const updated = await updateProspect(Number(req.params.id), allowed.data);
     if (!updated) return res.status(404).json({ message: "Prospecto no encontrado" });
     res.json(updated);
   } catch (error) {
@@ -169,7 +175,7 @@ router.patch("/prospects/:id", async (req, res) => {
   }
 });
 
-router.delete("/prospects/:id", async (req, res) => {
+router.delete("/prospects/:id", requireRole("admin", "comercial"), async (req, res) => {
   try {
     const deleted = await deleteProspect(Number(req.params.id));
     if (!deleted) return res.status(404).json({ message: "Prospecto no encontrado" });
@@ -650,6 +656,18 @@ router.get("/reports/competitors", async (_req, res) => {
     res.json(analysis);
   } catch (error) {
     console.error("[comercial] Competitor analysis error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+// --- Comercial Team ---
+
+router.get("/team", async (_req, res) => {
+  try {
+    const team = await getComercialTeam();
+    res.json(team);
+  } catch (error) {
+    console.error("[comercial] Get team error:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 });
