@@ -2,7 +2,7 @@ import { Router } from "express";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
-
+import { fileURLToPath } from "url";
 import { requireAuth, requireRole } from "../../middleware/auth";
 import {
   getProspects,
@@ -66,7 +66,9 @@ import { insertProspectSchema, insertLeadSchema, insertVentaRealSchema, insertKp
 export const router = Router();
 
 // Configure multer for document uploads
-const uploadsDir = path.resolve(process.cwd(), "dist/uploads/comercial");
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const uploadsDir = path.resolve(__dirname, "../../../dist/uploads/comercial");
 
 // Ensure uploads directory exists
 if (!fs.existsSync(uploadsDir)) {
