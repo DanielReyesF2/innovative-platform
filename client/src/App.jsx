@@ -1271,16 +1271,6 @@ const InnovativeDemo = () => {
         </button>
       </div>
 
-      {/* Search bar */}
-      {sidebarOpen && (
-        <div className="px-3 pb-2">
-          <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-[#f3f4f6]/50 border border-[#e5e7eb]/50 rounded-md text-[#6b7280] cursor-pointer hover:border-[#e5e7eb] transition-colors">
-            <Search size={13} />
-            <span className="text-[12px]">Buscar...</span>
-            <kbd className="ml-auto text-[9px] bg-white px-1 py-0.5 rounded border border-[#e5e7eb] font-mono">⌘K</kbd>
-          </div>
-        </div>
-      )}
 
       {/* Navigation */}
       <nav className="flex-1 px-2 overflow-y-auto scrollbar-hide">
@@ -1454,29 +1444,6 @@ const InnovativeDemo = () => {
       .sort((a, b) => (b.propuesta?.ventaTotal || b.facturacionEstimada || 0) - (a.propuesta?.ventaTotal || a.facturacionEstimada || 0))
       .slice(0, 3);
 
-    // ============ OPERACIONES DATA ============
-    const levActivos = levantamientosActivos.filter(l => l.tipo === 'Levantamiento');
-    const levCompletados = levantamientosActivos.filter(l => l.status === 'Completado');
-    const levSinReporte = levantamientosActivos.filter(l => l.status === 'Completado' && !l.tieneReporte);
-    const propuestasOps = levantamientosActivos.filter(l => l.tipo === 'Propuesta');
-    const valorPipelineOps = levantamientosActivos.reduce((s, l) => s + (l.valorEstimado || 0), 0);
-    const docsVigentes = documentos.filter(d => calcularStatusDocumento(d.fechaVencimiento) === 'Vigente');
-    const docsPorVencer = documentos.filter(d => ['Por Vencer'].includes(calcularStatusDocumento(d.fechaVencimiento)));
-    const docsVencidos = documentos.filter(d => calcularStatusDocumento(d.fechaVencimiento) === 'Vencido');
-
-    // ============ ECONOMIA CIRCULAR DATA ============
-    const toneladasReciclaje = datosTrazabilidad.reciclaje.reduce((sum, item) => sum + meses.reduce((s, m) => s + (item[m] || 0), 0), 0);
-    const toneladasComposta = datosTrazabilidad.composta.reduce((sum, item) => sum + meses.reduce((s, m) => s + (item[m] || 0), 0), 0);
-    const toneladasReuso = datosTrazabilidad.reuso.reduce((sum, item) => sum + meses.reduce((s, m) => s + (item[m] || 0), 0), 0);
-    const toneladasRelleno = datosTrazabilidad.rellenoSanitario.reduce((sum, item) => sum + meses.reduce((s, m) => s + (item[m] || 0), 0), 0);
-    const toneladasCirculares = toneladasReciclaje + toneladasComposta + toneladasReuso;
-    const totalGenerado = toneladasCirculares + toneladasRelleno;
-    const porcentajeDesviacion = totalGenerado > 0 ? ((toneladasCirculares / totalGenerado) * 100) : 0;
-    const co2Evitado = (toneladasCirculares * 2.5);
-    const ingresosOperativos = clientesConReportes.reduce((s, c) => s + c.ingresosMes, 0);
-
-    // Alertas desactivadas
-    // const alertasActivas = alertas.slice(0, 5);
 
     return (
     <div className="p-4 md:p-6 lg:p-8 bg-[#faf7f2] min-h-screen">
@@ -1494,7 +1461,7 @@ const InnovativeDemo = () => {
       </div>
 
       {/* ═══════ ROW 0: EXECUTIVE MEGA-KPIs ═══════ */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4">
         {/* Presupuesto Anual */}
         <div className="bg-gradient-to-br from-[#1c2c4a] to-[#0D47A1] rounded-xl p-5 text-white">
           <div className="flex items-center justify-between mb-2">
@@ -1503,15 +1470,6 @@ const InnovativeDemo = () => {
           </div>
           <div className="text-2xl font-bold">${(presupuestoTotal / 1000000).toFixed(0)}M</div>
           <div className="text-xs text-white/60 mt-1">Venta real: ${(ventasTotal / 1000000).toFixed(1)}M · {presupuestoTotal > 0 ? Math.round((ventasTotal / presupuestoTotal) * 100) : 0}% cumplimiento</div>
-        </div>
-        {/* Ingresos Operativos */}
-        <div className="bg-gradient-to-br from-[#2E7D32] to-[#1B5E20] rounded-xl p-5 text-white">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-medium text-white/70">Ingresos Operativos</span>
-            <TrendingUp size={18} className="text-white/40" />
-          </div>
-          <div className="text-2xl font-bold">${(ingresosOperativos / 1000000).toFixed(1)}M<span className="text-sm font-normal text-white/60">/mes</span></div>
-          <div className="text-xs text-white/60 mt-1">{clientesConReportes.length} clientes activos · {clientesConReportes.reduce((s, c) => s + c.sucursales, 0)} sucursales</div>
         </div>
       </div>
 
@@ -1588,95 +1546,6 @@ const InnovativeDemo = () => {
         </div>
       </div>
 
-      {/* ═══════ SECTION B: OPERACIONES ═══════ */}
-      <SectionHeader color="#F57C00" icon={Truck} label="Operaciones" />
-
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <div className="bg-white rounded-xl border border-[#e5e7eb] p-4">
-          <div className="text-xs text-[#6b7280] mb-1">Levantamientos Activos</div>
-          <div className="text-xl font-bold text-[#1c2c4a]">{levActivos.length}</div>
-          <div className="text-[10px] text-[#6b7280]">{levCompletados.length} completados</div>
-        </div>
-        <div className={`bg-white rounded-xl border p-4 ${levSinReporte.length > 0 ? 'border-orange-300 bg-orange-50/30' : 'border-[#e5e7eb]'}`}>
-          <div className="text-xs text-[#6b7280] mb-1">Sin Reporte</div>
-          <div className={`text-xl font-bold ${levSinReporte.length > 0 ? 'text-[#F57C00]' : 'text-[#1c2c4a]'}`}>{levSinReporte.length}</div>
-          <div className="text-[10px] text-[#F57C00]">{levSinReporte.length > 0 ? 'Requieren atención' : 'Todo al corriente'}</div>
-        </div>
-        <div className="bg-white rounded-xl border border-[#e5e7eb] p-4">
-          <div className="text-xs text-[#6b7280] mb-1">Propuestas Op.</div>
-          <div className="text-xl font-bold text-[#1c2c4a]">{propuestasOps.length}</div>
-          <div className="text-[10px] text-[#6b7280]">${(valorPipelineOps / 1000000).toFixed(1)}M valor total</div>
-        </div>
-        <div className={`bg-white rounded-xl border p-4 ${docsVencidos.length > 0 ? 'border-red-300 bg-red-50/30' : 'border-[#e5e7eb]'}`}>
-          <div className="text-xs text-[#6b7280] mb-1">Documentos</div>
-          <div className="text-xl font-bold text-[#1c2c4a]">{documentos.length}</div>
-          <div className="flex items-center gap-2 text-[10px]">
-            <span className="text-[#2E7D32]">{docsVigentes.length} vig.</span>
-            <span className="text-[#F57C00]">{docsPorVencer.length} por venc.</span>
-            {docsVencidos.length > 0 && <span className="text-red-600 font-bold">{docsVencidos.length} venc.</span>}
-          </div>
-        </div>
-      </div>
-
-      {/* Levantamientos list + Docs compliance */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4">
-        <div className="lg:col-span-2 bg-white rounded-xl border border-[#e5e7eb] p-4">
-          <h3 className="text-sm font-semibold text-[#1c2c4a] mb-3">Levantamientos y Propuestas</h3>
-          <div className="space-y-1.5">
-            {levantamientosActivos.length === 0 ? (
-              <div className="text-center py-6 text-[#6b7280] text-xs">Sin levantamientos activos</div>
-            ) : levantamientosActivos.slice(0, 6).map(lev => {
-              const statusColor = lev.status === 'Completado' ? '#2E7D32' : lev.status === 'Enviada' ? '#0D47A1' : lev.status === 'Agendado' ? '#7C3AED' : '#F57C00';
-              return (
-                <div key={lev.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-[#f9fafb] text-xs">
-                  <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: statusColor }} />
-                  <span className="font-medium text-[#1c2c4a] w-36 truncate">{lev.cliente}</span>
-                  <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium" style={{ backgroundColor: `${statusColor}15`, color: statusColor }}>{lev.status}</span>
-                  <span className="text-[#6b7280] flex-1 truncate">{lev.ejecutivo}</span>
-                  <span className="text-[#6b7280]">{lev.volumenEstimado}</span>
-                  <span className="font-semibold text-[#0D47A1] w-16 text-right">${(lev.valorEstimado / 1000000).toFixed(2)}M</span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Documents compliance widget */}
-        <div className="bg-white rounded-xl border border-[#e5e7eb] p-4">
-          <h3 className="text-sm font-semibold text-[#1c2c4a] mb-3">Cumplimiento Documental</h3>
-          <div className="space-y-3">
-            <div className="flex items-center gap-3">
-              <div className="w-3 h-3 rounded-full bg-[#2E7D32]" />
-              <span className="text-sm text-[#1c2c4a] flex-1">Vigentes</span>
-              <span className="text-lg font-bold text-[#2E7D32]">{docsVigentes.length}</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="w-3 h-3 rounded-full bg-[#F57C00]" />
-              <span className="text-sm text-[#1c2c4a] flex-1">Por Vencer</span>
-              <span className="text-lg font-bold text-[#F57C00]">{docsPorVencer.length}</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="w-3 h-3 rounded-full bg-red-500" />
-              <span className="text-sm text-[#1c2c4a] flex-1">Vencidos</span>
-              <span className="text-lg font-bold text-red-500">{docsVencidos.length}</span>
-            </div>
-          </div>
-          {/* Compliance bar */}
-          <div className="mt-4 pt-3 border-t border-[#e5e7eb]">
-            <div className="text-[11px] text-[#6b7280] mb-1.5">Cumplimiento general</div>
-            <div className="w-full h-3 bg-[#e5e7eb] rounded-full overflow-hidden flex">
-              {documentos.length > 0 && (
-                <>
-                  <div className="h-full bg-[#2E7D32]" style={{ width: `${(docsVigentes.length / documentos.length) * 100}%` }} />
-                  <div className="h-full bg-[#F57C00]" style={{ width: `${(docsPorVencer.length / documentos.length) * 100}%` }} />
-                  <div className="h-full bg-red-500" style={{ width: `${(docsVencidos.length / documentos.length) * 100}%` }} />
-                </>
-              )}
-            </div>
-            <div className="text-[11px] text-[#6b7280] mt-1">{documentos.length > 0 ? Math.round((docsVigentes.length / documentos.length) * 100) : 100}% al corriente</div>
-          </div>
-        </div>
-      </div>
 
 
 
@@ -5017,7 +4886,7 @@ const InnovativeDemo = () => {
                   setClienteSeleccionadoVista(clienteSeleccionado);
                   setVistaCliente(true);
                 }}
-                className="bg-[#0D47A1] hover:bg-[#0D47A1] text-white px-4 py-2 rounded-md font-medium text-sm shadow-sm hover:shadow-md flex items-center gap-2 transition-all"
+                className="bg-[#0D47A1] hover:bg-[#0a3a85] text-white px-4 py-2 rounded-md font-medium text-sm shadow-sm hover:shadow-md flex items-center gap-2 transition-all"
                 title="Ver como Cliente"
               >
                 <Eye size={16} />
@@ -5670,7 +5539,7 @@ const InnovativeDemo = () => {
             <div className="flex flex-wrap gap-2">
               {SERVICIOS_INNOVATIVE.map((servicio, idx) => (
                 <span key={idx} className="px-3 py-1.5 bg-[#00a8a8]/10 text-[#00a8a8] rounded-full text-xs font-medium border border-[#00a8a8]/20">
-                  {servicio}
+                  {servicio.nombre}
                 </span>
               ))}
             </div>
@@ -7068,7 +6937,7 @@ const InnovativeDemo = () => {
                       setMostrarPropuesta(true);
                       setMostrarDetallesProspecto(false);
                     }}
-                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-[#0D47A1] hover:bg-[#0D47A1] text-white rounded-md text-sm font-medium transition-all"
+                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-[#0D47A1] hover:bg-[#0a3a85] text-white rounded-md text-sm font-medium transition-all"
                   >
                     <FileText size={16} />
                     Ver Propuesta
@@ -7171,13 +7040,6 @@ const InnovativeDemo = () => {
                 </table>
               </div>
 
-              {/* BOTÓN DE EXPORTAR */}
-              <div className="mt-6 flex justify-end">
-                <button className="flex items-center gap-2 px-4 py-2 bg-[#0D47A1] hover:bg-[#0D47A1] text-white rounded-md text-sm font-medium transition-all">
-                  <Download size={16} />
-                  Exportar CSV
-                </button>
-              </div>
             </div>
           </div>
         </div>
@@ -8125,7 +7987,7 @@ const InnovativeDemo = () => {
                                 }
                               }
                             }}
-                            className="bg-[#0D47A1] hover:bg-[#0D47A1] text-white px-4 py-2 rounded-md text-sm font-medium flex items-center gap-2 transition-all"
+                            className="bg-[#0D47A1] hover:bg-[#0a3a85] text-white px-4 py-2 rounded-md text-sm font-medium flex items-center gap-2 transition-all"
                           >
                             <Download size={16} />
                             Descargar
@@ -8285,18 +8147,6 @@ const InnovativeDemo = () => {
                       </div>
                     </div>
 
-                    {/* BOTONES DE ACCIÓN CLIENTE */}
-                    <div className="flex justify-end gap-3">
-                      <button
-                        onClick={() => {
-                          addToast('Descargando reporte en PDF...', 'success');
-                        }}
-                        className="bg-[#0D47A1] hover:bg-[#0D47A1] text-white px-6 py-3 rounded-md font-medium text-sm flex items-center gap-2 transition-all shadow-sm hover:shadow-md"
-                      >
-                        <Download size={18} />
-                        Descargar Reporte Completo
-                      </button>
-                    </div>
                   </>
                 );
               })()}
