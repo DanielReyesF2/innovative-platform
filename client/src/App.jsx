@@ -93,20 +93,9 @@ const urgencyColor = (dateStr) => {
   return '#EF4444'; // rojo — urgente, mucho tiempo sin tocar
 };
 
-// Fecha estimada para prospectos sin fecha — basada en patrones conocidos de captación
+// Fecha de referencia para prospectos — usa fecha real de BD, sin datos fabricados
 const estimarFechaProspecto = (p) => {
-  if (p.fecha) return p.fecha;
-  // Carmen (CR) leads nuevos captados progresivamente sep 2025 - feb 2026
-  if (p.ejecutivo === 'CR') {
-    if (p.id <= 110) return '2025-09-15';
-    if (p.id <= 120) return '2025-10-15';
-    if (p.id <= 131) return '2025-11-15';
-    return '2025-12-15';
-  }
-  // Otros ejecutivos — leads viejos creados jul-ago 2025
-  if (p.status === 'contacto_inicial') return '2025-08-01';
-  if (p.status === 'presentacion') return '2025-09-01';
-  return '2025-10-01';
+  return p.fecha || null;
 };
 
 // Color mapping for service types — subtle backgrounds + accents for Kanban cards
@@ -514,27 +503,12 @@ const generarDatosSankeyCliente = (cliente, datosTrazabilidadCliente) => {
 // CLIENTES CON REPORTES DE TRAZABILIDAD ENTREGADOS
 const clientesConReportes = [];
 
-// EVOLUCIÓN PRESUPUESTO — solo targets, "real" se calcula desde DB
-const presupuestoEvolutionBase = [
-  { mes: 'Ene', mesNum: 1, presupuesto: 2774200 },
-  { mes: 'Feb', mesNum: 2, presupuesto: 2769810 },
-  { mes: 'Mar', mesNum: 3, presupuesto: 4009709 },
-  { mes: 'Abr', mesNum: 4, presupuesto: 11011618 },
-  { mes: 'May', mesNum: 5, presupuesto: 12452161 },
-  { mes: 'Jun', mesNum: 6, presupuesto: 14121018 },
-  { mes: 'Jul', mesNum: 7, presupuesto: 14216418 },
-  { mes: 'Ago', mesNum: 8, presupuesto: 15603961 },
-  { mes: 'Sep', mesNum: 9, presupuesto: 14951318 },
-  { mes: 'Oct', mesNum: 10, presupuesto: 14352318 },
-  { mes: 'Nov', mesNum: 11, presupuesto: 13006777 },
-  { mes: 'Dic', mesNum: 12, presupuesto: 10861507 }
-];
-
-// HISTORIAL ANUAL DE VENTAS
-const historicoVentas = [
-  { año: '2024', valor: 44711877, tipo: 'Real' },
-  { año: '2025', valor: 17602066, tipo: 'Real' },
-  { año: '2026', valor: 130130812, tipo: 'Presupuesto' }
+// EVOLUCIÓN PRESUPUESTO — months structure, targets from salesMetrics DB
+const MONTH_LABELS = [
+  { mes: 'Ene', mesNum: 1 }, { mes: 'Feb', mesNum: 2 }, { mes: 'Mar', mesNum: 3 },
+  { mes: 'Abr', mesNum: 4 }, { mes: 'May', mesNum: 5 }, { mes: 'Jun', mesNum: 6 },
+  { mes: 'Jul', mesNum: 7 }, { mes: 'Ago', mesNum: 8 }, { mes: 'Sep', mesNum: 9 },
+  { mes: 'Oct', mesNum: 10 }, { mes: 'Nov', mesNum: 11 }, { mes: 'Dic', mesNum: 12 },
 ];
 
 const COLORS_INNOVATIVE = {
@@ -725,7 +699,7 @@ const InnovativeDemo = () => {
     staleTime: 60 * 1000,
   });
 
-  // presupuestoEvolution: base targets + real from DB
+  // presupuestoEvolution: monthly budget from team API + real from DB ventas reales
   const presupuestoEvolution = useMemo(() => {
     const realPorMes = {};
     dbVentasReales.forEach(vr => {
@@ -733,12 +707,14 @@ const InnovativeDemo = () => {
       realPorMes[key] = (realPorMes[key] || 0) + Number(vr.monto);
     });
     const currentYear = new Date().getFullYear();
-    return presupuestoEvolutionBase.map(row => ({
+    // Sum of all team members' monthly budgets = total monthly target
+    const totalMonthlyBudget = dbTeamRaw.reduce((sum, m) => sum + (m.presupuestoMensual || 0), 0);
+    return MONTH_LABELS.map(row => ({
       mes: row.mes,
-      presupuesto: row.presupuesto,
+      presupuesto: totalMonthlyBudget,
       real: realPorMes[`${currentYear}-${row.mesNum}`] || 0,
     }));
-  }, [dbVentasReales]);
+  }, [dbVentasReales, dbTeamRaw]);
 
   // API mutations
   const updateProspectMutation = useMutation({
@@ -1608,25 +1584,6 @@ const InnovativeDemo = () => {
                 </div>
               );
             })}
-          </div>
-          {/* Historial anual */}
-          <div className="mt-3 pt-3 border-t border-[#e5e7eb]">
-            <div className="text-[11px] text-[#6b7280] mb-1">Historial Anual</div>
-            <div className="space-y-1.5">
-              {historicoVentas.map(h => {
-                const maxVal = Math.max(...historicoVentas.map(v => v.valor));
-                const pct = (h.valor / maxVal) * 100;
-                return (
-                  <div key={h.año} className="flex items-center gap-2">
-                    <div className="w-8 text-[10px] font-semibold text-[#1c2c4a]">{h.año}</div>
-                    <div className="flex-1 bg-[#f3f4f6] rounded-full h-2.5 overflow-hidden">
-                      <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: h.tipo === 'Presupuesto' ? '#00a8a8' : '#0D47A1' }} />
-                    </div>
-                    <div className="text-[10px] font-semibold text-[#1c2c4a] w-10 text-right">${(h.valor / 1000000).toFixed(0)}M</div>
-                  </div>
-                );
-              })}
-            </div>
           </div>
         </div>
       </div>

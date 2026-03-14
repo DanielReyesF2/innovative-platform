@@ -957,12 +957,12 @@ export async function getComercialTeam() {
   const currentMonth = now.getMonth() + 1;
   const currentYear = now.getFullYear();
 
-  // Get all active users with comercial/director roles (or who have a codigo set)
+  // Get only active comercial/director users (not admin accounts)
   const allUsers = await db.query.users.findMany({
     where: eq(users.isActive, true),
   });
   const comercialUsers = allUsers.filter(
-    u => u.codigo && (u.role === "comercial" || u.role === "director" || u.role === "admin")
+    u => u.codigo && (u.role === "comercial" || u.role === "director")
   );
 
   // Get current month sales metrics
