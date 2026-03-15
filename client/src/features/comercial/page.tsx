@@ -172,7 +172,7 @@ export default function ComercialPage() {
         {/* TAB BAR */}
         <div className="mt-5 flex items-center gap-1 bg-white rounded-xl border border-[#e5e7eb] p-1">
           {([
-            { id: 'pipeline' as const, label: 'Presupuesto', icon: ClipboardList },
+            { id: 'pipeline' as const, label: 'Oportunidades', icon: ClipboardList },
             { id: 'presupuesto' as const, label: 'Presupuesto', icon: DollarSign },
             { id: 'rechazadas' as const, label: 'Rechazadas', icon: RotateCcw, badge: kanbanProspectos.filter(p => p.status === 'cierre_perdido').length },
           ]).map(tab => (
