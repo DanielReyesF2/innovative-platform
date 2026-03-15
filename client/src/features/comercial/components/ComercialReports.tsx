@@ -1,13 +1,10 @@
-import { Users, TrendingUp, Target, Clock, Award, FileText, BarChart3 } from 'lucide-react';
+import { Users, Target, BarChart3 } from 'lucide-react';
 import {
   KANBAN_STAGES,
-  STAGE_PROBABILITY,
   KPI_METAS,
   SERVICIOS_INNOVATIVE,
   SERVICE_COLORS,
   ExecutiveAvatar,
-  calcularWinRate,
-  calcularPipelineVelocity,
 } from '@/lib/comercial-constants';
 
 interface ComercialReportsProps {
@@ -17,13 +14,6 @@ interface ComercialReportsProps {
 
 export function ComercialReports({ kanbanProspectos, salesTeamData }: ComercialReportsProps) {
   const activos = kanbanProspectos.filter(p => p.status !== 'cierre_perdido');
-  const ganados = kanbanProspectos.filter(p => p.status === 'cierre_ganado');
-  const perdidos = kanbanProspectos.filter(p => p.status === 'cierre_perdido');
-  const propuestas = kanbanProspectos.filter(p => p.status === 'propuesta' || p.status === 'negociacion');
-  const reuniones = kanbanProspectos.filter(p => p.status === 'presentacion');
-  const leadsNuevos = kanbanProspectos.filter(p => p.status === 'contacto_inicial');
-  const winRate = calcularWinRate(kanbanProspectos);
-  const velocity = calcularPipelineVelocity(kanbanProspectos);
 
   // Per-executive KPIs (3 KPIs: Leads Nuevos, Reuniones, Levantamientos)
   const ejecutivosKPIs = salesTeamData
@@ -66,26 +56,9 @@ export function ComercialReports({ kanbanProspectos, salesTeamData }: ComercialR
     .sort((a, b) => b[1] - a[1])
     .slice(0, 8);
 
-  const totalGanadoValor = ganados.reduce((s, p) => s + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0);
-
   return (
     <div className="space-y-5">
-      {/* Section 1: Scorecard del Equipo */}
-      <div>
-        <h3 className="text-xs font-bold text-[#1c2c4a] uppercase tracking-wider mb-3 flex items-center gap-2">
-          <Target size={14} className="text-[#00a8a8]" /> Scorecard del Equipo
-        </h3>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-          <ScoreCard label="Leads Nuevos" value={leadsNuevos.length} sub="en pipeline" icon={Users} color="#6b7280" />
-          <ScoreCard label="Reuniones" value={reuniones.length} sub="agendadas" icon={Clock} color="#0D47A1" />
-          <ScoreCard label="Propuestas" value={propuestas.length} sub="enviadas/negociación" icon={FileText} color="#00a8a8" />
-          <ScoreCard label="Cuentas Ganadas" value={ganados.length} sub={`$${(totalGanadoValor / 1000000).toFixed(1)}M`} icon={Award} color="#2E7D32" />
-          <ScoreCard label="Win Rate" value={`${winRate.toFixed(0)}%`} sub={`${ganados.length}W / ${perdidos.length}L`} icon={TrendingUp} color="#7C3AED" />
-          <ScoreCard label="Velocidad" value={`$${(velocity / 1000).toFixed(0)}K`} sub="pipeline/día" icon={BarChart3} color="#F57C00" />
-        </div>
-      </div>
-
-      {/* Section 2: KPIs Semanales por Ejecutivo */}
+      {/* Section 1: KPIs Semanales por Ejecutivo */}
       <div>
         <h3 className="text-xs font-bold text-[#1c2c4a] uppercase tracking-wider mb-3 flex items-center gap-2">
           <Users size={14} className="text-[#00a8a8]" /> KPIs Semanales por Ejecutivo
@@ -208,19 +181,3 @@ export function ComercialReports({ kanbanProspectos, salesTeamData }: ComercialR
   );
 }
 
-function ScoreCard({ label, value, sub, icon: Icon, color }: {
-  label: string; value: string | number; sub: string; icon: any; color: string;
-}) {
-  return (
-    <div className="bg-white rounded-xl border border-[#e5e7eb] p-4">
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-[10px] font-medium text-[#6b7280] uppercase">{label}</span>
-        <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${color}15` }}>
-          <Icon size={14} style={{ color }} />
-        </div>
-      </div>
-      <div className="text-xl font-bold text-[#1c2c4a]">{value}</div>
-      <div className="text-[10px] text-[#9ca3af] mt-0.5">{sub}</div>
-    </div>
-  );
-}
