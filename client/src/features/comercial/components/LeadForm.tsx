@@ -77,6 +77,17 @@ export function LeadForm({ onClose, salesTeam, defaultAssignee }: LeadFormProps)
             Ingresa la informacion de contacto inicial. Los datos de negocio se agregan al calificar como prospecto.
           </p>
 
+          {defaultAssignee && salesTeam && (() => {
+            const registrant = salesTeam.find((m: any) => m.dbUserId === defaultAssignee);
+            if (!registrant) return null;
+            return (
+              <div className="flex items-center gap-2 rounded-lg bg-muted/50 px-3 py-2">
+                <span className="text-xs text-muted-foreground">Registrado por:</span>
+                <span className="text-xs font-medium">{registrant.name}</span>
+              </div>
+            );
+          })()}
+
           <div>
             <Label>Empresa *</Label>
             <Input

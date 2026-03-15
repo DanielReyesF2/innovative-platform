@@ -26,6 +26,7 @@ export default function ComercialPage() {
     currentUserName,
     userGreeting,
     isLoading,
+    authUser,
   } = useComercialData();
 
   const [comercialTab, setComercialTab] = useState<'pipeline' | 'presupuesto' | 'rechazadas'>('pipeline');
@@ -201,7 +202,7 @@ export default function ComercialPage() {
         <LeadForm
           onClose={() => setShowNuevoLead(false)}
           salesTeam={salesTeamData}
-          defaultAssignee={hubEjecutivo?.dbUserId}
+          defaultAssignee={hubEjecutivo?.dbUserId || authUser?.id}
         />
       )}
     </div>
