@@ -29,7 +29,7 @@ export const SERVICE_COLORS: Record<string, { bg: string; border: string; text: 
 };
 
 export const INDUSTRIAS = [
-  'Automotriz', 'Alimenticia', 'Bebidas', 'Retail', 'Hotelería', 'Restaurantes',
+  'Automotriz', 'Alimenticia', 'Abarrotes', 'Bebidas', 'Retail', 'Hotelería', 'Restaurantes',
   'Servicios', 'Pinturas / Industrial', 'Fabricación de motores', 'Equipo óptico',
   'Farmacéutica', 'Tecnología', 'Logística', 'Construcción', 'Minería', 'Otro',
 ];
@@ -226,7 +226,7 @@ export const calcularPipelineVelocity = (prospectos: any[]): number => {
 };
 
 export const esProspectoCalificado = (lead: any): boolean => {
-  return !!(lead.empresa && lead.industria && lead.contacto?.nombre && lead.contacto?.puesto && lead.contacto?.correo);
+  return !!(lead.empresa && lead.industria && lead.contacto?.nombre && lead.contacto?.puesto && lead.contacto?.correo && lead.contacto?.telefono);
 };
 
 export const camposFaltantes = (lead: any): string[] => {
@@ -236,6 +236,7 @@ export const camposFaltantes = (lead: any): string[] => {
   if (!lead.contacto?.nombre) faltantes.push('Nombre contacto');
   if (!lead.contacto?.puesto) faltantes.push('Puesto');
   if (!lead.contacto?.correo) faltantes.push('Correo');
+  if (!lead.contacto?.telefono) faltantes.push('Celular');
   return faltantes;
 };
 

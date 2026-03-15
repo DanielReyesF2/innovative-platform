@@ -2,6 +2,7 @@ import { Users, TrendingUp, Target, Clock, Award, FileText, BarChart3 } from 'lu
 import {
   KANBAN_STAGES,
   STAGE_PROBABILITY,
+  KPI_METAS,
   SERVICIOS_INNOVATIVE,
   SERVICE_COLORS,
   ExecutiveAvatar,
@@ -24,28 +25,24 @@ export function ComercialReports({ kanbanProspectos, salesTeamData }: ComercialR
   const winRate = calcularWinRate(kanbanProspectos);
   const velocity = calcularPipelineVelocity(kanbanProspectos);
 
-  // Per-executive KPIs
+  // Per-executive KPIs (3 KPIs: Leads Nuevos, Reuniones, Levantamientos)
   const ejecutivosKPIs = salesTeamData
     .filter(m => m.codigo !== 'VA' && m.presupuestoAnual2026 > 0)
     .map(member => {
       const memberProspectos = kanbanProspectos.filter(p => p.ejecutivo === member.codigo);
-      const memberGanados = memberProspectos.filter(p => p.status === 'cierre_ganado');
-      const memberPerdidos = memberProspectos.filter(p => p.status === 'cierre_perdido');
-      const memberPropuestas = memberProspectos.filter(p => p.status === 'propuesta' || p.status === 'negociacion');
       const memberLeads = memberProspectos.filter(p => p.status === 'contacto_inicial');
-      const cierreReal = memberGanados.reduce((s, p) => s + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0);
-      const totalDecided = memberGanados.length + memberPerdidos.length;
-      const memberWinRate = totalDecided > 0 ? Math.round((memberGanados.length / totalDecided) * 100) : 0;
-      const pctCumpl = member.presupuestoMensual > 0 ? Math.round((cierreReal / member.presupuestoMensual) * 100) : 0;
+      const memberReuniones = memberProspectos.filter(p => p.status === 'presentacion');
+      const memberLevantamientos = memberProspectos.filter(p => p.status === 'levantamiento');
+      const memberPropuestas = memberProspectos.filter(p => p.status === 'propuesta' || p.status === 'negociacion');
+      const memberGanados = memberProspectos.filter(p => p.status === 'cierre_ganado');
 
       return {
         ...member,
-        leads: memberLeads.length,
+        leadsNuevos: memberLeads.length,
+        reuniones: memberReuniones.length,
+        levantamientos: memberLevantamientos.length,
         propuestas: memberPropuestas.length,
         ganados: memberGanados.length,
-        cierreReal,
-        pctCumpl,
-        winRate: memberWinRate,
         totalProspectos: memberProspectos.filter(p => p.status !== 'cierre_perdido').length,
       };
     })
@@ -88,56 +85,57 @@ export function ComercialReports({ kanbanProspectos, salesTeamData }: ComercialR
         </div>
       </div>
 
-      {/* Section 2: Cumplimiento por Ejecutivo */}
-      <div className="bg-white rounded-xl border border-[#e5e7eb] overflow-hidden">
-        <div className="px-4 py-3 border-b border-[#e5e7eb] flex items-center gap-2">
-          <Users size={14} className="text-[#00a8a8]" />
-          <h4 className="text-xs font-bold text-[#1c2c4a] uppercase tracking-wider">Cumplimiento por Ejecutivo</h4>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-[#e5e7eb] bg-[#f9fafb]">
-                <th className="text-left py-2.5 px-3 text-[10px] font-semibold text-[#6b7280] uppercase">Ejecutivo</th>
-                <th className="text-right py-2.5 px-3 text-[10px] font-semibold text-[#6b7280] uppercase">Presupuesto</th>
-                <th className="text-right py-2.5 px-3 text-[10px] font-semibold text-[#6b7280] uppercase">Cierre Real</th>
-                <th className="text-center py-2.5 px-3 text-[10px] font-semibold text-[#6b7280] uppercase w-32">% Cumpl.</th>
-                <th className="text-center py-2.5 px-3 text-[10px] font-semibold text-[#6b7280] uppercase">Leads</th>
-                <th className="text-center py-2.5 px-3 text-[10px] font-semibold text-[#6b7280] uppercase">Propuestas</th>
-                <th className="text-center py-2.5 px-3 text-[10px] font-semibold text-[#6b7280] uppercase">Ganados</th>
-                <th className="text-center py-2.5 px-3 text-[10px] font-semibold text-[#6b7280] uppercase">Win Rate</th>
-              </tr>
-            </thead>
-            <tbody>
-              {ejecutivosKPIs.map(ej => {
-                const barColor = ej.pctCumpl >= 80 ? '#2E7D32' : ej.pctCumpl >= 40 ? '#F57C00' : '#EF4444';
-                return (
-                  <tr key={ej.codigo} className="border-b border-[#f3f4f6] hover:bg-[#f9fafb] transition-colors">
-                    <td className="py-2.5 px-3">
-                      <div className="flex items-center gap-2">
-                        <ExecutiveAvatar codigo={ej.codigo} name={ej.name} size="sm" />
-                        <span className="text-sm font-medium text-[#1c2c4a]">{ej.name.split(' ').slice(0, 2).join(' ')}</span>
-                      </div>
-                    </td>
-                    <td className="py-2.5 px-3 text-right text-sm text-[#6b7280]">${(ej.presupuestoMensual / 1000000).toFixed(1)}M</td>
-                    <td className="py-2.5 px-3 text-right text-sm font-semibold text-[#00a8a8]">${(ej.cierreReal / 1000000).toFixed(1)}M</td>
-                    <td className="py-2.5 px-3">
-                      <div className="flex items-center gap-2">
-                        <div className="flex-1 h-2 bg-[#f3f4f6] rounded-full overflow-hidden">
-                          <div className="h-full rounded-full transition-all" style={{ width: `${Math.min(ej.pctCumpl, 100)}%`, backgroundColor: barColor }} />
+      {/* Section 2: KPIs Semanales por Ejecutivo */}
+      <div>
+        <h3 className="text-xs font-bold text-[#1c2c4a] uppercase tracking-wider mb-3 flex items-center gap-2">
+          <Users size={14} className="text-[#00a8a8]" /> KPIs Semanales por Ejecutivo
+        </h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {ejecutivosKPIs.map(ej => {
+            const kpis = [
+              { label: 'Leads Nuevos', value: ej.leadsNuevos, meta: KPI_METAS.leadsNuevos.meta, freq: KPI_METAS.leadsNuevos.frecuencia },
+              { label: 'Reuniones Agendadas', value: ej.reuniones, meta: KPI_METAS.reunionesAgendadas.meta, freq: KPI_METAS.reunionesAgendadas.frecuencia },
+              { label: 'Levantamientos', value: ej.levantamientos, meta: KPI_METAS.levantamientos.meta, freq: KPI_METAS.levantamientos.frecuencia },
+            ];
+
+            return (
+              <div key={ej.codigo} className="bg-white rounded-xl border border-[#e5e7eb] p-4 hover:shadow-md transition-shadow">
+                <div className="flex items-center gap-3 mb-4 pb-3 border-b border-[#f3f4f6]">
+                  <ExecutiveAvatar codigo={ej.codigo} name={ej.name} size="lg" />
+                  <div className="min-w-0">
+                    <div className="text-sm font-semibold text-[#1c2c4a] truncate">{ej.name.split(' ').slice(0, 2).join(' ')}</div>
+                    <div className="text-[10px] text-[#6b7280]">{ej.totalProspectos} oportunidades activas</div>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  {kpis.map(kpi => {
+                    const pct = kpi.meta > 0 ? Math.round((kpi.value / kpi.meta) * 100) : 0;
+                    const color = pct >= 80 ? '#2E7D32' : pct >= 40 ? '#F57C00' : '#EF4444';
+                    return (
+                      <div key={kpi.label}>
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-[11px] text-[#6b7280]">{kpi.label}</span>
+                          <span className="text-sm font-bold" style={{ color }}>
+                            {kpi.value}<span className="text-[10px] font-normal text-[#9ca3af]">/{kpi.meta} {kpi.freq === 'mensual' ? 'mes' : 'sem'}</span>
+                          </span>
                         </div>
-                        <span className="text-xs font-bold w-10 text-right" style={{ color: barColor }}>{ej.pctCumpl}%</span>
+                        <div className="h-2 bg-[#f3f4f6] rounded-full overflow-hidden">
+                          <div className="h-full rounded-full transition-all" style={{ width: `${Math.min(pct, 100)}%`, backgroundColor: color }} />
+                        </div>
                       </div>
-                    </td>
-                    <td className="py-2.5 px-3 text-center text-sm text-[#1c2c4a]">{ej.leads}</td>
-                    <td className="py-2.5 px-3 text-center text-sm text-[#1c2c4a]">{ej.propuestas}</td>
-                    <td className="py-2.5 px-3 text-center text-sm font-semibold text-[#2E7D32]">{ej.ganados}</td>
-                    <td className="py-2.5 px-3 text-center text-sm text-[#7C3AED] font-medium">{ej.winRate}%</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                    );
+                  })}
+                </div>
+
+                {/* Quick stats footer */}
+                <div className="mt-3 pt-3 border-t border-[#f3f4f6] flex items-center justify-between text-[10px] text-[#6b7280]">
+                  <span>{ej.propuestas} propuestas</span>
+                  <span className="font-semibold text-[#2E7D32]">{ej.ganados} ganados</span>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 
