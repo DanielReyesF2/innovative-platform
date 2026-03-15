@@ -972,6 +972,17 @@ export async function getComercialTeam() {
   });
   const metricsMap = new Map(metricsRows.map(m => [m.userId, m]));
 
+  // Get ALL months of current year for annual budget calculation
+  const allYearMetrics = await db.query.salesMetrics.findMany();
+  const yearPrefix = `${currentYear}-`;
+  const annualBudgetMap = new Map<number, number>();
+  for (const m of allYearMetrics) {
+    if (m.period.startsWith(yearPrefix)) {
+      const prev = annualBudgetMap.get(m.userId) || 0;
+      annualBudgetMap.set(m.userId, prev + (Number(m.monthlyBudget) || 0));
+    }
+  }
+
   // Get current month ventas reales
   const ventasRows = await db.query.ventasReales.findMany({
     where: and(
@@ -985,6 +996,7 @@ export async function getComercialTeam() {
     const metrics = metricsMap.get(u.id);
     const monthlyBudget = metrics ? Number(metrics.monthlyBudget) || 0 : 0;
     const ventaReal = ventasMap.get(u.id) || 0;
+    const annualBudget = annualBudgetMap.get(u.id) || 0;
     return {
       id: u.id,
       codigo: u.codigo,
@@ -992,7 +1004,7 @@ export async function getComercialTeam() {
       email: u.email,
       role: u.role,
       presupuestoMensual: monthlyBudget,
-      presupuestoAnual: monthlyBudget * 12,
+      presupuestoAnual: annualBudget,
       ventasReales: ventaReal,
     };
   });
