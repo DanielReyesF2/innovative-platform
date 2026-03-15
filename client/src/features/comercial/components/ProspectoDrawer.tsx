@@ -666,46 +666,46 @@ export function ProspectoDrawer({ prospecto, onClose, onEdit, onStageGate }: Pro
             </>
           )}
         </div>
+
+        {/* Qualify Lead Dialog */}
+        {showQualifyDialog && (
+          <QualifyLeadDialog
+            prospect={p}
+            onClose={() => setShowQualifyDialog(false)}
+            onQualified={() => { setShowQualifyDialog(false); onClose(); }}
+          />
+        )}
+
+        {/* Edit Dialog */}
+        {showEditDialog && (
+          <ProspectEditDialog
+            prospect={p}
+            onClose={() => setShowEditDialog(false)}
+            onSaved={() => setShowEditDialog(false)}
+          />
+        )}
+
+        {/* Rechazo Modal */}
+        {showRechazoModal && (
+          <ModalMotivoRechazo
+            prospecto={p}
+            onClose={() => setShowRechazoModal(false)}
+            onSave={async (data) => {
+              try {
+                await rejectProspect.mutateAsync({
+                  id: p.id,
+                  rejectionReasonId: data.motivoRechazo,
+                  rejectionDetail: data.motivoRechazoDetalle,
+                });
+                setShowRechazoModal(false);
+                onClose();
+              } catch {
+                // error handled by React Query
+              }
+            }}
+          />
+        )}
       </div>
-
-      {/* Qualify Lead Dialog */}
-      {showQualifyDialog && (
-        <QualifyLeadDialog
-          prospect={p}
-          onClose={() => setShowQualifyDialog(false)}
-          onQualified={() => { setShowQualifyDialog(false); onClose(); }}
-        />
-      )}
-
-      {/* Edit Dialog */}
-      {showEditDialog && (
-        <ProspectEditDialog
-          prospect={p}
-          onClose={() => setShowEditDialog(false)}
-          onSaved={() => setShowEditDialog(false)}
-        />
-      )}
-
-      {/* Rechazo Modal */}
-      {showRechazoModal && (
-        <ModalMotivoRechazo
-          prospecto={p}
-          onClose={() => setShowRechazoModal(false)}
-          onSave={async (data) => {
-            try {
-              await rejectProspect.mutateAsync({
-                id: p.id,
-                rejectionReasonId: data.motivoRechazo,
-                rejectionDetail: data.motivoRechazoDetalle,
-              });
-              setShowRechazoModal(false);
-              onClose();
-            } catch {
-              // error handled by React Query
-            }
-          }}
-        />
-      )}
     </div>
   );
 }
