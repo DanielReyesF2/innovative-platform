@@ -24,6 +24,7 @@ import {
   type InsertAlert,
   type InsertVentaReal,
   type InsertKpiMensual,
+  comercialWeeklyReports,
 } from "../../../shared/schema/comercial";
 import {
   surveys,
@@ -1013,4 +1014,48 @@ export async function getComercialTeam() {
       ventasReales: ventaReal,
     };
   });
+}
+
+// === RESUMEN SEMANAL (Weekly Management Report) ===
+
+export async function getWeeklyReport(userId: number, weekStart: string) {
+  return db.query.comercialWeeklyReports.findFirst({
+    where: and(
+      eq(comercialWeeklyReports.createdById, userId),
+      eq(comercialWeeklyReports.weekStart, weekStart),
+    ),
+  });
+}
+
+export async function upsertWeeklyReport(
+  userId: number,
+  weekStart: string,
+  content: string,
+  status: string = "draft",
+) {
+  const existing = await getWeeklyReport(userId, weekStart);
+
+  if (existing) {
+    const [updated] = await db
+      .update(comercialWeeklyReports)
+      .set({ content, status, updatedAt: new Date() })
+      .where(eq(comercialWeeklyReports.id, existing.id))
+      .returning();
+    return updated;
+  }
+
+  const [created] = await db
+    .insert(comercialWeeklyReports)
+    .values({ weekStart, content, status, createdById: userId })
+    .returning();
+  return created;
+}
+
+export async function markWeeklyReportAsSent(reportId: number, recipients: string) {
+  const [updated] = await db
+    .update(comercialWeeklyReports)
+    .set({ status: "sent", sentAt: new Date(), recipients, updatedAt: new Date() })
+    .where(eq(comercialWeeklyReports.id, reportId))
+    .returning();
+  return updated;
 }

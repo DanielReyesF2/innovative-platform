@@ -60,8 +60,12 @@ import {
   createOrUpdateKpiMensual,
   getRechazadasConVencimiento,
   getRechazadasProximasAVencer,
+  getWeeklyReport,
+  upsertWeeklyReport,
+  markWeeklyReportAsSent,
 } from "./storage";
 import { insertProspectSchema, insertLeadSchema, insertVentaRealSchema, insertKpiMensualSchema, qualifyProspectSchema } from "../../../shared/schema/comercial";
+import { triggerWebhook } from "../../lib/webhook";
 
 export const router = Router();
 
@@ -819,6 +823,84 @@ router.get("/uploads/:prospectId/:filename", async (req, res) => {
     res.sendFile(filePath);
   } catch (error) {
     console.error("[comercial] Serve file error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+// === RESUMEN SEMANAL (Weekly Management Report) ===
+
+router.get("/weekly-report", async (req, res) => {
+  try {
+    const week = req.query.week as string;
+    if (!week) return res.status(400).json({ message: "Parámetro 'week' requerido" });
+    const report = await getWeeklyReport((req as any).user.id, week);
+    res.json(report || null);
+  } catch (error) {
+    console.error("[comercial] Get weekly report error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+router.put("/weekly-report", async (req, res) => {
+  try {
+    const { weekStart, content } = req.body;
+    if (!weekStart) return res.status(400).json({ message: "weekStart requerido" });
+    const report = await upsertWeeklyReport(
+      (req as any).user.id,
+      weekStart,
+      content || "",
+    );
+    res.json(report);
+  } catch (error) {
+    console.error("[comercial] Save weekly report error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+router.post("/weekly-report/send", async (req, res) => {
+  try {
+    const { weekStart, recipients } = req.body;
+    if (!weekStart || !recipients?.length) {
+      return res.status(400).json({ message: "weekStart y recipients requeridos" });
+    }
+
+    const recipientStr = recipients.join(",");
+
+    // Ensure report exists (save content first if provided)
+    let report = await getWeeklyReport((req as any).user.id, weekStart);
+    if (!report) {
+      report = await upsertWeeklyReport(
+        (req as any).user.id,
+        weekStart,
+        req.body.content || "",
+      );
+    } else if (req.body.content !== undefined) {
+      report = await upsertWeeklyReport(
+        (req as any).user.id,
+        weekStart,
+        req.body.content,
+      );
+    }
+
+    // Try to trigger n8n webhook
+    const webhookUrl = process.env.N8N_WEBHOOK_RESUMEN_URL;
+    if (webhookUrl) {
+      await triggerWebhook(webhookUrl, {
+        content: report.content,
+        recipients,
+        subject: `Resumen Semanal — Semana del ${weekStart}`,
+        senderName: (req as any).user.name || "Comercial",
+        weekStart,
+      });
+    } else {
+      console.warn("[comercial] N8N_WEBHOOK_RESUMEN_URL not configured — skipping webhook");
+    }
+
+    // Mark as sent regardless (graceful fallback)
+    const updated = await markWeeklyReportAsSent(report.id, recipientStr);
+    res.json(updated);
+  } catch (error) {
+    console.error("[comercial] Send weekly report error:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 });

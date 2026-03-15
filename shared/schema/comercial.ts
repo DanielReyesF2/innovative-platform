@@ -1,4 +1,4 @@
-import { pgTable, serial, text, integer, timestamp, boolean, numeric, jsonb, pgEnum, uniqueIndex } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, integer, timestamp, boolean, numeric, jsonb, pgEnum, uniqueIndex, date } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { users } from "./common";
@@ -405,8 +405,33 @@ export type InsertProposal = z.infer<typeof insertProposalSchema>;
 export type FollowUpAlert = typeof followUpAlerts.$inferSelect;
 export type InsertAlert = z.infer<typeof insertAlertSchema>;
 
+// === RESUMEN SEMANAL (Weekly Management Report) ===
+
+export const comercialWeeklyReports = pgTable("comercial_weekly_reports", {
+  id: serial("id").primaryKey(),
+  weekStart: date("week_start").notNull(),
+  content: text("content").notNull().default(""),
+  status: text("status").notNull().default("draft"), // 'draft' | 'sent'
+  sentAt: timestamp("sent_at"),
+  recipients: text("recipients"), // comma-separated emails
+  createdById: integer("created_by_id").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  uniqueWeekUser: uniqueIndex("comercial_weekly_reports_week_user_idx").on(table.weekStart, table.createdById),
+}));
+
+export const insertWeeklyReportSchema = createInsertSchema(comercialWeeklyReports, {
+  content: z.string().max(50000),
+  recipients: z.string().max(1000).optional(),
+}).omit({ id: true, createdAt: true, updatedAt: true, sentAt: true });
+
 // Post-reunion types
 export type VentaReal = typeof ventasReales.$inferSelect;
 export type InsertVentaReal = z.infer<typeof insertVentaRealSchema>;
 export type KpiMensual = typeof kpisMensuales.$inferSelect;
 export type InsertKpiMensual = z.infer<typeof insertKpiMensualSchema>;
+
+// Weekly report types
+export type ComercialWeeklyReport = typeof comercialWeeklyReports.$inferSelect;
+export type InsertWeeklyReport = z.infer<typeof insertWeeklyReportSchema>;

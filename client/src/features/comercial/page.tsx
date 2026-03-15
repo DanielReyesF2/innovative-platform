@@ -18,6 +18,7 @@ import { RechazadasTab } from './components/RechazadasTab';
 import { EjecutivoHub } from './components/EjecutivoHub';
 import { LeadForm } from './components/LeadForm';
 import { ComercialReports } from './components/ComercialReports';
+import { ResumenSemanal } from './components/ResumenSemanal';
 
 export default function ComercialPage() {
   const [, navigate] = useLocation();
@@ -30,7 +31,7 @@ export default function ComercialPage() {
     authUser,
   } = useComercialData();
 
-  const [comercialTab, setComercialTab] = useState<'pipeline' | 'presupuesto' | 'rechazadas' | 'reportes'>('pipeline');
+  const [comercialTab, setComercialTab] = useState<'pipeline' | 'presupuesto' | 'rechazadas' | 'reportes' | 'resumen'>('pipeline');
   const [hubEjecutivo, setHubEjecutivo] = useState<any>(null);
   const [showNuevoLead, setShowNuevoLead] = useState(false);
 
@@ -178,6 +179,7 @@ export default function ComercialPage() {
             { id: 'presupuesto' as const, label: 'Presupuesto', icon: DollarSign },
             { id: 'rechazadas' as const, label: 'Rechazadas', icon: RotateCcw, badge: kanbanProspectos.filter(p => p.status === 'cierre_perdido').length },
             { id: 'reportes' as const, label: 'Reportes', icon: BarChart3 },
+            { id: 'resumen' as const, label: 'Resumen', icon: FileText },
           ]).map(tab => (
             <button key={tab.id} onClick={() => setComercialTab(tab.id)}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all flex-1 justify-center ${comercialTab === tab.id ? 'bg-[#1c2c4a] text-white shadow-sm' : 'text-[#6b7280] hover:bg-[#f3f4f6]'}`}>
@@ -195,6 +197,7 @@ export default function ComercialPage() {
         {comercialTab === 'presupuesto' && <PresupuestoTab />}
         {comercialTab === 'rechazadas' && <RechazadasTab />}
         {comercialTab === 'reportes' && <div className="mt-5"><ComercialReports kanbanProspectos={kanbanProspectos} salesTeamData={salesTeamData} /></div>}
+        {comercialTab === 'resumen' && <ResumenSemanal />}
 
       </div>
 
