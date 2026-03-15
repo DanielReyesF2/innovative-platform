@@ -14,6 +14,7 @@ import { ProspectProposals } from './ProspectProposals';
 import { ProspectEditDialog } from './ProspectEditDialog';
 import { ProspectLevantamiento } from './ProspectLevantamiento';
 import { ModalMotivoRechazo } from './ModalMotivoRechazo';
+import { StageGateModal } from './StageGateModal';
 import {
   KANBAN_STAGES, SERVICIOS_INNOVATIVE, SERVICE_COLORS, STAGE_GATES,
   classifyRechazo, getSeguimientoUrgency, getRecoveryState, RECHAZO_CATEGORIES,
@@ -27,10 +28,9 @@ interface Props {
   prospecto: any;
   onClose: () => void;
   onEdit?: (p: any) => void;
-  onStageGate?: (pending: { prospecto: any; fromStage: string; toStage: string }) => void;
 }
 
-export function ProspectoDrawer({ prospecto, onClose, onEdit, onStageGate }: Props) {
+export function ProspectoDrawer({ prospecto, onClose, onEdit }: Props) {
   const {
     authUser,
     updateProspectMutation,
@@ -46,6 +46,7 @@ export function ProspectoDrawer({ prospecto, onClose, onEdit, onStageGate }: Pro
   const [showQualifyDialog, setShowQualifyDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showRechazoModal, setShowRechazoModal] = useState(false);
+  const [pendingStageGate, setPendingStageGate] = useState<{ prospecto: any; fromStage: string; toStage: string } | null>(null);
   const rejectProspect = useRejectProspect();
 
   if (!prospecto) return null;
@@ -181,7 +182,7 @@ export function ProspectoDrawer({ prospecto, onClose, onEdit, onStageGate }: Pro
                       }
                       const gate = STAGE_GATES[nextStage.id];
                       if (gate && !gate.validate(p)) {
-                        onStageGate?.({ prospecto: p, fromStage: p.status, toStage: nextStage.id });
+                        setPendingStageGate({ prospecto: p, fromStage: p.status, toStage: nextStage.id });
                         return;
                       }
                       changeProspectoStage(p.id, nextStage.id);
@@ -721,6 +722,18 @@ export function ProspectoDrawer({ prospecto, onClose, onEdit, onStageGate }: Pro
             prospect={p}
             onClose={() => setShowEditDialog(false)}
             onSaved={() => setShowEditDialog(false)}
+          />
+        )}
+
+        {/* Stage Gate Modal */}
+        {pendingStageGate && (
+          <StageGateModal
+            pendingMove={pendingStageGate}
+            onForce={() => {
+              changeProspectoStage(pendingStageGate.prospecto.id, pendingStageGate.toStage);
+              setPendingStageGate(null);
+            }}
+            onCancel={() => setPendingStageGate(null)}
           />
         )}
 
