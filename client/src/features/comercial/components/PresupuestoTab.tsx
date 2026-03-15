@@ -114,11 +114,13 @@ export function PresupuestoTab() {
               </tr>
             </thead>
             <tbody>
-              {salesTeamData.filter(m => m.presupuestoMensual > 0).map(member => {
+              {salesTeamData.filter(m => m.presupuestoAnual2026 > 0).map(member => {
+                const selectedPeriod = `${ventaRealAño}-${String(ventaRealMes).padStart(2, '0')}`;
+                const memberBudgetMes = member.presupuestosMensuales?.[selectedPeriod] || 0;
                 const editKey = `${member.id}-${ventaRealMes}-${ventaRealAño}`;
                 const isEditing = editingVentaReal === editKey;
-                const ventaActual = ventasRealesEditadas[editKey] ?? member.ventasReales;
-                const pctVal = member.presupuestoMensual > 0 ? Math.round((Number(ventaActual) / member.presupuestoMensual) * 100) : 0;
+                const ventaActual = ventasRealesEditadas[editKey] ?? 0;
+                const pctVal = memberBudgetMes > 0 ? Math.round((Number(ventaActual) / memberBudgetMes) * 100) : 0;
                 const pctColor = pctVal >= 80 ? '#2E7D32' : pctVal >= 40 ? '#F57C00' : '#EF4444';
 
                 return (
@@ -133,7 +135,7 @@ export function PresupuestoTab() {
                       </div>
                     </td>
                     <td className="py-2.5 px-2 text-right">
-                      <span className="text-sm text-[#6b7280]">${(member.presupuestoMensual / 1000000).toFixed(2)}M</span>
+                      <span className="text-sm text-[#6b7280]">${(memberBudgetMes / 1000000).toFixed(2)}M</span>
                     </td>
                     <td className="py-2.5 px-2 text-right">
                       {isEditing ? (
@@ -199,30 +201,26 @@ export function PresupuestoTab() {
               })}
             </tbody>
             <tfoot>
-              <tr className="bg-[#f9fafb]">
-                <td className="py-2.5 px-2 font-semibold text-[#1c2c4a]">Total Equipo</td>
-                <td className="py-2.5 px-2 text-right font-semibold text-[#1c2c4a]">
-                  ${(salesTeamData.reduce((s, m) => s + m.presupuestoMensual, 0) / 1000000).toFixed(2)}M
-                </td>
-                <td className="py-2.5 px-2 text-right font-bold text-[#00a8a8]">
-                  ${(salesTeamData.reduce((s, m) => s + Number(ventasRealesEditadas[`${m.id}-${ventaRealMes}-${ventaRealAño}`] ?? m.ventasReales), 0) / 1000000).toFixed(2)}M
-                </td>
-                <td className="py-2.5 px-2 text-right font-bold" style={{
-                  color: (() => {
-                    const totalPres = salesTeamData.reduce((s, m) => s + m.presupuestoMensual, 0);
-                    const totalReal = salesTeamData.reduce((s, m) => s + Number(ventasRealesEditadas[`${m.id}-${ventaRealMes}-${ventaRealAño}`] ?? m.ventasReales), 0);
-                    const p = totalPres > 0 ? Math.round((totalReal / totalPres) * 100) : 0;
-                    return p >= 80 ? '#2E7D32' : p >= 40 ? '#F57C00' : '#EF4444';
-                  })()
-                }}>
-                  {(() => {
-                    const totalPres = salesTeamData.reduce((s, m) => s + m.presupuestoMensual, 0);
-                    const totalReal = salesTeamData.reduce((s, m) => s + Number(ventasRealesEditadas[`${m.id}-${ventaRealMes}-${ventaRealAño}`] ?? m.ventasReales), 0);
-                    return totalPres > 0 ? Math.round((totalReal / totalPres) * 100) : 0;
-                  })()}%
-                </td>
-                <td></td>
-              </tr>
+              {(() => {
+                const sp = `${ventaRealAño}-${String(ventaRealMes).padStart(2, '0')}`;
+                const totalPres = salesTeamData.reduce((s, m) => s + (m.presupuestosMensuales?.[sp] || 0), 0);
+                const totalReal = salesTeamData.reduce((s, m) => s + Number(ventasRealesEditadas[`${m.id}-${ventaRealMes}-${ventaRealAño}`] ?? 0), 0);
+                const pct = totalPres > 0 ? Math.round((totalReal / totalPres) * 100) : 0;
+                const pctColor = pct >= 80 ? '#2E7D32' : pct >= 40 ? '#F57C00' : '#EF4444';
+                return (
+                  <tr className="bg-[#f9fafb]">
+                    <td className="py-2.5 px-2 font-semibold text-[#1c2c4a]">Total Equipo</td>
+                    <td className="py-2.5 px-2 text-right font-semibold text-[#1c2c4a]">
+                      ${(totalPres / 1000000).toFixed(2)}M
+                    </td>
+                    <td className="py-2.5 px-2 text-right font-bold text-[#00a8a8]">
+                      ${(totalReal / 1000000).toFixed(2)}M
+                    </td>
+                    <td className="py-2.5 px-2 text-right font-bold" style={{ color: pctColor }}>{pct}%</td>
+                    <td></td>
+                  </tr>
+                );
+              })()}
             </tfoot>
           </table>
         </div>

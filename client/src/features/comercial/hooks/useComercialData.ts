@@ -60,6 +60,7 @@ export function useComercialData() {
       avatar: '👤',
       presupuestoAnual2026: m.presupuestoAnual || 0,
       presupuestoMensual: m.presupuestoMensual || 0,
+      presupuestosMensuales: m.presupuestosMensuales || {},
       ventasReales: m.ventasReales || 0,
       cumplimientoPresupuesto: m.presupuestoMensual > 0
         ? Math.round((m.ventasReales / m.presupuestoMensual) * 100) : 0,
@@ -77,12 +78,18 @@ export function useComercialData() {
       realPorMes[key] = (realPorMes[key] || 0) + Number(vr.monto);
     });
     const currentYear = new Date().getFullYear();
-    const totalMonthlyBudget = (dbTeamRaw as any[]).reduce((sum: number, m: any) => sum + (m.presupuestoMensual || 0), 0);
-    return MONTH_LABELS.map(row => ({
-      mes: row.mes,
-      presupuesto: totalMonthlyBudget,
-      real: realPorMes[`${currentYear}-${row.mesNum}`] || 0,
-    }));
+    return MONTH_LABELS.map(row => {
+      const period = `${currentYear}-${String(row.mesNum).padStart(2, '0')}`;
+      const monthBudget = (dbTeamRaw as any[]).reduce((sum: number, m: any) => {
+        const budgets = m.presupuestosMensuales || {};
+        return sum + (budgets[period] || 0);
+      }, 0);
+      return {
+        mes: row.mes,
+        presupuesto: monthBudget,
+        real: realPorMes[`${currentYear}-${row.mesNum}`] || 0,
+      };
+    });
   }, [dbVentasReales, dbTeamRaw]);
 
   const pipelineData = useMemo(() => calcularPipelineData(kanbanProspectos), [kanbanProspectos]);
