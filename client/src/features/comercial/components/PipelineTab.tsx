@@ -32,7 +32,7 @@ export function PipelineTab({ onViewHub }: Props) {
     <>
       {/* Presupuesto por Ejecutivo */}
       <div className="mt-4 bg-white rounded-xl border border-[#e5e7eb] card-modern p-5">
-        <h3 className="text-sm font-semibold text-[#1c2c4a] mb-3">Presupuesto por Ejecutivo</h3>
+        <h3 className="text-sm font-semibold text-[#1c2c4a] mb-3">Oportunidades por Ejecutivo</h3>
         <div className="space-y-4">
           {salesTeamData.map(member => {
             const memberProspectos = kanbanProspectos.filter(p => p.ejecutivo === member.codigo);
@@ -88,7 +88,7 @@ export function PipelineTab({ onViewHub }: Props) {
         </div>
       </div>
 
-      <SectionHeader color="#0D47A1" icon={ClipboardList} label="Presupuesto Detallado" />
+      <SectionHeader color="#0D47A1" icon={ClipboardList} label="Oportunidades Detallado" />
 
       {/* Service Summary */}
       <div className="flex items-center justify-end gap-2 flex-wrap">
