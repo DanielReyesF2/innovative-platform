@@ -178,7 +178,7 @@ export default function ComercialPage() {
             { id: 'pipeline' as const, label: 'Oportunidades', icon: ClipboardList },
             { id: 'presupuesto' as const, label: 'Presupuesto', icon: DollarSign },
             { id: 'rechazadas' as const, label: 'Rechazadas', icon: RotateCcw, badge: kanbanProspectos.filter(p => p.status === 'cierre_perdido').length },
-            { id: 'reportes' as const, label: 'Reportes', icon: BarChart3 },
+            { id: 'reportes' as const, label: 'KPIs', icon: BarChart3 },
             { id: 'resumen' as const, label: 'Resumen Semanal', icon: FileText },
           ]).map(tab => (
             <button key={tab.id} onClick={() => setComercialTab(tab.id)}
