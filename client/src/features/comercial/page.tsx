@@ -16,6 +16,7 @@ import { PipelineTab } from './components/PipelineTab';
 import { PresupuestoTab } from './components/PresupuestoTab';
 import { RechazadasTab } from './components/RechazadasTab';
 import { EjecutivoHub } from './components/EjecutivoHub';
+import { LeadForm } from './components/LeadForm';
 
 export default function ComercialPage() {
   const [, navigate] = useLocation();
@@ -29,6 +30,7 @@ export default function ComercialPage() {
 
   const [comercialTab, setComercialTab] = useState<'pipeline' | 'presupuesto' | 'rechazadas'>('pipeline');
   const [hubEjecutivo, setHubEjecutivo] = useState<any>(null);
+  const [showNuevoLead, setShowNuevoLead] = useState(false);
 
   if (isLoading) {
     return (
@@ -66,7 +68,7 @@ export default function ComercialPage() {
             <p className="text-sm text-[#6b7280] mt-0.5">Tu presupuesto comercial al momento</p>
           </div>
           <div className="flex items-center gap-2">
-            <button className="flex items-center gap-2 px-4 py-2.5 bg-[#1c2c4a] hover:bg-[#1c2c4a]/90 text-white rounded-lg text-sm font-semibold transition-all shadow-sm hover:shadow-md">
+            <button onClick={() => setShowNuevoLead(true)} className="flex items-center gap-2 px-4 py-2.5 bg-[#1c2c4a] hover:bg-[#1c2c4a]/90 text-white rounded-lg text-sm font-semibold transition-all shadow-sm hover:shadow-md">
               <Plus size={16} /> Nuevo Lead
             </button>
           </div>
@@ -193,6 +195,8 @@ export default function ComercialPage() {
         {comercialTab === 'rechazadas' && <RechazadasTab />}
 
       </div>
+
+      {showNuevoLead && <LeadForm onClose={() => setShowNuevoLead(false)} />}
     </div>
   );
 }

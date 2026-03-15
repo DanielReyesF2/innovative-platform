@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useCreateLead } from "../api";
+import { useCreateProspect } from "../api";
 import { useToast } from "@/components/ui/use-toast";
 
 const SOURCE_LABELS: Record<string, string> = {
@@ -28,7 +28,7 @@ export function LeadForm({ onClose }: LeadFormProps) {
     notes: "",
   });
 
-  const createLead = useCreateLead();
+  const createProspect = useCreateProspect();
   const { toast } = useToast();
 
   const set = (key: string, val: string) => setForm({ ...form, [key]: val });
@@ -40,13 +40,16 @@ export function LeadForm({ onClose }: LeadFormProps) {
     }
 
     try {
-      await createLead.mutateAsync({
-        companyName: form.companyName.trim(),
+      await createProspect.mutateAsync({
+        name: form.companyName.trim(),
         contactName: form.contactName.trim(),
         contactPhone: form.contactPhone.trim() || undefined,
         contactEmail: form.contactEmail.trim() || undefined,
         source: form.source,
-        notes: form.notes.trim() || undefined,
+        stage: "contacto_inicial",
+        probability: 10,
+        priority: "media",
+        reason: form.notes.trim() || undefined,
       });
       toast({ title: "Lead creado exitosamente" });
       onClose();
@@ -143,8 +146,8 @@ export function LeadForm({ onClose }: LeadFormProps) {
           <Button variant="outline" onClick={onClose}>
             Cancelar
           </Button>
-          <Button onClick={handleSubmit} disabled={createLead.isPending}>
-            {createLead.isPending ? "Creando..." : "Crear Lead"}
+          <Button onClick={handleSubmit} disabled={createProspect.isPending}>
+            {createProspect.isPending ? "Creando..." : "Crear Lead"}
           </Button>
         </div>
       </div>
