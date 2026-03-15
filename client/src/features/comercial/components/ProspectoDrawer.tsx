@@ -4,18 +4,22 @@ import {
   X, ChevronRight, Edit3, Trash2, Users, Package, ClipboardList, Clock,
   MessageSquare, FileText, Send, Phone, Mail, Copy, Check, XCircle,
   AlertCircle, Bell, CheckCircle, RotateCcw, PhoneCall, CalendarClock,
-  Upload, Paperclip, Image, BarChart3, Lock, Sparkles, Leaf,
+  Upload, Paperclip, Image, BarChart3, Lock, Sparkles, Leaf, Target,
 } from 'lucide-react';
 import { ProspectTimeline } from './ProspectTimeline';
 import { ProspectNotes } from './ProspectNotes';
 import { ProspectMeetings } from './ProspectMeetings';
 import { ProspectDocuments } from './ProspectDocuments';
 import { ProspectProposals } from './ProspectProposals';
+import { ProspectEditDialog } from './ProspectEditDialog';
+import { ProspectLevantamiento } from './ProspectLevantamiento';
+import { ModalMotivoRechazo } from './ModalMotivoRechazo';
 import {
   KANBAN_STAGES, SERVICIOS_INNOVATIVE, SERVICE_COLORS, STAGE_GATES,
   classifyRechazo, getSeguimientoUrgency, getRecoveryState, RECHAZO_CATEGORIES,
   timeAgo, isTabLocked, tabUnlockLabel,
 } from '@/lib/comercial-constants';
+import { useRejectProspect } from '../api';
 import { QualifyLeadDialog } from './QualifyLeadDialog';
 import { useComercialData } from '../hooks/useComercialData';
 
@@ -40,6 +44,9 @@ export function ProspectoDrawer({ prospecto, onClose, onEdit, onStageGate }: Pro
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [prospectoNuevaNota, setProspectoNuevaNota] = useState('');
   const [showQualifyDialog, setShowQualifyDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showRechazoModal, setShowRechazoModal] = useState(false);
+  const rejectProspect = useRejectProspect();
 
   if (!prospecto) return null;
   const p = prospecto;
@@ -127,6 +134,7 @@ export function ProspectoDrawer({ prospecto, onClose, onEdit, onStageGate }: Pro
     { id: 'timeline', label: 'Timeline', icon: Clock },
     { id: 'notas', label: 'Notas', icon: MessageSquare },
     { id: 'reuniones', label: 'Reuniones', icon: Users },
+    { id: 'levantamiento', label: 'Levantamiento', icon: Target },
     { id: 'docs', label: 'Docs', icon: FileText },
     { id: 'propuestas', label: 'Propuestas', icon: Send },
   ];
@@ -184,8 +192,17 @@ export function ProspectoDrawer({ prospecto, onClose, onEdit, onStageGate }: Pro
                   </button>
                 );
               })()}
+              {/* Rechazar */}
+              {p.status !== 'cierre_perdido' && p.status !== 'cierre_ganado' && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); setShowRechazoModal(true); }}
+                  className="flex items-center gap-1 px-2 py-1.5 bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 rounded-lg text-xs font-medium transition-all"
+                >
+                  <XCircle size={14} /> Rechazar
+                </button>
+              )}
               <button
-                onClick={(e) => { e.stopPropagation(); onEdit?.(p); }}
+                onClick={(e) => { e.stopPropagation(); setShowEditDialog(true); }}
                 className="p-1.5 text-[#999] hover:text-[#00a8a8] hover:bg-[#00a8a8]/10 rounded-lg transition-all"
                 title="Editar prospecto"
               >
@@ -275,6 +292,7 @@ export function ProspectoDrawer({ prospecto, onClose, onEdit, onStageGate }: Pro
           {!isTabLocked(drawerTab, p.status) && drawerTab === 'timeline' && <div className="p-5"><ProspectTimeline prospectId={realProspectId} /></div>}
           {!isTabLocked(drawerTab, p.status) && drawerTab === 'notas' && <div className="p-5"><ProspectNotes prospectId={realProspectId} /></div>}
           {!isTabLocked(drawerTab, p.status) && drawerTab === 'reuniones' && <div className="p-5"><ProspectMeetings prospectId={realProspectId} /></div>}
+          {!isTabLocked(drawerTab, p.status) && drawerTab === 'levantamiento' && <div className="p-5"><ProspectLevantamiento prospectId={realProspectId} /></div>}
           {!isTabLocked(drawerTab, p.status) && drawerTab === 'docs' && <div className="p-5"><ProspectDocuments prospectId={realProspectId} /></div>}
           {!isTabLocked(drawerTab, p.status) && drawerTab === 'propuestas' && <div className="p-5"><ProspectProposals prospectId={realProspectId} /></div>}
 
@@ -656,6 +674,36 @@ export function ProspectoDrawer({ prospecto, onClose, onEdit, onStageGate }: Pro
           prospect={p}
           onClose={() => setShowQualifyDialog(false)}
           onQualified={() => { setShowQualifyDialog(false); onClose(); }}
+        />
+      )}
+
+      {/* Edit Dialog */}
+      {showEditDialog && (
+        <ProspectEditDialog
+          prospect={p}
+          onClose={() => setShowEditDialog(false)}
+          onSaved={() => setShowEditDialog(false)}
+        />
+      )}
+
+      {/* Rechazo Modal */}
+      {showRechazoModal && (
+        <ModalMotivoRechazo
+          prospecto={p}
+          onClose={() => setShowRechazoModal(false)}
+          onSave={async (data) => {
+            try {
+              await rejectProspect.mutateAsync({
+                id: p.id,
+                rejectionReasonId: data.motivoRechazo,
+                rejectionDetail: data.motivoRechazoDetalle,
+              });
+              setShowRechazoModal(false);
+              onClose();
+            } catch {
+              // error handled by React Query
+            }
+          }}
         />
       )}
     </div>

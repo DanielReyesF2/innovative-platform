@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useLocation } from 'wouter';
-import { DollarSign, ClipboardList, RotateCcw, Plus, Target, Users, Recycle, FileText } from 'lucide-react';
+import { DollarSign, ClipboardList, RotateCcw, Plus, Target, Users, Recycle, FileText, BarChart3 } from 'lucide-react';
 import {
   KANBAN_STAGES,
   STAGE_PROBABILITY,
@@ -11,12 +11,15 @@ import {
   calcularWinRate,
   calcularPipelineVelocity,
 } from '@/lib/comercial-constants';
+import { useGenerateAlerts } from './api';
 import { useComercialData } from './hooks/useComercialData';
 import { PipelineTab } from './components/PipelineTab';
 import { PresupuestoTab } from './components/PresupuestoTab';
 import { RechazadasTab } from './components/RechazadasTab';
 import { EjecutivoHub } from './components/EjecutivoHub';
 import { LeadForm } from './components/LeadForm';
+import { ComercialReports } from './components/ComercialReports';
+import { AlertsDropdown } from './components/AlertsDropdown';
 
 export default function ComercialPage() {
   const [, navigate] = useLocation();
@@ -29,9 +32,19 @@ export default function ComercialPage() {
     authUser,
   } = useComercialData();
 
-  const [comercialTab, setComercialTab] = useState<'pipeline' | 'presupuesto' | 'rechazadas'>('pipeline');
+  const [comercialTab, setComercialTab] = useState<'pipeline' | 'presupuesto' | 'rechazadas' | 'reportes'>('pipeline');
   const [hubEjecutivo, setHubEjecutivo] = useState<any>(null);
   const [showNuevoLead, setShowNuevoLead] = useState(false);
+
+  // Generate alerts once on mount
+  const alertsGenerated = useRef(false);
+  const generateAlerts = useGenerateAlerts();
+  useEffect(() => {
+    if (!alertsGenerated.current) {
+      alertsGenerated.current = true;
+      generateAlerts.mutate();
+    }
+  }, []);
 
   if (isLoading) {
     return (
@@ -70,6 +83,7 @@ export default function ComercialPage() {
             <p className="text-sm text-[#6b7280] mt-0.5">Tu presupuesto comercial al momento</p>
           </div>
           <div className="flex items-center gap-2">
+            <AlertsDropdown />
             <button onClick={() => setShowNuevoLead(true)} className="flex items-center gap-2 px-4 py-2.5 bg-[#1c2c4a] hover:bg-[#1c2c4a]/90 text-white rounded-lg text-sm font-semibold transition-all shadow-sm hover:shadow-md">
               <Plus size={16} /> Nuevo Lead
             </button>
@@ -179,6 +193,7 @@ export default function ComercialPage() {
             { id: 'pipeline' as const, label: 'Oportunidades', icon: ClipboardList },
             { id: 'presupuesto' as const, label: 'Presupuesto', icon: DollarSign },
             { id: 'rechazadas' as const, label: 'Rechazadas', icon: RotateCcw, badge: kanbanProspectos.filter(p => p.status === 'cierre_perdido').length },
+            { id: 'reportes' as const, label: 'Reportes', icon: BarChart3 },
           ]).map(tab => (
             <button key={tab.id} onClick={() => setComercialTab(tab.id)}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all flex-1 justify-center ${comercialTab === tab.id ? 'bg-[#1c2c4a] text-white shadow-sm' : 'text-[#6b7280] hover:bg-[#f3f4f6]'}`}>
@@ -195,6 +210,7 @@ export default function ComercialPage() {
         {comercialTab === 'pipeline' && <PipelineTab onViewHub={setHubEjecutivo} />}
         {comercialTab === 'presupuesto' && <PresupuestoTab />}
         {comercialTab === 'rechazadas' && <RechazadasTab />}
+        {comercialTab === 'reportes' && <div className="mt-5"><ComercialReports /></div>}
 
       </div>
 

@@ -343,6 +343,7 @@ export const TAB_UNLOCK_STAGE: Record<string, string> = {
   timeline: 'contacto_inicial',
   notas: 'contacto_inicial',
   reuniones: 'presentacion',
+  levantamiento: 'levantamiento',
   docs: 'levantamiento',
   propuestas: 'propuesta',
 };

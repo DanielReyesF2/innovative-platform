@@ -23,7 +23,7 @@ export function ModalMotivoRechazo({ prospecto, onClose, onSave }: Props) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
       <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full" onClick={(e) => e.stopPropagation()}>
         <div className="p-6 border-b border-[#e5e7eb]">
           <div className="flex justify-between items-center">
@@ -73,7 +73,7 @@ export function ModalMotivoRechazo({ prospecto, onClose, onSave }: Props) {
                 <p className="font-semibold mb-1">Información importante</p>
                 <p>
                   El registro del motivo de rechazo es obligatorio y ayudará a mejorar nuestros procesos comerciales.
-                  Valor estimado de esta propuesta: ${(prospecto?.valorEstimado || 0).toLocaleString('es-MX')}
+                  Valor estimado de esta propuesta: ${(prospecto?.facturacionEstimada || prospecto?.propuesta?.ventaTotal || 0).toLocaleString('es-MX')}
                 </p>
               </div>
             </div>
