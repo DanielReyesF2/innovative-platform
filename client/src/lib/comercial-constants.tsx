@@ -277,6 +277,11 @@ export const dbProspectToKanban = (prospect: any, usersMap: Record<number, any> 
     recoveryStatus: prospect.recoveryStatus || null,
     fechaVencimientoContrato: prospect.fechaVencimientoContrato ? new Date(prospect.fechaVencimientoContrato).toISOString().split('T')[0] : null,
     levantamientoData: prospect.levantamientoData || null,
+    potential: prospect.potential || null,
+    probability: prospect.probability ?? null,
+    priority: prospect.priority || null,
+    nextStep: prospect.nextStep || null,
+    reason: prospect.reason || null,
   };
 };
 

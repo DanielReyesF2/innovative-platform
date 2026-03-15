@@ -536,12 +536,39 @@ export function ProspectoDrawer({ prospecto, onClose, onEdit, onStageGate }: Pro
                 })()}
 
                 {/* Details */}
-                {(p.volumenEstimado || p.propuesta?.ventaTotal || p.motivoRechazo || p.fecha) && (
+                {(p.volumenEstimado || p.propuesta?.ventaTotal || p.motivoRechazo || p.fecha || p.potential || p.probability || p.priority || p.nextStep) && (
                   <div className="bg-white rounded-xl border border-[#e5e7eb] overflow-hidden">
                     <div className="px-4 py-3 bg-[#f9fafb] border-b border-[#e5e7eb]">
                       <h3 className="text-sm font-semibold text-[#1c2c4a] flex items-center gap-2"><ClipboardList size={14} /> Detalles</h3>
                     </div>
                     <div className="p-4 space-y-2.5">
+                      {p.potential && (
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-[#6b7280]">Potencial</span>
+                          <span className={`font-medium px-2 py-0.5 rounded-full text-xs ${
+                            p.potential === 'Muy Alto' ? 'bg-green-100 text-green-700' :
+                            p.potential === 'Alto' ? 'bg-blue-100 text-blue-700' :
+                            p.potential === 'Medio' ? 'bg-yellow-100 text-yellow-700' :
+                            'bg-gray-100 text-gray-600'
+                          }`}>{p.potential}</span>
+                        </div>
+                      )}
+                      {p.probability != null && p.probability > 0 && (
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-[#6b7280]">Probabilidad</span>
+                          <span className="font-medium text-[#1c2c4a]">{p.probability}%</span>
+                        </div>
+                      )}
+                      {p.priority && p.priority !== 'media' && (
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-[#6b7280]">Prioridad</span>
+                          <span className={`font-medium px-2 py-0.5 rounded-full text-xs ${
+                            p.priority === 'muy_alta' ? 'bg-red-100 text-red-700' :
+                            p.priority === 'alta' ? 'bg-orange-100 text-orange-700' :
+                            'bg-gray-100 text-gray-600'
+                          }`}>{p.priority === 'muy_alta' ? 'Muy Alta' : p.priority === 'alta' ? 'Alta' : p.priority === 'baja' ? 'Baja' : 'Media'}</span>
+                        </div>
+                      )}
                       {p.volumenEstimado && (
                         <div className="flex items-center justify-between text-sm">
                           <span className="text-[#6b7280]">Volumen estimado</span>
@@ -570,6 +597,18 @@ export function ProspectoDrawer({ prospecto, onClose, onEdit, onStageGate }: Pro
                         <div className="flex items-center justify-between text-sm">
                           <span className="text-[#6b7280]">Fecha</span>
                           <span className="font-medium text-[#1c2c4a]">{p.fecha}</span>
+                        </div>
+                      )}
+                      {p.nextStep && (
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-[#6b7280]">Siguiente paso</span>
+                          <span className="font-medium text-[#1c2c4a] truncate max-w-[250px]">{p.nextStep}</span>
+                        </div>
+                      )}
+                      {p.reason && (
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-[#6b7280]">Razon de interes</span>
+                          <span className="font-medium text-[#1c2c4a] truncate max-w-[250px]">{p.reason}</span>
                         </div>
                       )}
                     </div>
