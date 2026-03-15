@@ -87,9 +87,11 @@ export function Sidebar() {
           <ul className="space-y-1">
             {modules.map((mod) => {
               const Icon = getIcon(mod.icon);
-              const isActive = mod.basePath === "/"
-                ? location === "/"
-                : location.startsWith(mod.basePath);
+              const isActive = mod.basePath === "/comercial"
+                ? location === "/" || location.startsWith("/comercial")
+                : mod.basePath === "/"
+                  ? location === "/"
+                  : location.startsWith(mod.basePath);
               return (
                 <NavItem
                   key={mod.name}

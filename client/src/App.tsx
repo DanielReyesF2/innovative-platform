@@ -17,10 +17,13 @@ function Router() {
     <Switch>
       <Route path="/login" component={LoginPage} />
       <Route path="/">
-        <ProtectedRoute><DashboardPage /></ProtectedRoute>
+        <ProtectedRoute><ComercialPage /></ProtectedRoute>
       </Route>
       <Route path="/comercial">
         <ProtectedRoute><ComercialPage /></ProtectedRoute>
+      </Route>
+      <Route path="/dashboard">
+        <ProtectedRoute><DashboardPage /></ProtectedRoute>
       </Route>
       <Route path="/operaciones">
         <ProtectedRoute><OperacionesPage /></ProtectedRoute>
@@ -32,7 +35,7 @@ function Router() {
         <ProtectedRoute adminOnly><SettingsPage /></ProtectedRoute>
       </Route>
       <Route>
-        <ProtectedRoute><DashboardPage /></ProtectedRoute>
+        <ProtectedRoute><ComercialPage /></ProtectedRoute>
       </Route>
     </Switch>
   );

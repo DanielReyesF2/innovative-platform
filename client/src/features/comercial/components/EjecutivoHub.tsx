@@ -90,7 +90,7 @@ export function EjecutivoHub({ member, onBack, onShowNuevoLead }: Props) {
   const hubActiveCard = hubActiveKanbanId ? memberProspectos.find(p => p.id === hubActiveKanbanId) : null;
 
   return (
-    <div className="p-4 md:p-6 lg:p-8 bg-[#faf7f2] min-h-screen">
+    <div className="bg-[#faf7f2] min-h-full">
       <div className="max-w-[1400px] mx-auto">
 
         {/* BACK + HEADER */}

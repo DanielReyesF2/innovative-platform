@@ -6,7 +6,7 @@
   "icon": "LayoutDashboard",
   "navOrder": 1,
   "showInNav": true,
-  "basePath": "/",
+  "basePath": "/dashboard",
   "apiPrefix": "/api/dashboard",
   "dependencies": ["auth"],
   "requiredEnvVars": [],

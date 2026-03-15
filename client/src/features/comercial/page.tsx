@@ -56,7 +56,7 @@ export default function ComercialPage() {
   const biodigestores = kanbanProspectos.filter(p => (p.servicios || []).includes('biodigestores'));
 
   return (
-    <div className="p-4 md:p-6 lg:p-8 bg-[#faf7f2] min-h-screen">
+    <div className="bg-[#faf7f2] min-h-full">
       <div className="max-w-[1400px] mx-auto">
 
         {/* HEADER */}
@@ -133,7 +133,7 @@ export default function ComercialPage() {
         </div>
 
         {/* EQUIPO */}
-        <SectionHeader color="#00a8a8" icon={Users} label="Equipo" linkLabel="Ver Dashboard" onLinkClick={() => navigate('/')} />
+        <SectionHeader color="#00a8a8" icon={Users} label="Equipo" linkLabel="Ver Dashboard" onLinkClick={() => navigate('/dashboard')} />
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
           {salesTeamData.filter(m => m.codigo !== 'VA').sort((a, b) => b.presupuestoAnual2026 - a.presupuestoAnual2026).map(member => {
