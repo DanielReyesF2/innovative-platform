@@ -18,6 +18,9 @@ export function PresupuestoTab() {
   const [ventaRealMes, setVentaRealMes] = useState(new Date().getMonth() + 1);
   const [ventaRealAño, setVentaRealAño] = useState(new Date().getFullYear());
 
+  const MESES_NOMBRE = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+  const mesNombre = MESES_NOMBRE[ventaRealMes - 1];
+
   const presupuestoTotal = salesTeamData.reduce((s, m) => s + (m.presupuestoAnual2026 || 0), 0);
   const ventasReales = salesTeamData.reduce((s, m) => s + (m.ventasReales || 0), 0);
   const presupuestoMesEquipo = salesTeamData.reduce((s, m) => s + (m.presupuestoMensual || 0), 0);
@@ -104,8 +107,8 @@ export function PresupuestoTab() {
             <thead>
               <tr className="border-b border-[#e5e7eb]">
                 <th className="text-left py-2 px-2 text-[10px] font-semibold text-[#6b7280] uppercase">Ejecutivo</th>
-                <th className="text-right py-2 px-2 text-[10px] font-semibold text-[#6b7280] uppercase">Presupuesto</th>
-                <th className="text-right py-2 px-2 text-[10px] font-semibold text-[#6b7280] uppercase">Venta Real</th>
+                <th className="text-right py-2 px-2 text-[10px] font-semibold text-[#6b7280] uppercase">Presupuesto {mesNombre}</th>
+                <th className="text-right py-2 px-2 text-[10px] font-semibold text-[#6b7280] uppercase">Venta Real {mesNombre}</th>
                 <th className="text-right py-2 px-2 text-[10px] font-semibold text-[#6b7280] uppercase">%</th>
                 <th className="text-center py-2 px-2 text-[10px] font-semibold text-[#6b7280] uppercase w-20"></th>
               </tr>
