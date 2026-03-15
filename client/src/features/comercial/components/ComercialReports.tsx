@@ -1,9 +1,6 @@
-import { Users, Target, BarChart3 } from 'lucide-react';
+import { Users } from 'lucide-react';
 import {
-  KANBAN_STAGES,
   KPI_METAS,
-  SERVICIOS_INNOVATIVE,
-  SERVICE_COLORS,
   ExecutiveAvatar,
 } from '@/lib/comercial-constants';
 
@@ -13,8 +10,6 @@ interface ComercialReportsProps {
 }
 
 export function ComercialReports({ kanbanProspectos, salesTeamData }: ComercialReportsProps) {
-  const activos = kanbanProspectos.filter(p => p.status !== 'cierre_perdido');
-
   // Per-executive KPIs (3 KPIs: Leads Nuevos, Reuniones, Levantamientos)
   const ejecutivosKPIs = salesTeamData
     .filter(m => m.codigo !== 'VA' && m.presupuestoAnual2026 > 0)
@@ -37,24 +32,6 @@ export function ComercialReports({ kanbanProspectos, salesTeamData }: ComercialR
       };
     })
     .sort((a, b) => b.presupuestoAnual2026 - a.presupuestoAnual2026);
-
-  // Pipeline by stage
-  const byStage = KANBAN_STAGES.map(stage => ({
-    ...stage,
-    count: kanbanProspectos.filter(p => p.status === stage.id).length,
-    value: kanbanProspectos.filter(p => p.status === stage.id).reduce((s, p) => s + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0),
-  }));
-
-  // By service
-  const serviceMap: Record<string, number> = {};
-  activos.forEach(p => {
-    (p.servicios || []).forEach((svc: string) => {
-      serviceMap[svc] = (serviceMap[svc] || 0) + 1;
-    });
-  });
-  const byService = Object.entries(serviceMap)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 8);
 
   return (
     <div className="space-y-5">
@@ -112,71 +89,6 @@ export function ComercialReports({ kanbanProspectos, salesTeamData }: ComercialR
         </div>
       </div>
 
-      {/* Section 3: Distribución de Pipeline */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* By Stage */}
-        <div className="bg-white rounded-xl border border-[#e5e7eb] p-4">
-          <h4 className="text-xs font-bold text-[#1c2c4a] uppercase tracking-wider mb-3 flex items-center gap-2">
-            <BarChart3 size={14} className="text-[#0D47A1]" /> Por Etapa
-          </h4>
-          <div className="space-y-2.5">
-            {byStage.map(stage => {
-              const maxCount = Math.max(...byStage.map(s => s.count), 1);
-              return (
-                <div key={stage.id} className="flex items-center gap-3">
-                  <span className="text-[11px] text-[#6b7280] w-28 truncate">{stage.label}</span>
-                  <div className="flex-1 h-5 bg-[#f3f4f6] rounded-full overflow-hidden relative">
-                    <div
-                      className="h-full rounded-full transition-all"
-                      style={{ width: `${(stage.count / maxCount) * 100}%`, backgroundColor: stage.color }}
-                    />
-                    {stage.count > 0 && (
-                      <span className="absolute inset-y-0 flex items-center text-[10px] font-bold px-2" style={{ color: stage.count / maxCount > 0.3 ? '#fff' : stage.color }}>
-                        {stage.count}
-                      </span>
-                    )}
-                  </div>
-                  <span className="text-[10px] text-[#6b7280] w-16 text-right">${(stage.value / 1000000).toFixed(1)}M</span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* By Service */}
-        <div className="bg-white rounded-xl border border-[#e5e7eb] p-4">
-          <h4 className="text-xs font-bold text-[#1c2c4a] uppercase tracking-wider mb-3 flex items-center gap-2">
-            <Target size={14} className="text-[#F57C00]" /> Por Servicio
-          </h4>
-          {byService.length === 0 ? (
-            <p className="text-xs text-[#9ca3af] text-center py-6">Sin servicios asignados aún</p>
-          ) : (
-            <div className="space-y-2.5">
-              {byService.map(([svcId, count]) => {
-                const svc = SERVICIOS_INNOVATIVE.find(s => s.id === svcId);
-                const colors = SERVICE_COLORS[svcId];
-                const maxCount = Math.max(...byService.map(([, c]) => c), 1);
-                return (
-                  <div key={svcId} className="flex items-center gap-3">
-                    <span className="text-[11px] text-[#6b7280] w-28 truncate">{svc?.nombre || svcId}</span>
-                    <div className="flex-1 h-5 bg-[#f3f4f6] rounded-full overflow-hidden relative">
-                      <div
-                        className="h-full rounded-full transition-all"
-                        style={{ width: `${(count / maxCount) * 100}%`, backgroundColor: colors?.border || '#00a8a8' }}
-                      />
-                      {count > 0 && (
-                        <span className="absolute inset-y-0 flex items-center text-[10px] font-bold px-2" style={{ color: count / maxCount > 0.3 ? '#fff' : (colors?.border || '#00a8a8') }}>
-                          {count}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      </div>
     </div>
   );
 }
