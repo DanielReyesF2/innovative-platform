@@ -4,7 +4,7 @@ import {
   X, ChevronRight, Edit3, Trash2, Users, Package, ClipboardList, Clock,
   MessageSquare, FileText, Send, Phone, Mail, Copy, Check, XCircle,
   AlertCircle, Bell, CheckCircle, RotateCcw, PhoneCall, CalendarClock,
-  Upload, Paperclip, Image, BarChart3,
+  Upload, Paperclip, Image, BarChart3, Lock, Sparkles, Leaf,
 } from 'lucide-react';
 import { ProspectTimeline } from './ProspectTimeline';
 import { ProspectNotes } from './ProspectNotes';
@@ -14,8 +14,9 @@ import { ProspectProposals } from './ProspectProposals';
 import {
   KANBAN_STAGES, SERVICIOS_INNOVATIVE, SERVICE_COLORS, STAGE_GATES,
   classifyRechazo, getSeguimientoUrgency, getRecoveryState, RECHAZO_CATEGORIES,
-  timeAgo,
+  timeAgo, isTabLocked, tabUnlockLabel,
 } from '@/lib/comercial-constants';
+import { QualifyLeadDialog } from './QualifyLeadDialog';
 import { useComercialData } from '../hooks/useComercialData';
 
 interface Props {
@@ -38,6 +39,7 @@ export function ProspectoDrawer({ prospecto, onClose, onEdit, onStageGate }: Pro
   const [drawerTab, setDrawerTab] = useState('info');
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [prospectoNuevaNota, setProspectoNuevaNota] = useState('');
+  const [showQualifyDialog, setShowQualifyDialog] = useState(false);
 
   if (!prospecto) return null;
   const p = prospecto;
@@ -164,6 +166,11 @@ export function ProspectoDrawer({ prospecto, onClose, onEdit, onStageGate }: Pro
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
+                      // From contacto_inicial → open qualify dialog instead of advancing directly
+                      if (p.status === 'contacto_inicial') {
+                        setShowQualifyDialog(true);
+                        return;
+                      }
                       const gate = STAGE_GATES[nextStage.id];
                       if (gate && !gate.validate(p)) {
                         onStageGate?.({ prospecto: p, fromStage: p.status, toStage: nextStage.id });
@@ -173,7 +180,7 @@ export function ProspectoDrawer({ prospecto, onClose, onEdit, onStageGate }: Pro
                     }}
                     className="flex items-center gap-1 px-2.5 py-1.5 bg-[#00a8a8] hover:bg-[#008b8b] text-white rounded-lg text-xs font-medium transition-all"
                   >
-                    <ChevronRight size={14} /> Avanzar a {nextStage.label}
+                    <ChevronRight size={14} /> {p.status === 'contacto_inicial' ? 'Calificar' : `Avanzar a ${nextStage.label}`}
                   </button>
                 );
               })()}
@@ -205,34 +212,97 @@ export function ProspectoDrawer({ prospecto, onClose, onEdit, onStageGate }: Pro
             </div>
           </div>
 
+          {/* Progress Bar */}
+          <div className="flex items-center gap-0.5 mt-4 -mx-6 px-6">
+            {KANBAN_STAGES.map((stage, idx) => {
+              const currentIdx = KANBAN_STAGES.findIndex(s => s.id === p.status);
+              const isPast = idx < currentIdx;
+              const isCurrent = idx === currentIdx;
+              return (
+                <div key={stage.id} className="flex-1 flex flex-col items-center gap-1">
+                  <div
+                    className="w-full h-1.5 rounded-full transition-all"
+                    style={{
+                      backgroundColor: isPast || isCurrent ? stage.color : '#e5e7eb',
+                      opacity: isPast ? 0.5 : 1,
+                    }}
+                  />
+                  <span className={`text-[9px] font-medium truncate max-w-full ${isCurrent ? 'text-[#1a1a1a]' : 'text-[#bbb]'}`}>
+                    {stage.label}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+
           {/* Tabs */}
-          <div className="flex gap-1 mt-5 border-b border-[#f0f0f0] -mx-6 px-6">
-            {CRM_TABS.map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => setDrawerTab(tab.id)}
-                className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-all relative ${
-                  drawerTab === tab.id ? 'text-[#1a1a1a]' : 'text-[#999] hover:text-[#666]'
-                }`}
-              >
-                <tab.icon size={15} />
-                {tab.label}
-                {drawerTab === tab.id && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#1a1a1a] rounded-full" />}
-              </button>
-            ))}
+          <div className="flex gap-1 mt-3 border-b border-[#f0f0f0] -mx-6 px-6">
+            {CRM_TABS.map(tab => {
+              const locked = isTabLocked(tab.id, p.status);
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setDrawerTab(tab.id)}
+                  className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-all relative ${
+                    locked ? 'text-[#999]/40 cursor-default' :
+                    drawerTab === tab.id ? 'text-[#1a1a1a]' : 'text-[#999] hover:text-[#666]'
+                  }`}
+                >
+                  {locked ? <Lock size={12} className="text-[#ccc]" /> : <tab.icon size={15} />}
+                  {tab.label}
+                  {!locked && drawerTab === tab.id && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#1a1a1a] rounded-full" />}
+                </button>
+              );
+            })}
           </div>
         </div>
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto">
-          {drawerTab === 'timeline' && <div className="p-5"><ProspectTimeline prospectId={realProspectId} /></div>}
-          {drawerTab === 'notas' && <div className="p-5"><ProspectNotes prospectId={realProspectId} /></div>}
-          {drawerTab === 'reuniones' && <div className="p-5"><ProspectMeetings prospectId={realProspectId} /></div>}
-          {drawerTab === 'docs' && <div className="p-5"><ProspectDocuments prospectId={realProspectId} /></div>}
-          {drawerTab === 'propuestas' && <div className="p-5"><ProspectProposals prospectId={realProspectId} /></div>}
+          {/* Locked tab placeholder */}
+          {isTabLocked(drawerTab, p.status) && (
+            <div className="flex flex-col items-center justify-center py-16 px-8 text-center">
+              <div className="w-14 h-14 rounded-full bg-[#f3f4f6] flex items-center justify-center mb-4">
+                <Lock size={24} className="text-[#ccc]" />
+              </div>
+              <p className="text-sm font-medium text-[#999]">
+                Esta seccion se activa en la etapa <span className="font-semibold text-[#666]">{tabUnlockLabel(drawerTab)}</span>
+              </p>
+              <p className="text-xs text-[#bbb] mt-1">Avanza el prospecto para desbloquear</p>
+            </div>
+          )}
+
+          {!isTabLocked(drawerTab, p.status) && drawerTab === 'timeline' && <div className="p-5"><ProspectTimeline prospectId={realProspectId} /></div>}
+          {!isTabLocked(drawerTab, p.status) && drawerTab === 'notas' && <div className="p-5"><ProspectNotes prospectId={realProspectId} /></div>}
+          {!isTabLocked(drawerTab, p.status) && drawerTab === 'reuniones' && <div className="p-5"><ProspectMeetings prospectId={realProspectId} /></div>}
+          {!isTabLocked(drawerTab, p.status) && drawerTab === 'docs' && <div className="p-5"><ProspectDocuments prospectId={realProspectId} /></div>}
+          {!isTabLocked(drawerTab, p.status) && drawerTab === 'propuestas' && <div className="p-5"><ProspectProposals prospectId={realProspectId} /></div>}
 
           {drawerTab === 'info' && (
             <>
+              {/* Qualify Lead Banner */}
+              {p.status === 'contacto_inicial' && (
+                <div className="mx-5 mt-4 rounded-xl border-2 border-[#00a8a8]/30 bg-gradient-to-r from-[#00a8a8]/5 to-[#0D47A1]/5 overflow-hidden">
+                  <div className="px-4 py-3 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-full bg-[#00a8a8]/10 flex items-center justify-center">
+                        <Sparkles size={18} className="text-[#00a8a8]" />
+                      </div>
+                      <div>
+                        <div className="text-sm font-semibold text-[#1c2c4a]">Calificar Lead</div>
+                        <div className="text-xs text-[#6b7280]">Agrega datos de negocio y residuos para avanzar</div>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setShowQualifyDialog(true)}
+                      className="px-4 py-2 bg-[#00a8a8] hover:bg-[#008b8b] text-white rounded-lg text-sm font-semibold transition-all shadow-sm"
+                    >
+                      Calificar
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* Rejection banner */}
               {p.status === 'cierre_perdido' && (() => {
                 const cat = classifyRechazo(p.motivoRechazo);
@@ -406,6 +476,47 @@ export function ProspectoDrawer({ prospecto, onClose, onEdit, onStageGate }: Pro
                   </div>
                 )}
 
+                {/* Qualification Waste Data */}
+                {p.levantamientoData?.qualificationWaste && (() => {
+                  const qw = p.levantamientoData.qualificationWaste;
+                  return (
+                    <div className="bg-white rounded-xl border border-[#e5e7eb] overflow-hidden">
+                      <div className="px-4 py-3 bg-[#f0fdf4] border-b border-[#e5e7eb]">
+                        <h3 className="text-sm font-semibold text-[#1c2c4a] flex items-center gap-2"><Leaf size={14} className="text-[#22C55E]" /> Residuos (Calificacion)</h3>
+                      </div>
+                      <div className="p-4 space-y-3">
+                        {qw.wasteTypes?.length > 0 && (
+                          <div className="flex flex-wrap gap-1.5">
+                            {qw.wasteTypes.map((wt: string) => (
+                              <span key={wt} className="px-2.5 py-1 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-200">
+                                {wt}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                        {qw.estimatedVolume && (
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-[#6b7280]">Volumen estimado</span>
+                            <span className="font-medium text-[#1c2c4a]">{qw.estimatedVolume}</span>
+                          </div>
+                        )}
+                        {qw.hasCurrentProvider && qw.currentProviderName && (
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-[#6b7280]">Proveedor actual</span>
+                            <span className="font-medium text-[#1c2c4a]">{qw.currentProviderName}</span>
+                          </div>
+                        )}
+                        {qw.reasonForChange && (
+                          <div className="text-sm">
+                            <span className="text-[#6b7280]">Razon de cambio: </span>
+                            <span className="text-[#1c2c4a]">{qw.reasonForChange}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })()}
+
                 {/* Details */}
                 {(p.volumenEstimado || p.propuesta?.ventaTotal || p.motivoRechazo || p.fecha) && (
                   <div className="bg-white rounded-xl border border-[#e5e7eb] overflow-hidden">
@@ -538,6 +649,15 @@ export function ProspectoDrawer({ prospecto, onClose, onEdit, onStageGate }: Pro
           )}
         </div>
       </div>
+
+      {/* Qualify Lead Dialog */}
+      {showQualifyDialog && (
+        <QualifyLeadDialog
+          prospect={p}
+          onClose={() => setShowQualifyDialog(false)}
+          onQualified={() => { setShowQualifyDialog(false); onClose(); }}
+        />
+      )}
     </div>
   );
 }

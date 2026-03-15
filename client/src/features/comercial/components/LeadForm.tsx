@@ -16,9 +16,11 @@ const SOURCE_LABELS: Record<string, string> = {
 
 interface LeadFormProps {
   onClose: () => void;
+  salesTeam?: any[];
+  defaultAssignee?: number;
 }
 
-export function LeadForm({ onClose }: LeadFormProps) {
+export function LeadForm({ onClose, salesTeam, defaultAssignee }: LeadFormProps) {
   const [form, setForm] = useState({
     companyName: "",
     contactName: "",
@@ -26,6 +28,7 @@ export function LeadForm({ onClose }: LeadFormProps) {
     contactEmail: "",
     source: "referido",
     notes: "",
+    assignedToId: defaultAssignee ? String(defaultAssignee) : "",
   });
 
   const createProspect = useCreateProspect();
@@ -50,6 +53,7 @@ export function LeadForm({ onClose }: LeadFormProps) {
         probability: 10,
         priority: "media",
         reason: form.notes.trim() || undefined,
+        assignedToId: form.assignedToId ? Number(form.assignedToId) : undefined,
       });
       toast({ title: "Lead creado exitosamente" });
       onClose();
@@ -129,6 +133,24 @@ export function LeadForm({ onClose }: LeadFormProps) {
               ))}
             </select>
           </div>
+
+          {salesTeam && salesTeam.length > 0 && (
+            <div>
+              <Label>Ejecutivo asignado</Label>
+              <select
+                value={form.assignedToId}
+                onChange={(e) => set("assignedToId", e.target.value)}
+                className="mt-1 h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+              >
+                <option value="">Sin asignar</option>
+                {salesTeam.map((m: any) => (
+                  <option key={m.dbUserId} value={m.dbUserId}>
+                    {m.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           <div>
             <Label>Notas</Label>

@@ -276,6 +276,7 @@ export const dbProspectToKanban = (prospect: any, usersMap: Record<number, any> 
     followUpAction: prospect.followUpAction || null,
     recoveryStatus: prospect.recoveryStatus || null,
     fechaVencimientoContrato: prospect.fechaVencimientoContrato ? new Date(prospect.fechaVencimientoContrato).toISOString().split('T')[0] : null,
+    levantamientoData: prospect.levantamientoData || null,
   };
 };
 
@@ -336,6 +337,34 @@ export const getSeguimientoUrgency = (seg: any) => {
   return { label: `${Math.floor(diffDays / 30)}m`, color: '#6b7280', bg: '#f3f4f6', overdue: false, days: diffDays };
 };
 
+// ═══════ TAB UNLOCK BY STAGE ═══════
+export const TAB_UNLOCK_STAGE: Record<string, string> = {
+  info: 'contacto_inicial',
+  timeline: 'contacto_inicial',
+  notas: 'contacto_inicial',
+  reuniones: 'presentacion',
+  docs: 'levantamiento',
+  propuestas: 'propuesta',
+};
+
+const STAGE_ORDER = ['contacto_inicial', 'presentacion', 'levantamiento', 'propuesta', 'negociacion', 'cierre_ganado'];
+
+export function isTabLocked(tabId: string, currentStage: string): boolean {
+  const requiredStage = TAB_UNLOCK_STAGE[tabId];
+  if (!requiredStage) return false;
+  const currentIdx = STAGE_ORDER.indexOf(currentStage);
+  const requiredIdx = STAGE_ORDER.indexOf(requiredStage);
+  if (currentIdx === -1 || requiredIdx === -1) return false;
+  return currentIdx < requiredIdx;
+}
+
+export function tabUnlockLabel(tabId: string): string {
+  const requiredStage = TAB_UNLOCK_STAGE[tabId];
+  if (!requiredStage) return '';
+  const stage = KANBAN_STAGES.find(s => s.id === requiredStage);
+  return stage?.label || requiredStage;
+}
+
 // ═══════ STAGE GATES ═══════
 export const STAGE_GATES: Record<string, {
   label: string;
@@ -344,10 +373,10 @@ export const STAGE_GATES: Record<string, {
   requirement: string;
 }> = {
   presentacion: {
-    label: 'Prospecto Calificado',
+    label: 'Lead Calificado',
     validate: (p) => esProspectoCalificado(p),
-    message: (p) => `Faltan campos: ${camposFaltantes(p).join(', ')}`,
-    requirement: 'Requiere: Empresa + Industria + Contacto + Puesto + Correo',
+    message: () => 'Usa "Calificar" en el detalle del lead para completar datos',
+    requirement: 'Requiere: Calificar lead con datos de negocio',
   },
   levantamiento: {
     label: 'Volumen Verificado',

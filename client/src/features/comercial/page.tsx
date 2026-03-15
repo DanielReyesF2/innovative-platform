@@ -46,6 +46,7 @@ export default function ComercialPage() {
       <EjecutivoHub
         member={hubEjecutivo}
         onBack={() => setHubEjecutivo(null)}
+        onShowNuevoLead={() => setShowNuevoLead(true)}
       />
     );
   }
@@ -196,7 +197,13 @@ export default function ComercialPage() {
 
       </div>
 
-      {showNuevoLead && <LeadForm onClose={() => setShowNuevoLead(false)} />}
+      {showNuevoLead && (
+        <LeadForm
+          onClose={() => setShowNuevoLead(false)}
+          salesTeam={salesTeamData}
+          defaultAssignee={hubEjecutivo?.dbUserId}
+        />
+      )}
     </div>
   );
 }

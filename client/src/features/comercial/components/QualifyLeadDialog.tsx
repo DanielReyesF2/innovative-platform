@@ -2,9 +2,10 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useConvertLead } from "../api";
+import { useUpdateProspect } from "../api";
 import { useToast } from "@/components/ui/use-toast";
 import { ArrowRight, UserCheck, ChevronLeft, ChevronRight } from "lucide-react";
+import { KANBAN_STAGES } from "@/lib/comercial-constants";
 
 const INDUSTRIES = [
   "Manufactura",
@@ -14,6 +15,9 @@ const INDUSTRIES = [
   "Salud",
   "Hoteleria",
   "Construccion",
+  "Automotriz",
+  "Bebidas",
+  "Farmaceutica",
   "Otro",
 ];
 
@@ -31,18 +35,18 @@ const WASTE_TYPES = [
 ];
 
 interface QualifyLeadDialogProps {
-  lead: any;
+  prospect: any;
   onClose: () => void;
-  onConverted?: () => void;
+  onQualified?: () => void;
 }
 
-export function QualifyLeadDialog({ lead, onClose, onConverted }: QualifyLeadDialogProps) {
+export function QualifyLeadDialog({ prospect, onClose, onQualified }: QualifyLeadDialogProps) {
   const [step, setStep] = useState(1);
 
   // Step 1: Business data
   const [business, setBusiness] = useState({
-    industry: "",
-    location: "",
+    industry: prospect.industria || "",
+    location: prospect.ciudad || "",
     potential: "Medio",
     estimatedValue: "",
   });
@@ -56,7 +60,7 @@ export function QualifyLeadDialog({ lead, onClose, onConverted }: QualifyLeadDia
     reasonForChange: "",
   });
 
-  const convertLead = useConvertLead();
+  const updateProspect = useUpdateProspect();
   const { toast } = useToast();
 
   const setBiz = (key: string, val: string) => setBusiness({ ...business, [key]: val });
@@ -72,33 +76,39 @@ export function QualifyLeadDialog({ lead, onClose, onConverted }: QualifyLeadDia
 
   const handleSubmit = async () => {
     try {
-      await convertLead.mutateAsync({
-        id: lead.id,
+      await updateProspect.mutateAsync({
+        id: prospect.id,
         industry: business.industry || undefined,
         location: business.location.trim() || undefined,
         potential: business.potential || undefined,
         estimatedValue: business.estimatedValue || undefined,
         estimatedVolume: waste.estimatedVolume.trim() || undefined,
-        wasteInfo: waste.wasteTypes.length > 0
+        levantamientoData: waste.wasteTypes.length > 0
           ? {
-              wasteTypes: waste.wasteTypes,
-              estimatedVolume: waste.estimatedVolume.trim(),
-              hasCurrentProvider: waste.hasCurrentProvider,
-              currentProviderName: waste.currentProviderName.trim() || undefined,
-              reasonForChange: waste.reasonForChange.trim() || undefined,
+              qualificationWaste: {
+                wasteTypes: waste.wasteTypes,
+                estimatedVolume: waste.estimatedVolume.trim(),
+                hasCurrentProvider: waste.hasCurrentProvider,
+                currentProviderName: waste.currentProviderName.trim() || undefined,
+                reasonForChange: waste.reasonForChange.trim() || undefined,
+              },
             }
           : undefined,
+        stage: "presentacion",
+        probability: 20,
       });
-      toast({ title: "Lead calificado como prospecto" });
-      onConverted?.();
-      onClose();
+      toast({ title: "Lead calificado exitosamente" });
+      onQualified?.();
     } catch {
       toast({ title: "Error al calificar lead", variant: "destructive" });
     }
   };
 
+  const fromLabel = KANBAN_STAGES.find(s => s.id === prospect.status)?.label || "Lead Nuevo";
+  const toLabel = KANBAN_STAGES.find(s => s.id === "presentacion")?.label || "Reunión";
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4">
       <div className="w-full max-w-lg rounded-lg bg-background shadow-lg">
         {/* Header */}
         <div className="flex items-center justify-between border-b px-6 py-4">
@@ -111,23 +121,23 @@ export function QualifyLeadDialog({ lead, onClose, onConverted }: QualifyLeadDia
           </Button>
         </div>
 
-        {/* Lead info + step indicator */}
+        {/* Prospect info + step indicator */}
         <div className="space-y-3 px-6 pt-4">
           <div className="rounded-lg bg-muted/50 p-3">
-            <div className="text-sm font-medium">{lead.companyName}</div>
+            <div className="text-sm font-medium">{prospect.empresa || prospect.name}</div>
             <div className="text-xs text-muted-foreground">
-              {lead.contactName}
-              {lead.contactPhone && ` · ${lead.contactPhone}`}
+              {prospect.contacto?.nombre || prospect.contactName}
+              {(prospect.contacto?.telefono || prospect.contactPhone) && ` · ${prospect.contacto?.telefono || prospect.contactPhone}`}
             </div>
           </div>
 
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <span className="rounded bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800">
-              Lead
+            <span className="rounded bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700">
+              {fromLabel}
             </span>
             <ArrowRight className="h-4 w-4" />
-            <span className="rounded bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800">
-              Prospecto
+            <span className="rounded bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800">
+              {toLabel}
             </span>
           </div>
 
@@ -327,8 +337,8 @@ export function QualifyLeadDialog({ lead, onClose, onConverted }: QualifyLeadDia
               </Button>
             )}
             {step === 2 && (
-              <Button onClick={handleSubmit} disabled={convertLead.isPending}>
-                {convertLead.isPending ? "Convirtiendo..." : "Crear Prospecto"}
+              <Button onClick={handleSubmit} disabled={updateProspect.isPending}>
+                {updateProspect.isPending ? "Calificando..." : "Calificar Lead"}
               </Button>
             )}
           </div>
