@@ -29,6 +29,7 @@ export function LeadForm({ onClose, salesTeam, defaultAssignee }: LeadFormProps)
     source: "referido",
     notes: "",
     assignedToId: defaultAssignee ? String(defaultAssignee) : "",
+    firstContactDate: new Date().toISOString().split("T")[0],
   });
 
   const createProspect = useCreateProspect();
@@ -54,6 +55,7 @@ export function LeadForm({ onClose, salesTeam, defaultAssignee }: LeadFormProps)
         priority: "media",
         reason: form.notes.trim() || undefined,
         assignedToId: form.assignedToId ? Number(form.assignedToId) : undefined,
+        firstContactDate: form.firstContactDate || undefined,
       });
       toast({ title: "Lead creado exitosamente" });
       onClose();
@@ -128,6 +130,16 @@ export function LeadForm({ onClose, salesTeam, defaultAssignee }: LeadFormProps)
                 className="mt-1"
               />
             </div>
+          </div>
+
+          <div>
+            <Label>Fecha primer contacto</Label>
+            <Input
+              type="date"
+              value={form.firstContactDate}
+              onChange={(e) => set("firstContactDate", e.target.value)}
+              className="mt-1"
+            />
           </div>
 
           <div>

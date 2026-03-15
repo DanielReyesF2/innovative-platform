@@ -32,6 +32,7 @@ export function ProspectEditDialog({ prospect, onClose, onSaved }: ProspectEditD
     probability: p.probability ?? "",
     estimatedValue: p.facturacionEstimada || p.propuesta?.ventaTotal || "",
     estimatedVolume: p.volumenEstimado || "",
+    estimatedCloseTime: p.estimatedCloseTime || "",
     priority: p.priority || "media",
     nextStep: p.comentarios || "",
     reason: p.reason || "",
@@ -69,6 +70,7 @@ export function ProspectEditDialog({ prospect, onClose, onSaved }: ProspectEditD
         probability: form.probability !== "" ? Number(form.probability) : undefined,
         estimatedValue: form.estimatedValue !== "" ? String(form.estimatedValue) : undefined,
         estimatedVolume: form.estimatedVolume.trim() || undefined,
+        estimatedCloseTime: form.estimatedCloseTime || undefined,
         priority: form.priority || undefined,
         nextStep: form.nextStep.trim() || undefined,
         reason: form.reason.trim() || undefined,
@@ -194,6 +196,10 @@ export function ProspectEditDialog({ prospect, onClose, onSaved }: ProspectEditD
               <div>
                 <Label className="text-xs">Volumen estimado</Label>
                 <Input value={form.estimatedVolume} onChange={(e) => set("estimatedVolume", e.target.value)} className="mt-1" placeholder="Ej: 120 ton/mes" />
+              </div>
+              <div>
+                <Label className="text-xs">Mes de cierre estimado</Label>
+                <Input type="month" value={form.estimatedCloseTime} onChange={(e) => set("estimatedCloseTime", e.target.value)} className="mt-1" />
               </div>
               <div>
                 <Label className="text-xs">Prioridad</Label>

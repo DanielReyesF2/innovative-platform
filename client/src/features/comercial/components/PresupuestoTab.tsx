@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { DollarSign, Edit3, Package } from 'lucide-react';
+import { DollarSign, Edit3, Package, CalendarDays } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { ExecutiveAvatar } from '@/lib/comercial-constants';
+import { ExecutiveAvatar, KANBAN_STAGES } from '@/lib/comercial-constants';
 import { useComercialData } from '../hooks/useComercialData';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 
@@ -228,6 +228,85 @@ export function PresupuestoTab() {
           <Edit3 size={10} /> Click en el icono de lápiz para editar la venta real. Presiona Enter para guardar.
         </p>
       </div>
+
+      {/* Cuentas del Mes */}
+      {(() => {
+        const cuentas = kanbanProspectos
+          .filter(p => p.estimatedCloseTime && p.status !== 'cierre_perdido')
+          .sort((a, b) => (a.estimatedCloseTime || '').localeCompare(b.estimatedCloseTime || ''));
+        const totalCuentasValor = cuentas.reduce((s, p) => s + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0);
+
+        if (cuentas.length === 0) return null;
+
+        const MESES_MAP: Record<string, string> = {
+          '01': 'Enero', '02': 'Febrero', '03': 'Marzo', '04': 'Abril',
+          '05': 'Mayo', '06': 'Junio', '07': 'Julio', '08': 'Agosto',
+          '09': 'Septiembre', '10': 'Octubre', '11': 'Noviembre', '12': 'Diciembre',
+        };
+
+        const formatMesCierre = (val: string) => {
+          if (!val) return '—';
+          const parts = val.split('-');
+          if (parts.length >= 2) {
+            return `${MESES_MAP[parts[1]] || parts[1]} ${parts[0]}`;
+          }
+          return val;
+        };
+
+        return (
+          <div className="mt-4 bg-white rounded-xl border border-[#e5e7eb] p-4">
+            <div className="flex items-center gap-2 mb-4">
+              <CalendarDays size={14} className="text-[#7C3AED]" />
+              <h4 className="text-xs font-semibold text-[#1c2c4a] uppercase tracking-wide">Cuentas del Mes</h4>
+              <span className="text-[10px] text-[#6b7280] ml-auto">{cuentas.length} cuentas · ${(totalCuentasValor / 1000000).toFixed(1)}M total</span>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-[#e5e7eb]">
+                    <th className="text-left py-2 px-2 text-[10px] font-semibold text-[#6b7280] uppercase">Empresa</th>
+                    <th className="text-left py-2 px-2 text-[10px] font-semibold text-[#6b7280] uppercase">Ejecutivo</th>
+                    <th className="text-left py-2 px-2 text-[10px] font-semibold text-[#6b7280] uppercase">Etapa</th>
+                    <th className="text-left py-2 px-2 text-[10px] font-semibold text-[#6b7280] uppercase">Mes Cierre</th>
+                    <th className="text-right py-2 px-2 text-[10px] font-semibold text-[#6b7280] uppercase">Venta Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {cuentas.map(p => {
+                    const stage = KANBAN_STAGES.find(s => s.id === p.status);
+                    return (
+                      <tr key={p.id} className="border-b border-[#f3f4f6] hover:bg-[#f9fafb] transition-colors">
+                        <td className="py-2 px-2 text-sm font-medium text-[#1c2c4a]">{p.empresa}</td>
+                        <td className="py-2 px-2">
+                          <div className="flex items-center gap-1.5">
+                            <ExecutiveAvatar codigo={p.ejecutivo} name={p.ejecutivo} size="xs" />
+                            <span className="text-sm text-[#6b7280]">{p.ejecutivo}</span>
+                          </div>
+                        </td>
+                        <td className="py-2 px-2">
+                          <span className="text-[10px] font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: `${stage?.color || '#6b7280'}15`, color: stage?.color || '#6b7280' }}>
+                            {stage?.label || p.status}
+                          </span>
+                        </td>
+                        <td className="py-2 px-2 text-sm text-[#6b7280]">{formatMesCierre(p.estimatedCloseTime)}</td>
+                        <td className="py-2 px-2 text-right text-sm font-semibold text-[#00a8a8]">
+                          ${((p.propuesta?.ventaTotal || p.facturacionEstimada || 0) / 1000000).toFixed(2)}M
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+                <tfoot>
+                  <tr className="bg-[#f9fafb]">
+                    <td colSpan={4} className="py-2 px-2 font-semibold text-[#1c2c4a]">{cuentas.length} cuentas</td>
+                    <td className="py-2 px-2 text-right font-bold text-[#00a8a8]">${(totalCuentasValor / 1000000).toFixed(2)}M</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Material Volume */}
       <div className="mt-4 bg-white rounded-xl border border-[#e5e7eb] p-4">
