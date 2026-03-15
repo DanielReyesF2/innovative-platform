@@ -249,6 +249,10 @@ export function ProspectLevantamiento({ prospectId }: ProspectLevantamientoProps
   const sendToOps = useSendToOperaciones();
   const { toast } = useToast();
   const [showOpsConfirm, setShowOpsConfirm] = useState(false);
+  const [schedProposedDate, setSchedProposedDate] = useState("");
+  const [schedProposedTime, setSchedProposedTime] = useState("");
+  const [schedResponsible, setSchedResponsible] = useState("");
+  const [schedNotes, setSchedNotes] = useState("");
 
   const [levData, setLevData] = useState<any | null>(null);
   const [initialized, setInitialized] = useState(false);
@@ -284,7 +288,21 @@ export function ProspectLevantamiento({ prospectId }: ProspectLevantamientoProps
   };
 
   const handleSendToOps = async () => {
+    if (!schedProposedDate || !schedProposedTime || !schedResponsible.trim()) {
+      toast({ title: "Fecha, hora y responsable son requeridos", variant: "destructive" });
+      return;
+    }
     try {
+      const dataWithScheduling = {
+        ...levData,
+        scheduling: {
+          proposedDate: schedProposedDate,
+          proposedTime: schedProposedTime,
+          responsibleName: schedResponsible.trim(),
+          notes: schedNotes.trim() || null,
+        },
+      };
+      await updateProspect.mutateAsync({ id: prospectId, levantamientoData: dataWithScheduling });
       await sendToOps.mutateAsync(prospectId);
       toast({ title: "Enviado a Operaciones" });
       setShowOpsConfirm(false);
@@ -297,7 +315,7 @@ export function ProspectLevantamiento({ prospectId }: ProspectLevantamientoProps
 
   const canSendToOps =
     prospect &&
-    ["contacto_inicial", "presentacion"].includes(prospect.stage) &&
+    ["contacto_inicial", "presentacion", "levantamiento"].includes(prospect.stage) &&
     !prospect.surveyId;
 
   const sentToOps = prospect?.sentToOpsAt;
@@ -355,23 +373,63 @@ export function ProspectLevantamiento({ prospectId }: ProspectLevantamientoProps
         )}
       </div>
 
-      {/* Confirmation dialog */}
+      {/* Scheduling + confirmation dialog */}
       {showOpsConfirm && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4" onClick={() => setShowOpsConfirm(false)}>
-          <div className="w-full max-w-md rounded-lg bg-white shadow-xl p-6" onClick={(e) => e.stopPropagation()}>
+          <div className="w-full max-w-lg rounded-lg bg-white shadow-xl p-6" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-start gap-3 mb-4">
               <AlertCircle className="h-6 w-6 text-[#F57C00] flex-shrink-0 mt-0.5" />
               <div>
                 <h3 className="font-semibold text-[#1c2c4a]">Enviar a Operaciones</h3>
                 <p className="text-sm text-[#6b7280] mt-1">
-                  Se creara una solicitud de levantamiento en Operaciones. El prospecto pasara a etapa "Levantamiento".
+                  Propone una fecha, hora y responsable para el levantamiento. Operaciones puede aceptar o ajustar.
                 </p>
+              </div>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2 mb-4">
+              <div>
+                <Label className="text-xs">Fecha Propuesta *</Label>
+                <Input
+                  type="date"
+                  value={schedProposedDate}
+                  onChange={(e) => setSchedProposedDate(e.target.value)}
+                  className="mt-1"
+                />
+              </div>
+              <div>
+                <Label className="text-xs">Hora Propuesta *</Label>
+                <Input
+                  type="time"
+                  value={schedProposedTime}
+                  onChange={(e) => setSchedProposedTime(e.target.value)}
+                  className="mt-1"
+                />
+              </div>
+              <div className="sm:col-span-2">
+                <Label className="text-xs">Responsable del Levantamiento *</Label>
+                <Input
+                  value={schedResponsible}
+                  onChange={(e) => setSchedResponsible(e.target.value)}
+                  placeholder="Nombre del responsable"
+                  className="mt-1"
+                />
+              </div>
+              <div className="sm:col-span-2">
+                <Label className="text-xs">Notas (opcional)</Label>
+                <textarea
+                  value={schedNotes}
+                  onChange={(e) => setSchedNotes(e.target.value)}
+                  className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  rows={2}
+                  placeholder="Ej: Llegar por la puerta de carga..."
+                />
               </div>
             </div>
             <div className="flex justify-end gap-3">
               <Button variant="outline" onClick={() => setShowOpsConfirm(false)}>Cancelar</Button>
-              <Button onClick={handleSendToOps} disabled={sendToOps.isPending}>
-                {sendToOps.isPending ? "Enviando..." : "Confirmar"}
+              <Button onClick={handleSendToOps} disabled={sendToOps.isPending || updateProspect.isPending}>
+                <Send className="mr-1 h-4 w-4" />
+                {sendToOps.isPending || updateProspect.isPending ? "Enviando..." : "Confirmar y Enviar"}
               </Button>
             </div>
           </div>

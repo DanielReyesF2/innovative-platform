@@ -37,6 +37,12 @@ export function ReviewSurveyModal({ survey, onClose, users = [] }: ReviewSurveyM
 
   const surveyData = fullSurvey || survey;
   const generalInfo = (surveyData.generalInfo as any) || {};
+  const proposedScheduling = generalInfo.proposedScheduling as {
+    proposedDate?: string;
+    proposedTime?: string;
+    responsibleName?: string;
+    notes?: string;
+  } | null;
 
   const handleAccept = async () => {
     if (!scheduledDate || !assignedToId) {
@@ -93,6 +99,46 @@ export function ReviewSurveyModal({ survey, onClose, users = [] }: ReviewSurveyM
 
         {/* Content */}
         <div className="flex-1 overflow-auto p-6 space-y-4">
+          {/* Proposed scheduling from comercial */}
+          {proposedScheduling && (
+            <div className="rounded-lg border border-cyan-200 bg-cyan-50 p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <Calendar className="h-4 w-4 text-cyan-700" />
+                <span className="text-sm font-semibold text-cyan-800">Propuesta de Comercial</span>
+              </div>
+              <div className="grid gap-2 sm:grid-cols-3 text-sm">
+                {proposedScheduling.proposedDate && (
+                  <div>
+                    <span className="text-xs text-cyan-600">Fecha</span>
+                    <div className="font-medium text-cyan-900">
+                      {new Date(proposedScheduling.proposedDate + "T12:00:00").toLocaleDateString("es-MX", { weekday: "short", year: "numeric", month: "short", day: "numeric" })}
+                    </div>
+                  </div>
+                )}
+                {proposedScheduling.proposedTime && (
+                  <div>
+                    <span className="text-xs text-cyan-600">Hora</span>
+                    <div className="font-medium text-cyan-900">{proposedScheduling.proposedTime}</div>
+                  </div>
+                )}
+                {proposedScheduling.responsibleName && (
+                  <div>
+                    <span className="text-xs text-cyan-600">Responsable</span>
+                    <div className="font-medium text-cyan-900 flex items-center gap-1">
+                      <User className="h-3 w-3" />
+                      {proposedScheduling.responsibleName}
+                    </div>
+                  </div>
+                )}
+              </div>
+              {proposedScheduling.notes && (
+                <div className="mt-2 text-xs text-cyan-700">
+                  <span className="font-medium">Notas:</span> {proposedScheduling.notes}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* General Info */}
           <SectionCard title="Datos de la Empresa" icon={<Building2 className="h-4 w-4" />}>
             <div className="grid gap-3 sm:grid-cols-2">
@@ -198,7 +244,12 @@ export function ReviewSurveyModal({ survey, onClose, users = [] }: ReviewSurveyM
                 <XCircle className="mr-2 h-4 w-4" />
                 Rechazar
               </Button>
-              <Button onClick={() => setAction("accept")}>
+              <Button onClick={() => {
+                if (proposedScheduling?.proposedDate && !scheduledDate) {
+                  setScheduledDate(proposedScheduling.proposedDate);
+                }
+                setAction("accept");
+              }}>
                 <CheckCircle className="mr-2 h-4 w-4" />
                 Aceptar y Agendar
               </Button>

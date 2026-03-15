@@ -302,7 +302,7 @@ export async function sendProspectToOperaciones(prospectId: number, sentById: nu
   if (!prospect) throw new Error("NOT_FOUND");
 
   // State guard: only early stages can be sent
-  const allowedStages = ["lead", "contacto_inicial", "presentacion"];
+  const allowedStages = ["lead", "contacto_inicial", "presentacion", "levantamiento"];
   if (!allowedStages.includes(prospect.stage)) {
     throw new Error("CONFLICT:El prospecto ya paso la etapa de levantamiento");
   }
@@ -338,6 +338,10 @@ export async function sendProspectToOperaciones(prospectId: number, sentById: nu
         estimatedVolume: prospect.estimatedVolume,
         estimatedValue: prospect.estimatedValue,
         address: levData.generalInfo?.direccion || null,
+        generalInfo: {
+          ...levData.generalInfo,
+          proposedScheduling: levData.scheduling || null,
+        },
         prospectId: prospect.id,
         sentById,
       })
