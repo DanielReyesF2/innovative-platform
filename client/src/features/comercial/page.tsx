@@ -148,7 +148,13 @@ export default function ComercialPage() {
         <SectionHeader color="#00a8a8" icon={Users} label="Equipo" linkLabel="Ver Dashboard" onLinkClick={() => navigate('/dashboard')} />
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
-          {salesTeamData.sort((a, b) => b.presupuestoAnual2026 - a.presupuestoAnual2026).map(member => {
+          {[...salesTeamData].sort((a, b) => {
+              if (a.codigo === 'VA') return -1;
+              if (b.codigo === 'VA') return 1;
+              if (a.codigo === 'AM') return 1;
+              if (b.codigo === 'AM') return -1;
+              return b.presupuestoAnual2026 - a.presupuestoAnual2026;
+            }).map(member => {
             const pct = member.cumplimientoPresupuesto || 0;
             const barColor = pct >= 80 ? '#2E7D32' : pct >= 40 ? '#F57C00' : '#ef4444';
             const memberProspectos = kanbanProspectos.filter(p => p.ejecutivo === member.codigo);
