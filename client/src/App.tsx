@@ -11,6 +11,7 @@ import ComercialPage from './features/comercial/page';
 import OperacionesPage from './features/operaciones/page';
 import SubproductosPage from './features/subproductos/page';
 import SettingsPage from './features/settings/page';
+import ProfilePage from './features/auth/profile-page';
 
 function Router() {
   return (
@@ -30,6 +31,9 @@ function Router() {
       </Route>
       <Route path="/subproductos">
         <ProtectedRoute><SubproductosPage /></ProtectedRoute>
+      </Route>
+      <Route path="/perfil">
+        <ProtectedRoute><ProfilePage /></ProtectedRoute>
       </Route>
       <Route path="/settings">
         <ProtectedRoute adminOnly><SettingsPage /></ProtectedRoute>
