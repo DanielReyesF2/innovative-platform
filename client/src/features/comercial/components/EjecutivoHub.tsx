@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { ArrowLeft, Plus, Lock, ChevronDown, ChevronUp, X, AlertCircle, Calendar, Bell, DollarSign, Edit3, Save, Target } from 'lucide-react';
+import { ArrowLeft, Plus, Lock, ChevronDown, ChevronUp, X, AlertCircle, Calendar, Bell, DollarSign, Edit3, Save, Target, Check } from 'lucide-react';
 import { DndContext, closestCenter, DragOverlay, useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import {
@@ -10,6 +10,7 @@ import {
   classifyRechazo,
 } from '@/lib/comercial-constants';
 import { useComercialData } from '../hooks/useComercialData';
+import { useToast } from '@/components/ui/use-toast';
 import { HubKanbanCard } from './HubKanbanCard';
 import { StageGateModal } from './StageGateModal';
 import { ProspectoDrawer } from './ProspectoDrawer';
@@ -38,6 +39,7 @@ export function EjecutivoHub({ member, onBack, onShowNuevoLead }: Props) {
     ventasRealesEditadas,
     setVentasRealesEditadas,
   } = useComercialData();
+  const { toast } = useToast();
 
   const memberProspectos = kanbanProspectos.filter(p => p.ejecutivo === member.codigo);
   const memberLeads = memberProspectos.filter(p => ['contacto_inicial', 'presentacion'].includes(p.status));
@@ -392,12 +394,13 @@ export function EjecutivoHub({ member, onBack, onShowNuevoLead }: Props) {
                       });
                       const editKey = `${member.id}-${ventaRealMes}-${ventaRealAño}`;
                       setVentasRealesEditadas((prev: any) => ({ ...prev, [editKey]: Number(ventaRealMonto) }));
-                      queryClient.invalidateQueries({ queryKey: ['/api/comercial/ventas-reales'] });
-                      queryClient.invalidateQueries({ queryKey: ['/api/comercial/team'] });
+                      await queryClient.invalidateQueries({ queryKey: ['/api/comercial/ventas-reales'] });
+                      await queryClient.invalidateQueries({ queryKey: ['/api/comercial/team'] });
                       setShowVentasRealesModal(false);
                       setVentaRealMonto('');
-                    } catch {
-                      // Error handling
+                      toast({ title: `Venta real guardada: $${Number(ventaRealMonto).toLocaleString()}` });
+                    } catch (err) {
+                      toast({ title: 'Error al guardar venta real', variant: 'destructive' });
                     }
                   }}
                   disabled={!ventaRealMonto}

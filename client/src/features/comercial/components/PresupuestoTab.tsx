@@ -3,6 +3,7 @@ import { DollarSign, Edit3, Package, CalendarDays } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { ExecutiveAvatar, KANBAN_STAGES } from '@/lib/comercial-constants';
 import { useComercialData } from '../hooks/useComercialData';
+import { useToast } from '@/components/ui/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 
 export function PresupuestoTab() {
@@ -13,6 +14,7 @@ export function PresupuestoTab() {
     ventasRealesEditadas,
     setVentasRealesEditadas,
   } = useComercialData();
+  const { toast } = useToast();
 
   const [editingVentaReal, setEditingVentaReal] = useState<string | null>(null);
   const [ventaRealMes, setVentaRealMes] = useState(new Date().getMonth() + 1);
@@ -154,6 +156,10 @@ export function PresupuestoTab() {
                                 .then(() => {
                                   queryClient.invalidateQueries({ queryKey: ['/api/comercial/ventas-reales'] });
                                   queryClient.invalidateQueries({ queryKey: ['/api/comercial/team'] });
+                                  toast({ title: `Venta real guardada: $${monto.toLocaleString()}` });
+                                })
+                                .catch(() => {
+                                  toast({ title: 'Error al guardar', variant: 'destructive' });
                                 });
                             } else if (e.key === 'Escape') {
                               setVentasRealesEditadas((prev: any) => { const n = { ...prev }; delete n[editKey]; return n; });
@@ -169,6 +175,10 @@ export function PresupuestoTab() {
                                 .then(() => {
                                   queryClient.invalidateQueries({ queryKey: ['/api/comercial/ventas-reales'] });
                                   queryClient.invalidateQueries({ queryKey: ['/api/comercial/team'] });
+                                  toast({ title: `Venta real guardada: $${monto.toLocaleString()}` });
+                                })
+                                .catch(() => {
+                                  toast({ title: 'Error al guardar', variant: 'destructive' });
                                 });
                             }
                           }}
