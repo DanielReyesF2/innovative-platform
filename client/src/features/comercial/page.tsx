@@ -43,14 +43,23 @@ export default function ComercialPage() {
     );
   }
 
-  // If viewing hub, render EjecutivoHub
+  // If viewing hub, render EjecutivoHub + LeadForm modal
   if (hubEjecutivo) {
     return (
-      <EjecutivoHub
-        member={hubEjecutivo}
-        onBack={() => setHubEjecutivo(null)}
-        onShowNuevoLead={() => setShowNuevoLead(true)}
-      />
+      <>
+        <EjecutivoHub
+          member={hubEjecutivo}
+          onBack={() => setHubEjecutivo(null)}
+          onShowNuevoLead={() => setShowNuevoLead(true)}
+        />
+        {showNuevoLead && (
+          <LeadForm
+            onClose={() => setShowNuevoLead(false)}
+            salesTeam={salesTeamData}
+            defaultAssignee={hubEjecutivo?.dbUserId || authUser?.id}
+          />
+        )}
+      </>
     );
   }
 

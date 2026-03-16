@@ -179,7 +179,7 @@ router.patch("/prospects/:id", async (req, res) => {
   }
 });
 
-router.delete("/prospects/:id", requireRole("admin", "comercial"), async (req, res) => {
+router.delete("/prospects/:id", requireRole("admin", "comercial", "director"), async (req, res) => {
   try {
     const deleted = await deleteProspect(Number(req.params.id));
     if (!deleted) return res.status(404).json({ message: "Prospecto no encontrado" });
@@ -230,7 +230,7 @@ router.post("/prospects/:id/qualify", async (req, res) => {
 
 router.post(
   "/prospects/:id/send-to-operaciones",
-  requireRole("admin", "comercial"),
+  requireRole("admin", "comercial", "director"),
   async (req, res) => {
     try {
       const result = await sendProspectToOperaciones(
