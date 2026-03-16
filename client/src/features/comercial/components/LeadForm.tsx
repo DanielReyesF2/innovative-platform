@@ -66,15 +66,15 @@ export function LeadForm({ onClose, salesTeam, defaultAssignee }: LeadFormProps)
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-md rounded-lg bg-background shadow-lg">
-        <div className="flex items-center justify-between border-b px-6 py-4">
+      <div className="w-full max-w-md max-h-[90vh] flex flex-col rounded-lg bg-background shadow-lg">
+        <div className="flex items-center justify-between border-b px-6 py-4 shrink-0">
           <h2 className="text-lg font-bold">Nuevo Lead</h2>
           <Button variant="ghost" size="sm" onClick={onClose}>
             ✕
           </Button>
         </div>
 
-        <div className="space-y-4 p-6">
+        <div className="space-y-4 p-6 overflow-y-auto">
           <p className="text-sm text-muted-foreground">
             Ingresa la informacion de contacto inicial. Los datos de negocio se agregan al calificar como prospecto.
           </p>
@@ -187,7 +187,7 @@ export function LeadForm({ onClose, salesTeam, defaultAssignee }: LeadFormProps)
           </div>
         </div>
 
-        <div className="flex justify-end gap-2 border-t px-6 py-3">
+        <div className="flex justify-end gap-2 border-t px-6 py-3 shrink-0">
           <Button variant="outline" onClick={onClose}>
             Cancelar
           </Button>

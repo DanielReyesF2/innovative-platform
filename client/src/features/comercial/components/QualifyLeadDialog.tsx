@@ -109,9 +109,9 @@ export function QualifyLeadDialog({ prospect, onClose, onQualified }: QualifyLea
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-lg rounded-lg bg-background shadow-lg">
+      <div className="w-full max-w-lg max-h-[90vh] flex flex-col rounded-lg bg-background shadow-lg">
         {/* Header */}
-        <div className="flex items-center justify-between border-b px-6 py-4">
+        <div className="flex items-center justify-between border-b px-6 py-4 shrink-0">
           <div className="flex items-center gap-2">
             <UserCheck className="h-5 w-5 text-primary" />
             <h2 className="text-lg font-bold">Calificar Lead</h2>
@@ -172,7 +172,7 @@ export function QualifyLeadDialog({ prospect, onClose, onQualified }: QualifyLea
         </div>
 
         {/* Step content */}
-        <div className="space-y-4 px-6 py-4">
+        <div className="space-y-4 px-6 py-4 overflow-y-auto">
           {step === 1 && (
             <>
               <div>
@@ -317,7 +317,7 @@ export function QualifyLeadDialog({ prospect, onClose, onQualified }: QualifyLea
         </div>
 
         {/* Footer */}
-        <div className="flex justify-between border-t px-6 py-3">
+        <div className="flex justify-between border-t px-6 py-3 shrink-0">
           <div>
             {step === 2 && (
               <Button variant="ghost" onClick={() => setStep(1)}>
