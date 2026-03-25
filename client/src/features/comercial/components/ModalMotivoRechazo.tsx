@@ -48,7 +48,7 @@ export function ModalMotivoRechazo({ prospecto, onClose, onSave }: Props) {
             >
               <option value="">Seleccione un motivo...</option>
               {MOTIVOS_RECHAZO.map(motivo => (
-                <option key={motivo.id} value={motivo.id}>
+                <option key={motivo.id} value={String(motivo.id)}>
                   {motivo.motivo} ({motivo.categoria})
                 </option>
               ))}

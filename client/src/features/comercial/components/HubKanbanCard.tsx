@@ -1,6 +1,7 @@
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { MessageSquare, Paperclip } from 'lucide-react';
+import { fmtM } from '@/lib/utils';
 import {
   SERVICE_COLORS,
   estimarFechaProspecto,
@@ -62,7 +63,7 @@ export function HubKanbanCard({ prospecto, onSelect, notesCount = 0, filesCount 
           {notesCount > 0 && <span className="flex items-center gap-0.5 text-[#9ca3af]"><MessageSquare size={8} />{notesCount}</span>}
           {filesCount > 0 && <span className="flex items-center gap-0.5 text-[#9ca3af]"><Paperclip size={8} />{filesCount}</span>}
         </div>
-        {valor > 0 && <span className="font-bold text-[#0D47A1]">${(valor / 1000000).toFixed(1)}M</span>}
+        {valor > 0 && <span className="font-bold text-[#0D47A1]">{fmtM(valor)}</span>}
       </div>
       <div className="mt-1">
         <div className="w-full h-[2px] bg-black/[0.04] rounded-full overflow-hidden">
