@@ -493,8 +493,7 @@ export function useWeeklyReport(weekStart: string) {
   return useQuery<any>({
     queryKey: ["/api/comercial/weekly-report", weekStart],
     queryFn: async () => {
-      const res = await fetch(`/api/comercial/weekly-report?week=${weekStart}`, { credentials: "include" });
-      if (!res.ok) throw new Error("Error al obtener reporte");
+      const res = await apiRequest("GET", `/api/comercial/weekly-report?week=${weekStart}`);
       return res.json();
     },
     enabled: !!weekStart,

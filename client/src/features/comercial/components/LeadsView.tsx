@@ -155,7 +155,9 @@ export function LeadsView() {
       {qualifyLead && (
         <QualifyLeadDialog
           prospect={qualifyLead}
+          isLead
           onClose={() => setQualifyLead(null)}
+          onQualified={() => setQualifyLead(null)}
         />
       )}
     </>
