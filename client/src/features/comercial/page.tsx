@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useLocation } from 'wouter';
 import { DollarSign, ClipboardList, RotateCcw, Users, Recycle, FileText, BarChart3 } from 'lucide-react';
+import { fmtM } from '@/lib/utils';
 import {
   KANBAN_STAGES,
   STAGE_PROBABILITY,
@@ -91,9 +92,9 @@ export default function ComercialPage() {
             <div className="flex items-center justify-between">
               <div>
                 <div className="text-[13px] font-medium text-[#6b7280] mb-1">Presupuesto {new Date().toLocaleDateString('es-MX', { month: 'long' }).replace(/^\w/, c => c.toUpperCase())}</div>
-                <div className="text-2xl font-bold text-[#1c2c4a]">${(presupuestoMesEquipo / 1000000).toFixed(1)}M</div>
+                <div className="text-2xl font-bold text-[#1c2c4a]">{fmtM(presupuestoMesEquipo)}</div>
                 <div className="text-xs text-[#6b7280] mt-1">
-                  Cierre: <span className="font-semibold text-[#00a8a8]">${(montoPropuestas / 1000000).toFixed(1)}M</span>
+                  Cierre: <span className="font-semibold text-[#00a8a8]">{fmtM(montoPropuestas)}</span>
                   {presupuestoMesEquipo > 0 && (
                     <span className={`ml-1.5 font-semibold ${(montoPropuestas / presupuestoMesEquipo) >= 1 ? 'text-[#2E7D32]' : 'text-[#F57C00]'}`}>
                       ({Math.round((montoPropuestas / presupuestoMesEquipo) * 100)}%)
@@ -148,7 +149,13 @@ export default function ComercialPage() {
         <SectionHeader color="#00a8a8" icon={Users} label="Equipo" linkLabel="Ver Dashboard" onLinkClick={() => navigate('/dashboard')} />
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
-          {salesTeamData.filter(m => m.codigo !== 'VA').sort((a, b) => b.presupuestoAnual2026 - a.presupuestoAnual2026).map(member => {
+          {[...salesTeamData].sort((a, b) => {
+              if (a.codigo === 'VA') return -1;
+              if (b.codigo === 'VA') return 1;
+              if (a.codigo === 'AM') return 1;
+              if (b.codigo === 'AM') return -1;
+              return b.presupuestoAnual2026 - a.presupuestoAnual2026;
+            }).map(member => {
             const pct = member.cumplimientoPresupuesto || 0;
             const barColor = pct >= 80 ? '#2E7D32' : pct >= 40 ? '#F57C00' : '#ef4444';
             const memberProspectos = kanbanProspectos.filter(p => p.ejecutivo === member.codigo);
@@ -163,9 +170,9 @@ export default function ComercialPage() {
                     <div className="text-[10px] text-[#6b7280]">{member.zona || member.role}</div>
                   </div>
                 </div>
-                <div className="text-lg font-bold text-[#1c2c4a]">${(member.presupuestoMensual / 1000000).toFixed(1)}M<span className="text-xs font-normal text-[#6b7280] ml-0.5">/mes</span></div>
+                <div className="text-lg font-bold text-[#1c2c4a]">{fmtM(member.presupuestoMensual)}<span className="text-xs font-normal text-[#6b7280] ml-0.5">/mes</span></div>
                 <div className="flex items-center justify-between mt-1 mb-2">
-                  <span className="text-[10px] text-[#6b7280]">Anual: ${(member.presupuestoAnual2026 / 1000000).toFixed(1)}M</span>
+                  <span className="text-[10px] text-[#6b7280]">Anual: {fmtM(member.presupuestoAnual2026)}</span>
                   <span className="text-[10px] font-semibold" style={{ color: barColor }}>{pct}%</span>
                 </div>
                 <div className="w-full h-1.5 bg-[#f3f4f6] rounded-full overflow-hidden">
@@ -174,7 +181,7 @@ export default function ComercialPage() {
                 <div className="flex items-center gap-2 mt-2.5 pt-2 border-t border-[#f3f4f6]">
                   <span className="text-[10px] text-[#6b7280]">{memberProspectos.length} opps</span>
                   <span className="text-[10px] text-[#6b7280]">·</span>
-                  <span className="text-[10px] text-[#6b7280]">${((memberProspectos.filter(p => p.status !== 'cierre_perdido').reduce((s, p) => s + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0)) / 1000000).toFixed(1)}M presupuesto</span>
+                  <span className="text-[10px] text-[#6b7280]">{fmtM(memberProspectos.filter(p => p.status !== 'cierre_perdido').reduce((s, p) => s + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0))} presupuesto</span>
                 </div>
               </div>
             );

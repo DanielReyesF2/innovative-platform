@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { DollarSign, Edit3, Package, CalendarDays } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { fmtM } from '@/lib/utils';
 import { ExecutiveAvatar, KANBAN_STAGES } from '@/lib/comercial-constants';
 import { useComercialData } from '../hooks/useComercialData';
+import { useToast } from '@/components/ui/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 
 export function PresupuestoTab() {
@@ -13,6 +15,7 @@ export function PresupuestoTab() {
     ventasRealesEditadas,
     setVentasRealesEditadas,
   } = useComercialData();
+  const { toast } = useToast();
 
   const [editingVentaReal, setEditingVentaReal] = useState<string | null>(null);
   const [ventaRealMes, setVentaRealMes] = useState(new Date().getMonth() + 1);
@@ -50,10 +53,10 @@ export function PresupuestoTab() {
           <BarChart data={presupuestoEvolution} barGap={2}>
             <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" vertical={false} />
             <XAxis dataKey="mes" tick={{ fontSize: 10, fill: '#6b7280' }} axisLine={false} tickLine={false} />
-            <YAxis tick={{ fontSize: 9, fill: '#6b7280' }} axisLine={false} tickLine={false} tickFormatter={(v: number) => `$${(v / 1000000).toFixed(0)}M`} />
+            <YAxis tick={{ fontSize: 9, fill: '#6b7280' }} axisLine={false} tickLine={false} tickFormatter={(v: number) => fmtM(v, 0)} />
             <Tooltip
               contentStyle={{ fontSize: 11, borderRadius: 8, border: '1px solid #e5e7eb' }}
-              formatter={(value: number) => [`$${(value / 1000000).toFixed(1)}M`, '']}
+              formatter={(value: number) => [fmtM(value), '']}
               labelStyle={{ fontWeight: 600, color: '#1c2c4a' }}
             />
             <Bar dataKey="presupuesto" name="Presupuesto" fill="#e5e7eb" radius={[3, 3, 0, 0]} />
@@ -63,11 +66,11 @@ export function PresupuestoTab() {
         <div className="mt-3 pt-3 border-t border-[#e5e7eb] grid grid-cols-2 md:grid-cols-4 gap-3">
           <div className="text-center">
             <div className="text-[10px] text-[#6b7280]">Presupuesto Anual</div>
-            <div className="text-sm font-bold text-[#1c2c4a]">${(presupuestoTotal / 1000000).toFixed(0)}M</div>
+            <div className="text-sm font-bold text-[#1c2c4a]">{fmtM(presupuestoTotal, 0)}</div>
           </div>
           <div className="text-center">
             <div className="text-[10px] text-[#6b7280]">Ventas Reales</div>
-            <div className="text-sm font-bold text-[#00a8a8]">${(ventasReales / 1000000).toFixed(1)}M</div>
+            <div className="text-sm font-bold text-[#00a8a8]">{fmtM(ventasReales)}</div>
           </div>
           <div className="text-center">
             <div className="text-[10px] text-[#6b7280]">% Avance</div>
@@ -77,7 +80,7 @@ export function PresupuestoTab() {
           </div>
           <div className="text-center">
             <div className="text-[10px] text-[#6b7280]">Presupuesto {new Date().toLocaleDateString('es-MX', { month: 'long' }).replace(/^\w/, c => c.toUpperCase())}</div>
-            <div className="text-sm font-bold text-[#1c2c4a]">${(presupuestoMesEquipo / 1000000).toFixed(1)}M</div>
+            <div className="text-sm font-bold text-[#1c2c4a]">{fmtM(presupuestoMesEquipo)}</div>
           </div>
         </div>
       </div>
@@ -135,7 +138,7 @@ export function PresupuestoTab() {
                       </div>
                     </td>
                     <td className="py-2.5 px-2 text-right">
-                      <span className="text-sm text-[#6b7280]">${(memberBudgetMes / 1000000).toFixed(2)}M</span>
+                      <span className="text-sm text-[#6b7280]">{fmtM(memberBudgetMes, 2)}</span>
                     </td>
                     <td className="py-2.5 px-2 text-right">
                       {isEditing ? (
@@ -154,6 +157,10 @@ export function PresupuestoTab() {
                                 .then(() => {
                                   queryClient.invalidateQueries({ queryKey: ['/api/comercial/ventas-reales'] });
                                   queryClient.invalidateQueries({ queryKey: ['/api/comercial/team'] });
+                                  toast({ title: `Venta real guardada: $${monto.toLocaleString()}` });
+                                })
+                                .catch(() => {
+                                  toast({ title: 'Error al guardar', variant: 'destructive' });
                                 });
                             } else if (e.key === 'Escape') {
                               setVentasRealesEditadas((prev: any) => { const n = { ...prev }; delete n[editKey]; return n; });
@@ -169,6 +176,10 @@ export function PresupuestoTab() {
                                 .then(() => {
                                   queryClient.invalidateQueries({ queryKey: ['/api/comercial/ventas-reales'] });
                                   queryClient.invalidateQueries({ queryKey: ['/api/comercial/team'] });
+                                  toast({ title: `Venta real guardada: $${monto.toLocaleString()}` });
+                                })
+                                .catch(() => {
+                                  toast({ title: 'Error al guardar', variant: 'destructive' });
                                 });
                             }
                           }}
@@ -176,7 +187,7 @@ export function PresupuestoTab() {
                           placeholder="0"
                         />
                       ) : (
-                        <span className="text-sm font-semibold text-[#00a8a8]">${(Number(ventaActual) / 1000000).toFixed(2)}M</span>
+                        <span className="text-sm font-semibold text-[#00a8a8]">{fmtM(Number(ventaActual), 2)}</span>
                       )}
                     </td>
                     <td className="py-2.5 px-2 text-right">
@@ -211,10 +222,10 @@ export function PresupuestoTab() {
                   <tr className="bg-[#f9fafb]">
                     <td className="py-2.5 px-2 font-semibold text-[#1c2c4a]">Total Equipo</td>
                     <td className="py-2.5 px-2 text-right font-semibold text-[#1c2c4a]">
-                      ${(totalPres / 1000000).toFixed(2)}M
+                      {fmtM(totalPres, 2)}
                     </td>
                     <td className="py-2.5 px-2 text-right font-bold text-[#00a8a8]">
-                      ${(totalReal / 1000000).toFixed(2)}M
+                      {fmtM(totalReal, 2)}
                     </td>
                     <td className="py-2.5 px-2 text-right font-bold" style={{ color: pctColor }}>{pct}%</td>
                     <td></td>
@@ -258,7 +269,7 @@ export function PresupuestoTab() {
             <div className="flex items-center gap-2 mb-4">
               <CalendarDays size={14} className="text-[#7C3AED]" />
               <h4 className="text-xs font-semibold text-[#1c2c4a] uppercase tracking-wide">Cuentas del Mes</h4>
-              <span className="text-[10px] text-[#6b7280] ml-auto">{cuentas.length} cuentas · ${(totalCuentasValor / 1000000).toFixed(1)}M total</span>
+              <span className="text-[10px] text-[#6b7280] ml-auto">{cuentas.length} cuentas · {fmtM(totalCuentasValor)} total</span>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -290,7 +301,7 @@ export function PresupuestoTab() {
                         </td>
                         <td className="py-2 px-2 text-sm text-[#6b7280]">{formatMesCierre(p.estimatedCloseTime)}</td>
                         <td className="py-2 px-2 text-right text-sm font-semibold text-[#00a8a8]">
-                          ${((p.propuesta?.ventaTotal || p.facturacionEstimada || 0) / 1000000).toFixed(2)}M
+                          {fmtM(p.propuesta?.ventaTotal || p.facturacionEstimada || 0, 2)}
                         </td>
                       </tr>
                     );
@@ -299,7 +310,7 @@ export function PresupuestoTab() {
                 <tfoot>
                   <tr className="bg-[#f9fafb]">
                     <td colSpan={4} className="py-2 px-2 font-semibold text-[#1c2c4a]">{cuentas.length} cuentas</td>
-                    <td className="py-2 px-2 text-right font-bold text-[#00a8a8]">${(totalCuentasValor / 1000000).toFixed(2)}M</td>
+                    <td className="py-2 px-2 text-right font-bold text-[#00a8a8]">{fmtM(totalCuentasValor, 2)}</td>
                   </tr>
                 </tfoot>
               </table>

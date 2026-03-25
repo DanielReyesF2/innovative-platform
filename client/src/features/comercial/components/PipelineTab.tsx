@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { ClipboardList, Filter, X } from 'lucide-react';
+import { fmtM } from '@/lib/utils';
 import {
   KANBAN_STAGES,
   SERVICE_COLORS,
@@ -47,7 +48,7 @@ export function PipelineTab({ onViewHub }: Props) {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-sm font-semibold text-[#1c2c4a]">{member.name.split(' ').slice(0, 2).join(' ')}</span>
-                    <span className="text-sm font-bold text-[#0D47A1]">${(memberPipeline / 1000000).toFixed(1)}M</span>
+                    <span className="text-sm font-bold text-[#0D47A1]">{fmtM(memberPipeline)}</span>
                   </div>
                   <div className="flex items-center gap-3 mb-1.5">
                     <span className="text-xs text-[#6b7280]"><span className="font-semibold">{leads}</span> leads</span>
@@ -74,7 +75,7 @@ export function PipelineTab({ onViewHub }: Props) {
               <span className="text-[#6b7280]">Total: <span className="font-bold text-[#1c2c4a]">{kanbanProspectos.length}</span></span>
               <span className="text-[#6b7280]">Leads: <span className="font-bold">{kanbanProspectos.filter(p => ['contacto_inicial', 'presentacion'].includes(p.status)).length}</span></span>
               <span className="text-[#00a8a8]">Prospectos: <span className="font-bold">{kanbanProspectos.filter(p => !['contacto_inicial', 'presentacion', 'cierre_perdido'].includes(p.status)).length}</span></span>
-              <span className="text-[#0D47A1] font-bold">${(kanbanProspectos.filter(p => p.status !== 'cierre_perdido').reduce((s, p) => s + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0) / 1000000).toFixed(1)}M</span>
+              <span className="text-[#0D47A1] font-bold">{fmtM(kanbanProspectos.filter(p => p.status !== 'cierre_perdido').reduce((s, p) => s + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0))}</span>
             </div>
             <div className="flex gap-2">
               {KANBAN_STAGES.map(s => (
