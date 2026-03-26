@@ -37,7 +37,6 @@ const EJECUTIVO_EMAILS = [
   "csescosse@ig-la.com",   // Cristina Sescosse
   "lmesa@ig-la.com",       // Laura Mesa Caballero
   "molmos@ig-la.com",      // Mariana Olmos
-  "lsobrino@ig-la.com",    // Laura Sobrino
 ];
 
 async function main() {
