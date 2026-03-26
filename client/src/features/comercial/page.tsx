@@ -1,363 +1,229 @@
-import { useState } from "react";
-import { useAuth } from "@/lib/auth";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { useState } from 'react';
+import { useLocation } from 'wouter';
+import { DollarSign, ClipboardList, RotateCcw, Users, Recycle, FileText, BarChart3 } from 'lucide-react';
+import { fmtM } from '@/lib/utils';
 import {
-  TrendingUp,
-  Users,
-  Target,
-  DollarSign,
-  Search,
-  ChevronRight,
-  AlertCircle,
-  BarChart3,
-  FileBarChart,
-  UserPlus,
-} from "lucide-react";
-import { useProspects, usePipeline, useLeads } from "./api";
-import { KpiSection } from "@/features/kpis/components/KpiSection";
-import { ProspectDetail } from "./components/ProspectDetail";
-import { ComercialReports } from "./components/ComercialReports";
-import { AlertsDropdown } from "./components/AlertsDropdown";
-import { LeadsView } from "./components/LeadsView";
-
-const STAGE_LABELS: Record<string, string> = {
-  contacto_inicial: "Contacto Inicial",
-  presentacion: "Presentacion",
-  levantamiento: "Levantamiento",
-  propuesta: "Propuesta",
-  negociacion: "Negociacion",
-  cierre_ganado: "Cierre Ganado",
-  cierre_perdido: "Cierre Perdido",
-  // Legacy
-  lead: "Contacto Inicial",
-  cierre: "Cierre Ganado",
-  rechazada: "Cierre Perdido",
-};
-
-const STAGE_COLORS: Record<string, string> = {
-  contacto_inicial: "bg-blue-100 text-blue-800",
-  presentacion: "bg-cyan-100 text-cyan-800",
-  levantamiento: "bg-yellow-100 text-yellow-800",
-  propuesta: "bg-purple-100 text-purple-800",
-  negociacion: "bg-orange-100 text-orange-800",
-  cierre_ganado: "bg-green-100 text-green-800",
-  cierre_perdido: "bg-red-100 text-red-800",
-  // Legacy
-  lead: "bg-blue-100 text-blue-800",
-  cierre: "bg-green-100 text-green-800",
-  rechazada: "bg-red-100 text-red-800",
-};
-
-const PRIORITY_COLORS: Record<string, string> = {
-  muy_alta: "bg-red-100 text-red-700",
-  alta: "bg-orange-100 text-orange-700",
-  media: "bg-yellow-100 text-yellow-700",
-  baja: "bg-gray-100 text-gray-700",
-};
+  KANBAN_STAGES,
+  STAGE_PROBABILITY,
+  SERVICIOS_INNOVATIVE,
+  ExecutiveAvatar,
+  SectionHeader,
+  calcularWeightedPipeline,
+  calcularWinRate,
+  calcularPipelineVelocity,
+} from '@/lib/comercial-constants';
+import { useComercialData } from './hooks/useComercialData';
+import { PipelineTab } from './components/PipelineTab';
+import { PresupuestoTab } from './components/PresupuestoTab';
+import { RechazadasTab } from './components/RechazadasTab';
+import { EjecutivoHub } from './components/EjecutivoHub';
+import { LeadForm } from './components/LeadForm';
+import { ComercialReports } from './components/ComercialReports';
+import { ResumenSemanal } from './components/ResumenSemanal';
 
 export default function ComercialPage() {
-  const { user } = useAuth();
-  const [mainTab, setMainTab] = useState<"leads" | "pipeline" | "kpis" | "reportes">("leads");
+  const [, navigate] = useLocation();
+  const {
+    kanbanProspectos,
+    salesTeamData,
+    currentUserName,
+    userGreeting,
+    isLoading,
+    authUser,
+  } = useComercialData();
+
+  const [comercialTab, setComercialTab] = useState<'pipeline' | 'presupuesto' | 'rechazadas' | 'reportes' | 'resumen'>('pipeline');
+  const [hubEjecutivo, setHubEjecutivo] = useState<any>(null);
+  const [showNuevoLead, setShowNuevoLead] = useState(false);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#00a8a8]" />
+      </div>
+    );
+  }
+
+  // If viewing hub, render EjecutivoHub + LeadForm modal
+  if (hubEjecutivo) {
+    return (
+      <>
+        <EjecutivoHub
+          member={hubEjecutivo}
+          onBack={() => setHubEjecutivo(null)}
+          onShowNuevoLead={() => setShowNuevoLead(true)}
+        />
+        {showNuevoLead && (
+          <LeadForm
+            onClose={() => setShowNuevoLead(false)}
+            salesTeam={salesTeamData}
+            defaultAssignee={hubEjecutivo?.dbUserId || authUser?.id}
+          />
+        )}
+      </>
+    );
+  }
+
+  // Derived KPIs
+  const presupuestoMesEquipo = salesTeamData.reduce((s, m) => s + (m.presupuestoMensual || 0), 0);
+  const propuestasEnviadas = kanbanProspectos.filter(p => p.status === 'propuesta');
+  const montoPropuestas = propuestasEnviadas.reduce((s, p) => s + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0);
+  const levantamientosActivos = kanbanProspectos.filter(p => p.status === 'levantamiento');
+  const biodigestores = kanbanProspectos.filter(p => (p.servicios || []).includes('biodigestores'));
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Pipeline Comercial</h1>
-          <p className="text-muted-foreground">
-            Gestion de leads, prospectos y embudo de ventas
-          </p>
+    <div className="bg-[#faf7f2] min-h-full">
+      <div className="max-w-[1400px] mx-auto">
+
+        {/* HEADER */}
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-xl font-bold text-[#1c2c4a]">{userGreeting}, {currentUserName}</h1>
+            <p className="text-sm text-[#6b7280] mt-0.5">Tu presupuesto comercial al momento</p>
+          </div>
+          <div className="flex items-center gap-2">
+          </div>
         </div>
-        <AlertsDropdown />
+
+        {/* KPI CARDS */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+          {/* Card 1: Presupuesto Mes */}
+          <div className="rounded-xl border border-[#00a8a8]/10 card-modern p-5" style={{ backgroundColor: 'rgba(0,168,168,0.04)' }}>
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-[13px] font-medium text-[#6b7280] mb-1">Presupuesto {new Date().toLocaleDateString('es-MX', { month: 'long' }).replace(/^\w/, c => c.toUpperCase())}</div>
+                <div className="text-2xl font-bold text-[#1c2c4a]">{fmtM(presupuestoMesEquipo)}</div>
+                <div className="text-xs text-[#6b7280] mt-1">
+                  Cierre: <span className="font-semibold text-[#00a8a8]">{fmtM(montoPropuestas)}</span>
+                  {presupuestoMesEquipo > 0 && (
+                    <span className={`ml-1.5 font-semibold ${(montoPropuestas / presupuestoMesEquipo) >= 1 ? 'text-[#2E7D32]' : 'text-[#F57C00]'}`}>
+                      ({Math.round((montoPropuestas / presupuestoMesEquipo) * 100)}%)
+                    </span>
+                  )}
+                </div>
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-[#00a8a8]/10 flex items-center justify-center">
+                <DollarSign className="text-[#00a8a8]" size={20} />
+              </div>
+            </div>
+          </div>
+          {/* Card 2: Levantamientos */}
+          <div className="bg-white rounded-xl border border-[#e5e7eb] card-modern p-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-[13px] font-medium text-[#6b7280] mb-1">Levantamientos Activos</div>
+                <div className="text-2xl font-bold text-[#1c2c4a]">{levantamientosActivos.length}</div>
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-[#0D47A1]/10 flex items-center justify-center">
+                <ClipboardList className="text-[#0D47A1]" size={20} />
+              </div>
+            </div>
+          </div>
+          {/* Card 3: Propuestas */}
+          <div className="rounded-xl border border-[#2E7D32]/10 card-modern p-5" style={{ backgroundColor: 'rgba(46,125,50,0.04)' }}>
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-[13px] font-medium text-[#6b7280] mb-1">Propuestas Enviadas</div>
+                <div className="text-2xl font-bold text-[#1c2c4a]">{propuestasEnviadas.length}</div>
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-[#2E7D32]/10 flex items-center justify-center">
+                <FileText className="text-[#2E7D32]" size={20} />
+              </div>
+            </div>
+          </div>
+          {/* Card 4: Biodigestores */}
+          <div className="bg-white rounded-xl border border-[#e5e7eb] card-modern p-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-[13px] font-medium text-[#6b7280] mb-1">Cierre Biodigestores</div>
+                <div className="text-2xl font-bold text-[#1c2c4a]">{biodigestores.length}</div>
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-[#F57C00]/10 flex items-center justify-center">
+                <Recycle className="text-[#F57C00]" size={20} />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* EQUIPO */}
+        <SectionHeader color="#00a8a8" icon={Users} label="Equipo" linkLabel="Ver Dashboard" onLinkClick={() => navigate('/dashboard')} />
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
+          {[...salesTeamData].sort((a, b) => {
+              if (a.codigo === 'VA') return -1;
+              if (b.codigo === 'VA') return 1;
+              if (a.codigo === 'AM') return 1;
+              if (b.codigo === 'AM') return -1;
+              return b.presupuestoAnual2026 - a.presupuestoAnual2026;
+            }).map(member => {
+            const pct = member.cumplimientoPresupuesto || 0;
+            const barColor = pct >= 80 ? '#2E7D32' : pct >= 40 ? '#F57C00' : '#ef4444';
+            const memberProspectos = kanbanProspectos.filter(p => p.ejecutivo === member.codigo);
+            return (
+              <div key={member.codigo} onClick={() => setHubEjecutivo(member)}
+                className="bg-white rounded-xl border border-[#e5e7eb] p-4 cursor-pointer hover:shadow-lg hover:border-[#00a8a8]/40 transition-all group relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#00a8a8] to-[#0D47A1] opacity-60 group-hover:opacity-100 transition-opacity" />
+                <div className="flex items-center gap-3 mb-3">
+                  <ExecutiveAvatar codigo={member.codigo} name={member.name} size="lg" />
+                  <div className="min-w-0">
+                    <div className="text-sm font-semibold text-[#1c2c4a] truncate">{member.name.split(' ').slice(0, 2).join(' ')}</div>
+                    <div className="text-[10px] text-[#6b7280]">{member.zona || member.role}</div>
+                  </div>
+                </div>
+                <div className="text-lg font-bold text-[#1c2c4a]">{fmtM(member.presupuestoMensual)}<span className="text-xs font-normal text-[#6b7280] ml-0.5">/mes</span></div>
+                <div className="flex items-center justify-between mt-1 mb-2">
+                  <span className="text-[10px] text-[#6b7280]">Anual: {fmtM(member.presupuestoAnual2026)}</span>
+                  <span className="text-[10px] font-semibold" style={{ color: barColor }}>{pct}%</span>
+                </div>
+                <div className="w-full h-1.5 bg-[#f3f4f6] rounded-full overflow-hidden">
+                  <div className="h-full rounded-full transition-all" style={{ width: `${Math.min(pct, 100)}%`, backgroundColor: barColor }} />
+                </div>
+                <div className="flex items-center gap-2 mt-2.5 pt-2 border-t border-[#f3f4f6]">
+                  <span className="text-[10px] text-[#6b7280]">{memberProspectos.length} opps</span>
+                  <span className="text-[10px] text-[#6b7280]">·</span>
+                  <span className="text-[10px] text-[#6b7280]">{fmtM(memberProspectos.filter(p => p.status !== 'cierre_perdido').reduce((s, p) => s + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0))} presupuesto</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* TAB BAR */}
+        <div className="mt-5 flex items-center gap-1 bg-white rounded-xl border border-[#e5e7eb] p-1">
+          {([
+            { id: 'pipeline' as const, label: 'Oportunidades', icon: ClipboardList },
+            { id: 'presupuesto' as const, label: 'Presupuesto', icon: DollarSign },
+            { id: 'rechazadas' as const, label: 'Rechazadas', icon: RotateCcw, badge: kanbanProspectos.filter(p => p.status === 'cierre_perdido').length },
+            { id: 'reportes' as const, label: 'KPIs', icon: BarChart3 },
+            { id: 'resumen' as const, label: 'Resumen Semanal', icon: FileText },
+          ]).map(tab => (
+            <button key={tab.id} onClick={() => setComercialTab(tab.id)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all flex-1 justify-center ${comercialTab === tab.id ? 'bg-[#1c2c4a] text-white shadow-sm' : 'text-[#6b7280] hover:bg-[#f3f4f6]'}`}>
+              <tab.icon size={15} />
+              {tab.label}
+              {'badge' in tab && (tab as any).badge > 0 && (
+                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${comercialTab === tab.id ? 'bg-white/20 text-white' : 'bg-[#F59E0B]/10 text-[#F59E0B]'}`}>{(tab as any).badge}</span>
+              )}
+            </button>
+          ))}
+        </div>
+
+        {/* TAB CONTENT */}
+        {comercialTab === 'pipeline' && <PipelineTab onViewHub={setHubEjecutivo} />}
+        {comercialTab === 'presupuesto' && <PresupuestoTab />}
+        {comercialTab === 'rechazadas' && <RechazadasTab />}
+        {comercialTab === 'reportes' && <div className="mt-5"><ComercialReports kanbanProspectos={kanbanProspectos} salesTeamData={salesTeamData} /></div>}
+        {comercialTab === 'resumen' && <ResumenSemanal />}
+
       </div>
 
-      {/* Main tab selector */}
-      <div className="flex gap-2 border-b pb-2">
-        <button
-          onClick={() => setMainTab("leads")}
-          className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-t-md transition-colors ${
-            mainTab === "leads"
-              ? "border-b-2 border-primary text-primary"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          <UserPlus className="h-4 w-4" />
-          Leads
-        </button>
-        <button
-          onClick={() => setMainTab("pipeline")}
-          className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-t-md transition-colors ${
-            mainTab === "pipeline"
-              ? "border-b-2 border-primary text-primary"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          <TrendingUp className="h-4 w-4" />
-          Pipeline
-        </button>
-        <button
-          onClick={() => setMainTab("kpis")}
-          className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-t-md transition-colors ${
-            mainTab === "kpis"
-              ? "border-b-2 border-primary text-primary"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          <BarChart3 className="h-4 w-4" />
-          KPIs
-        </button>
-        <button
-          onClick={() => setMainTab("reportes")}
-          className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-t-md transition-colors ${
-            mainTab === "reportes"
-              ? "border-b-2 border-primary text-primary"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          <FileBarChart className="h-4 w-4" />
-          Reportes
-        </button>
-      </div>
-
-      {mainTab === "leads" && <LeadsView />}
-      {mainTab === "pipeline" && <PipelineView />}
-      {mainTab === "kpis" && <KpiSection moduleSlug="comercial" compact />}
-      {mainTab === "reportes" && <ComercialReports />}
+      {showNuevoLead && (
+        <LeadForm
+          onClose={() => setShowNuevoLead(false)}
+          salesTeam={salesTeamData}
+          defaultAssignee={hubEjecutivo?.dbUserId || authUser?.id}
+        />
+      )}
     </div>
   );
 }
-
-function PipelineView() {
-  const { data: prospects = [] } = useProspects();
-  const { data: pipeline = [] } = usePipeline();
-  const { data: leads = [] } = useLeads();
-
-  const [searchTerm, setSearchTerm] = useState("");
-  const [stageFilter, setStageFilter] = useState<string>("all");
-  const [selectedProspect, setSelectedProspect] = useState<any>(null);
-
-  // Calculate metrics
-  const activeProspects = prospects.filter((p: any) => !["rechazada", "cierre_perdido"].includes(p.stage));
-  const totalPipelineValue = activeProspects.reduce(
-    (sum: number, p: any) => sum + Number(p.estimatedValue || 0),
-    0
-  );
-  const avgProbability =
-    activeProspects.length > 0
-      ? Math.round(
-          activeProspects.reduce((sum: number, p: any) => sum + (p.probability || 0), 0) /
-            activeProspects.length
-        )
-      : 0;
-  const closedDeals = prospects.filter((p: any) => ["cierre", "cierre_ganado"].includes(p.stage)).length;
-
-  // Map legacy stages for filtering
-  const stageAliases: Record<string, string[]> = {
-    contacto_inicial: ["contacto_inicial", "lead"],
-    cierre_ganado: ["cierre_ganado", "cierre"],
-    cierre_perdido: ["cierre_perdido", "rechazada"],
-  };
-
-  // Filter prospects
-  const filtered = prospects.filter((p: any) => {
-    const matchesSearch =
-      !searchTerm ||
-      p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.industry?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStage =
-      stageFilter === "all" ||
-      (stageAliases[stageFilter]
-        ? stageAliases[stageFilter].includes(p.stage)
-        : p.stage === stageFilter);
-    return matchesSearch && matchesStage;
-  });
-
-  return (
-    <>
-      {/* KPI Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <MetricCard
-          title="Pipeline Total"
-          value={`$${(totalPipelineValue / 1_000_000).toFixed(1)}M`}
-          description={`${activeProspects.length} prospectos activos`}
-          icon={<DollarSign className="h-4 w-4 text-muted-foreground" />}
-        />
-        <MetricCard
-          title="Leads Activos"
-          value={String(leads.length)}
-          description="Sin asignar / en proceso"
-          icon={<Users className="h-4 w-4 text-muted-foreground" />}
-        />
-        <MetricCard
-          title="Probabilidad Promedio"
-          value={`${avgProbability}%`}
-          description="De prospectos activos"
-          icon={<Target className="h-4 w-4 text-muted-foreground" />}
-        />
-        <MetricCard
-          title="Cierres"
-          value={String(closedDeals)}
-          description="Negocios cerrados"
-          icon={<TrendingUp className="h-4 w-4 text-muted-foreground" />}
-        />
-      </div>
-
-      {/* Pipeline funnel */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Embudo de Ventas</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-6 gap-3">
-            {pipeline.map((stage: any) => (
-              <button
-                key={stage.stage}
-                onClick={() => setStageFilter(stage.stage)}
-                className={`rounded-lg border p-4 text-center transition-colors hover:bg-accent ${
-                  stageFilter === stage.stage ? "border-primary bg-accent" : ""
-                }`}
-              >
-                <div className="text-2xl font-bold">{stage.count}</div>
-                <div className="text-xs text-muted-foreground">
-                  {STAGE_LABELS[stage.stage] || stage.stage}
-                </div>
-                <div className="mt-1 text-xs font-medium">
-                  ${(Number(stage.totalValue) / 1_000_000).toFixed(1)}M
-                </div>
-              </button>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Search and filters */}
-      <div className="flex items-center gap-3">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Buscar prospectos..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-9"
-          />
-        </div>
-        <select
-          value={stageFilter}
-          onChange={(e) => setStageFilter(e.target.value)}
-          className="h-10 rounded-md border border-input bg-background px-3 text-sm"
-        >
-          <option value="all">Todas las etapas</option>
-          {["contacto_inicial", "presentacion", "levantamiento", "propuesta", "negociacion", "cierre_ganado", "cierre_perdido"].map((key) => (
-            <option key={key} value={key}>
-              {STAGE_LABELS[key]}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {/* Prospects list */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">
-            Prospectos ({filtered.length})
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {filtered.length === 0 ? (
-            <div className="py-8 text-center text-muted-foreground">
-              <AlertCircle className="mx-auto mb-2 h-8 w-8 opacity-50" />
-              <p>No hay prospectos que mostrar</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {filtered.map((prospect: any) => (
-                <button
-                  key={prospect.id}
-                  onClick={() => setSelectedProspect(prospect)}
-                  className="flex w-full items-center justify-between rounded-lg border p-4 text-left transition-colors hover:bg-accent"
-                >
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold">{prospect.name}</span>
-                      <span
-                        className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
-                          STAGE_COLORS[prospect.stage] || ""
-                        }`}
-                      >
-                        {STAGE_LABELS[prospect.stage] || prospect.stage}
-                      </span>
-                      {prospect.priority && (
-                        <span
-                          className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
-                            PRIORITY_COLORS[prospect.priority] || ""
-                          }`}
-                        >
-                          {prospect.priority.replace("_", " ")}
-                        </span>
-                      )}
-                    </div>
-                    <div className="mt-1 flex items-center gap-4 text-sm text-muted-foreground">
-                      <span>{prospect.industry}</span>
-                      <span>{prospect.location}</span>
-                      {prospect.estimatedValue && (
-                        <span className="font-medium">
-                          ${Number(prospect.estimatedValue).toLocaleString("es-MX")}
-                        </span>
-                      )}
-                      {prospect.probability > 0 && (
-                        <span>{prospect.probability}% prob.</span>
-                      )}
-                    </div>
-                    {prospect.nextStep && (
-                      <div className="mt-1 text-xs text-muted-foreground">
-                        Siguiente: {prospect.nextStep}
-                      </div>
-                    )}
-                  </div>
-                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                </button>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Prospect detail */}
-      {selectedProspect && (
-        <ProspectDetail
-          prospect={selectedProspect}
-          onClose={() => setSelectedProspect(null)}
-        />
-      )}
-    </>
-  );
-}
-
-function MetricCard({
-  title,
-  value,
-  description,
-  icon,
-}: {
-  title: string;
-  value: string;
-  description: string;
-  icon: React.ReactNode;
-}) {
-  return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium">{title}</CardTitle>
-        {icon}
-      </CardHeader>
-      <CardContent>
-        <div className="text-2xl font-bold">{value}</div>
-        <p className="text-xs text-muted-foreground">{description}</p>
-      </CardContent>
-    </Card>
-  );
-}
-

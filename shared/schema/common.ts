@@ -25,6 +25,7 @@ export const users = pgTable("users", {
   email: text("email").notNull().unique(),
   password: text("password").notNull(),
   role: text("role").notNull().default("viewer"),
+  codigo: text("codigo"), // Short code for sales team (e.g. CR, AM, LM)
   companyId: integer("company_id").references(() => companies.id),
   areaId: integer("area_id").references(() => areas.id),
   isActive: boolean("is_active").default(true),
@@ -38,6 +39,7 @@ export const insertUserSchema = createInsertSchema(users, {
   email: z.string().email().max(320),
   password: z.string().min(8).max(100),
   role: z.string().max(50).optional(),
+  codigo: z.string().max(10).optional(),
 }).omit({ id: true, createdAt: true, lastLogin: true });
 
 export const insertCompanySchema = createInsertSchema(companies, {

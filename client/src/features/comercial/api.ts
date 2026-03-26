@@ -36,10 +36,36 @@ export function useCreateProspect() {
   });
 }
 
+export function useQualifyProspect() {
+  return useMutation({
+    mutationFn: async ({ id, ...data }: { id: number; [key: string]: any }) => {
+      const res = await apiRequest("POST", `/api/comercial/prospects/${id}/qualify`, data);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/comercial/prospects"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/comercial/pipeline"] });
+    },
+  });
+}
+
 export function useUpdateProspect() {
   return useMutation({
     mutationFn: async ({ id, ...data }: any) => {
       const res = await apiRequest("PATCH", `/api/comercial/prospects/${id}`, data);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/comercial/prospects"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/comercial/pipeline"] });
+    },
+  });
+}
+
+export function useDeleteProspect() {
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const res = await apiRequest("DELETE", `/api/comercial/prospects/${id}`);
       return res.json();
     },
     onSuccess: () => {
@@ -119,6 +145,15 @@ export function useConvertLead() {
       queryClient.invalidateQueries({ queryKey: ["/api/comercial/prospects"] });
       queryClient.invalidateQueries({ queryKey: ["/api/comercial/pipeline"] });
     },
+  });
+}
+
+// --- Comercial Team ---
+
+export function useComercialTeam() {
+  return useQuery<any[]>({
+    queryKey: ["/api/comercial/team"],
+    staleTime: 5 * 60 * 1000,
   });
 }
 
@@ -449,5 +484,42 @@ export function useWinLossAnalysis() {
 export function useCompetitorAnalysis() {
   return useQuery<any[]>({
     queryKey: ["/api/comercial/reports/competitors"],
+  });
+}
+
+// === RESUMEN SEMANAL ===
+
+export function useWeeklyReport(weekStart: string) {
+  return useQuery<any>({
+    queryKey: ["/api/comercial/weekly-report", weekStart],
+    queryFn: async () => {
+      const res = await apiRequest("GET", `/api/comercial/weekly-report?week=${weekStart}`);
+      return res.json();
+    },
+    enabled: !!weekStart,
+  });
+}
+
+export function useSaveWeeklyReport() {
+  return useMutation({
+    mutationFn: async (data: { weekStart: string; content: string }) => {
+      const res = await apiRequest("PUT", "/api/comercial/weekly-report", data);
+      return res.json();
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/comercial/weekly-report", variables.weekStart] });
+    },
+  });
+}
+
+export function useSendWeeklyReport() {
+  return useMutation({
+    mutationFn: async (data: { weekStart: string; content: string; recipients: string[] }) => {
+      const res = await apiRequest("POST", "/api/comercial/weekly-report/send", data);
+      return res.json();
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/comercial/weekly-report", variables.weekStart] });
+    },
   });
 }

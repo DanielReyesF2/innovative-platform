@@ -48,28 +48,12 @@ export default function LoginPage() {
           <div className="absolute bottom-40 right-10 w-32 h-32 rounded-full border-2 border-white"></div>
         </div>
 
-        <div className="flex flex-col items-center justify-center w-full relative z-10">
+        <div className="flex items-center justify-center w-full relative z-10">
           <img
             src="/IGMexico-Blanco.png"
             alt="Innovative Group Mexico"
-            className="w-80 drop-shadow-lg"
+            className="w-96 drop-shadow-lg"
           />
-          <div className="mt-12 text-center text-white">
-            <h2 className="text-2xl font-bold mb-3">Hub Digital</h2>
-            <p className="text-white/80 text-sm max-w-sm mx-auto leading-relaxed">
-              Gestion integral de pipeline comercial, operaciones, trazabilidad y KPIs del equipo.
-            </p>
-          </div>
-          <div className="mt-8 flex flex-wrap justify-center gap-3 max-w-md">
-            {["Pipeline Comercial", "Kanban Board", "Trazabilidad", "KPIs en Tiempo Real", "Economia Circular"].map((feature) => (
-              <span
-                key={feature}
-                className="px-4 py-2 bg-white/10 border border-white/20 rounded-full text-white/90 text-xs font-medium"
-              >
-                {feature}
-              </span>
-            ))}
-          </div>
         </div>
       </div>
 
@@ -95,7 +79,7 @@ export default function LoginPage() {
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Email */}
             <div>
-              <label className="block text-sm font-medium text-[#1c2c4a] mb-2">Correo electronico</label>
+              <label className="block text-sm font-medium text-[#1c2c4a] mb-2">Usuario</label>
               <div className="relative">
                 <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6b7280]">
                   <Send size={16} />
@@ -104,9 +88,9 @@ export default function LoginPage() {
                   type="text"
                   value={username}
                   onChange={(e) => { setUsername(e.target.value); setError(""); }}
-                  placeholder="nombre@ig-la.com"
+                  placeholder="Usuario"
                   className="w-full pl-10 pr-4 py-3 bg-white border border-[#e5e7eb] rounded-lg text-sm text-[#1c2c4a] placeholder-[#6b7280]/50 focus:outline-none focus:ring-2 focus:ring-[#2E7D32]/30 focus:border-[#2E7D32] transition-all"
-                  autoComplete="username"
+                  autoComplete="off"
                 />
               </div>
             </div>
@@ -124,7 +108,7 @@ export default function LoginPage() {
                   onChange={(e) => { setPassword(e.target.value); setError(""); }}
                   placeholder="********"
                   className="w-full pl-10 pr-12 py-3 bg-white border border-[#e5e7eb] rounded-lg text-sm text-[#1c2c4a] placeholder-[#6b7280]/50 focus:outline-none focus:ring-2 focus:ring-[#2E7D32]/30 focus:border-[#2E7D32] transition-all"
-                  autoComplete="current-password"
+                  autoComplete="off"
                 />
                 <button
                   type="button"
@@ -155,12 +139,8 @@ export default function LoginPage() {
                 />
                 <span className="text-sm text-[#6b7280]">Recordarme</span>
               </label>
-              <button
-                type="button"
-                className="text-sm text-[#2E7D32] hover:text-[#1B5E20] font-medium transition-colors"
-              >
-                Olvide mi contrasena
-              </button>
+              <span />
+
             </div>
 
             {/* Submit */}

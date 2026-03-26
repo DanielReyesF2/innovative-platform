@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useCreateLead } from "../api";
+import { useCreateProspect } from "../api";
 import { useToast } from "@/components/ui/use-toast";
 
 const SOURCE_LABELS: Record<string, string> = {
@@ -16,9 +16,11 @@ const SOURCE_LABELS: Record<string, string> = {
 
 interface LeadFormProps {
   onClose: () => void;
+  salesTeam?: any[];
+  defaultAssignee?: number;
 }
 
-export function LeadForm({ onClose }: LeadFormProps) {
+export function LeadForm({ onClose, salesTeam, defaultAssignee }: LeadFormProps) {
   const [form, setForm] = useState({
     companyName: "",
     contactName: "",
@@ -26,9 +28,11 @@ export function LeadForm({ onClose }: LeadFormProps) {
     contactEmail: "",
     source: "referido",
     notes: "",
+    assignedToId: defaultAssignee ? String(defaultAssignee) : "",
+    firstContactDate: new Date().toISOString().split("T")[0],
   });
 
-  const createLead = useCreateLead();
+  const createProspect = useCreateProspect();
   const { toast } = useToast();
 
   const set = (key: string, val: string) => setForm({ ...form, [key]: val });
@@ -40,13 +44,18 @@ export function LeadForm({ onClose }: LeadFormProps) {
     }
 
     try {
-      await createLead.mutateAsync({
-        companyName: form.companyName.trim(),
+      await createProspect.mutateAsync({
+        name: form.companyName.trim(),
         contactName: form.contactName.trim(),
         contactPhone: form.contactPhone.trim() || undefined,
         contactEmail: form.contactEmail.trim() || undefined,
         source: form.source,
-        notes: form.notes.trim() || undefined,
+        stage: "contacto_inicial",
+        probability: 10,
+        priority: "media",
+        reason: form.notes.trim() || undefined,
+        assignedToId: form.assignedToId ? Number(form.assignedToId) : undefined,
+        firstContactDate: form.firstContactDate || undefined,
       });
       toast({ title: "Lead creado exitosamente" });
       onClose();
@@ -57,18 +66,29 @@ export function LeadForm({ onClose }: LeadFormProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-md rounded-lg bg-background shadow-lg">
-        <div className="flex items-center justify-between border-b px-6 py-4">
+      <div className="w-full max-w-md max-h-[90vh] flex flex-col rounded-lg bg-background shadow-lg">
+        <div className="flex items-center justify-between border-b px-6 py-4 shrink-0">
           <h2 className="text-lg font-bold">Nuevo Lead</h2>
           <Button variant="ghost" size="sm" onClick={onClose}>
             ✕
           </Button>
         </div>
 
-        <div className="space-y-4 p-6">
+        <div className="space-y-4 p-6 overflow-y-auto">
           <p className="text-sm text-muted-foreground">
             Ingresa la informacion de contacto inicial. Los datos de negocio se agregan al calificar como prospecto.
           </p>
+
+          {defaultAssignee && salesTeam && (() => {
+            const registrant = salesTeam.find((m: any) => m.dbUserId === defaultAssignee);
+            if (!registrant) return null;
+            return (
+              <div className="flex items-center gap-2 rounded-lg bg-muted/50 px-3 py-2">
+                <span className="text-xs text-muted-foreground">Registrado por:</span>
+                <span className="text-xs font-medium">{registrant.name}</span>
+              </div>
+            );
+          })()}
 
           <div>
             <Label>Empresa *</Label>
@@ -113,6 +133,16 @@ export function LeadForm({ onClose }: LeadFormProps) {
           </div>
 
           <div>
+            <Label>Fecha primer contacto</Label>
+            <Input
+              type="date"
+              value={form.firstContactDate}
+              onChange={(e) => set("firstContactDate", e.target.value)}
+              className="mt-1"
+            />
+          </div>
+
+          <div>
             <Label>Fuente</Label>
             <select
               value={form.source}
@@ -127,6 +157,24 @@ export function LeadForm({ onClose }: LeadFormProps) {
             </select>
           </div>
 
+          {salesTeam && salesTeam.length > 0 && (
+            <div>
+              <Label>Ejecutivo asignado</Label>
+              <select
+                value={form.assignedToId}
+                onChange={(e) => set("assignedToId", e.target.value)}
+                className="mt-1 h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+              >
+                <option value="">Sin asignar</option>
+                {salesTeam.map((m: any) => (
+                  <option key={m.dbUserId} value={m.dbUserId}>
+                    {m.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
           <div>
             <Label>Notas</Label>
             <textarea
@@ -139,12 +187,12 @@ export function LeadForm({ onClose }: LeadFormProps) {
           </div>
         </div>
 
-        <div className="flex justify-end gap-2 border-t px-6 py-3">
+        <div className="flex justify-end gap-2 border-t px-6 py-3 shrink-0">
           <Button variant="outline" onClick={onClose}>
             Cancelar
           </Button>
-          <Button onClick={handleSubmit} disabled={createLead.isPending}>
-            {createLead.isPending ? "Creando..." : "Crear Lead"}
+          <Button onClick={handleSubmit} disabled={createProspect.isPending}>
+            {createProspect.isPending ? "Creando..." : "Crear Lead"}
           </Button>
         </div>
       </div>

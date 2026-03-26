@@ -1,4 +1,4 @@
-import { pgTable, serial, text, integer, timestamp, boolean, numeric, jsonb, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, integer, timestamp, boolean, numeric, jsonb, pgEnum, uniqueIndex, date } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { users } from "./common";
@@ -93,6 +93,7 @@ export const prospects = pgTable("prospects", {
   location: text("location"),
   potential: text("potential"), // Bajo, Medio, Alto, Muy Alto
   estimatedVolume: text("estimated_volume"), // e.g. "120 ton/mes"
+  services: text("services").array().default([]),  // selected services (e.g. ["rme", "biodigestores"])
   estimatedValue: numeric("estimated_value", { precision: 12, scale: 2 }),
   probability: integer("probability").default(0), // 0-100
   stage: prospectStageEnum("stage").notNull().default("contacto_inicial"),
@@ -100,6 +101,7 @@ export const prospects = pgTable("prospects", {
   contactRole: text("contact_role"),
   contactPhone: text("contact_phone"),
   contactEmail: text("contact_email"),
+  source: leadSourceEnum("source").default("otro"),
   lastActivity: text("last_activity"),
   priority: priorityEnum("priority").default("media"),
   reason: text("reason"), // why they're interested
@@ -121,8 +123,10 @@ export const prospects = pgTable("prospects", {
   lastContactAt: timestamp("last_contact_at"),
   nextFollowUpAt: timestamp("next_follow_up_at"),
   competitors: text("competitors").array(),
-  // Rejected prospects: contract expiration date for follow-up
+  // Rejected prospects: follow-up tracking
   fechaVencimientoContrato: timestamp("fecha_vencimiento_contrato"),
+  followUpAction: text("follow_up_action"),
+  recoveryStatus: text("recovery_status"), // sin_seguimiento, en_seguimiento, re_contactada
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -186,6 +190,7 @@ export const prospectActivities = pgTable("prospect_activities", {
   type: activityTypeEnum("type").notNull(),
   title: text("title").notNull(),
   description: text("description"),
+  activityDate: timestamp("activity_date"),  // when the activity happened (business date)
   metadata: jsonb("metadata"),
   createdById: integer("created_by_id").references(() => users.id).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
@@ -276,7 +281,21 @@ export const insertProspectSchema = createInsertSchema(prospects, {
   location: z.string().max(200).optional(),
   potential: z.string().max(20).optional(),
   probability: z.number().min(0).max(100).optional(),
+  services: z.array(z.string().max(50)).max(10).optional(),
 }).omit({ id: true, createdAt: true, updatedAt: true });
+
+export const qualifyProspectSchema = z.object({
+  industry: z.string().min(1).max(100),
+  potential: z.string().min(1).max(20),
+  estimatedValue: z.union([z.string(), z.number()]).optional(),
+  estimatedVolume: z.string().max(100).optional(),
+  probability: z.number().min(0).max(100),
+  priority: z.enum(["muy_alta", "alta", "media", "baja"]),
+  contactRole: z.string().max(200).optional(),
+  contactEmail: z.string().email().max(200).optional(),
+  reason: z.string().max(500).optional(),
+  nextStep: z.string().max(500).optional(),
+});
 
 export const insertLeadSchema = createInsertSchema(leads, {
   companyName: z.string().min(1).max(200),
@@ -299,6 +318,7 @@ export const insertSalesMetricsSchema = createInsertSchema(salesMetrics).omit({
 // Validators for new tables
 export const insertActivitySchema = createInsertSchema(prospectActivities, {
   title: z.string().min(1).max(200),
+  activityDate: z.date().optional(),
 }).omit({ id: true, createdAt: true });
 
 export const insertNoteSchema = createInsertSchema(prospectNotes, {
@@ -334,7 +354,9 @@ export const ventasReales = pgTable("ventas_reales", {
   monto: numeric("monto", { precision: 14, scale: 2 }).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => ({
+  uniqueUserMesAño: uniqueIndex("ventas_reales_user_mes_año_idx").on(table.userId, table.mes, table.año),
+}));
 
 // KPIs Mensuales (historical data structure for year-over-year comparisons)
 export const kpisMensuales = pgTable("kpis_mensuales", {
@@ -371,6 +393,7 @@ export type InsertLead = z.infer<typeof insertLeadSchema>;
 export type RejectionReason = typeof rejectionReasons.$inferSelect;
 export type SalesMetrics = typeof salesMetrics.$inferSelect;
 export type PipelineSnapshot = typeof pipelineSnapshots.$inferSelect;
+export type QualifyProspectData = z.infer<typeof qualifyProspectSchema>;
 
 // New types
 export type ProspectActivity = typeof prospectActivities.$inferSelect;
@@ -386,8 +409,33 @@ export type InsertProposal = z.infer<typeof insertProposalSchema>;
 export type FollowUpAlert = typeof followUpAlerts.$inferSelect;
 export type InsertAlert = z.infer<typeof insertAlertSchema>;
 
+// === RESUMEN SEMANAL (Weekly Management Report) ===
+
+export const comercialWeeklyReports = pgTable("comercial_weekly_reports", {
+  id: serial("id").primaryKey(),
+  weekStart: date("week_start").notNull(),
+  content: text("content").notNull().default(""),
+  status: text("status").notNull().default("draft"), // 'draft' | 'sent'
+  sentAt: timestamp("sent_at"),
+  recipients: text("recipients"), // comma-separated emails
+  createdById: integer("created_by_id").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  uniqueWeekUser: uniqueIndex("comercial_weekly_reports_week_user_idx").on(table.weekStart, table.createdById),
+}));
+
+export const insertWeeklyReportSchema = createInsertSchema(comercialWeeklyReports, {
+  content: z.string().max(50000),
+  recipients: z.string().max(1000).optional(),
+}).omit({ id: true, createdAt: true, updatedAt: true, sentAt: true });
+
 // Post-reunion types
 export type VentaReal = typeof ventasReales.$inferSelect;
 export type InsertVentaReal = z.infer<typeof insertVentaRealSchema>;
 export type KpiMensual = typeof kpisMensuales.$inferSelect;
 export type InsertKpiMensual = z.infer<typeof insertKpiMensualSchema>;
+
+// Weekly report types
+export type ComercialWeeklyReport = typeof comercialWeeklyReports.$inferSelect;
+export type InsertWeeklyReport = z.infer<typeof insertWeeklyReportSchema>;

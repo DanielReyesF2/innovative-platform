@@ -70,16 +70,8 @@ export function Sidebar() {
         )}
       >
         {/* Logo / brand */}
-        <div className="flex h-14 items-center gap-2.5 border-b border-sidebar-border px-4">
-          <img src="/logo-icon.svg" alt="Innovative Group" className="h-8 w-8" />
-          <div className="flex flex-col">
-            <span className="text-sm font-bold leading-tight text-sidebar-foreground">
-              Innovative
-            </span>
-            <span className="text-[10px] font-medium uppercase tracking-wider text-sidebar-primary">
-              Group
-            </span>
-          </div>
+        <div className="flex h-20 items-center justify-center border-b border-sidebar-border px-3">
+          <img src="/IGMexico-Blanco.png" alt="Innovative Group" className="h-14 w-auto" />
         </div>
 
         {/* Navigation — all items come from GET /api/modules */}
@@ -87,9 +79,11 @@ export function Sidebar() {
           <ul className="space-y-1">
             {modules.map((mod) => {
               const Icon = getIcon(mod.icon);
-              const isActive = mod.basePath === "/"
-                ? location === "/"
-                : location.startsWith(mod.basePath);
+              const isActive = mod.basePath === "/comercial"
+                ? location === "/" || location.startsWith("/comercial")
+                : mod.basePath === "/"
+                  ? location === "/"
+                  : location.startsWith(mod.basePath);
               return (
                 <NavItem
                   key={mod.name}

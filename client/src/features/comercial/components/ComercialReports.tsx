@@ -1,328 +1,95 @@
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Users } from 'lucide-react';
 import {
-  BarChart,
-  LineChart,
-  PieChart,
-  TrendingUp,
-  TrendingDown,
-  Users,
-  DollarSign,
-} from "lucide-react";
-import {
-  useLeadSourcesReport,
-  useSalesForecast,
-  useWinLossAnalysis,
-  useCompetitorAnalysis,
-} from "../api";
+  KPI_METAS,
+  ExecutiveAvatar,
+} from '@/lib/comercial-constants';
 
-const formatCurrency = (value: string | number | null | undefined) => {
-  if (!value) return "$0";
-  const num = typeof value === "string" ? parseFloat(value) : value;
-  return new Intl.NumberFormat("es-MX", {
-    style: "currency",
-    currency: "MXN",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(num);
-};
+interface ComercialReportsProps {
+  kanbanProspectos: any[];
+  salesTeamData: any[];
+}
 
-const formatPercent = (value: string | number | null | undefined) => {
-  if (!value) return "0%";
-  const num = typeof value === "string" ? parseFloat(value) : value;
-  return `${num.toFixed(1)}%`;
-};
+export function ComercialReports({ kanbanProspectos, salesTeamData }: ComercialReportsProps) {
+  // Per-executive KPIs (3 KPIs: Leads Nuevos, Reuniones, Levantamientos)
+  const ejecutivosKPIs = salesTeamData
+    .filter(m => m.codigo !== 'VA' && m.presupuestoAnual2026 > 0)
+    .map(member => {
+      const memberProspectos = kanbanProspectos.filter(p => p.ejecutivo === member.codigo);
+      const memberLeads = memberProspectos.filter(p => p.status === 'contacto_inicial');
+      const memberReuniones = memberProspectos.filter(p => p.status === 'presentacion');
+      const memberLevantamientos = memberProspectos.filter(p => p.status === 'levantamiento');
+      const memberPropuestas = memberProspectos.filter(p => p.status === 'propuesta' || p.status === 'negociacion');
+      const memberGanados = memberProspectos.filter(p => p.status === 'cierre_ganado');
 
-export function ComercialReports() {
-  const [activeTab, setActiveTab] = useState("sources");
-
-  const { data: leadSources = [], isLoading: loadingSources } = useLeadSourcesReport();
-  const { data: forecast = [], isLoading: loadingForecast } = useSalesForecast();
-  const { data: winLoss, isLoading: loadingWinLoss } = useWinLossAnalysis();
-  const { data: competitors = [], isLoading: loadingCompetitors } = useCompetitorAnalysis();
+      return {
+        ...member,
+        leadsNuevos: memberLeads.length,
+        reuniones: memberReuniones.length,
+        levantamientos: memberLevantamientos.length,
+        propuestas: memberPropuestas.length,
+        ganados: memberGanados.length,
+        totalProspectos: memberProspectos.filter(p => p.status !== 'cierre_perdido').length,
+      };
+    })
+    .sort((a, b) => b.presupuestoAnual2026 - a.presupuestoAnual2026);
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">Reportes Comerciales</h2>
-      </div>
+    <div className="space-y-5">
+      {/* Section 1: KPIs Semanales por Ejecutivo */}
+      <div>
+        <h3 className="text-xs font-bold text-[#1c2c4a] uppercase tracking-wider mb-3 flex items-center gap-2">
+          <Users size={14} className="text-[#00a8a8]" /> KPIs Semanales por Ejecutivo
+        </h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {ejecutivosKPIs.map(ej => {
+            const kpis = [
+              { label: 'Leads Nuevos', value: ej.leadsNuevos, meta: KPI_METAS.leadsNuevos.meta, freq: KPI_METAS.leadsNuevos.frecuencia },
+              { label: 'Reuniones Agendadas', value: ej.reuniones, meta: KPI_METAS.reunionesAgendadas.meta, freq: KPI_METAS.reunionesAgendadas.frecuencia },
+              { label: 'Levantamientos', value: ej.levantamientos, meta: KPI_METAS.levantamientos.meta, freq: KPI_METAS.levantamientos.frecuencia },
+            ];
 
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid grid-cols-4 w-full max-w-2xl">
-          <TabsTrigger value="sources" className="flex items-center gap-2">
-            <Users className="h-4 w-4" />
-            <span className="hidden sm:inline">Fuentes</span>
-          </TabsTrigger>
-          <TabsTrigger value="forecast" className="flex items-center gap-2">
-            <LineChart className="h-4 w-4" />
-            <span className="hidden sm:inline">Proyeccion</span>
-          </TabsTrigger>
-          <TabsTrigger value="winloss" className="flex items-center gap-2">
-            <PieChart className="h-4 w-4" />
-            <span className="hidden sm:inline">Win/Loss</span>
-          </TabsTrigger>
-          <TabsTrigger value="competitors" className="flex items-center gap-2">
-            <BarChart className="h-4 w-4" />
-            <span className="hidden sm:inline">Competencia</span>
-          </TabsTrigger>
-        </TabsList>
-
-        {/* Lead Sources */}
-        <TabsContent value="sources" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Fuentes de Leads</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {loadingSources ? (
-                <div className="flex justify-center py-8">
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
-                </div>
-              ) : leadSources.length === 0 ? (
-                <p className="text-center py-8 text-muted-foreground">
-                  No hay datos disponibles
-                </p>
-              ) : (
-                <div className="space-y-4">
-                  {leadSources.map((source: any) => (
-                    <div key={source.source} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div>
-                        <p className="font-medium capitalize">{source.source?.replace("_", " ") || "Desconocido"}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {source.total} leads - {source.converted} convertidos
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-semibold">{formatPercent(source.conversionRate)}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {formatCurrency(source.totalValue)}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Sales Forecast */}
-        <TabsContent value="forecast" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Proyeccion de Ventas</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {loadingForecast ? (
-                <div className="flex justify-center py-8">
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
-                </div>
-              ) : forecast.length === 0 ? (
-                <p className="text-center py-8 text-muted-foreground">
-                  No hay datos disponibles
-                </p>
-              ) : (
-                <div className="space-y-4">
-                  {forecast.map((month: any) => (
-                    <div key={month.month} className="p-4 border rounded-lg">
-                      <div className="flex items-center justify-between mb-2">
-                        <p className="font-medium">{month.month}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {month.count} oportunidades
-                        </p>
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <p className="text-xs text-muted-foreground">Valor Total</p>
-                          <p className="font-semibold">{formatCurrency(month.totalValue)}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-muted-foreground">Valor Ponderado</p>
-                          <p className="font-semibold text-primary">
-                            {formatCurrency(month.weightedValue)}
-                          </p>
-                        </div>
-                      </div>
-                      {/* Simple visual bar */}
-                      <div className="mt-3 h-2 bg-muted rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-primary transition-all"
-                          style={{
-                            width: `${Math.min(
-                              100,
-                              ((parseFloat(month.weightedValue) || 0) /
-                                (parseFloat(month.totalValue) || 1)) *
-                                100
-                            )}%`,
-                          }}
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Win/Loss Analysis */}
-        <TabsContent value="winloss" className="mt-6">
-          <div className="grid gap-6 md:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <CardTitle>Resumen General</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {loadingWinLoss ? (
-                  <div className="flex justify-center py-8">
-                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
+            return (
+              <div key={ej.codigo} className="bg-white rounded-xl border border-[#e5e7eb] p-4 hover:shadow-md transition-shadow">
+                <div className="flex items-center gap-3 mb-4 pb-3 border-b border-[#f3f4f6]">
+                  <ExecutiveAvatar codigo={ej.codigo} name={ej.name} size="lg" />
+                  <div className="min-w-0">
+                    <div className="text-sm font-semibold text-[#1c2c4a] truncate">{ej.name.split(' ').slice(0, 2).join(' ')}</div>
+                    <div className="text-[10px] text-[#6b7280]">{ej.totalProspectos} oportunidades activas</div>
                   </div>
-                ) : !winLoss ? (
-                  <p className="text-center py-8 text-muted-foreground">
-                    No hay datos disponibles
-                  </p>
-                ) : (
-                  <div className="space-y-6">
-                    <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <TrendingUp className="h-8 w-8 text-green-600" />
-                        <div>
-                          <p className="text-sm text-muted-foreground">Ganados</p>
-                          <p className="text-2xl font-bold text-green-600">
-                            {winLoss.won || 0}
-                          </p>
-                        </div>
-                      </div>
-                      <p className="text-lg font-semibold">
-                        {formatCurrency(winLoss.wonValue)}
-                      </p>
-                    </div>
-                    <div className="flex items-center justify-between p-4 bg-red-50 rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <TrendingDown className="h-8 w-8 text-red-600" />
-                        <div>
-                          <p className="text-sm text-muted-foreground">Perdidos</p>
-                          <p className="text-2xl font-bold text-red-600">
-                            {winLoss.lost || 0}
-                          </p>
-                        </div>
-                      </div>
-                      <p className="text-lg font-semibold">
-                        {formatCurrency(winLoss.lostValue)}
-                      </p>
-                    </div>
-                    <div className="text-center p-4 bg-muted rounded-lg">
-                      <p className="text-sm text-muted-foreground">Win Rate</p>
-                      <p className="text-3xl font-bold">
-                        {formatPercent(winLoss.winRate)}
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Motivos de Rechazo</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {loadingWinLoss ? (
-                  <div className="flex justify-center py-8">
-                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
-                  </div>
-                ) : !winLoss?.rejectionReasons || winLoss.rejectionReasons.length === 0 ? (
-                  <p className="text-center py-8 text-muted-foreground">
-                    No hay rechazos registrados
-                  </p>
-                ) : (
-                  <div className="space-y-3">
-                    {winLoss.rejectionReasons.map((reason: any, index: number) => (
-                      <div
-                        key={index}
-                        className="flex items-center justify-between p-3 border rounded-lg"
-                      >
-                        <div>
-                          <p className="font-medium">{reason.reason}</p>
-                          <p className="text-xs text-muted-foreground">{reason.category}</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="font-semibold">{reason.count}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {formatCurrency(reason.lostValue)}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        {/* Competitor Analysis */}
-        <TabsContent value="competitors" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Analisis de Competencia</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {loadingCompetitors ? (
-                <div className="flex justify-center py-8">
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
                 </div>
-              ) : competitors.length === 0 ? (
-                <p className="text-center py-8 text-muted-foreground">
-                  No hay datos de competidores
-                </p>
-              ) : (
-                <div className="space-y-4">
-                  {competitors.map((comp: any) => {
-                    const total = (comp.wins || 0) + (comp.losses || 0);
-                    const winRate = total > 0 ? ((comp.wins || 0) / total) * 100 : 0;
 
+                <div className="space-y-3">
+                  {kpis.map(kpi => {
+                    const pct = kpi.meta > 0 ? Math.round((kpi.value / kpi.meta) * 100) : 0;
+                    const color = pct >= 80 ? '#2E7D32' : pct >= 40 ? '#F57C00' : '#EF4444';
                     return (
-                      <div key={comp.competitor} className="p-4 border rounded-lg">
-                        <div className="flex items-center justify-between mb-2">
-                          <p className="font-medium">{comp.competitor}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {comp.mentions} menciones
-                          </p>
+                      <div key={kpi.label}>
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-[11px] text-[#6b7280]">{kpi.label}</span>
+                          <span className="text-sm font-bold" style={{ color }}>
+                            {kpi.value}<span className="text-[10px] font-normal text-[#9ca3af]">/{kpi.meta} {kpi.freq === 'mensual' ? 'mes' : 'sem'}</span>
+                          </span>
                         </div>
-                        <div className="grid grid-cols-3 gap-4 text-center">
-                          <div className="p-2 bg-green-50 rounded">
-                            <p className="text-xs text-muted-foreground">Victorias</p>
-                            <p className="font-semibold text-green-600">{comp.wins || 0}</p>
-                          </div>
-                          <div className="p-2 bg-red-50 rounded">
-                            <p className="text-xs text-muted-foreground">Derrotas</p>
-                            <p className="font-semibold text-red-600">{comp.losses || 0}</p>
-                          </div>
-                          <div className="p-2 bg-blue-50 rounded">
-                            <p className="text-xs text-muted-foreground">Win Rate</p>
-                            <p className="font-semibold text-blue-600">
-                              {formatPercent(winRate)}
-                            </p>
-                          </div>
-                        </div>
-                        {/* Win/Loss bar */}
-                        <div className="mt-3 h-2 bg-red-200 rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-green-500 transition-all"
-                            style={{ width: `${winRate}%` }}
-                          />
+                        <div className="h-2 bg-[#f3f4f6] rounded-full overflow-hidden">
+                          <div className="h-full rounded-full transition-all" style={{ width: `${Math.min(pct, 100)}%`, backgroundColor: color }} />
                         </div>
                       </div>
                     );
                   })}
                 </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+
+                {/* Quick stats footer */}
+                <div className="mt-3 pt-3 border-t border-[#f3f4f6] flex items-center justify-between text-[10px] text-[#6b7280]">
+                  <span>{ej.propuestas} propuestas</span>
+                  <span className="font-semibold text-[#2E7D32]">{ej.ganados} ganados</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
     </div>
   );
 }
+

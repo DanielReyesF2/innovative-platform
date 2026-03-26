@@ -110,6 +110,19 @@ router.get("/user", requireAuth, async (req, res) => {
   }
 });
 
+// GET /api/auth/team — List team members (any authenticated user, minimal fields)
+router.get("/team", requireAuth, async (_req, res) => {
+  try {
+    const allUsers = await db.query.users.findMany({
+      columns: { id: true, name: true, role: true, codigo: true, areaId: true, isActive: true },
+    });
+    res.json(allUsers.filter(u => u.isActive));
+  } catch (error) {
+    console.error("[auth] List team error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
 // GET /api/auth/users — List all users (admin only)
 router.get("/users", requireAuth, requireAdmin, async (req, res) => {
   try {

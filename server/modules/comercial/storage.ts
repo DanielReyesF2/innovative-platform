@@ -24,12 +24,14 @@ import {
   type InsertAlert,
   type InsertVentaReal,
   type InsertKpiMensual,
+  comercialWeeklyReports,
 } from "../../../shared/schema/comercial";
 import {
   surveys,
   surveyWasteTypes,
   surveyCurrentServices,
 } from "../../../shared/schema/operaciones";
+import { users } from "../../../shared/schema/common";
 
 // --- Prospects ---
 
@@ -55,6 +57,22 @@ export async function getProspectsByStage(stage: string) {
 export async function createProspect(data: InsertProspect) {
   const [prospect] = await db.insert(prospects).values(data).returning();
   return prospect;
+}
+
+export async function deleteProspect(id: number) {
+  return db.transaction(async (tx) => {
+    // Delete related records first
+    await tx.delete(prospectActivities).where(eq(prospectActivities.prospectId, id));
+    await tx.delete(prospectNotes).where(eq(prospectNotes.prospectId, id));
+    await tx.delete(prospectMeetings).where(eq(prospectMeetings.prospectId, id));
+    await tx.delete(prospectDocuments).where(eq(prospectDocuments.prospectId, id));
+    await tx.delete(proposalVersions).where(eq(proposalVersions.prospectId, id));
+    await tx.delete(followUpAlerts).where(eq(followUpAlerts.prospectId, id));
+    // Clear FK from leads that were converted to this prospect
+    await tx.update(leads).set({ convertedToProspectId: null }).where(eq(leads.convertedToProspectId, id));
+    const [deleted] = await tx.delete(prospects).where(eq(prospects.id, id)).returning();
+    return deleted;
+  });
 }
 
 export async function updateProspect(id: number, data: Partial<InsertProspect>) {
@@ -83,6 +101,51 @@ export async function rejectProspect(
     })
     .where(eq(prospects.id, id))
     .returning();
+  return updated;
+}
+
+// --- Qualify Lead → Prospecto ---
+
+export async function qualifyProspect(id: number, data: {
+  industry: string;
+  potential: string;
+  estimatedValue?: string | number;
+  estimatedVolume?: string;
+  probability: number;
+  priority: string;
+  contactRole?: string;
+  contactEmail?: string;
+  reason?: string;
+  nextStep?: string;
+}) {
+  // Verify prospect exists and is in 'lead' stage
+  const prospect = await db.query.prospects.findFirst({
+    where: eq(prospects.id, id),
+  });
+  if (!prospect) throw new Error("NOT_FOUND");
+  if (prospect.stage !== "lead") {
+    throw new Error("CONFLICT:El prospecto no esta en etapa 'lead'");
+  }
+
+  const [updated] = await db
+    .update(prospects)
+    .set({
+      stage: "prospecto",
+      industry: data.industry,
+      potential: data.potential,
+      estimatedValue: data.estimatedValue ? String(data.estimatedValue) : null,
+      estimatedVolume: data.estimatedVolume || null,
+      probability: data.probability,
+      priority: data.priority as any,
+      contactRole: data.contactRole || null,
+      contactEmail: data.contactEmail || null,
+      reason: data.reason || null,
+      nextStep: data.nextStep || null,
+      updatedAt: new Date(),
+    })
+    .where(eq(prospects.id, id))
+    .returning();
+
   return updated;
 }
 
@@ -239,7 +302,7 @@ export async function sendProspectToOperaciones(prospectId: number, sentById: nu
   if (!prospect) throw new Error("NOT_FOUND");
 
   // State guard: only early stages can be sent
-  const allowedStages = ["lead", "contacto_inicial", "presentacion"];
+  const allowedStages = ["lead", "contacto_inicial", "presentacion", "levantamiento"];
   if (!allowedStages.includes(prospect.stage)) {
     throw new Error("CONFLICT:El prospecto ya paso la etapa de levantamiento");
   }
@@ -275,6 +338,10 @@ export async function sendProspectToOperaciones(prospectId: number, sentById: nu
         estimatedVolume: prospect.estimatedVolume,
         estimatedValue: prospect.estimatedValue,
         address: levData.generalInfo?.direccion || null,
+        generalInfo: {
+          ...levData.generalInfo,
+          proposedScheduling: levData.scheduling || null,
+        },
         prospectId: prospect.id,
         sentById,
       })
@@ -886,4 +953,113 @@ export async function getRechazadasProximasAVencer(diasAnticipacion: number = 30
     ),
     orderBy: [prospects.fechaVencimientoContrato],
   });
+}
+
+// --- Comercial Team (replaces hardcoded salesTeamData) ---
+
+export async function getComercialTeam() {
+  const now = new Date();
+  const currentMonth = now.getMonth() + 1;
+  const currentYear = now.getFullYear();
+
+  // Get only active comercial/director users (not admin accounts)
+  const allUsers = await db.query.users.findMany({
+    where: eq(users.isActive, true),
+  });
+  const comercialUsers = allUsers.filter(
+    u => u.codigo && (u.role === "comercial" || u.role === "director")
+  );
+
+  // Get current month sales metrics
+  const currentPeriod = `${currentYear}-${String(currentMonth).padStart(2, "0")}`;
+  const metricsRows = await db.query.salesMetrics.findMany({
+    where: eq(salesMetrics.period, currentPeriod),
+  });
+  const metricsMap = new Map(metricsRows.map(m => [m.userId, m]));
+
+  // Get ALL months of current year for annual budget + per-month budgets
+  const allYearMetrics = await db.query.salesMetrics.findMany();
+  const yearPrefix = `${currentYear}-`;
+  const annualBudgetMap = new Map<number, number>();
+  const monthlyBudgetsMap = new Map<number, Record<string, number>>();
+  for (const m of allYearMetrics) {
+    if (m.period.startsWith(yearPrefix)) {
+      const budget = Number(m.monthlyBudget) || 0;
+      annualBudgetMap.set(m.userId, (annualBudgetMap.get(m.userId) || 0) + budget);
+      const userBudgets = monthlyBudgetsMap.get(m.userId) || {};
+      userBudgets[m.period] = budget;
+      monthlyBudgetsMap.set(m.userId, userBudgets);
+    }
+  }
+
+  // Get current month ventas reales
+  const ventasRows = await db.query.ventasReales.findMany({
+    where: and(
+      eq(ventasReales.mes, currentMonth),
+      eq(ventasReales.año, currentYear),
+    ),
+  });
+  const ventasMap = new Map(ventasRows.map(v => [v.userId, Number(v.monto)]));
+
+  return comercialUsers.map(u => {
+    const metrics = metricsMap.get(u.id);
+    const monthlyBudget = metrics ? Number(metrics.monthlyBudget) || 0 : 0;
+    const ventaReal = ventasMap.get(u.id) || 0;
+    const annualBudget = annualBudgetMap.get(u.id) || 0;
+    return {
+      id: u.id,
+      codigo: u.codigo,
+      name: u.name,
+      email: u.email,
+      role: u.role,
+      presupuestoMensual: monthlyBudget,
+      presupuestoAnual: annualBudget,
+      presupuestosMensuales: monthlyBudgetsMap.get(u.id) || {},
+      ventasReales: ventaReal,
+    };
+  });
+}
+
+// === RESUMEN SEMANAL (Weekly Management Report) ===
+
+export async function getWeeklyReport(userId: number, weekStart: string) {
+  return db.query.comercialWeeklyReports.findFirst({
+    where: and(
+      eq(comercialWeeklyReports.createdById, userId),
+      eq(comercialWeeklyReports.weekStart, weekStart),
+    ),
+  });
+}
+
+export async function upsertWeeklyReport(
+  userId: number,
+  weekStart: string,
+  content: string,
+  status: string = "draft",
+) {
+  const existing = await getWeeklyReport(userId, weekStart);
+
+  if (existing) {
+    const [updated] = await db
+      .update(comercialWeeklyReports)
+      .set({ content, status, updatedAt: new Date() })
+      .where(eq(comercialWeeklyReports.id, existing.id))
+      .returning();
+    return updated;
+  }
+
+  const [created] = await db
+    .insert(comercialWeeklyReports)
+    .values({ weekStart, content, status, createdById: userId })
+    .returning();
+  return created;
+}
+
+export async function markWeeklyReportAsSent(reportId: number, recipients: string) {
+  const [updated] = await db
+    .update(comercialWeeklyReports)
+    .set({ status: "sent", sentAt: new Date(), recipients, updatedAt: new Date() })
+    .where(eq(comercialWeeklyReports.id, reportId))
+    .returning();
+  return updated;
 }
