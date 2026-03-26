@@ -106,7 +106,7 @@
       "contactPhone": "+52 55 4780 1300",
       "contactEmail": "anava@aifa.gob.mx",
       "priority": "alta",
-      "assignedTo": "laura.sobrino@innovative-la.com",
+      "assignedTo": "laura.mesa@innovative-la.com",
       "nextStep": "Levantamiento en zona de operaciones y food court",
       "estimatedCloseTime": "4 meses",
       "lastActivity": "Reunión inicial con subdirección",
@@ -352,24 +352,6 @@
       "weeklyActivities": 0,
       "globalEfficiency": 0,
       "_notes": "Cotización: Clase Azul. Levantamientos: 3 FEMSA (Ixtacomitán, Morelia, Cuernavaca)."
-    },
-    {
-      "email": "laura.sobrino@innovative-la.com",
-      "period": "2026-01",
-      "leads": 0,
-      "surveys": 0,
-      "proposalsSent": 0,
-      "meetings": 0,
-      "closedDeals": 0,
-      "conversionRate": 0,
-      "monthlyBudget": 500000,
-      "actualSales": 0,
-      "budgetCompliance": 0,
-      "responseTime": null,
-      "clientSatisfaction": null,
-      "weeklyActivities": 0,
-      "globalEfficiency": 0,
-      "_notes": "Sin reporte de enero vía WhatsApp."
     }
   ]
 }
