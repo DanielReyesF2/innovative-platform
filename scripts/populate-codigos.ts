@@ -11,13 +11,11 @@ const CODIGOS: Record<string, string> = {
   "lmesa@ig-la.com": "LM",
   "csescosse@ig-la.com": "CS",
   "molmos@ig-la.com": "MO",
-  "lsobrino@ig-la.com": "LS",
   // Seed data emails (alternate)
   "vero@innovative-la.com": "VA",
   "carmen@innovative-la.com": "CR",
   "armando@innovative-la.com": "AM",
   "cristina@innovative-la.com": "CS",
-  "laura.sobrino@innovative-la.com": "LS",
 };
 
 async function main() {
