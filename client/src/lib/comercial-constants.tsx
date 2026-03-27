@@ -278,6 +278,7 @@ export const dbProspectToKanban = (prospect: any, usersMap: Record<number, any> 
     recoveryStatus: prospect.recoveryStatus || null,
     fechaVencimientoContrato: prospect.fechaVencimientoContrato ? new Date(prospect.fechaVencimientoContrato).toISOString().split('T')[0] : null,
     levantamientoData: prospect.levantamientoData || null,
+    serviceVolumes: prospect.serviceVolumes || {},
     potential: prospect.potential || null,
     probability: prospect.probability ?? null,
     priority: prospect.priority || null,
@@ -374,35 +375,57 @@ export function tabUnlockLabel(tabId: string): string {
 }
 
 // ═══════ STAGE GATES ═══════
+export interface GateMissingField {
+  key: string;
+  label: string;
+  type: 'text' | 'number' | 'services';
+  placeholder?: string;
+}
+
 export const STAGE_GATES: Record<string, {
   label: string;
   validate: (p: any) => boolean;
   message: (p: any) => string;
   requirement: string;
+  /** Returns fields the user can fill inline to pass the gate. Empty = use special flow (e.g. QualifyLeadDialog) */
+  missingFields: (p: any) => GateMissingField[];
 }> = {
   presentacion: {
     label: 'Lead Calificado',
     validate: (p) => esProspectoCalificado(p),
     message: () => 'Usa "Calificar" en el detalle del lead para completar datos',
     requirement: 'Requiere: Calificar lead con datos de negocio',
+    // Gate 'presentacion' uses QualifyLeadDialog for lead→prospect conversion logic
+    missingFields: () => [],
   },
   levantamiento: {
     label: 'Volumen Verificado',
     validate: (p) => !!(p.volumenEstimado || p.facturacionEstimada),
     message: () => 'Falta volumen estimado o facturación estimada',
     requirement: 'Requiere: Volumen estimado o Facturación estimada',
+    missingFields: (p) => [
+      ...(!p.volumenEstimado ? [{ key: 'estimatedVolume', label: 'Volumen estimado', type: 'text' as const, placeholder: 'Ej: 120 ton/mes' }] : []),
+      ...(!p.facturacionEstimada && !p.volumenEstimado ? [{ key: 'estimatedValue', label: 'Facturación estimada ($)', type: 'number' as const, placeholder: '0.00' }] : []),
+    ],
   },
   propuesta: {
     label: 'Levantamiento Completado',
     validate: (p) => !!(p.volumenEstimado && (p.servicios?.length > 0)),
-    message: (p) => `Edita el prospecto para completar: ${[!p.volumenEstimado && 'volumen estimado', !p.servicios?.length && 'servicios seleccionados'].filter(Boolean).join(', ')}`,
-    requirement: 'Requiere: Volumen + Servicios (edita el prospecto para completar)',
+    message: (p) => `Completa: ${[!p.volumenEstimado && 'volumen estimado', !p.servicios?.length && 'servicios seleccionados'].filter(Boolean).join(', ')}`,
+    requirement: 'Requiere: Volumen + Servicios',
+    missingFields: (p) => [
+      ...(!p.volumenEstimado ? [{ key: 'estimatedVolume', label: 'Volumen estimado', type: 'text' as const, placeholder: 'Ej: 120 ton/mes' }] : []),
+      ...(!(p.servicios?.length > 0) ? [{ key: 'services', label: 'Servicios', type: 'services' as const }] : []),
+    ],
   },
   negociacion: {
     label: 'Propuesta Acusada',
     validate: (p) => !!(p.propuesta?.ventaTotal || p.facturacionEstimada),
     message: () => 'Falta monto de propuesta o facturación estimada',
     requirement: 'Requiere: Monto de propuesta definido',
+    missingFields: (p) => [
+      ...(!p.facturacionEstimada && !p.propuesta?.ventaTotal ? [{ key: 'estimatedValue', label: 'Valor estimado ($)', type: 'number' as const, placeholder: '0.00' }] : []),
+    ],
   },
 };
 

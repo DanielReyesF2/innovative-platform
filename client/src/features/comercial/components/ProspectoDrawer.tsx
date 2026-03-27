@@ -579,6 +579,19 @@ export function ProspectoDrawer({ prospecto, onClose, onEdit }: Props) {
                           <span className="font-medium text-[#1c2c4a]">{p.volumenEstimado}</span>
                         </div>
                       )}
+                      {p.serviceVolumes && Object.keys(p.serviceVolumes).length > 0 && (
+                        <div className="text-sm space-y-1 pl-2 border-l-2 border-[#e5e7eb]">
+                          {Object.entries(p.serviceVolumes as Record<string, string>).map(([svcId, vol]) => {
+                            const svc = SERVICIOS_INNOVATIVE.find(s => s.id === svcId);
+                            return vol ? (
+                              <div key={svcId} className="flex items-center justify-between">
+                                <span className="text-[#6b7280] text-xs">{svc?.nombre || svcId}</span>
+                                <span className="text-xs font-medium text-[#1c2c4a]">{vol}</span>
+                              </div>
+                            ) : null;
+                          })}
+                        </div>
+                      )}
                       {p.propuesta?.ventaTotal && (
                         <div className="flex items-center justify-between text-sm">
                           <span className="text-[#6b7280]">Venta total (contrato)</span>

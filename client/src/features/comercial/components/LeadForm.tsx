@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useCreateProspect } from "../api";
 import { useToast } from "@/components/ui/use-toast";
+import { SERVICIOS_INNOVATIVE } from "@/lib/comercial-constants";
 
 const SOURCE_LABELS: Record<string, string> = {
   referido: "Referido",
@@ -30,12 +31,22 @@ export function LeadForm({ onClose, salesTeam, defaultAssignee }: LeadFormProps)
     notes: "",
     assignedToId: defaultAssignee ? String(defaultAssignee) : "",
     firstContactDate: new Date().toISOString().split("T")[0],
+    services: [] as string[],
   });
 
   const createProspect = useCreateProspect();
   const { toast } = useToast();
 
   const set = (key: string, val: string) => setForm({ ...form, [key]: val });
+
+  const toggleService = (svcId: string) => {
+    setForm(prev => ({
+      ...prev,
+      services: prev.services.includes(svcId)
+        ? prev.services.filter(s => s !== svcId)
+        : [...prev.services, svcId],
+    }));
+  };
 
   const handleSubmit = async () => {
     if (!form.companyName.trim() || !form.contactName.trim()) {
@@ -54,6 +65,7 @@ export function LeadForm({ onClose, salesTeam, defaultAssignee }: LeadFormProps)
         probability: 10,
         priority: "media",
         reason: form.notes.trim() || undefined,
+        services: form.services.length > 0 ? form.services : undefined,
         assignedToId: form.assignedToId ? Number(form.assignedToId) : undefined,
         firstContactDate: form.firstContactDate || undefined,
       });
@@ -174,6 +186,26 @@ export function LeadForm({ onClose, salesTeam, defaultAssignee }: LeadFormProps)
               </select>
             </div>
           )}
+
+          <div>
+            <Label>Servicios de interés</Label>
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {SERVICIOS_INNOVATIVE.map(svc => (
+                <button
+                  key={svc.id}
+                  type="button"
+                  onClick={() => toggleService(svc.id)}
+                  className={`rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
+                    form.services.includes(svc.id)
+                      ? "bg-[#00a8a8] text-white"
+                      : "bg-[#f3f4f6] text-[#6b7280] hover:bg-[#e5e7eb]"
+                  }`}
+                >
+                  {svc.nombre}
+                </button>
+              ))}
+            </div>
+          </div>
 
           <div>
             <Label>Notas</Label>

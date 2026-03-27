@@ -92,8 +92,10 @@ export const prospects = pgTable("prospects", {
   industry: text("industry"),
   location: text("location"),
   potential: text("potential"), // Bajo, Medio, Alto, Muy Alto
-  estimatedVolume: text("estimated_volume"), // e.g. "120 ton/mes"
+  estimatedVolume: text("estimated_volume"), // e.g. "120 ton/mes" (total/summary)
   services: text("services").array().default([]),  // selected services (e.g. ["rme", "biodigestores"])
+  serviceVolumes: jsonb("service_volumes").$type<Record<string, string>>().default({}), // e.g. { "rme": "80 ton/mes", "organicos": "40 ton/mes" }
+  // DEBT: if volume aggregation/reports needed, migrate to { volume, unit } structure
   estimatedValue: numeric("estimated_value", { precision: 12, scale: 2 }),
   probability: integer("probability").default(0), // 0-100
   stage: prospectStageEnum("stage").notNull().default("contacto_inicial"),
@@ -282,6 +284,7 @@ export const insertProspectSchema = createInsertSchema(prospects, {
   potential: z.string().max(20).optional(),
   probability: z.number().min(0).max(100).optional(),
   services: z.array(z.string().max(50)).max(10).optional(),
+  serviceVolumes: z.record(z.string().max(50), z.string().max(100)).optional(),
 }).omit({ id: true, createdAt: true, updatedAt: true });
 
 export const qualifyProspectSchema = z.object({

@@ -4,3 +4,7 @@ dist/
 *.log
 .DS_Store
 .vite/
+
+# Block .jsx in client/src — all components must be .tsx
+# Prevents monolithic .jsx from overriding modular .tsx (Vite resolution bug)
+client/src/**/*.jsx
