@@ -49,10 +49,24 @@ await loadModules(app);
 if (process.env.NODE_ENV === "production") {
   const path = await import("path");
   const publicDir = path.resolve(import.meta.dirname, "public");
-  app.use(express.static(publicDir));
+  // Hashed assets (JS/CSS) — cache forever (hash changes on content change)
+  app.use("/assets", express.static(path.join(publicDir, "assets"), {
+    maxAge: "1y",
+    immutable: true,
+  }));
 
-  // SPA fallback — serve index.html for non-API routes
+  // Everything else (HTML, favicon, etc.) — no cache so deploys take effect immediately
+  app.use(express.static(publicDir, {
+    setHeaders: (res, filePath) => {
+      if (filePath.endsWith(".html")) {
+        res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+      }
+    },
+  }));
+
+  // SPA fallback — serve index.html for non-API routes (always fresh)
   app.get("*", (_req, res) => {
+    res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
     res.sendFile(path.join(publicDir, "index.html"));
   });
 } else {

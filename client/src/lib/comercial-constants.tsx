@@ -72,17 +72,7 @@ export const KPI_METAS: Record<string, { meta: number; frecuencia: string; label
   propuestasRechazadas: { meta: 0, frecuencia: 'semanal', label: 'Propuestas Rechazadas', peso: 0 },
 };
 
-// ═══════ MOTIVOS RECHAZO ═══════
-export const MOTIVOS_RECHAZO = [
-  { id: 1, motivo: 'Precios no competitivos', categoria: 'Comercial' },
-  { id: 2, motivo: 'Tardanza en entregar propuesta', categoria: 'Proceso' },
-  { id: 3, motivo: 'No tienen destinos finales suficientes', categoria: 'Operativo' },
-  { id: 4, motivo: 'No pueden hacer recolecciones diarias', categoria: 'Operativo' },
-  { id: 5, motivo: 'Cliente se queda con proveedor actual', categoria: 'Competencia' },
-  { id: 6, motivo: 'Falta de permisos/documentos', categoria: 'Legal' },
-  { id: 7, motivo: 'Muy poco material (< 10 ton)', categoria: 'Viabilidad' },
-  { id: 8, motivo: 'Otro (especificar)', categoria: 'Otro' },
-];
+// MOTIVOS_RECHAZO removed — rejection reasons now loaded from API: GET /api/comercial/rejection-reasons
 
 export const RECHAZO_CATEGORIES: Record<string, {
   id: string; label: string; color: string; bgColor: string; borderColor: string;
