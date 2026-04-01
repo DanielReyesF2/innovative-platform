@@ -44,7 +44,6 @@ export function EjecutivoHub({ member, onBack, onShowNuevoLead }: Props) {
 
   const memberProspectos = kanbanProspectos.filter(p => p.ejecutivo === member.codigo);
   const memberRechazados = memberProspectos.filter(p => p.status === 'cierre_perdido');
-  const totalPipeline = memberProspectos.filter(p => p.status !== 'cierre_perdido').reduce((s, p) => s + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0);
 
   // State
   const [selectedProspecto, setSelectedProspecto] = useState<any>(null);
@@ -122,14 +121,7 @@ export function EjecutivoHub({ member, onBack, onShowNuevoLead }: Props) {
         </div>
 
         {/* ACTION ROW — only Rechazadas + Presupuesto (stage counts live in kanban headers) */}
-        <div className="flex items-center gap-3 mb-4">
-          {/* Pipeline summary */}
-          <div className="flex items-center gap-3 text-sm">
-            <span className="text-[#6b7280]"><strong className="text-[#1c2c4a]">{memberProspectos.filter(p => p.status !== 'cierre_perdido').length}</strong> prospectos</span>
-            <span className="text-[#6b7280]"><strong className="text-[#0D47A1]">{fmtM(totalPipeline)}</strong> pipeline</span>
-          </div>
-
-          <div className="ml-auto flex items-center gap-2">
+        <div className="flex items-center justify-end gap-2 mb-4">
             {/* Rechazadas */}
             {memberRechazados.length > 0 && (() => {
               const vencidos = memberRechazados.filter(p => getSeguimientoUrgency({ fechaSeguimiento: p.fechaSeguimiento, accion: p.followUpAction, recoveryStatus: p.recoveryStatus, fechaVencimientoContrato: p.fechaVencimientoContrato })?.overdue).length;
@@ -166,7 +158,6 @@ export function EjecutivoHub({ member, onBack, onShowNuevoLead }: Props) {
                 <Edit3 size={14} className="text-[#0067B0]" />
               </button>
             )}
-          </div>
         </div>
 
         {/* PIPELINE — Kanban personal */}
@@ -177,7 +168,6 @@ export function EjecutivoHub({ member, onBack, onShowNuevoLead }: Props) {
             <div className="grid grid-cols-6 gap-2">
               {HUB_KANBAN_STAGES.map(stage => {
                 const stageItems = memberProspectos.filter(p => p.status === stage.id);
-                const stageValue = stageItems.reduce((s, p) => s + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0);
                 const gate = STAGE_GATES[stage.id];
 
                 return (
@@ -190,7 +180,6 @@ export function EjecutivoHub({ member, onBack, onShowNuevoLead }: Props) {
                         </div>
                         {gate && <Lock size={11} className="text-[#9ca3af]" />}
                       </div>
-                      {stageValue > 0 && <div className="text-[10px] text-[#6b7280] mt-0.5">{fmtM(stageValue)}</div>}
                     </div>
                     <HubDroppableColumn stageId={stage.id}>
                       <SortableContext items={stageItems.map(p => p.id)} strategy={verticalListSortingStrategy}>
