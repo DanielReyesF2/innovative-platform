@@ -250,7 +250,8 @@ export const dbProspectToKanban = (prospect: any, usersMap: Record<number, any> 
     servicios: prospect.services || [],
     status: prospect.stage,
     semana: null,
-    fecha: prospect.createdAt ? new Date(prospect.createdAt).toISOString().split('T')[0] : null,
+    fecha: prospect.firstContactDate || (prospect.createdAt ? new Date(prospect.createdAt).toISOString().split('T')[0] : null),
+    fechaRegistro: prospect.createdAt ? new Date(prospect.createdAt).toISOString().split('T')[0] : null,
     propuesta: {
       status: null,
       ventaTotal: prospect.estimatedValue ? Number(prospect.estimatedValue) : null,
@@ -258,7 +259,8 @@ export const dbProspectToKanban = (prospect: any, usersMap: Record<number, any> 
       carton: null,
       playo: null,
     },
-    motivoRechazo: prospect.rejectionDetail || null,
+    motivoRechazo: prospect.rejectionReasonText || prospect.rejectionDetail || null,
+    motivoRechazoCategory: prospect.rejectionReasonCategory || null,
     comentarios: prospect.reason || prospect.nextStep || '',
     volumenEstimado: prospect.estimatedVolume || null,
     facturacionEstimada: prospect.estimatedValue ? Number(prospect.estimatedValue) : null,
@@ -314,7 +316,20 @@ export const getRecoveryState = (seg: any) => {
   return RECOVERY_STATES.sin_seguimiento;
 };
 
-export const classifyRechazo = (motivoRechazo: string | null | undefined) => {
+/**
+ * Clasifica un rechazo usando la categoría del catálogo (DB) como fuente primaria.
+ * Fallback a keyword matching sobre el texto del motivo si no hay categoría.
+ */
+export const classifyRechazo = (motivoRechazo: string | null | undefined, dbCategory?: string | null) => {
+  // Primary: use the category from rejection_reasons table
+  if (dbCategory) {
+    const lower = dbCategory.toLowerCase();
+    if (lower === 'comercial' || lower === 'competencia') return RECHAZO_CATEGORIES.pricing;
+    if (lower === 'proceso') return RECHAZO_CATEGORIES.proposal;
+    // Operativo, Legal, Viabilidad → operational
+    return RECHAZO_CATEGORIES.operational;
+  }
+  // Fallback: keyword matching on rejection text (legacy data without category)
   if (!motivoRechazo) return RECHAZO_CATEGORIES.operational;
   const lower = motivoRechazo.toLowerCase();
   if (lower.includes('precio') || lower.includes('competitivo') || lower.includes('costo') || lower.includes('elevado')) return RECHAZO_CATEGORIES.pricing;

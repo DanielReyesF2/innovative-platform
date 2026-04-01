@@ -129,6 +129,7 @@ export const prospects = pgTable("prospects", {
   fechaVencimientoContrato: timestamp("fecha_vencimiento_contrato"),
   followUpAction: text("follow_up_action"),
   recoveryStatus: text("recovery_status"), // sin_seguimiento, en_seguimiento, re_contactada
+  firstContactDate: date("first_contact_date"), // business date: when initial contact happened
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

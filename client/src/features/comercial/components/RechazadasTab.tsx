@@ -54,7 +54,7 @@ export function RechazadasTab({ onSelectProspecto }: Props) {
   const totalValue = allRejected.reduce((s, p) => s + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0);
 
   const byCat: Record<string, any[]> = { pricing: [], proposal: [], operational: [] };
-  allRejected.forEach(p => { const cat = classifyRechazo(p.motivoRechazo); if (byCat[cat.id]) byCat[cat.id].push(p); });
+  allRejected.forEach(p => { const cat = classifyRechazo(p.motivoRechazo, p.motivoRechazoCategory); if (byCat[cat.id]) byCat[cat.id].push(p); });
 
   const pieData = Object.entries(byCat)
     .filter(([, items]) => items.length > 0)

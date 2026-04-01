@@ -43,8 +43,9 @@ export function EjecutivoHub({ member, onBack, onShowNuevoLead }: Props) {
   const { toast } = useToast();
 
   const memberProspectos = kanbanProspectos.filter(p => p.ejecutivo === member.codigo);
-  const memberLeads = memberProspectos.filter(p => ['contacto_inicial', 'presentacion'].includes(p.status));
-  const memberProspectosActivos = memberProspectos.filter(p => !['contacto_inicial', 'presentacion', 'cierre_perdido'].includes(p.status));
+  // KPI cards match HUB_KANBAN_STAGES 1:1 to avoid count confusion
+  const memberLeads = memberProspectos.filter(p => p.status === 'contacto_inicial');
+  const memberProspectosActivos = memberProspectos.filter(p => ['presentacion', 'levantamiento', 'propuesta', 'negociacion'].includes(p.status));
   const memberRechazados = memberProspectos.filter(p => p.status === 'cierre_perdido');
   const memberGanados = memberProspectos.filter(p => p.status === 'cierre_ganado');
   const memberPropuestas = memberProspectos.filter(p => ['propuesta', 'negociacion'].includes(p.status));
@@ -291,7 +292,7 @@ export function EjecutivoHub({ member, onBack, onShowNuevoLead }: Props) {
               <div className="p-4 overflow-y-auto max-h-[calc(80vh-80px)]">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {memberRechazados.map(p => {
-                    const cat = classifyRechazo(p.motivoRechazo);
+                    const cat = classifyRechazo(p.motivoRechazo, p.motivoRechazoCategory);
                     const seg = { fechaSeguimiento: p.fechaSeguimiento, accion: p.followUpAction, recoveryStatus: p.recoveryStatus, fechaVencimientoContrato: p.fechaVencimientoContrato };
                     const urgency = getSeguimientoUrgency(seg);
                     return (

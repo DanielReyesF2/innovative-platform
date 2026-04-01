@@ -36,9 +36,21 @@ import { users } from "../../../shared/schema/common";
 // --- Prospects ---
 
 export async function getProspects() {
-  return db.query.prospects.findMany({
-    orderBy: [desc(prospects.updatedAt)],
-  });
+  const rows = await db
+    .select({
+      prospect: prospects,
+      rejectionReasonText: rejectionReasons.reason,
+      rejectionReasonCategory: rejectionReasons.category,
+    })
+    .from(prospects)
+    .leftJoin(rejectionReasons, eq(prospects.rejectionReasonId, rejectionReasons.id))
+    .orderBy(desc(prospects.updatedAt));
+
+  return rows.map((r) => ({
+    ...r.prospect,
+    rejectionReasonText: r.rejectionReasonText,
+    rejectionReasonCategory: r.rejectionReasonCategory,
+  }));
 }
 
 export async function getProspectById(id: number) {

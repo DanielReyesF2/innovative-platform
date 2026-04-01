@@ -170,18 +170,22 @@ async function seed() {
     });
   }
 
-  // 10. Seed rejection reasons (idempotent — skip if already populated)
+  // 10. Seed rejection reasons (idempotent — insert missing ones)
   const existingReasons = await db.query.rejectionReasons.findMany();
-  if (existingReasons.length === 0) {
-    console.log(`  Inserting ${comercialData.rejectionReasons.length} rejection reasons...`);
-    for (const reason of comercialData.rejectionReasons) {
+  const existingReasonTexts = new Set(existingReasons.map((r: any) => r.reason));
+  const missingReasons = comercialData.rejectionReasons.filter(
+    (r: any) => !existingReasonTexts.has(r.reason)
+  );
+  if (missingReasons.length > 0) {
+    console.log(`  Inserting ${missingReasons.length} new rejection reasons...`);
+    for (const reason of missingReasons) {
       await db.insert(rejectionReasons).values({
         reason: reason.reason,
         category: reason.category,
       });
     }
   } else {
-    console.log(`  Rejection reasons already exist (${existingReasons.length}), skipping.`);
+    console.log(`  All rejection reasons already exist (${existingReasons.length}), skipping.`);
   }
 
   console.log("Seed complete!");

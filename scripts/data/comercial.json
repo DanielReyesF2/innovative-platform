@@ -1,6 +1,7 @@
 {
   "rejectionReasons": [
     { "reason": "Precio fuera de presupuesto", "category": "Comercial" },
+    { "reason": "Precios no competitivos", "category": "Comercial" },
     { "reason": "No hay interés en el servicio actualmente", "category": "Comercial" },
     { "reason": "Proceso de licitación cancelado", "category": "Proceso" },
     { "reason": "Cambio de prioridades internas", "category": "Proceso" },

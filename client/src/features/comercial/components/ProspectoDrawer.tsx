@@ -351,7 +351,7 @@ export function ProspectoDrawer({ prospecto, onClose, onEdit }: Props) {
 
               {/* Rejection banner */}
               {p.status === 'cierre_perdido' && (() => {
-                const cat = classifyRechazo(p.motivoRechazo);
+                const cat = classifyRechazo(p.motivoRechazo, p.motivoRechazoCategory);
                 const seg = { fechaSeguimiento: p.fechaSeguimiento, accion: p.followUpAction, recoveryStatus: p.recoveryStatus, fechaVencimientoContrato: p.fechaVencimientoContrato };
                 const urgency = getSeguimientoUrgency(seg);
                 return (
@@ -599,7 +599,11 @@ export function ProspectoDrawer({ prospecto, onClose, onEdit }: Props) {
                       )}
                       {p.volumenEstimado && (
                         <div className="flex items-center justify-between text-sm">
-                          <span className="text-[#6b7280]">Volumen estimado</span>
+                          <span className="text-[#6b7280]">
+                            {p.serviceVolumes && Object.keys(p.serviceVolumes).length > 0
+                              ? 'Volumen total'
+                              : 'Volumen estimado (general)'}
+                          </span>
                           <span className="font-medium text-[#1c2c4a]">{p.volumenEstimado}</span>
                         </div>
                       )}
@@ -623,7 +627,7 @@ export function ProspectoDrawer({ prospecto, onClose, onEdit }: Props) {
                         </div>
                       )}
                       {p.motivoRechazo && (() => {
-                        const cat = classifyRechazo(p.motivoRechazo);
+                        const cat = classifyRechazo(p.motivoRechazo, p.motivoRechazoCategory);
                         return (
                           <div className="flex items-center justify-between text-sm">
                             <span className="text-[#6b7280]">Motivo rechazo</span>
@@ -636,8 +640,14 @@ export function ProspectoDrawer({ prospecto, onClose, onEdit }: Props) {
                       })()}
                       {p.fecha && (
                         <div className="flex items-center justify-between text-sm">
-                          <span className="text-[#6b7280]">Fecha</span>
+                          <span className="text-[#6b7280]">Primer contacto</span>
                           <span className="font-medium text-[#1c2c4a]">{p.fecha}</span>
+                        </div>
+                      )}
+                      {p.fechaRegistro && p.fechaRegistro !== p.fecha && (
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-[#6b7280]">Registrado</span>
+                          <span className="font-medium text-[#9ca3af]">{p.fechaRegistro}</span>
                         </div>
                       )}
                       {p.nextStep && (
