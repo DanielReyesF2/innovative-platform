@@ -43,12 +43,7 @@ export function EjecutivoHub({ member, onBack, onShowNuevoLead }: Props) {
   const { toast } = useToast();
 
   const memberProspectos = kanbanProspectos.filter(p => p.ejecutivo === member.codigo);
-  // KPI cards match HUB_KANBAN_STAGES 1:1 to avoid count confusion
-  const memberLeads = memberProspectos.filter(p => p.status === 'contacto_inicial');
-  const memberProspectosActivos = memberProspectos.filter(p => ['presentacion', 'levantamiento', 'propuesta', 'negociacion'].includes(p.status));
   const memberRechazados = memberProspectos.filter(p => p.status === 'cierre_perdido');
-  const memberGanados = memberProspectos.filter(p => p.status === 'cierre_ganado');
-  const memberPropuestas = memberProspectos.filter(p => ['propuesta', 'negociacion'].includes(p.status));
   const totalPipeline = memberProspectos.filter(p => p.status !== 'cierre_perdido').reduce((s, p) => s + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0);
 
   // State
@@ -126,24 +121,17 @@ export function EjecutivoHub({ member, onBack, onShowNuevoLead }: Props) {
           )}
         </div>
 
-        {/* KPI ROW */}
+        {/* KPI ROW — generated from HUB_KANBAN_STAGES so counts always match kanban columns */}
         <div className="grid grid-cols-3 md:grid-cols-6 gap-3 mb-5">
-          <div className="bg-white rounded-xl border border-[#e5e7eb] p-3 text-center">
-            <div className="text-2xl font-bold text-[#6b7280]">{memberLeads.length}</div>
-            <div className="text-xs text-[#6b7280] mt-0.5">Leads</div>
-          </div>
-          <div className="bg-white rounded-xl border border-[#e5e7eb] p-3 text-center">
-            <div className="text-2xl font-bold text-[#00a8a8]">{memberProspectosActivos.length}</div>
-            <div className="text-xs text-[#6b7280] mt-0.5">Prospectos</div>
-          </div>
-          <div className="bg-white rounded-xl border border-[#e5e7eb] p-3 text-center">
-            <div className="text-2xl font-bold text-[#7C3AED]">{memberPropuestas.length}</div>
-            <div className="text-xs text-[#6b7280] mt-0.5">Propuestas</div>
-          </div>
-          <div className="bg-white rounded-xl border border-[#e5e7eb] p-3 text-center">
-            <div className="text-2xl font-bold text-[#2E7D32]">{memberGanados.length}</div>
-            <div className="text-xs text-[#6b7280] mt-0.5">Cierres</div>
-          </div>
+          {HUB_KANBAN_STAGES.map(stage => {
+            const count = memberProspectos.filter(p => p.status === stage.id).length;
+            return (
+              <div key={stage.id} className="bg-white rounded-xl border border-[#e5e7eb] p-3 text-center">
+                <div className="text-2xl font-bold" style={{ color: stage.color }}>{count}</div>
+                <div className="text-xs text-[#6b7280] mt-0.5">{stage.label}</div>
+              </div>
+            );
+          })}
           {memberRechazados.length > 0 && (() => {
             const vencidos = memberRechazados.filter(p => getSeguimientoUrgency({ fechaSeguimiento: p.fechaSeguimiento, accion: p.followUpAction, recoveryStatus: p.recoveryStatus, fechaVencimientoContrato: p.fechaVencimientoContrato })?.overdue).length;
             const conSeg = memberRechazados.filter(p => p.fechaSeguimiento).length;
