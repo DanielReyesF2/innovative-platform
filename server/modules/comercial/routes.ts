@@ -195,9 +195,15 @@ router.post("/prospects/:id/reject", async (req, res) => {
     if (!rejectionReasonId) {
       return res.status(400).json({ message: "Motivo de rechazo requerido" });
     }
+    // Validate rejection reason exists in DB
+    const reasons = await getRejectionReasons();
+    const validReason = reasons.find(r => r.id === Number(rejectionReasonId));
+    if (!validReason) {
+      return res.status(400).json({ message: "Motivo de rechazo inválido" });
+    }
     const updated = await rejectProspect(
       Number(req.params.id),
-      rejectionReasonId,
+      Number(rejectionReasonId),
       rejectionDetail || ""
     );
     if (!updated) return res.status(404).json({ message: "Prospecto no encontrado" });

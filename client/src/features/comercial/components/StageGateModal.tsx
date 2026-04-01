@@ -54,18 +54,14 @@ export function StageGateModal({ pendingMove, isHub, onForce, onCancel }: Props)
     if (!isFormValid) return;
     setIsSaving(true);
     try {
-      // Save the missing fields
+      // Save missing fields AND advance stage in a single mutation to avoid race conditions
       await updateProspect.mutateAsync({
         id: pendingMove.prospecto.id,
         ...formValues,
-      });
-      // Move to next stage
-      await updateProspect.mutateAsync({
-        id: pendingMove.prospecto.id,
         stage: pendingMove.toStage,
       });
       toast({ title: `Avanzado a ${stageLabel}` });
-      onCancel(); // Close modal — queries already invalidated by useUpdateProspect
+      onCancel();
     } catch {
       toast({ title: 'Error al actualizar', variant: 'destructive' });
     } finally {

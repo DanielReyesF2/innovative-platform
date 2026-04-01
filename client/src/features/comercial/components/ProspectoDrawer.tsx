@@ -82,8 +82,13 @@ export function ProspectoDrawer({ prospecto, onClose, onEdit }: Props) {
     setTimeout(() => setCopiedField(null), 2000);
   };
 
-  const changeProspectoStage = (prospectoId: number, newStage: string) => {
-    updateProspectMutation.mutate({ id: prospectoId, stage: newStage });
+  const changeProspectoStage = async (prospectoId: number, newStage: string) => {
+    try {
+      await updateProspectMutation.mutateAsync({ id: prospectoId, stage: newStage });
+      toast({ title: `Etapa actualizada` });
+    } catch {
+      toast({ title: 'Error al cambiar etapa', variant: 'destructive' });
+    }
   };
 
   const guardarSeguimiento = (prospectoId: number, data: any) => {
@@ -207,10 +212,10 @@ export function ProspectoDrawer({ prospecto, onClose, onEdit }: Props) {
               )}
               <button
                 onClick={(e) => { e.stopPropagation(); setShowEditDialog(true); }}
-                className="p-1.5 text-[#999] hover:text-[#00a8a8] hover:bg-[#00a8a8]/10 rounded-lg transition-all"
+                className="flex items-center gap-1 px-2 py-1.5 text-[#00a8a8] border border-[#00a8a8]/30 hover:bg-[#00a8a8]/10 rounded-lg text-xs font-medium transition-all"
                 title="Editar prospecto"
               >
-                <Edit3 size={16} />
+                <Edit3 size={14} /> Editar
               </button>
               {(authUser?.role === 'admin' || authUser?.role === 'comercial' || authUser?.role === 'director') && (
                 <button

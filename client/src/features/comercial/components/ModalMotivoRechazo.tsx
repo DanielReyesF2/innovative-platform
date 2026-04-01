@@ -1,6 +1,6 @@
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { X, AlertCircle } from 'lucide-react';
-import { MOTIVOS_RECHAZO } from '@/lib/comercial-constants';
 
 interface Props {
   prospecto: any;
@@ -11,6 +11,10 @@ interface Props {
 export function ModalMotivoRechazo({ prospecto, onClose, onSave }: Props) {
   const [motivoSeleccionado, setMotivoSeleccionado] = useState('');
   const [detalle, setDetalle] = useState('');
+
+  const { data: rejectionReasons = [] } = useQuery<{ id: number; reason: string; category: string }[]>({
+    queryKey: ['/api/comercial/rejection-reasons'],
+  });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,9 +51,9 @@ export function ModalMotivoRechazo({ prospecto, onClose, onSave }: Props) {
               required
             >
               <option value="">Seleccione un motivo...</option>
-              {MOTIVOS_RECHAZO.map(motivo => (
+              {rejectionReasons.map(motivo => (
                 <option key={motivo.id} value={String(motivo.id)}>
-                  {motivo.motivo} ({motivo.categoria})
+                  {motivo.reason} ({motivo.category})
                 </option>
               ))}
             </select>

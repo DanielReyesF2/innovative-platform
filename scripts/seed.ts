@@ -11,7 +11,9 @@ import {
   surveyGateConfigs,
   operationalDocuments,
 } from "../shared/schema/operaciones";
+import { rejectionReasons } from "../shared/schema/comercial";
 import operacionesData from "./data/operaciones.json";
+import comercialData from "./data/comercial.json";
 
 async function seed() {
   console.log("Seeding operaciones data...");
@@ -166,6 +168,20 @@ async function seed() {
       status: doc.status as any,
       notes: doc.notes || null,
     });
+  }
+
+  // 10. Seed rejection reasons (idempotent — skip if already populated)
+  const existingReasons = await db.query.rejectionReasons.findMany();
+  if (existingReasons.length === 0) {
+    console.log(`  Inserting ${comercialData.rejectionReasons.length} rejection reasons...`);
+    for (const reason of comercialData.rejectionReasons) {
+      await db.insert(rejectionReasons).values({
+        reason: reason.reason,
+        category: reason.category,
+      });
+    }
+  } else {
+    console.log(`  Rejection reasons already exist (${existingReasons.length}), skipping.`);
   }
 
   console.log("Seed complete!");

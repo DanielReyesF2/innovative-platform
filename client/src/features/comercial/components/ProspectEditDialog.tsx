@@ -24,7 +24,6 @@ export function ProspectEditDialog({ prospect, onClose, onSaved }: ProspectEditD
     location: p.ciudad || "",
     industry: p.industria || "",
     services: p.servicios || [],
-    serviceVolumes: (p.serviceVolumes || {}) as Record<string, string>,
     contactName: p.contacto?.nombre || "",
     contactRole: p.contacto?.puesto || "",
     contactPhone: p.contacto?.telefono || "",
@@ -71,7 +70,6 @@ export function ProspectEditDialog({ prospect, onClose, onSaved }: ProspectEditD
         probability: form.probability !== "" ? Number(form.probability) : undefined,
         estimatedValue: form.estimatedValue !== "" ? String(form.estimatedValue) : undefined,
         estimatedVolume: form.estimatedVolume.trim() || undefined,
-        serviceVolumes: Object.keys(form.serviceVolumes).length > 0 ? form.serviceVolumes : undefined,
         estimatedCloseTime: form.estimatedCloseTime || undefined,
         priority: form.priority || undefined,
         nextStep: form.nextStep.trim() || undefined,
@@ -144,28 +142,6 @@ export function ProspectEditDialog({ prospect, onClose, onSaved }: ProspectEditD
                   ))}
                 </div>
               </div>
-              {form.services.length > 0 && (
-                <div className="sm:col-span-2">
-                  <Label className="text-xs">Volumen por servicio</Label>
-                  <div className="mt-2 space-y-2">
-                    {form.services.map((svcId: string) => {
-                      const svc = SERVICIOS_INNOVATIVE.find(s => s.id === svcId);
-                      if (!svc) return null;
-                      return (
-                        <div key={svcId} className="flex items-center gap-2">
-                          <span className="text-xs font-medium text-[#1c2c4a] w-32 shrink-0">{svc.nombre}</span>
-                          <Input
-                            value={form.serviceVolumes[svcId] || ""}
-                            onChange={(e) => set("serviceVolumes", { ...form.serviceVolumes, [svcId]: e.target.value })}
-                            placeholder="Ej: 80 ton/mes"
-                            className="h-8 text-xs"
-                          />
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
             </div>
           </div>
 

@@ -25,6 +25,7 @@ export function LeadForm({ onClose, salesTeam, defaultAssignee }: LeadFormProps)
   const [form, setForm] = useState({
     companyName: "",
     contactName: "",
+    contactRole: "",
     contactPhone: "",
     contactEmail: "",
     source: "referido",
@@ -58,6 +59,7 @@ export function LeadForm({ onClose, salesTeam, defaultAssignee }: LeadFormProps)
       await createProspect.mutateAsync({
         name: form.companyName.trim(),
         contactName: form.contactName.trim(),
+        contactRole: form.contactRole.trim() || undefined,
         contactPhone: form.contactPhone.trim() || undefined,
         contactEmail: form.contactEmail.trim() || undefined,
         source: form.source,
@@ -118,6 +120,16 @@ export function LeadForm({ onClose, salesTeam, defaultAssignee }: LeadFormProps)
               value={form.contactName}
               onChange={(e) => set("contactName", e.target.value)}
               placeholder="Nombre completo"
+              className="mt-1"
+            />
+          </div>
+
+          <div>
+            <Label>Cargo / Puesto</Label>
+            <Input
+              value={form.contactRole}
+              onChange={(e) => set("contactRole", e.target.value)}
+              placeholder="Ej: Gerente de Planta"
               className="mt-1"
             />
           </div>

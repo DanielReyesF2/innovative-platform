@@ -96,8 +96,6 @@ function GeneralInfoSection({ data, onChange }: { data: any; onChange: (d: any) 
         <Field label="RFC" value={data.rfc} onChange={(v) => set("rfc", v)} />
         <Field label="Direccion" value={data.direccion} onChange={(v) => set("direccion", v)} />
         <Field label="Giro" value={data.giro} onChange={(v) => set("giro", v)} />
-        <Field label="Num. Empleados" value={data.numEmpleados} onChange={(v) => set("numEmpleados", v)} />
-        <Field label="Horario de Operacion" value={data.horarioOperacion} onChange={(v) => set("horarioOperacion", v)} />
         <Field label="Contacto Operativo" value={data.contactoOperativo} onChange={(v) => set("contactoOperativo", v)} />
         <Field label="Telefono Operativo" value={data.telefonoOperativo} onChange={(v) => set("telefonoOperativo", v)} />
       </div>
@@ -107,7 +105,7 @@ function GeneralInfoSection({ data, onChange }: { data: any; onChange: (d: any) 
 
 function WasteTypesSection({ data, onChange }: { data: any[]; onChange: (d: any[]) => void }) {
   const addRow = () =>
-    onChange([...data, { wasteType: "", quantity: "", percentage: "", currentDestination: "", monthlyCost: "" }]);
+    onChange([...data, { wasteType: "", quantity: "", currentDestination: "", monthlyCost: "" }]);
   const removeRow = (i: number) => onChange(data.filter((_, idx) => idx !== i));
   const updateRow = (i: number, key: string, val: string) => {
     const updated = [...data];
@@ -128,10 +126,9 @@ function WasteTypesSection({ data, onChange }: { data: any[]; onChange: (d: any[
               <Trash2 className="h-3 w-3" />
             </Button>
           </div>
-          <div className="grid gap-2 sm:grid-cols-3">
+          <div className="grid gap-2 sm:grid-cols-2">
             <Field label="Tipo *" value={row.wasteType} onChange={(v) => updateRow(i, "wasteType", v)} placeholder="Ej: Organicos" />
             <Field label="Cantidad" value={row.quantity} onChange={(v) => updateRow(i, "quantity", v)} placeholder="Ej: 18 ton/mes" />
-            <Field label="Porcentaje %" value={row.percentage} onChange={(v) => updateRow(i, "percentage", v)} type="number" />
             <Field label="Destino Actual" value={row.currentDestination} onChange={(v) => updateRow(i, "currentDestination", v)} />
             <Field label="Costo Mensual" value={row.monthlyCost} onChange={(v) => updateRow(i, "monthlyCost", v)} type="number" />
           </div>
