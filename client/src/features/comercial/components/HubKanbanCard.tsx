@@ -27,6 +27,8 @@ export function HubKanbanCard({ prospecto, onSelect, notesCount = 0, filesCount 
   const primaryService = (prospecto.servicios || [])[0] || 'rme';
   const svc = SERVICE_COLORS[primaryService] || SERVICE_COLORS.rme;
   const fechaRef = estimarFechaProspecto(prospecto);
+  const diasDesdeContacto = fechaRef ? Math.floor((new Date().getTime() - new Date(fechaRef).getTime()) / (1000 * 60 * 60 * 24)) : null;
+  const fechaCorta = fechaRef ? new Date(fechaRef + 'T12:00:00').toLocaleDateString('es-MX', { day: 'numeric', month: 'short' }) : null;
   const campos = calcularCamposCompletos(prospecto);
   const completos = campos.filter((c: any) => c.ok).length;
   const total = campos.length;
@@ -55,9 +57,11 @@ export function HubKanbanCard({ prospecto, onSelect, notesCount = 0, filesCount 
       <div className="flex items-center justify-between text-[10px] text-[#9ca3af]">
         <div className="flex items-center gap-1">
           {prospecto.ciudad && <span className="truncate max-w-[50px]">{prospecto.ciudad.split(',')[0]}</span>}
-          <span className="font-semibold px-1 py-px rounded text-[8px]" style={{ color: urgencyColor(fechaRef), backgroundColor: `${urgencyColor(fechaRef)}12` }}>
-            {timeAgo(fechaRef)}
-          </span>
+          {fechaCorta && (
+            <span className="px-1 py-px rounded text-[8px]" style={{ color: urgencyColor(fechaRef), backgroundColor: `${urgencyColor(fechaRef)}12` }}>
+              <span className="text-[#9ca3af] font-normal">1er contacto:</span> <span className="font-semibold">{fechaCorta} · {diasDesdeContacto}d</span>
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-1 flex-shrink-0">
           {notesCount > 0 && <span className="flex items-center gap-0.5 text-[#9ca3af]"><MessageSquare size={8} />{notesCount}</span>}
