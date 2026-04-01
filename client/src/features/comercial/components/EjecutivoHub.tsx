@@ -105,7 +105,6 @@ export function EjecutivoHub({ member, onBack, onShowNuevoLead }: Props) {
           <ExecutiveAvatar codigo={member.codigo} name={member.name} size="xl" />
           <div className="flex-1 min-w-0">
             <h1 className="text-xl font-bold text-[#1c2c4a]">{member.name}</h1>
-            <p className="text-sm text-[#6b7280]">{member.role}{member.zona ? ` — ${member.zona}` : ''}</p>
           </div>
           <div className="text-right hidden md:block">
             <div className="text-sm text-[#6b7280]">Presupuesto Anual</div>
