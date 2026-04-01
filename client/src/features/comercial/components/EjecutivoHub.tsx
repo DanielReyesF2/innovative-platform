@@ -98,75 +98,71 @@ export function EjecutivoHub({ member, onBack, onShowNuevoLead }: Props) {
     <div className="bg-[#faf7f2] min-h-full">
       <div className="max-w-[1400px] mx-auto">
 
-        {/* BACK + HEADER */}
-        <div className="flex items-center gap-3 mb-6">
-          <button onClick={onBack}
-            className="flex items-center justify-center w-9 h-9 rounded-lg bg-white border border-[#e5e7eb] hover:bg-[#f3f4f6] transition-colors">
-            <ArrowLeft size={18} className="text-[#6b7280]" />
-          </button>
-          <ExecutiveAvatar codigo={member.codigo} name={member.name} size="xl" />
-          <div className="flex-1 min-w-0">
-            <h1 className="text-xl font-bold text-[#1c2c4a]">{member.name}</h1>
-          </div>
-          <div className="text-right hidden md:block">
-            <div className="text-sm text-[#6b7280]">Presupuesto Anual</div>
-            <div className="text-xl font-bold text-[#0D47A1]">{fmtM(member.presupuestoAnual2026)}</div>
-            <div className="text-xs text-[#9ca3af]">{fmtM(member.presupuestoMensual, 2)} / mes</div>
-          </div>
-          {onShowNuevoLead && (
-            <button onClick={() => onShowNuevoLead(member.codigo)}
-              className="flex items-center gap-2 px-4 py-2.5 bg-[#1c2c4a] hover:bg-[#1c2c4a]/90 text-white rounded-lg text-sm font-semibold transition-all shadow-sm hover:shadow-md">
-              <Plus size={16} /> Nuevo Lead
+        {/* UNIFIED HEADER CARD — single container: identity + insights + actions */}
+        <div className="bg-white rounded-xl shadow-sm border border-[#e5e7eb]/60 px-5 py-4 mb-4">
+          {/* Top row: back + avatar + name | actions */}
+          <div className="flex items-center gap-3">
+            <button onClick={onBack}
+              className="flex items-center justify-center w-9 h-9 rounded-lg border border-[#e5e7eb] hover:bg-[#f3f4f6] transition-colors flex-shrink-0">
+              <ArrowLeft size={18} className="text-[#6b7280]" />
             </button>
-          )}
-        </div>
-
-        {/* ACTION ROW — only Rechazadas + Presupuesto (stage counts live in kanban headers) */}
-        <div className="flex items-center justify-end gap-2 mb-4">
-            {/* Rechazadas */}
-            {memberRechazados.length > 0 && (() => {
-              const vencidos = memberRechazados.filter(p => getSeguimientoUrgency({ fechaSeguimiento: p.fechaSeguimiento, accion: p.followUpAction, recoveryStatus: p.recoveryStatus, fechaVencimientoContrato: p.fechaVencimientoContrato })?.overdue).length;
-              const conSeg = memberRechazados.filter(p => p.fechaSeguimiento).length;
-              return (
-                <button onClick={() => setShowRechazadasModal(true)}
-                  className={`flex items-center gap-2 rounded-lg border px-3 py-2 hover:shadow-sm transition-all ${vencidos > 0 ? 'border-red-300 bg-red-50' : 'border-[#e5e7eb] bg-white'}`}>
-                  {vencidos > 0 && <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />}
-                  <span className="text-lg font-bold" style={{ color: vencidos > 0 ? '#EF4444' : '#F59E0B' }}>{memberRechazados.length}</span>
+            <ExecutiveAvatar codigo={member.codigo} name={member.name} size="xl" />
+            <div className="flex-1 min-w-0">
+              <h1 className="text-xl font-bold text-[#1c2c4a]">{member.name}</h1>
+            </div>
+            {/* Action buttons */}
+            <div className="flex items-center gap-2 flex-shrink-0">
+              {memberRechazados.length > 0 && (() => {
+                const vencidos = memberRechazados.filter(p => getSeguimientoUrgency({ fechaSeguimiento: p.fechaSeguimiento, accion: p.followUpAction, recoveryStatus: p.recoveryStatus, fechaVencimientoContrato: p.fechaVencimientoContrato })?.overdue).length;
+                const conSeg = memberRechazados.filter(p => p.fechaSeguimiento).length;
+                return (
+                  <button onClick={() => setShowRechazadasModal(true)}
+                    className={`flex items-center gap-2 rounded-lg border px-2.5 py-1.5 hover:shadow-sm transition-all ${vencidos > 0 ? 'border-red-300 bg-red-50' : 'border-[#e5e7eb] bg-[#f9fafb]'}`}>
+                    {vencidos > 0 && <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />}
+                    <span className="text-sm font-bold" style={{ color: vencidos > 0 ? '#EF4444' : '#F59E0B' }}>{memberRechazados.length}</span>
+                    <div className="text-left">
+                      <div className="text-[11px] font-semibold text-[#1c2c4a]">Rechazadas</div>
+                      <div className="text-[9px] text-[#9ca3af]">{conSeg}/{memberRechazados.length} seg.</div>
+                    </div>
+                  </button>
+                );
+              })()}
+              {member.presupuestoAnual2026 > 0 && (
+                <button onClick={() => setShowVentasRealesModal(true)}
+                  className="flex items-center gap-2 rounded-lg border border-[#e5e7eb] bg-[#f9fafb] px-2.5 py-1.5 hover:shadow-sm hover:border-[#0067B0]/30 transition-all">
+                  <span className="text-sm font-bold" style={{ color: member.cumplimientoPresupuesto >= 70 ? '#2E7D32' : member.cumplimientoPresupuesto >= 40 ? '#F57C00' : '#DC2626' }}>
+                    {member.cumplimientoPresupuesto}%
+                  </span>
                   <div className="text-left">
-                    <div className="text-xs font-semibold text-[#1c2c4a]">Rechazadas</div>
-                    <div className="text-[9px] text-[#9ca3af]">{conSeg}/{memberRechazados.length} con seguimiento</div>
+                    <div className="text-[11px] font-semibold text-[#1c2c4a]">Presupuesto</div>
+                    <div className="w-16 h-1.5 bg-[#e5e7eb] rounded-full overflow-hidden mt-0.5">
+                      <div className="h-full rounded-full" style={{
+                        width: `${Math.min(member.cumplimientoPresupuesto, 100)}%`,
+                        backgroundColor: member.cumplimientoPresupuesto >= 70 ? '#2E7D32' : member.cumplimientoPresupuesto >= 40 ? '#F57C00' : '#DC2626',
+                      }} />
+                    </div>
                   </div>
+                  <Edit3 size={12} className="text-[#0067B0]" />
                 </button>
-              );
-            })()}
-
-            {/* Presupuesto */}
-            {member.presupuestoAnual2026 > 0 && (
-              <button onClick={() => setShowVentasRealesModal(true)}
-                className="flex items-center gap-2 bg-white rounded-lg border border-[#e5e7eb] px-3 py-2 hover:shadow-sm hover:border-[#0067B0]/30 transition-all">
-                <span className="text-lg font-bold" style={{ color: member.cumplimientoPresupuesto >= 70 ? '#2E7D32' : member.cumplimientoPresupuesto >= 40 ? '#F57C00' : '#DC2626' }}>
-                  {member.cumplimientoPresupuesto}%
-                </span>
-                <div className="text-left">
-                  <div className="text-xs font-semibold text-[#1c2c4a]">Presupuesto</div>
-                  <div className="w-20 h-1.5 bg-[#e5e7eb] rounded-full overflow-hidden mt-0.5">
-                    <div className="h-full rounded-full" style={{
-                      width: `${Math.min(member.cumplimientoPresupuesto, 100)}%`,
-                      backgroundColor: member.cumplimientoPresupuesto >= 70 ? '#2E7D32' : member.cumplimientoPresupuesto >= 40 ? '#F57C00' : '#DC2626',
-                    }} />
-                  </div>
-                </div>
-                <Edit3 size={14} className="text-[#0067B0]" />
-              </button>
-            )}
+              )}
+              {onShowNuevoLead && (
+                <button onClick={() => onShowNuevoLead(member.codigo)}
+                  className="flex items-center gap-2 px-4 py-2 bg-[#1c2c4a] hover:bg-[#1c2c4a]/90 text-white rounded-lg text-sm font-semibold transition-all shadow-sm hover:shadow-md">
+                  <Plus size={16} /> Nuevo Lead
+                </button>
+              )}
+            </div>
+          </div>
+          {/* Insights row — full width below the header row */}
+          <InsightsBanner
+            greeting={userGreeting}
+            memberName={member.name}
+            prospectos={memberProspectos}
+            presupuestoMensual={member.presupuestoMensual}
+            ventasReales={member.ventasReales}
+            cumplimiento={member.cumplimientoPresupuesto}
+          />
         </div>
-
-        {/* INSIGHTS BANNER — personalized smart analysis */}
-        <InsightsBanner
-          greeting={userGreeting}
-          memberName={member.name}
-          prospectos={memberProspectos}
-        />
 
         {/* PIPELINE — Kanban personal */}
         <div className="space-y-4">

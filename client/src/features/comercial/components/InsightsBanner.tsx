@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import { ChevronDown, ChevronUp, Clock, CalendarCheck, Flame, TrendingUp, AlertTriangle, CheckCircle } from 'lucide-react';
+import { Clock, CalendarCheck, Flame, TrendingUp, AlertTriangle, CheckCircle } from 'lucide-react';
 import { fmtM } from '@/lib/utils';
 import { HUB_KANBAN_STAGES } from '@/lib/comercial-constants';
 
@@ -45,8 +44,7 @@ export function calcularInsights(prospectos: any[]): Insight[] {
     insights.push({
       id: 'stagnant',
       icon: 'stagnant',
-      text: `${worst.empresa} lleva ${worst.stagnantDays} días en ${stageName} sin movimiento` +
-        (stagnant.length > 1 ? ` — ${stagnant.length - 1} más estancados` : ''),
+      text: `${worst.empresa} — ${worst.stagnantDays}d en ${stageName}`,
       priority: 1,
     });
   }
@@ -67,7 +65,7 @@ export function calcularInsights(prospectos: any[]): Insight[] {
       icon: 'warning',
       text: overdue.length === 1
         ? `Seguimiento vencido: ${worstOverdue.empresa}`
-        : `${overdue.length} seguimientos vencidos — el más urgente: ${worstOverdue.empresa}`,
+        : `${overdue.length} seguimientos vencidos`,
       priority: 0, // Most urgent
     });
   } else if (dueToday.length > 0) {
@@ -102,7 +100,7 @@ export function calcularInsights(prospectos: any[]): Insight[] {
     insights.push({
       id: 'hot-deal',
       icon: 'hot',
-      text: `${hot.empresa} (${stageName}, ${fmtM(valor)}) — tu oportunidad más avanzada`,
+      text: `${hot.empresa} — ${stageName}, ${fmtM(valor)}`,
       priority: 3,
     });
   }
@@ -141,38 +139,38 @@ interface InsightsBannerProps {
   greeting: string;
   memberName: string;
   prospectos: any[];
+  presupuestoMensual?: number;
+  ventasReales?: number;
+  cumplimiento?: number;
 }
 
-export function InsightsBanner({ greeting, memberName, prospectos }: InsightsBannerProps) {
-  const [collapsed, setCollapsed] = useState(false);
+export function InsightsBanner({ greeting, memberName, prospectos, presupuestoMensual, ventasReales, cumplimiento }: InsightsBannerProps) {
   const insights = calcularInsights(prospectos);
   const firstName = memberName.split(' ')[0];
 
   // Nothing to show if no prospects at all
   if (prospectos.length === 0) return null;
 
+  const presupColor = (cumplimiento ?? 0) >= 70 ? '#2E7D32' : (cumplimiento ?? 0) >= 40 ? '#F57C00' : '#DC2626';
+
   return (
-    <div className="bg-slate-50 border-l-[3px] border-l-[#0067B0] rounded-r-lg px-4 py-3 mb-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-base font-semibold text-slate-800">
-          {greeting}, {firstName}
-        </h2>
-        <button
-          onClick={() => setCollapsed(!collapsed)}
-          className="p-1 hover:bg-slate-200 rounded transition-colors"
-          aria-label={collapsed ? 'Expandir insights' : 'Colapsar insights'}
-        >
-          {collapsed ? <ChevronDown size={16} className="text-slate-400" /> : <ChevronUp size={16} className="text-slate-400" />}
-        </button>
-      </div>
-      {!collapsed && (
-        <div className="mt-2 space-y-1.5">
+    <div className="mt-3 pt-3 border-t border-[#f0f0f0]">
+      {/* Greeting + budget summary */}
+      <p className="text-sm text-[#6b7280]">
+        {greeting}, {firstName}
+        {presupuestoMensual != null && presupuestoMensual > 0 && (
+          <span> · Tu meta este mes es <span className="font-semibold text-[#4b5563]">{fmtM(presupuestoMensual, 2)}</span>, llevas cerrado <span className="font-semibold" style={{ color: presupColor }}>{fmtM(ventasReales ?? 0, 2)}</span></span>
+        )}
+      </p>
+      {/* Insights */}
+      {insights.length > 0 && (
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-1 mt-1.5">
           {insights.map(insight => {
             const { Icon, color } = INSIGHT_ICONS[insight.icon] || INSIGHT_ICONS.ok;
             return (
-              <div key={insight.id} className="flex items-start gap-2">
-                <Icon size={14} className="mt-0.5 flex-shrink-0" style={{ color }} />
-                <span className="text-sm text-slate-600">{insight.text}</span>
+              <div key={insight.id} className="flex items-center gap-1.5">
+                <Icon size={13} className="flex-shrink-0" style={{ color }} />
+                <span className="text-[13px] text-[#4b5563]">{insight.text}</span>
               </div>
             );
           })}
