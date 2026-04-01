@@ -121,22 +121,18 @@ export function EjecutivoHub({ member, onBack, onShowNuevoLead }: Props) {
           )}
         </div>
 
-        {/* COMPACT SUMMARY STRIP — stages + rechazadas + presupuesto in one row */}
-        <div className="bg-white rounded-xl border border-[#e5e7eb] px-4 py-3 mb-4 flex items-center gap-1 flex-wrap">
-          {/* Stage counts */}
+        {/* MINI-CARDS ROW — compact but clear: number + label per stage, single row */}
+        <div className="flex items-stretch gap-2 mb-4 overflow-x-auto">
+          {/* Stage mini-cards */}
           {HUB_KANBAN_STAGES.map(stage => {
             const count = memberProspectos.filter(p => p.status === stage.id).length;
             return (
-              <div key={stage.id} className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg" style={{ backgroundColor: count > 0 ? `${stage.color}10` : 'transparent' }}>
-                <div className="w-2 h-2 rounded-sm flex-shrink-0" style={{ backgroundColor: stage.color }} />
-                <span className="text-xs text-[#6b7280]">{stage.label}</span>
-                <span className="text-sm font-bold" style={{ color: count > 0 ? stage.color : '#9ca3af' }}>{count}</span>
+              <div key={stage.id} className="bg-white rounded-lg border border-[#e5e7eb] px-3 py-2 text-center min-w-[72px]">
+                <div className="text-lg font-bold leading-tight" style={{ color: count > 0 ? stage.color : '#d1d5db' }}>{count}</div>
+                <div className="text-[10px] text-[#6b7280] leading-tight mt-0.5">{stage.label}</div>
               </div>
             );
           })}
-
-          {/* Divider */}
-          <div className="w-px h-5 bg-[#e5e7eb] mx-1" />
 
           {/* Rechazadas */}
           {memberRechazados.length > 0 && (() => {
@@ -144,40 +140,37 @@ export function EjecutivoHub({ member, onBack, onShowNuevoLead }: Props) {
             const conSeg = memberRechazados.filter(p => p.fechaSeguimiento).length;
             return (
               <button onClick={() => setShowRechazadasModal(true)}
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg hover:bg-red-50 transition-colors ${vencidos > 0 ? 'bg-red-50' : ''}`}>
-                {vencidos > 0 && <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />}
-                <span className="text-xs text-[#6b7280]">Rechazadas</span>
-                <span className="text-sm font-bold" style={{ color: vencidos > 0 ? '#EF4444' : '#F59E0B' }}>{memberRechazados.length}</span>
-                <span className="text-[9px] text-[#9ca3af]">({conSeg} seg.)</span>
+                className={`rounded-lg border px-3 py-2 text-center min-w-[72px] hover:shadow-sm transition-all ${vencidos > 0 ? 'border-red-300 bg-red-50' : 'border-[#e5e7eb] bg-white'}`}>
+                <div className="flex items-center justify-center gap-1">
+                  <span className="text-lg font-bold leading-tight" style={{ color: vencidos > 0 ? '#EF4444' : '#F59E0B' }}>{memberRechazados.length}</span>
+                  {vencidos > 0 && <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />}
+                </div>
+                <div className="text-[10px] text-[#6b7280] leading-tight mt-0.5">Rechazadas</div>
               </button>
             );
           })()}
 
           {/* Presupuesto */}
           {member.presupuestoAnual2026 > 0 && (
-            <>
-              <div className="w-px h-5 bg-[#e5e7eb] mx-1" />
-              <button onClick={() => setShowVentasRealesModal(true)}
-                className="flex items-center gap-2 px-2.5 py-1 rounded-lg hover:bg-[#f3f4f6] transition-colors">
-                <span className="text-xs text-[#6b7280]">Presupuesto</span>
-                <span className="text-sm font-bold" style={{ color: member.cumplimientoPresupuesto >= 70 ? '#2E7D32' : member.cumplimientoPresupuesto >= 40 ? '#F57C00' : '#DC2626' }}>
-                  {member.cumplimientoPresupuesto}%
-                </span>
-                <div className="w-16 h-1.5 bg-[#e5e7eb] rounded-full overflow-hidden">
-                  <div className="h-full rounded-full" style={{
-                    width: `${Math.min(member.cumplimientoPresupuesto, 100)}%`,
-                    backgroundColor: member.cumplimientoPresupuesto >= 70 ? '#2E7D32' : member.cumplimientoPresupuesto >= 40 ? '#F57C00' : '#DC2626',
-                  }} />
-                </div>
-                <span className="text-[10px] text-[#0067B0] font-semibold flex items-center gap-0.5"><Edit3 size={10} /> Editar</span>
-              </button>
-            </>
+            <button onClick={() => setShowVentasRealesModal(true)}
+              className="bg-white rounded-lg border border-[#e5e7eb] px-3 py-2 text-center min-w-[90px] hover:shadow-sm hover:border-[#0067B0]/30 transition-all">
+              <div className="text-lg font-bold leading-tight" style={{ color: member.cumplimientoPresupuesto >= 70 ? '#2E7D32' : member.cumplimientoPresupuesto >= 40 ? '#F57C00' : '#DC2626' }}>
+                {member.cumplimientoPresupuesto}%
+              </div>
+              <div className="text-[10px] text-[#6b7280] leading-tight mt-0.5">Presupuesto</div>
+              <div className="w-full h-1 bg-[#e5e7eb] rounded-full overflow-hidden mt-1">
+                <div className="h-full rounded-full" style={{
+                  width: `${Math.min(member.cumplimientoPresupuesto, 100)}%`,
+                  backgroundColor: member.cumplimientoPresupuesto >= 70 ? '#2E7D32' : member.cumplimientoPresupuesto >= 40 ? '#F57C00' : '#DC2626',
+                }} />
+              </div>
+            </button>
           )}
 
-          {/* Pipeline total — right aligned */}
-          <div className="ml-auto flex items-center gap-3 text-xs">
-            <span className="text-[#6b7280]"><strong className="text-[#1c2c4a]">{memberProspectos.filter(p => p.status !== 'cierre_perdido').length}</strong> prospectos</span>
-            <span className="text-[#6b7280]"><strong className="text-[#0D47A1]">{fmtM(totalPipeline)}</strong> pipeline</span>
+          {/* Pipeline summary — right aligned */}
+          <div className="ml-auto flex flex-col justify-center text-right pl-2">
+            <span className="text-sm font-bold text-[#1c2c4a]">{memberProspectos.filter(p => p.status !== 'cierre_perdido').length} prospectos</span>
+            <span className="text-xs text-[#0D47A1] font-semibold">{fmtM(totalPipeline)} pipeline</span>
           </div>
         </div>
 
