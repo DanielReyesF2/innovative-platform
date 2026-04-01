@@ -86,9 +86,14 @@ export function EjecutivoHub({ member, onBack, onShowNuevoLead }: Props) {
       setPendingMove({ prospecto, fromStage: prospecto.status, toStage: targetStage });
       return;
     }
-    updateProspectMutation.mutate({ id: prospecto.id, stage: targetStage });
-    setSelectedProspecto((prev: any) => prev && prev.id === prospecto.id ? { ...prev, status: targetStage } : prev);
-  }, [memberProspectos, updateProspectMutation]);
+    updateProspectMutation.mutate(
+      { id: prospecto.id, stage: targetStage },
+      {
+        onSuccess: () => setSelectedProspecto((prev: any) => prev && prev.id === prospecto.id ? { ...prev, status: targetStage } : prev),
+        onError: () => toast({ title: 'Error al cambiar etapa', variant: 'destructive' }),
+      }
+    );
+  }, [memberProspectos, updateProspectMutation, toast]);
 
   const hubActiveCard = hubActiveKanbanId ? memberProspectos.find(p => p.id === hubActiveKanbanId) : null;
 
@@ -421,9 +426,13 @@ export function EjecutivoHub({ member, onBack, onShowNuevoLead }: Props) {
             pendingMove={pendingMove}
             isHub
             onForce={() => {
-              updateProspectMutation.mutate({ id: pendingMove.prospecto.id, stage: pendingMove.toStage });
-              setShowStageGateModal(false);
-              setPendingMove(null);
+              updateProspectMutation.mutate(
+                { id: pendingMove.prospecto.id, stage: pendingMove.toStage },
+                {
+                  onSuccess: () => { setShowStageGateModal(false); setPendingMove(null); },
+                  onError: () => { toast({ title: 'Error al cambiar etapa', variant: 'destructive' }); setShowStageGateModal(false); setPendingMove(null); },
+                }
+              );
             }}
             onCancel={() => { setShowStageGateModal(false); setPendingMove(null); }}
           />

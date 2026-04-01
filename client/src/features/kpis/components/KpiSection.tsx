@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useToast } from "@/components/ui/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -216,6 +217,7 @@ function PanelTab({ kpis, onSelect }: { kpis: any[]; onSelect: (id: number) => v
 // ========================
 
 function RegistroTab({ kpis }: { kpis: any[] }) {
+  const { toast } = useToast();
   const [selectedKpiId, setSelectedKpiId] = useState<number>(kpis[0]?.id || 0);
   const [period, setPeriod] = useState(() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`; });
   const [actualValue, setActualValue] = useState("");
@@ -225,7 +227,7 @@ function RegistroTab({ kpis }: { kpis: any[] }) {
 
   const handleSubmit = () => {
     if (!selectedKpiId || !actualValue) return;
-    createEntry.mutate({ kpiId: selectedKpiId, period, actualValue, notes: notes || undefined }, { onSuccess: () => { setActualValue(""); setNotes(""); } });
+    createEntry.mutate({ kpiId: selectedKpiId, period, actualValue, notes: notes || undefined }, { onSuccess: () => { setActualValue(""); setNotes(""); }, onError: () => { toast({ title: "Error al registrar", description: "Intenta de nuevo", variant: "destructive" }); } });
   };
 
   return (
@@ -289,6 +291,7 @@ function RegistroTab({ kpis }: { kpis: any[] }) {
 // ========================
 
 function PlanesTab({ kpis, areaId }: { kpis: any[]; areaId?: number }) {
+  const { toast } = useToast();
   const { data: plans = [] } = usePendingActionPlans(areaId);
   const [planStatusFilter, setPlanStatusFilter] = useState("");
   const [showCreate, setShowCreate] = useState(false);
@@ -326,8 +329,8 @@ function PlanesTab({ kpis, areaId }: { kpis: any[]; areaId?: number }) {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      {plan.status === "pendiente" && <Button variant="ghost" size="sm" onClick={() => updatePlan.mutate({ id: plan.id, status: "en_proceso" })}>Iniciar</Button>}
-                      {plan.status === "en_proceso" && <Button variant="ghost" size="sm" onClick={() => updatePlan.mutate({ id: plan.id, status: "completado" })}>Completar</Button>}
+                      {plan.status === "pendiente" && <Button variant="ghost" size="sm" onClick={() => updatePlan.mutate({ id: plan.id, status: "en_proceso" }, { onError: () => { toast({ title: "Error al actualizar", description: "Intenta de nuevo", variant: "destructive" }); } })}>Iniciar</Button>}
+                      {plan.status === "en_proceso" && <Button variant="ghost" size="sm" onClick={() => updatePlan.mutate({ id: plan.id, status: "completado" }, { onError: () => { toast({ title: "Error al actualizar", description: "Intenta de nuevo", variant: "destructive" }); } })}>Completar</Button>}
                     </div>
                   </div>
                 );

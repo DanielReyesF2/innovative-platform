@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Pencil, Archive } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
 import {
   useKpi,
   useKpiEntries,
@@ -95,6 +96,7 @@ export function KpiDetailModal({ kpiId, onClose }: { kpiId: number; onClose: () 
   const { data: entries = [] } = useKpiEntries(kpiId);
   const { data: trend = [] } = useKpiTrend(kpiId);
   const { data: actionPlans = [] } = useKpiActionPlans(kpiId);
+  const { toast } = useToast();
   const archiveKpi = useArchiveKpi();
   const [showEdit, setShowEdit] = useState(false);
 
@@ -117,7 +119,7 @@ export function KpiDetailModal({ kpiId, onClose }: { kpiId: number; onClose: () 
           </div>
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="sm" onClick={() => setShowEdit(true)}><Pencil className="h-4 w-4" /></Button>
-            <Button variant="ghost" size="sm" onClick={() => { if (window.confirm("Archivar este KPI?")) archiveKpi.mutate(kpiId, { onSuccess: () => onClose() }); }}>
+            <Button variant="ghost" size="sm" onClick={() => { if (window.confirm("Archivar este KPI?")) archiveKpi.mutate(kpiId, { onSuccess: () => onClose(), onError: () => { toast({ title: "Error al archivar", description: "Intenta de nuevo", variant: "destructive" }); } }); }}>
               <Archive className="h-4 w-4" />
             </Button>
             <Button variant="ghost" size="sm" onClick={onClose}>✕</Button>
@@ -211,6 +213,7 @@ export function KpiDetailModal({ kpiId, onClose }: { kpiId: number; onClose: () 
 // ========================
 
 export function CreateKpiModal({ categories, onClose, defaultAreaId }: { categories: any[]; onClose: () => void; defaultAreaId?: number }) {
+  const { toast } = useToast();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [categoryId, setCategoryId] = useState("");
@@ -222,7 +225,7 @@ export function CreateKpiModal({ categories, onClose, defaultAreaId }: { categor
   const handleSubmit = () => {
     createKpi.mutate(
       { name, description: description || undefined, categoryId: categoryId ? Number(categoryId) : undefined, unit: unit || undefined, targetValue: targetValue || undefined, frequency, areaId: defaultAreaId || undefined },
-      { onSuccess: () => onClose() }
+      { onSuccess: () => onClose(), onError: () => { toast({ title: "Error al crear KPI", description: "Intenta de nuevo", variant: "destructive" }); } }
     );
   };
 
@@ -259,13 +262,14 @@ export function CreateKpiModal({ categories, onClose, defaultAreaId }: { categor
 // ========================
 
 function EditKpiModal({ kpi, onClose }: { kpi: any; onClose: () => void }) {
+  const { toast } = useToast();
   const [name, setName] = useState(kpi.name);
   const [description, setDescription] = useState(kpi.description || "");
   const [targetValue, setTargetValue] = useState(kpi.targetValue || "");
   const updateKpi = useUpdateKpi();
 
   const handleSubmit = () => {
-    updateKpi.mutate({ id: kpi.id, name, description, targetValue }, { onSuccess: () => onClose() });
+    updateKpi.mutate({ id: kpi.id, name, description, targetValue }, { onSuccess: () => onClose(), onError: () => { toast({ title: "Error al guardar", description: "Intenta de nuevo", variant: "destructive" }); } });
   };
 
   return (
@@ -285,6 +289,7 @@ function EditKpiModal({ kpi, onClose }: { kpi: any; onClose: () => void }) {
 // ========================
 
 export function CreateActionPlanModal({ kpis, onClose, defaultAreaId }: { kpis: any[]; onClose: () => void; defaultAreaId?: number }) {
+  const { toast } = useToast();
   const [kpiId, setKpiId] = useState("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -295,7 +300,7 @@ export function CreateActionPlanModal({ kpis, onClose, defaultAreaId }: { kpis: 
   const handleSubmit = () => {
     createPlan.mutate(
       { kpiId: Number(kpiId), title, description: description || undefined, priority, dueDate: dueDate || undefined },
-      { onSuccess: () => onClose() }
+      { onSuccess: () => onClose(), onError: () => { toast({ title: "Error al crear plan", description: "Intenta de nuevo", variant: "destructive" }); } }
     );
   };
 

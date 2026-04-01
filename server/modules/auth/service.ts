@@ -2,25 +2,18 @@ import bcrypt from "bcrypt";
 import { db } from "../../db";
 import { users } from "../../../shared/schema/common";
 import { generateToken } from "../../middleware/auth";
-import { eq, ilike } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 
-// Login user by email (or email prefix) and password
+// Login user by exact email match and password
 export async function loginUser(
   username: string,
   password: string
 ): Promise<{ token: string; user: Record<string, unknown> } | null> {
   try {
-    // Find user by exact email or email prefix
-    let user = await db.query.users.findFirst({
-      where: eq(users.email, username.toLowerCase()),
+    // Find user by exact email only (no prefix/wildcard matching)
+    const user = await db.query.users.findFirst({
+      where: eq(users.email, username.toLowerCase().trim()),
     });
-
-    // If not found by exact email, try prefix match
-    if (!user) {
-      user = await db.query.users.findFirst({
-        where: ilike(users.email, `${username}%`),
-      });
-    }
 
     if (!user) return null;
 

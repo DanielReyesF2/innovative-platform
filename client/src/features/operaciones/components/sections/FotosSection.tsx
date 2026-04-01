@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Plus, Trash2, Image } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
 import { photosApi } from "../../api";
 
 interface Props {
@@ -11,6 +12,7 @@ interface Props {
 }
 
 export default function FotosSection({ surveyId, disabled }: Props) {
+  const { toast } = useToast();
   const { data: photos = [] } = photosApi.useItems(surveyId);
   const createMutation = photosApi.useCreate();
   const deleteMutation = photosApi.useDelete();
@@ -19,12 +21,19 @@ export default function FotosSection({ surveyId, disabled }: Props) {
 
   const handleAdd = () => {
     if (!newUrl.trim()) return;
-    createMutation.mutate({
-      surveyId,
-      url: newUrl,
-      caption: newCaption || null,
-      section: "general",
-    });
+    createMutation.mutate(
+      {
+        surveyId,
+        url: newUrl,
+        caption: newCaption || null,
+        section: "general",
+      },
+      {
+        onError: () => {
+          toast({ title: "Error al guardar", description: "Intenta de nuevo", variant: "destructive" });
+        },
+      }
+    );
     setNewUrl("");
     setNewCaption("");
   };
@@ -46,7 +55,7 @@ export default function FotosSection({ surveyId, disabled }: Props) {
                   variant="destructive"
                   size="sm"
                   className="absolute top-1 right-1 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                  onClick={() => deleteMutation.mutate({ surveyId, itemId: photo.id })}
+                  onClick={() => deleteMutation.mutate({ surveyId, itemId: photo.id }, { onError: () => { toast({ title: "Error al eliminar", description: "Intenta de nuevo", variant: "destructive" }); } })}
                 >
                   <Trash2 className="h-3 w-3" />
                 </Button>

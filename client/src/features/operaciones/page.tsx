@@ -55,11 +55,13 @@ const DOC_STATUS_COLORS: Record<string, string> = {
 
 export default function OperacionesPage() {
   const [, navigate] = useLocation();
-  const { data: surveys = [] } = useSurveys();
+  const { data: surveys = [], isError: surveysError } = useSurveys();
   const { data: summary } = useSurveySummary();
-  const { data: documents = [] } = useDocuments();
+  const { data: documents = [], isError: docsError } = useDocuments();
   const { data: expiredDocs = [] } = useExpiredDocuments();
   const { data: pendingReview = [] } = usePendingReviewSurveys();
+
+  const isError = surveysError || docsError;
 
   const [activeTab, setActiveTab] = useState<"solicitudes" | "surveys" | "documents" | "kpis">(
     "solicitudes"
@@ -100,6 +102,19 @@ export default function OperacionesPage() {
   const withoutReport = surveys.filter(
     (s: any) => s.status === "completado" && !s.hasReport
   ).length;
+
+  if (isError) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-3">
+        <div className="text-red-500 text-4xl">⚠</div>
+        <h2 className="text-lg font-semibold text-[#1c2c4a]">Error al cargar operaciones</h2>
+        <p className="text-sm text-[#6b7280]">Hubo un problema al conectar con el servidor. Intenta recargar la página.</p>
+        <button onClick={() => window.location.reload()} className="mt-2 px-4 py-2 text-sm font-medium text-white bg-[#00a8a8] rounded-lg hover:bg-[#008f8f]">
+          Recargar
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

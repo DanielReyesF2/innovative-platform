@@ -17,7 +17,7 @@ export function useComercialData() {
   const { user: authUser } = useAuth();
 
   // ═══════ QUERIES ═══════
-  const { data: dbProspectsRaw = [], isLoading: prospectsLoading } = useQuery({
+  const { data: dbProspectsRaw = [], isLoading: prospectsLoading, isError: prospectsError } = useQuery({
     queryKey: ['/api/comercial/prospects'],
     staleTime: 30 * 1000,
   });
@@ -33,7 +33,7 @@ export function useComercialData() {
     return map;
   }, [dbUsers]);
 
-  const { data: dbTeamRaw = [], isLoading: teamLoading } = useQuery<any[]>({
+  const { data: dbTeamRaw = [], isLoading: teamLoading, isError: teamError } = useQuery<any[]>({
     queryKey: ['/api/comercial/team'],
     staleTime: 5 * 60 * 1000,
   });
@@ -220,8 +220,9 @@ export function useComercialData() {
   })();
 
   return {
-    // Loading
+    // Loading / Error
     isLoading: prospectsLoading || teamLoading,
+    isError: prospectsError || teamError,
     // Data
     kanbanProspectos,
     salesTeamData,

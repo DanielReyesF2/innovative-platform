@@ -1,6 +1,6 @@
 import { Router } from "express";
+import { z } from "zod";
 import { requireAuth } from "../../middleware/auth";
-import type { JwtPayload } from "../../middleware/auth";
 
 export const router = Router();
 
@@ -20,12 +20,16 @@ router.post("/chat", async (req, res) => {
       });
     }
 
-    const user = (req as any).user as JwtPayload;
-    const { message, conversationId } = req.body;
-
-    if (!message) {
-      return res.status(400).json({ message: "Message is required" });
+    const user = req.user!;
+    const chatSchema = z.object({
+      message: z.string().min(1, "Message is required").max(10000),
+      conversationId: z.string().optional(),
+    });
+    const parsed = chatSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ message: parsed.error.errors[0]?.message || "Datos inválidos" });
     }
+    const { message, conversationId } = parsed.data;
 
     // Set up SSE
     res.setHeader("Content-Type", "text/event-stream");

@@ -103,7 +103,7 @@ router.post("/users", async (req, res) => {
   try {
     const parsed = createUserSchema.parse(req.body);
     const user = await createUser(parsed);
-    const currentUser = (req as any).user;
+    const currentUser = req.user!;
     await logAction({
       action: "create",
       entityType: "user",
@@ -124,7 +124,7 @@ router.post("/users", async (req, res) => {
 router.patch("/users/:id", async (req, res) => {
   try {
     const parsed = updateUserSchema.parse(req.body);
-    const currentUser = (req as any).user;
+    const currentUser = req.user!;
     const updated = await updateUser(Number(req.params.id), parsed, currentUser.id);
     if (!updated) return res.status(404).json({ message: "Usuario no encontrado" });
     await logAction({
@@ -152,7 +152,7 @@ router.patch("/users/:id", async (req, res) => {
 
 router.post("/users/:id/toggle-active", async (req, res) => {
   try {
-    const currentUser = (req as any).user;
+    const currentUser = req.user!;
     const updated = await toggleUserActive(Number(req.params.id), currentUser.id);
     if (!updated) return res.status(404).json({ message: "Usuario no encontrado" });
     await logAction({
@@ -176,7 +176,7 @@ router.post("/users/:id/reset-password", async (req, res) => {
     const parsed = resetPasswordSchema.parse(req.body);
     const updated = await resetPassword(Number(req.params.id), parsed.newPassword);
     if (!updated) return res.status(404).json({ message: "Usuario no encontrado" });
-    const currentUser = (req as any).user;
+    const currentUser = req.user!;
     await logAction({
       action: "reset_password",
       entityType: "user",
@@ -219,7 +219,7 @@ router.post("/roles", async (req, res) => {
   try {
     const parsed = insertRoleSchema.parse(req.body);
     const role = await createRole(parsed);
-    const currentUser = (req as any).user;
+    const currentUser = req.user!;
     await logAction({
       action: "create",
       entityType: "role",
@@ -242,7 +242,7 @@ router.patch("/roles/:id", async (req, res) => {
     const parsed = updateRoleSchema.parse(req.body);
     const updated = await updateRole(Number(req.params.id), parsed);
     if (!updated) return res.status(404).json({ message: "Rol no encontrado" });
-    const currentUser = (req as any).user;
+    const currentUser = req.user!;
     await logAction({
       action: "update",
       entityType: "role",
@@ -261,7 +261,7 @@ router.delete("/roles/:id", async (req, res) => {
   try {
     const deleted = await deleteRole(Number(req.params.id));
     if (!deleted) return res.status(404).json({ message: "Rol no encontrado" });
-    const currentUser = (req as any).user;
+    const currentUser = req.user!;
     await logAction({
       action: "delete",
       entityType: "role",
@@ -300,7 +300,7 @@ router.post("/areas", async (req, res) => {
   try {
     const parsed = createAreaSchema.parse(req.body);
     const area = await createArea(parsed);
-    const currentUser = (req as any).user;
+    const currentUser = req.user!;
     await logAction({
       action: "create",
       entityType: "area",
@@ -320,7 +320,7 @@ router.patch("/areas/:id", async (req, res) => {
     const parsed = updateAreaSchema.parse(req.body);
     const updated = await updateArea(Number(req.params.id), parsed);
     if (!updated) return res.status(404).json({ message: "Area no encontrada" });
-    const currentUser = (req as any).user;
+    const currentUser = req.user!;
     await logAction({
       action: "update",
       entityType: "area",
@@ -339,7 +339,7 @@ router.delete("/areas/:id", async (req, res) => {
   try {
     const deleted = await deleteArea(Number(req.params.id));
     if (!deleted) return res.status(404).json({ message: "Area no encontrada" });
-    const currentUser = (req as any).user;
+    const currentUser = req.user!;
     await logAction({
       action: "delete",
       entityType: "area",
@@ -376,7 +376,7 @@ router.patch("/company", async (req, res) => {
     const parsed = updateCompanySchema.parse(req.body);
     const updated = await updateCompany(parsed);
     if (!updated) return res.status(404).json({ message: "Empresa no encontrada" });
-    const currentUser = (req as any).user;
+    const currentUser = req.user!;
     await logAction({
       action: "update",
       entityType: "company",
@@ -396,7 +396,7 @@ router.patch("/company/settings", async (req, res) => {
     const parsed = updateCompanySettingsSchema.parse(req.body);
     const updated = await upsertCompanySettings(parsed);
     if (!updated) return res.status(404).json({ message: "Empresa no encontrada" });
-    const currentUser = (req as any).user;
+    const currentUser = req.user!;
     await logAction({
       action: "upsert",
       entityType: "company_settings",
@@ -427,7 +427,7 @@ router.get("/modules/:name/config", async (req, res) => {
 router.put("/modules/config", async (req, res) => {
   try {
     const parsed = upsertModuleConfigSchema.parse(req.body);
-    const currentUser = (req as any).user;
+    const currentUser = req.user!;
     const config = await upsertModuleConfig(parsed, currentUser.id);
     await logAction({
       action: "upsert",

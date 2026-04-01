@@ -32,6 +32,8 @@ async function throwIfResNotOk(res: Response) {
       removeAuthToken();
       if (typeof window !== "undefined" && !window.location.pathname.includes("/login")) {
         sessionStorage.setItem("redirectAfterLogin", window.location.pathname);
+        window.location.href = "/login";
+        return; // Stop processing — redirecting to login
       }
     }
 

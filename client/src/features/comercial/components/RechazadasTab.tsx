@@ -9,6 +9,7 @@ import {
   classifyRechazo,
 } from '@/lib/comercial-constants';
 import { useComercialData } from '../hooks/useComercialData';
+import { useToast } from '@/components/ui/use-toast';
 import { ProspectoDrawer } from './ProspectoDrawer';
 
 interface Props {
@@ -17,6 +18,7 @@ interface Props {
 
 export function RechazadasTab({ onSelectProspecto }: Props) {
   const { kanbanProspectos, updateProspectMutation } = useComercialData();
+  const { toast } = useToast();
   const [selectedProspecto, setSelectedProspecto] = useState<any>(null);
 
   const handleSelect = (p: any) => {
@@ -24,11 +26,16 @@ export function RechazadasTab({ onSelectProspecto }: Props) {
     else setSelectedProspecto(p);
   };
 
-  const guardarSeguimiento = (prospectoId: number, data: any) => {
+  const guardarSeguimiento = async (prospectoId: number, data: any) => {
     const updates: any = {};
     if (data.fechaSeguimiento !== undefined) updates.nextFollowUpAt = data.fechaSeguimiento || null;
     if (Object.keys(updates).length > 0) {
-      updateProspectMutation.mutate({ id: prospectoId, ...updates });
+      try {
+        await updateProspectMutation.mutateAsync({ id: prospectoId, ...updates });
+        toast({ title: 'Seguimiento guardado' });
+      } catch {
+        toast({ title: 'Error al guardar seguimiento', variant: 'destructive' });
+      }
     }
   };
 

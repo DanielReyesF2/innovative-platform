@@ -64,8 +64,56 @@ import {
   upsertWeeklyReport,
   markWeeklyReportAsSent,
 } from "./storage";
-import { insertProspectSchema, insertLeadSchema, insertVentaRealSchema, insertKpiMensualSchema, qualifyProspectSchema, insertActivitySchema, insertMeetingSchema, insertProspectDocumentSchema, insertProposalSchema } from "../../../shared/schema/comercial";
+import { z } from "zod";
+import { insertProspectSchema, insertLeadSchema, insertVentaRealSchema, insertKpiMensualSchema, qualifyProspectSchema, insertActivitySchema, insertNoteSchema, insertMeetingSchema, insertProspectDocumentSchema, insertProposalSchema, proposalStatusEnum, insertWeeklyReportSchema } from "../../../shared/schema/comercial";
 import { triggerWebhook } from "../../lib/webhook";
+
+// Inline schemas for simple routes
+const rejectProspectSchema = z.object({
+  rejectionReasonId: z.number({ required_error: "Motivo de rechazo requerido" }).int().positive(),
+  rejectionDetail: z.string().max(2000).optional().default(""),
+});
+
+const convertLeadSchema = z.object({
+  industry: z.string().max(100).optional(),
+  location: z.string().max(200).optional(),
+  potential: z.string().max(20).optional(),
+  estimatedValue: z.string().max(50).optional(),
+  estimatedVolume: z.string().max(100).optional(),
+  wasteInfo: z.object({
+    wasteTypes: z.array(z.string()),
+    estimatedVolume: z.string(),
+    hasCurrentProvider: z.boolean(),
+    currentProviderName: z.string().optional(),
+    reasonForChange: z.string().optional(),
+  }).optional(),
+});
+
+const assignLeadSchema = z.object({
+  assignedToId: z.number({ required_error: "assignedToId requerido" }).int().positive(),
+});
+
+const meetingCompleteSchema = z.object({
+  outcome: z.string().min(1, "Resultado requerido").max(2000),
+});
+
+const proposalStatusChangeSchema = z.object({
+  status: z.enum(["borrador", "enviada", "revisada", "aceptada", "rechazada"], {
+    required_error: "Status requerido",
+    invalid_type_error: "Status inválido",
+  }),
+});
+
+const weeklyReportSaveSchema = z.object({
+  weekStart: z.string().min(1, "weekStart requerido"),
+  content: z.string().max(50000).optional().default(""),
+});
+
+const weeklyReportSendSchema = z.object({
+  weekStart: z.string().min(1, "weekStart requerido"),
+  recipients: z.array(z.string().email()).min(1, "recipients requeridos"),
+  content: z.string().max(50000).optional(),
+});
 
 export const router = Router();
 
@@ -191,20 +239,20 @@ router.delete("/prospects/:id", requireRole("admin", "comercial", "director"), a
 
 router.post("/prospects/:id/reject", async (req, res) => {
   try {
-    const { rejectionReasonId, rejectionDetail } = req.body;
-    if (!rejectionReasonId) {
-      return res.status(400).json({ message: "Motivo de rechazo requerido" });
+    const parsed = rejectProspectSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ message: parsed.error.errors[0]?.message || "Datos inválidos" });
     }
     // Validate rejection reason exists in DB
     const reasons = await getRejectionReasons();
-    const validReason = reasons.find(r => r.id === Number(rejectionReasonId));
+    const validReason = reasons.find(r => r.id === parsed.data.rejectionReasonId);
     if (!validReason) {
       return res.status(400).json({ message: "Motivo de rechazo inválido" });
     }
     const updated = await rejectProspect(
       Number(req.params.id),
-      Number(rejectionReasonId),
-      rejectionDetail || ""
+      parsed.data.rejectionReasonId,
+      parsed.data.rejectionDetail || ""
     );
     if (!updated) return res.status(404).json({ message: "Prospecto no encontrado" });
     res.json(updated);
@@ -240,7 +288,7 @@ router.post(
     try {
       const result = await sendProspectToOperaciones(
         Number(req.params.id),
-        (req as any).user.id
+        req.user!.id
       );
       res.json(result);
     } catch (error: any) {
@@ -279,9 +327,11 @@ router.post("/leads", async (req, res) => {
 
 router.patch("/leads/:id/assign", async (req, res) => {
   try {
-    const { assignedToId } = req.body;
-    if (!assignedToId) return res.status(400).json({ message: "assignedToId requerido" });
-    const updated = await assignLead(Number(req.params.id), assignedToId);
+    const parsed = assignLeadSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ message: parsed.error.errors[0]?.message || "Datos inválidos" });
+    }
+    const updated = await assignLead(Number(req.params.id), parsed.data.assignedToId);
     if (!updated) return res.status(404).json({ message: "Lead no encontrado" });
     res.json(updated);
   } catch (error) {
@@ -292,15 +342,11 @@ router.patch("/leads/:id/assign", async (req, res) => {
 
 router.post("/leads/:id/convert", async (req, res) => {
   try {
-    const { industry, location, potential, estimatedValue, estimatedVolume, wasteInfo } = req.body;
-    const result = await convertLeadToProspect(Number(req.params.id), {
-      industry,
-      location,
-      potential,
-      estimatedValue,
-      estimatedVolume,
-      wasteInfo,
-    });
+    const parsed = convertLeadSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ message: "Datos inválidos", errors: parsed.error.errors });
+    }
+    const result = await convertLeadToProspect(Number(req.params.id), parsed.data);
     res.status(201).json(result);
   } catch (error: any) {
     console.error("[comercial] Convert lead error:", error);
@@ -377,7 +423,7 @@ router.post("/prospects/:id/activities", async (req, res) => {
     const parsed = insertActivitySchema.safeParse({
       ...req.body,
       prospectId: Number(req.params.id),
-      createdById: (req as any).user.id,
+      createdById: req.user!.id,
       ...(req.body.activityDate && { activityDate: new Date(req.body.activityDate) }),
     });
     if (!parsed.success) {
@@ -405,9 +451,11 @@ router.get("/prospects/:id/notes", async (req, res) => {
 
 router.post("/prospects/:id/notes", async (req, res) => {
   try {
-    const { content } = req.body;
-    if (!content) return res.status(400).json({ message: "Contenido requerido" });
-    const note = await createNote(Number(req.params.id), content, (req as any).user.id);
+    const parsed = z.object({ content: z.string().min(1, "Contenido requerido").max(5000) }).safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ message: parsed.error.errors[0]?.message || "Datos inválidos" });
+    }
+    const note = await createNote(Number(req.params.id), parsed.data.content, req.user!.id);
     res.status(201).json(note);
   } catch (error) {
     console.error("[comercial] Create note error:", error);
@@ -417,9 +465,11 @@ router.post("/prospects/:id/notes", async (req, res) => {
 
 router.patch("/prospects/:prospectId/notes/:noteId", async (req, res) => {
   try {
-    const { content } = req.body;
-    if (!content) return res.status(400).json({ message: "Contenido requerido" });
-    const updated = await updateNote(Number(req.params.noteId), content);
+    const parsed = z.object({ content: z.string().min(1, "Contenido requerido").max(5000) }).safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ message: parsed.error.errors[0]?.message || "Datos inválidos" });
+    }
+    const updated = await updateNote(Number(req.params.noteId), parsed.data.content);
     res.json(updated);
   } catch (error) {
     console.error("[comercial] Update note error:", error);
@@ -468,7 +518,7 @@ router.post("/prospects/:id/meetings", async (req, res) => {
     const parsed = insertMeetingSchema.safeParse({
       ...req.body,
       prospectId: Number(req.params.id),
-      createdById: (req as any).user.id,
+      createdById: req.user!.id,
       scheduledAt,
     });
     if (!parsed.success) {
@@ -484,9 +534,11 @@ router.post("/prospects/:id/meetings", async (req, res) => {
 
 router.post("/prospects/:prospectId/meetings/:meetingId/complete", async (req, res) => {
   try {
-    const { outcome } = req.body;
-    if (!outcome) return res.status(400).json({ message: "Resultado requerido" });
-    const updated = await completeMeeting(Number(req.params.meetingId), outcome);
+    const parsed = meetingCompleteSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ message: parsed.error.errors[0]?.message || "Datos inválidos" });
+    }
+    const updated = await completeMeeting(Number(req.params.meetingId), parsed.data.outcome);
     res.json(updated);
   } catch (error) {
     console.error("[comercial] Complete meeting error:", error);
@@ -521,7 +573,7 @@ router.post("/prospects/:id/documents", async (req, res) => {
     const parsed = insertProspectDocumentSchema.safeParse({
       ...req.body,
       prospectId: Number(req.params.id),
-      uploadedById: (req as any).user.id,
+      uploadedById: req.user!.id,
     });
     if (!parsed.success) {
       return res.status(400).json({ message: "Datos invalidos", errors: parsed.error.errors });
@@ -561,7 +613,7 @@ router.post("/prospects/:id/proposals", async (req, res) => {
     const parsed = insertProposalSchema.safeParse({
       ...req.body,
       prospectId: Number(req.params.id),
-      createdById: (req as any).user.id,
+      createdById: req.user!.id,
     });
     if (!parsed.success) {
       return res.status(400).json({ message: "Datos invalidos", errors: parsed.error.errors });
@@ -576,7 +628,7 @@ router.post("/prospects/:id/proposals", async (req, res) => {
 
 router.post("/prospects/:prospectId/proposals/:proposalId/send", async (req, res) => {
   try {
-    const updated = await sendProposal(Number(req.params.proposalId), (req as any).user.id);
+    const updated = await sendProposal(Number(req.params.proposalId), req.user!.id);
     res.json(updated);
   } catch (error) {
     console.error("[comercial] Send proposal error:", error);
@@ -586,9 +638,11 @@ router.post("/prospects/:prospectId/proposals/:proposalId/send", async (req, res
 
 router.post("/prospects/:prospectId/proposals/:proposalId/status", async (req, res) => {
   try {
-    const { status } = req.body;
-    if (!status) return res.status(400).json({ message: "Status requerido" });
-    const updated = await changeProposalStatus(Number(req.params.proposalId), status);
+    const parsed = proposalStatusChangeSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ message: parsed.error.errors[0]?.message || "Datos inválidos" });
+    }
+    const updated = await changeProposalStatus(Number(req.params.proposalId), parsed.data.status);
     res.json(updated);
   } catch (error) {
     console.error("[comercial] Change proposal status error:", error);
@@ -601,7 +655,7 @@ router.post("/prospects/:prospectId/proposals/:proposalId/status", async (req, r
 router.get("/alerts", async (req, res) => {
   try {
     const status = req.query.status as string | undefined;
-    const alerts = await getAlerts(status, (req as any).user.id);
+    const alerts = await getAlerts(status, req.user!.id);
     res.json(alerts);
   } catch (error) {
     console.error("[comercial] Get alerts error:", error);
@@ -611,7 +665,7 @@ router.get("/alerts", async (req, res) => {
 
 router.get("/alerts/count", async (req, res) => {
   try {
-    const count = await getPendingAlertsCount((req as any).user.id);
+    const count = await getPendingAlertsCount(req.user!.id);
     res.json({ count });
   } catch (error) {
     console.error("[comercial] Get alerts count error:", error);
@@ -621,7 +675,7 @@ router.get("/alerts/count", async (req, res) => {
 
 router.post("/alerts/:id/acknowledge", async (req, res) => {
   try {
-    const updated = await acknowledgeAlert(Number(req.params.id), (req as any).user.id);
+    const updated = await acknowledgeAlert(Number(req.params.id), req.user!.id);
     res.json(updated);
   } catch (error) {
     console.error("[comercial] Acknowledge alert error:", error);
@@ -822,7 +876,7 @@ router.post("/prospects/:id/documents/upload", upload.single("file"), async (req
       url: relativePath,
       fileSize: file.size,
       mimeType: file.mimetype,
-      uploadedById: (req as any).user.id,
+      uploadedById: req.user!.id,
     });
 
     // If it's an OC and user wants to mark as closed
@@ -860,7 +914,7 @@ router.get("/weekly-report", async (req, res) => {
   try {
     const week = req.query.week as string;
     if (!week) return res.status(400).json({ message: "Parámetro 'week' requerido" });
-    const report = await getWeeklyReport((req as any).user.id, week);
+    const report = await getWeeklyReport(req.user!.id, week);
     res.json(report || null);
   } catch (error) {
     console.error("[comercial] Get weekly report error:", error);
@@ -870,12 +924,14 @@ router.get("/weekly-report", async (req, res) => {
 
 router.put("/weekly-report", async (req, res) => {
   try {
-    const { weekStart, content } = req.body;
-    if (!weekStart) return res.status(400).json({ message: "weekStart requerido" });
+    const parsed = weeklyReportSaveSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ message: parsed.error.errors[0]?.message || "Datos inválidos" });
+    }
     const report = await upsertWeeklyReport(
-      (req as any).user.id,
-      weekStart,
-      content || "",
+      req.user!.id,
+      parsed.data.weekStart,
+      parsed.data.content,
     );
     res.json(report);
   } catch (error) {
@@ -886,26 +942,27 @@ router.put("/weekly-report", async (req, res) => {
 
 router.post("/weekly-report/send", async (req, res) => {
   try {
-    const { weekStart, recipients } = req.body;
-    if (!weekStart || !recipients?.length) {
-      return res.status(400).json({ message: "weekStart y recipients requeridos" });
+    const parsed = weeklyReportSendSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ message: parsed.error.errors[0]?.message || "Datos inválidos" });
     }
+    const { weekStart, recipients, content } = parsed.data;
 
     const recipientStr = recipients.join(",");
 
     // Ensure report exists (save content first if provided)
-    let report = await getWeeklyReport((req as any).user.id, weekStart);
+    let report = await getWeeklyReport(req.user!.id, weekStart);
     if (!report) {
       report = await upsertWeeklyReport(
-        (req as any).user.id,
+        req.user!.id,
         weekStart,
-        req.body.content || "",
+        content || "",
       );
-    } else if (req.body.content !== undefined) {
+    } else if (content !== undefined) {
       report = await upsertWeeklyReport(
-        (req as any).user.id,
+        req.user!.id,
         weekStart,
-        req.body.content,
+        content,
       );
     }
 
@@ -916,7 +973,7 @@ router.post("/weekly-report/send", async (req, res) => {
         content: report.content,
         recipients,
         subject: `Resumen Semanal — Semana del ${weekStart}`,
-        senderName: (req as any).user.name || "Comercial",
+        senderName: req.user!.name || "Comercial",
         weekStart,
       });
     } else {

@@ -91,37 +91,52 @@ export function ProspectoDrawer({ prospecto, onClose, onEdit }: Props) {
     }
   };
 
-  const guardarSeguimiento = (prospectoId: number, data: any) => {
+  const guardarSeguimiento = async (prospectoId: number, data: any) => {
     const updates: any = {};
     if (data.fechaSeguimiento !== undefined) updates.nextFollowUpAt = data.fechaSeguimiento || null;
     if (data.accion !== undefined) updates.followUpAction = data.accion || null;
     if (data.recoveryStatus !== undefined) updates.recoveryStatus = data.recoveryStatus || null;
     if (data.fechaVencimientoContrato !== undefined) updates.fechaVencimientoContrato = data.fechaVencimientoContrato || null;
     if (Object.keys(updates).length > 0) {
-      updateProspectMutation.mutate({ id: prospectoId, ...updates });
+      try {
+        await updateProspectMutation.mutateAsync({ id: prospectoId, ...updates });
+        toast({ title: 'Seguimiento guardado' });
+      } catch {
+        toast({ title: 'Error al guardar seguimiento', variant: 'destructive' });
+      }
     }
   };
 
-  const agregarNota = () => {
+  const agregarNota = async () => {
     if (!prospectoNuevaNota.trim()) return;
-    createNoteMutation.mutate({ prospectId: realProspectId, content: prospectoNuevaNota.trim() });
-    setProspectoNuevaNota('');
+    const content = prospectoNuevaNota.trim();
+    try {
+      await createNoteMutation.mutateAsync({ prospectId: realProspectId, content });
+      setProspectoNuevaNota('');
+    } catch {
+      toast({ title: 'Error al guardar nota', variant: 'destructive' });
+    }
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
-    files.forEach(f => {
-      createDocumentMutation.mutate({
-        prospectId: realProspectId,
-        name: f.name,
-        type: 'otro',
-        url: `local://${f.name}`,
-        fileSize: f.size,
-        mimeType: f.type,
-        uploadedById: authUser?.id,
-      });
-    });
+    // DEBT: Uses fake local:// URL — should use real upload endpoint POST /prospects/:id/documents/upload
+    for (const f of files) {
+      try {
+        await createDocumentMutation.mutateAsync({
+          prospectId: realProspectId,
+          name: f.name,
+          type: 'otro',
+          url: `local://${f.name}`,
+          fileSize: f.size,
+          mimeType: f.type,
+          uploadedById: authUser?.id,
+        });
+      } catch {
+        toast({ title: `Error al subir ${f.name}`, variant: 'destructive' });
+      }
+    }
     e.target.value = '';
   };
 
@@ -219,11 +234,15 @@ export function ProspectoDrawer({ prospecto, onClose, onEdit }: Props) {
               </button>
               {(authUser?.role === 'admin' || authUser?.role === 'comercial' || authUser?.role === 'director') && (
                 <button
-                  onClick={(e) => {
+                  onClick={async (e) => {
                     e.stopPropagation();
                     if (window.confirm(`¿Eliminar prospecto "${p.empresa}"? Esta acción no se puede deshacer.`)) {
-                      deleteProspectMutation.mutate(p.id);
-                      onClose();
+                      try {
+                        await deleteProspectMutation.mutateAsync(p.id);
+                        onClose();
+                      } catch {
+                        toast({ title: 'Error al eliminar prospecto', variant: 'destructive' });
+                      }
                     }
                   }}
                   className="p-1.5 text-[#999] hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
@@ -666,7 +685,10 @@ export function ProspectoDrawer({ prospecto, onClose, onEdit }: Props) {
                           <div key={nota.id} className="bg-[#f9fafb] rounded-lg p-3 group">
                             <div className="flex items-start justify-between gap-2">
                               <p className="text-sm text-[#1c2c4a] flex-1 whitespace-pre-wrap">{nota.content}</p>
-                              <button onClick={() => deleteNoteMutation.mutate({ prospectId: realProspectId, noteId: nota.id })}
+                              <button onClick={async () => {
+                                try { await deleteNoteMutation.mutateAsync({ prospectId: realProspectId, noteId: nota.id }); }
+                                catch { toast({ title: 'Error al eliminar nota', variant: 'destructive' }); }
+                              }}
                                 className="opacity-0 group-hover:opacity-100 text-[#6b7280] hover:text-red-500 transition-all flex-shrink-0 mt-0.5">
                                 <Trash2 size={12} />
                               </button>
@@ -711,7 +733,10 @@ export function ProspectoDrawer({ prospecto, onClose, onEdit }: Props) {
                               <div className="text-xs font-medium text-[#1c2c4a] truncate">{archivo.name}</div>
                               <div className="text-[10px] text-[#9ca3af]">{formatFileSize(archivo.fileSize)} · {timeAgo(archivo.createdAt)}</div>
                             </div>
-                            <button onClick={() => deleteDocumentMutation.mutate({ prospectId: realProspectId, docId: archivo.id })}
+                            <button onClick={async () => {
+                              try { await deleteDocumentMutation.mutateAsync({ prospectId: realProspectId, docId: archivo.id }); }
+                              catch { toast({ title: 'Error al eliminar documento', variant: 'destructive' }); }
+                            }}
                               className="opacity-0 group-hover:opacity-100 text-[#6b7280] hover:text-red-500 transition-all">
                               <Trash2 size={12} />
                             </button>

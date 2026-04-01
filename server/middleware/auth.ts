@@ -52,13 +52,13 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
     return res.status(401).json({ message: "Invalid or expired token" });
   }
 
-  (req as any).user = payload;
+  req.user = payload;
   next();
 }
 
 // Middleware: Require admin role
 export function requireAdmin(req: Request, res: Response, next: NextFunction) {
-  const user = (req as any).user;
+  const user = req.user;
   if (!user || user.role !== "admin") {
     return res.status(403).json({ message: "Admin access required" });
   }
@@ -68,7 +68,7 @@ export function requireAdmin(req: Request, res: Response, next: NextFunction) {
 // Middleware: Require specific role
 export function requireRole(...roles: string[]) {
   return (req: Request, res: Response, next: NextFunction) => {
-    const user = (req as any).user;
+    const user = req.user;
     if (!user || !roles.includes(user.role)) {
       return res.status(403).json({ message: `Requires one of: ${roles.join(", ")}` });
     }

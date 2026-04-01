@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "@/lib/auth";
+import { useToast } from "@/components/ui/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -117,6 +118,7 @@ function UsersTab({ currentUserId }: { currentUserId?: number }) {
   const { data: stats } = useUserStats();
   const toggleActive = useToggleUserActive();
   const { data: roles = [] } = useRoles();
+  const { toast } = useToast();
 
   return (
     <div className="space-y-4">
@@ -168,7 +170,7 @@ function UsersTab({ currentUserId }: { currentUserId?: number }) {
                   <div className="flex items-center gap-2">
                     <Button variant="ghost" size="sm" onClick={() => setEditingUser(u)}><Pencil className="h-4 w-4" /></Button>
                     <Button variant="ghost" size="sm" onClick={() => setResetPwUser(u)}><RotateCcw className="h-4 w-4" /></Button>
-                    <Button variant="ghost" size="sm" disabled={u.id === currentUserId} onClick={() => toggleActive.mutate(u.id)}>
+                    <Button variant="ghost" size="sm" disabled={u.id === currentUserId} onClick={() => toggleActive.mutate(u.id, { onError: () => toast({ title: "Error al cambiar estado", variant: "destructive" }) })}>
                       {u.isActive ? <ToggleRight className="h-4 w-4 text-green-500" /> : <ToggleLeft className="h-4 w-4 text-gray-400" />}
                     </Button>
                   </div>
@@ -195,6 +197,7 @@ function RolesTab() {
   const [showCreate, setShowCreate] = useState(false);
   const [editing, setEditing] = useState<any>(null);
   const deleteRole = useDeleteRole();
+  const { toast } = useToast();
 
   return (
     <div className="space-y-4">
@@ -225,7 +228,7 @@ function RolesTab() {
                   <div className="flex items-center gap-2">
                     <Button variant="ghost" size="sm" onClick={() => setEditing(role)}><Pencil className="h-4 w-4" /></Button>
                     {!role.isSystem && (
-                      <Button variant="ghost" size="sm" onClick={() => { if (window.confirm(`Eliminar el rol "${role.displayName}"?`)) deleteRole.mutate(role.id); }}>
+                      <Button variant="ghost" size="sm" onClick={() => { if (window.confirm(`Eliminar el rol "${role.displayName}"?`)) deleteRole.mutate(role.id, { onError: () => toast({ title: "Error al eliminar rol", variant: "destructive" }) }); }}>
                         <Trash2 className="h-4 w-4 text-red-500" />
                       </Button>
                     )}
@@ -251,6 +254,7 @@ function AreasTab() {
   const [showCreate, setShowCreate] = useState(false);
   const [editing, setEditing] = useState<any>(null);
   const deleteArea = useDeleteArea();
+  const { toast } = useToast();
 
   return (
     <div className="space-y-4">
@@ -272,7 +276,7 @@ function AreasTab() {
                   </div>
                   <div className="flex items-center gap-2">
                     <Button variant="ghost" size="sm" onClick={() => setEditing(area)}><Pencil className="h-4 w-4" /></Button>
-                    <Button variant="ghost" size="sm" onClick={() => { if (window.confirm(`Eliminar el area "${area.name}"?`)) deleteArea.mutate(area.id); }}>
+                    <Button variant="ghost" size="sm" onClick={() => { if (window.confirm(`Eliminar el area "${area.name}"?`)) deleteArea.mutate(area.id, { onError: () => toast({ title: "Error al eliminar área", variant: "destructive" }) }); }}>
                       <Trash2 className="h-4 w-4 text-red-500" />
                     </Button>
                   </div>
@@ -296,6 +300,7 @@ function EmpresaTab() {
   const { data: company } = useCompany();
   const updateCompany = useUpdateCompany();
   const updateSettings = useUpdateCompanySettings();
+  const { toast } = useToast();
   const [name, setName] = useState("");
   const [logoUrl, setLogoUrl] = useState("");
   const [brandColor, setBrandColor] = useState("");
@@ -319,9 +324,16 @@ function EmpresaTab() {
     setInitialized(true);
   }
 
-  const handleSave = () => {
-    updateCompany.mutate({ name });
-    updateSettings.mutate({ logoUrl: logoUrl || null, brandColor: brandColor || null, industry: industry || null, address: address || null, phone: phone || null, website: website || null, taxId: taxId || null, timezone, locale });
+  const handleSave = async () => {
+    try {
+      await Promise.all([
+        updateCompany.mutateAsync({ name }),
+        updateSettings.mutateAsync({ logoUrl: logoUrl || null, brandColor: brandColor || null, industry: industry || null, address: address || null, phone: phone || null, website: website || null, taxId: taxId || null, timezone, locale }),
+      ]);
+      toast({ title: "Configuración guardada" });
+    } catch {
+      toast({ title: "Error al guardar configuración", variant: "destructive" });
+    }
   };
 
   return (

@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { z } from "zod";
 import { requireAuth } from "../../middleware/auth";
 import {
   getServiceClients,
@@ -26,7 +27,27 @@ import {
   insertTraceabilitySchema,
   insertClientReportSchema,
   insertEconomicModelSchema,
+  reportStatusEnum,
 } from "../../../shared/schema/subproductos";
+
+// Inline schemas for simple routes
+const reportStatusChangeSchema = z.object({
+  status: z.enum(reportStatusEnum.enumValues, {
+    required_error: "Status requerido",
+    invalid_type_error: "Status inválido",
+  }),
+});
+
+const insertConciliationSchema = z.object({
+  clientId: z.number().int().positive(),
+  period: z.string().regex(/^\d{4}-\d{2}$/, "Formato de periodo inválido (YYYY-MM)"),
+  rmeManaged: z.union([z.string(), z.number()]).optional(),
+  valorizationAchieved: z.union([z.string(), z.number()]).optional(),
+  monthlyRevenue: z.union([z.string(), z.number()]).optional(),
+  servicesDelivered: z.any().optional(),
+  discrepancies: z.string().max(2000).optional(),
+  isReconciled: z.boolean().optional(),
+});
 
 export const router = Router();
 
@@ -80,7 +101,11 @@ router.post("/clients", async (req, res) => {
 
 router.patch("/clients/:id", async (req, res) => {
   try {
-    const updated = await updateServiceClient(Number(req.params.id), req.body);
+    const parsed = insertServiceClientSchema.partial().safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ message: "Datos inválidos", errors: parsed.error.errors });
+    }
+    const updated = await updateServiceClient(Number(req.params.id), parsed.data);
     if (!updated) return res.status(404).json({ message: "Cliente no encontrado" });
     res.json(updated);
   } catch (error) {
@@ -168,9 +193,11 @@ router.post("/reports", async (req, res) => {
 
 router.patch("/reports/:id/status", async (req, res) => {
   try {
-    const { status } = req.body;
-    if (!status) return res.status(400).json({ message: "Status requerido" });
-    const updated = await updateReportStatus(Number(req.params.id), status);
+    const parsed = reportStatusChangeSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ message: parsed.error.errors[0]?.message || "Datos inválidos" });
+    }
+    const updated = await updateReportStatus(Number(req.params.id), parsed.data.status);
     if (!updated) return res.status(404).json({ message: "Reporte no encontrado" });
     res.json(updated);
   } catch (error) {
@@ -216,7 +243,11 @@ router.post("/economic-models", async (req, res) => {
 
 router.patch("/economic-models/:id", async (req, res) => {
   try {
-    const updated = await updateEconomicModel(Number(req.params.id), req.body);
+    const parsed = insertEconomicModelSchema.partial().safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ message: "Datos inválidos", errors: parsed.error.errors });
+    }
+    const updated = await updateEconomicModel(Number(req.params.id), parsed.data);
     if (!updated) return res.status(404).json({ message: "Modelo no encontrado" });
     res.json(updated);
   } catch (error) {
@@ -240,7 +271,11 @@ router.get("/conciliations", async (req, res) => {
 
 router.post("/conciliations", async (req, res) => {
   try {
-    const record = await createConciliation(req.body);
+    const parsed = insertConciliationSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ message: "Datos inválidos", errors: parsed.error.errors });
+    }
+    const record = await createConciliation(parsed.data);
     res.status(201).json(record);
   } catch (error) {
     console.error("[subproductos] Create conciliation error:", error);
