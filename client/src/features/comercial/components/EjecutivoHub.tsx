@@ -121,56 +121,51 @@ export function EjecutivoHub({ member, onBack, onShowNuevoLead }: Props) {
           )}
         </div>
 
-        {/* MINI-CARDS ROW — compact but clear: number + label per stage, single row */}
-        <div className="flex items-stretch gap-2 mb-4 overflow-x-auto">
-          {/* Stage mini-cards */}
-          {HUB_KANBAN_STAGES.map(stage => {
-            const count = memberProspectos.filter(p => p.status === stage.id).length;
-            return (
-              <div key={stage.id} className="bg-white rounded-lg border border-[#e5e7eb] px-3 py-2 text-center min-w-[72px]">
-                <div className="text-lg font-bold leading-tight" style={{ color: count > 0 ? stage.color : '#d1d5db' }}>{count}</div>
-                <div className="text-[10px] text-[#6b7280] leading-tight mt-0.5">{stage.label}</div>
-              </div>
-            );
-          })}
+        {/* ACTION ROW — only Rechazadas + Presupuesto (stage counts live in kanban headers) */}
+        <div className="flex items-center gap-3 mb-4">
+          {/* Pipeline summary */}
+          <div className="flex items-center gap-3 text-sm">
+            <span className="text-[#6b7280]"><strong className="text-[#1c2c4a]">{memberProspectos.filter(p => p.status !== 'cierre_perdido').length}</strong> prospectos</span>
+            <span className="text-[#6b7280]"><strong className="text-[#0D47A1]">{fmtM(totalPipeline)}</strong> pipeline</span>
+          </div>
 
-          {/* Rechazadas */}
-          {memberRechazados.length > 0 && (() => {
-            const vencidos = memberRechazados.filter(p => getSeguimientoUrgency({ fechaSeguimiento: p.fechaSeguimiento, accion: p.followUpAction, recoveryStatus: p.recoveryStatus, fechaVencimientoContrato: p.fechaVencimientoContrato })?.overdue).length;
-            const conSeg = memberRechazados.filter(p => p.fechaSeguimiento).length;
-            return (
-              <button onClick={() => setShowRechazadasModal(true)}
-                className={`rounded-lg border px-3 py-2 text-center min-w-[72px] hover:shadow-sm transition-all ${vencidos > 0 ? 'border-red-300 bg-red-50' : 'border-[#e5e7eb] bg-white'}`}>
-                <div className="flex items-center justify-center gap-1">
-                  <span className="text-lg font-bold leading-tight" style={{ color: vencidos > 0 ? '#EF4444' : '#F59E0B' }}>{memberRechazados.length}</span>
-                  {vencidos > 0 && <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />}
+          <div className="ml-auto flex items-center gap-2">
+            {/* Rechazadas */}
+            {memberRechazados.length > 0 && (() => {
+              const vencidos = memberRechazados.filter(p => getSeguimientoUrgency({ fechaSeguimiento: p.fechaSeguimiento, accion: p.followUpAction, recoveryStatus: p.recoveryStatus, fechaVencimientoContrato: p.fechaVencimientoContrato })?.overdue).length;
+              const conSeg = memberRechazados.filter(p => p.fechaSeguimiento).length;
+              return (
+                <button onClick={() => setShowRechazadasModal(true)}
+                  className={`flex items-center gap-2 rounded-lg border px-3 py-2 hover:shadow-sm transition-all ${vencidos > 0 ? 'border-red-300 bg-red-50' : 'border-[#e5e7eb] bg-white'}`}>
+                  {vencidos > 0 && <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />}
+                  <span className="text-lg font-bold" style={{ color: vencidos > 0 ? '#EF4444' : '#F59E0B' }}>{memberRechazados.length}</span>
+                  <div className="text-left">
+                    <div className="text-xs font-semibold text-[#1c2c4a]">Rechazadas</div>
+                    <div className="text-[9px] text-[#9ca3af]">{conSeg}/{memberRechazados.length} con seguimiento</div>
+                  </div>
+                </button>
+              );
+            })()}
+
+            {/* Presupuesto */}
+            {member.presupuestoAnual2026 > 0 && (
+              <button onClick={() => setShowVentasRealesModal(true)}
+                className="flex items-center gap-2 bg-white rounded-lg border border-[#e5e7eb] px-3 py-2 hover:shadow-sm hover:border-[#0067B0]/30 transition-all">
+                <span className="text-lg font-bold" style={{ color: member.cumplimientoPresupuesto >= 70 ? '#2E7D32' : member.cumplimientoPresupuesto >= 40 ? '#F57C00' : '#DC2626' }}>
+                  {member.cumplimientoPresupuesto}%
+                </span>
+                <div className="text-left">
+                  <div className="text-xs font-semibold text-[#1c2c4a]">Presupuesto</div>
+                  <div className="w-20 h-1.5 bg-[#e5e7eb] rounded-full overflow-hidden mt-0.5">
+                    <div className="h-full rounded-full" style={{
+                      width: `${Math.min(member.cumplimientoPresupuesto, 100)}%`,
+                      backgroundColor: member.cumplimientoPresupuesto >= 70 ? '#2E7D32' : member.cumplimientoPresupuesto >= 40 ? '#F57C00' : '#DC2626',
+                    }} />
+                  </div>
                 </div>
-                <div className="text-[10px] text-[#6b7280] leading-tight mt-0.5">Rechazadas</div>
+                <Edit3 size={14} className="text-[#0067B0]" />
               </button>
-            );
-          })()}
-
-          {/* Presupuesto */}
-          {member.presupuestoAnual2026 > 0 && (
-            <button onClick={() => setShowVentasRealesModal(true)}
-              className="bg-white rounded-lg border border-[#e5e7eb] px-3 py-2 text-center min-w-[90px] hover:shadow-sm hover:border-[#0067B0]/30 transition-all">
-              <div className="text-lg font-bold leading-tight" style={{ color: member.cumplimientoPresupuesto >= 70 ? '#2E7D32' : member.cumplimientoPresupuesto >= 40 ? '#F57C00' : '#DC2626' }}>
-                {member.cumplimientoPresupuesto}%
-              </div>
-              <div className="text-[10px] text-[#6b7280] leading-tight mt-0.5">Presupuesto</div>
-              <div className="w-full h-1 bg-[#e5e7eb] rounded-full overflow-hidden mt-1">
-                <div className="h-full rounded-full" style={{
-                  width: `${Math.min(member.cumplimientoPresupuesto, 100)}%`,
-                  backgroundColor: member.cumplimientoPresupuesto >= 70 ? '#2E7D32' : member.cumplimientoPresupuesto >= 40 ? '#F57C00' : '#DC2626',
-                }} />
-              </div>
-            </button>
-          )}
-
-          {/* Pipeline summary — right aligned */}
-          <div className="ml-auto flex flex-col justify-center text-right pl-2">
-            <span className="text-sm font-bold text-[#1c2c4a]">{memberProspectos.filter(p => p.status !== 'cierre_perdido').length} prospectos</span>
-            <span className="text-xs text-[#0D47A1] font-semibold">{fmtM(totalPipeline)} pipeline</span>
+            )}
           </div>
         </div>
 
@@ -188,14 +183,14 @@ export function EjecutivoHub({ member, onBack, onShowNuevoLead }: Props) {
                 return (
                   <div key={stage.id} className="flex flex-col">
                     <div className="rounded-t-lg p-2.5 mb-1.5" style={{ borderTop: `3px solid ${stage.color}` }}>
-                      <div className="flex items-center justify-between mb-0.5">
-                        <div className="flex items-center gap-1.5">
-                          <h3 className="text-xs font-semibold text-[#1c2c4a]">{stage.label}</h3>
-                          <span className="text-[10px] bg-[#f3f4f6] text-[#6b7280] px-1.5 py-0.5 rounded-full font-medium">{stageItems.length}</span>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-sm font-bold text-[#1c2c4a]">{stage.label}</h3>
+                          <span className="text-sm font-bold px-2 py-0.5 rounded-md" style={{ backgroundColor: `${stage.color}15`, color: stage.color }}>{stageItems.length}</span>
                         </div>
-                        {gate && <Lock size={10} className="text-[#9ca3af]" />}
+                        {gate && <Lock size={11} className="text-[#9ca3af]" />}
                       </div>
-                      {stageValue > 0 && <div className="text-[10px] text-[#6b7280]">{fmtM(stageValue)}</div>}
+                      {stageValue > 0 && <div className="text-[10px] text-[#6b7280] mt-0.5">{fmtM(stageValue)}</div>}
                     </div>
                     <HubDroppableColumn stageId={stage.id}>
                       <SortableContext items={stageItems.map(p => p.id)} strategy={verticalListSortingStrategy}>
