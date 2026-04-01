@@ -15,6 +15,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { HubKanbanCard } from './HubKanbanCard';
 import { StageGateModal } from './StageGateModal';
 import { ProspectoDrawer } from './ProspectoDrawer';
+import { InsightsBanner } from './InsightsBanner';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 
 function HubDroppableColumn({ stageId, children }: { stageId: string; children: React.ReactNode }) {
@@ -39,6 +40,7 @@ export function EjecutivoHub({ member, onBack, onShowNuevoLead }: Props) {
     updateProspectMutation,
     ventasRealesEditadas,
     setVentasRealesEditadas,
+    userGreeting,
   } = useComercialData();
   const { toast } = useToast();
 
@@ -158,6 +160,13 @@ export function EjecutivoHub({ member, onBack, onShowNuevoLead }: Props) {
               </button>
             )}
         </div>
+
+        {/* INSIGHTS BANNER — personalized smart analysis */}
+        <InsightsBanner
+          greeting={userGreeting}
+          memberName={member.name}
+          prospectos={memberProspectos}
+        />
 
         {/* PIPELINE — Kanban personal */}
         <div className="space-y-4">

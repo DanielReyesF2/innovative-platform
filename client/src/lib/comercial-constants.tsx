@@ -277,6 +277,7 @@ export const dbProspectToKanban = (prospect: any, usersMap: Record<number, any> 
     nextStep: prospect.nextStep || null,
     reason: prospect.reason || null,
     estimatedCloseTime: prospect.estimatedCloseTime || null,
+    updatedAt: prospect.updatedAt || null,
   };
 };
 
