@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { useCreateProspect } from "../api";
 import { useToast } from "@/components/ui/use-toast";
 import { SERVICIOS_INNOVATIVE } from "@/lib/comercial-constants";
+import type { TeamMember } from "@shared/types/comercial";
 
 const SOURCE_LABELS: Record<string, string> = {
   referido: "Referido",
@@ -17,7 +18,7 @@ const SOURCE_LABELS: Record<string, string> = {
 
 interface LeadFormProps {
   onClose: () => void;
-  salesTeam?: any[];
+  salesTeam?: TeamMember[];
   defaultAssignee?: number;
 }
 
@@ -94,7 +95,7 @@ export function LeadForm({ onClose, salesTeam, defaultAssignee }: LeadFormProps)
           </p>
 
           {defaultAssignee && salesTeam && (() => {
-            const registrant = salesTeam.find((m: any) => m.dbUserId === defaultAssignee);
+            const registrant = salesTeam.find((m: TeamMember) => m.dbUserId === defaultAssignee);
             if (!registrant) return null;
             return (
               <div className="flex items-center gap-2 rounded-lg bg-muted/50 px-3 py-2">
@@ -190,7 +191,7 @@ export function LeadForm({ onClose, salesTeam, defaultAssignee }: LeadFormProps)
                 className="mt-1 h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
               >
                 <option value="">Sin asignar</option>
-                {salesTeam.map((m: any) => (
+                {salesTeam.map((m: TeamMember) => (
                   <option key={m.dbUserId} value={m.dbUserId}>
                     {m.name}
                   </option>

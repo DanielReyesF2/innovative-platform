@@ -14,6 +14,7 @@ import {
 import { useLeads } from "../api";
 import { LeadForm } from "./LeadForm";
 import { QualifyLeadDialog } from "./QualifyLeadDialog";
+import type { Lead } from "@shared/schema/comercial";
 
 const SOURCE_LABELS: Record<string, string> = {
   referido: "Referido",
@@ -36,10 +37,10 @@ const SOURCE_COLORS: Record<string, string> = {
 export function LeadsView() {
   const { data: leads = [] } = useLeads();
   const [showForm, setShowForm] = useState(false);
-  const [qualifyLead, setQualifyLead] = useState<any>(null);
+  const [qualifyLead, setQualifyLead] = useState<Lead | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
 
-  const filtered = leads.filter((lead: any) => {
+  const filtered = leads.filter((lead: Lead) => {
     if (!searchTerm) return true;
     const term = searchTerm.toLowerCase();
     return (
@@ -91,7 +92,7 @@ export function LeadsView() {
             </div>
           ) : (
             <div className="space-y-3">
-              {filtered.map((lead: any) => (
+              {filtered.map((lead: Lead) => (
                 <div
                   key={lead.id}
                   className="flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-accent"

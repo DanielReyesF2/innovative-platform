@@ -1,6 +1,8 @@
 import { Clock, CalendarCheck, Flame, TrendingUp, AlertTriangle, CheckCircle } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { fmtM } from '@/lib/utils';
 import { HUB_KANBAN_STAGES } from '@/lib/comercial-constants';
+import type { KanbanProspecto } from '@shared/types/comercial';
 
 // ═══════ TYPES ═══════
 
@@ -14,7 +16,7 @@ interface Insight {
 
 // ═══════ PURE FUNCTION — computes insights from real kanban data ═══════
 
-export function calcularInsights(prospectos: any[]): Insight[] {
+export function calcularInsights(prospectos: KanbanProspecto[]): Insight[] {
   const insights: Insight[] = [];
   const now = new Date();
   const todayStr = now.toISOString().split('T')[0];
@@ -33,7 +35,7 @@ export function calcularInsights(prospectos: any[]): Insight[] {
       return diffDays > 7;
     })
     .map(p => {
-      const diffDays = Math.floor((now.getTime() - new Date(p.updatedAt).getTime()) / (1000 * 60 * 60 * 24));
+      const diffDays = Math.floor((now.getTime() - new Date(p.updatedAt ?? 0).getTime()) / (1000 * 60 * 60 * 24));
       return { ...p, stagnantDays: diffDays };
     })
     .sort((a, b) => b.stagnantDays - a.stagnantDays);
@@ -55,7 +57,7 @@ export function calcularInsights(prospectos: any[]): Insight[] {
     return p.fechaSeguimiento <= todayStr;
   });
 
-  const overdue = followUpsDue.filter(p => p.fechaSeguimiento < todayStr);
+  const overdue = followUpsDue.filter(p => (p.fechaSeguimiento ?? '') < todayStr);
   const dueToday = followUpsDue.filter(p => p.fechaSeguimiento === todayStr);
 
   if (overdue.length > 0) {
@@ -124,7 +126,7 @@ export function calcularInsights(prospectos: any[]): Insight[] {
 
 // ═══════ ICON MAP ═══════
 
-const INSIGHT_ICONS: Record<string, { Icon: any; color: string }> = {
+const INSIGHT_ICONS: Record<string, { Icon: LucideIcon; color: string }> = {
   stagnant: { Icon: Clock, color: '#F97316' },
   followup: { Icon: CalendarCheck, color: '#3B82F6' },
   hot:      { Icon: Flame, color: '#EF4444' },
@@ -138,7 +140,7 @@ const INSIGHT_ICONS: Record<string, { Icon: any; color: string }> = {
 interface InsightsBannerProps {
   greeting: string;
   memberName: string;
-  prospectos: any[];
+  prospectos: KanbanProspecto[];
   presupuestoMensual?: number;
   ventasReales?: number;
   cumplimiento?: number;

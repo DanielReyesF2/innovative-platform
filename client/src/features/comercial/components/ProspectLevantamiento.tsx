@@ -50,7 +50,7 @@ function Field({
   placeholder,
 }: {
   label: string;
-  value: string;
+  value: unknown;
   onChange: (v: string) => void;
   type?: string;
   placeholder?: string;
@@ -60,7 +60,7 @@ function Field({
       <Label className="text-xs">{label}</Label>
       <Input
         type={type}
-        value={value || ""}
+        value={(value as string) || ""}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         className="mt-1"
@@ -87,7 +87,7 @@ function BoolField({ label, value, onChange }: { label: string; value: boolean; 
 
 // ─── Section Components ───
 
-function GeneralInfoSection({ data, onChange }: { data: any; onChange: (d: any) => void }) {
+function GeneralInfoSection({ data, onChange }: { data: Record<string, unknown>; onChange: (d: Record<string, unknown>) => void }) {
   const set = (key: string, val: string) => onChange({ ...data, [key]: val });
   return (
     <CollapsibleSection title="Datos de la Empresa" icon={<Building2 className="h-4 w-4" />} defaultOpen>
@@ -103,13 +103,13 @@ function GeneralInfoSection({ data, onChange }: { data: any; onChange: (d: any) 
   );
 }
 
-function WasteTypesSection({ data, onChange }: { data: any[]; onChange: (d: any[]) => void }) {
+function WasteTypesSection({ data, onChange }: { data: Record<string, unknown>[]; onChange: (d: Record<string, unknown>[]) => void }) {
   const addRow = () =>
     onChange([...data, { wasteType: "", quantity: "", currentDestination: "", monthlyCost: "" }]);
   const removeRow = (i: number) => onChange(data.filter((_, idx) => idx !== i));
   const updateRow = (i: number, key: string, val: string) => {
     const updated = [...data];
-    updated[i] = { ...updated[i], [key]: val };
+    updated[i] = { ...updated[i], [key]: val } as Record<string, unknown>;
     onChange(updated);
   };
 
@@ -118,7 +118,7 @@ function WasteTypesSection({ data, onChange }: { data: any[]; onChange: (d: any[
       {data.length === 0 && (
         <p className="mb-3 text-sm text-muted-foreground">Agrega al menos un tipo de residuo *</p>
       )}
-      {data.map((row: any, i: number) => (
+      {data.map((row: Record<string, unknown>, i: number) => (
         <div key={i} className="mb-3 rounded-lg border p-3">
           <div className="mb-2 flex items-center justify-between">
             <span className="text-xs font-medium">Residuo #{i + 1}</span>
@@ -141,8 +141,8 @@ function WasteTypesSection({ data, onChange }: { data: any[]; onChange: (d: any[
   );
 }
 
-function CurrentServicesSection({ data, onChange }: { data: any; onChange: (d: any) => void }) {
-  const set = (key: string, val: any) => onChange({ ...data, [key]: val });
+function CurrentServicesSection({ data, onChange }: { data: Record<string, unknown>; onChange: (d: Record<string, unknown>) => void }) {
+  const set = (key: string, val: string | number | boolean) => onChange({ ...data, [key]: val });
   return (
     <CollapsibleSection title="Servicios Actuales" icon={<Truck className="h-4 w-4" />}>
       <div className="grid gap-3 sm:grid-cols-2">
@@ -157,7 +157,7 @@ function CurrentServicesSection({ data, onChange }: { data: any; onChange: (d: a
             type="number"
             min={1}
             max={10}
-            value={data.satisfactionLevel || ""}
+            value={(data.satisfactionLevel as number) || ""}
             onChange={(e) => set("satisfactionLevel", Number(e.target.value))}
             className="mt-1"
           />
@@ -165,7 +165,7 @@ function CurrentServicesSection({ data, onChange }: { data: any; onChange: (d: a
         <div className="sm:col-span-2">
           <Label className="text-xs">Razon de Cambio</Label>
           <textarea
-            value={data.reasonForChange || ""}
+            value={(data.reasonForChange as string) || ""}
             onChange={(e) => set("reasonForChange", e.target.value)}
             className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
             rows={2}
@@ -176,8 +176,8 @@ function CurrentServicesSection({ data, onChange }: { data: any; onChange: (d: a
   );
 }
 
-function InfrastructureSection({ data, onChange }: { data: any; onChange: (d: any) => void }) {
-  const set = (key: string, val: any) => onChange({ ...data, [key]: val });
+function InfrastructureSection({ data, onChange }: { data: Record<string, unknown>; onChange: (d: Record<string, unknown>) => void }) {
+  const set = (key: string, val: string | number | boolean) => onChange({ ...data, [key]: val });
   return (
     <CollapsibleSection title="Infraestructura" icon={<Warehouse className="h-4 w-4" />}>
       <div className="grid gap-3 sm:grid-cols-2">
@@ -195,8 +195,8 @@ function InfrastructureSection({ data, onChange }: { data: any; onChange: (d: an
   );
 }
 
-function NeedsSection({ data, onChange }: { data: any; onChange: (d: any) => void }) {
-  const set = (key: string, val: any) => onChange({ ...data, [key]: val });
+function NeedsSection({ data, onChange }: { data: Record<string, unknown>; onChange: (d: Record<string, unknown>) => void }) {
+  const set = (key: string, val: string | number | boolean) => onChange({ ...data, [key]: val });
   return (
     <CollapsibleSection title="Necesidades" icon={<Target className="h-4 w-4" />}>
       <div className="grid gap-3 sm:grid-cols-2">
@@ -209,7 +209,7 @@ function NeedsSection({ data, onChange }: { data: any; onChange: (d: any) => voi
         <div>
           <Label className="text-xs">Urgencia</Label>
           <select
-            value={data.urgency || ""}
+            value={(data.urgency as string) || ""}
             onChange={(e) => set("urgency", e.target.value)}
             className="mt-1 h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
           >
@@ -223,7 +223,7 @@ function NeedsSection({ data, onChange }: { data: any; onChange: (d: any) => voi
         <div className="sm:col-span-2">
           <Label className="text-xs">Metas Ambientales</Label>
           <textarea
-            value={data.environmentalGoals || ""}
+            value={(data.environmentalGoals as string) || ""}
             onChange={(e) => set("environmentalGoals", e.target.value)}
             className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
             rows={2}
@@ -251,12 +251,12 @@ export function ProspectLevantamiento({ prospectId }: ProspectLevantamientoProps
   const [schedResponsible, setSchedResponsible] = useState("");
   const [schedNotes, setSchedNotes] = useState("");
 
-  const [levData, setLevData] = useState<any | null>(null);
+  const [levData, setLevData] = useState<Record<string, unknown> | null>(null);
   const [initialized, setInitialized] = useState(false);
 
   // Initialize from API data once loaded
   if (prospect && !initialized) {
-    const raw = prospect.levantamientoData || {};
+    const raw = (prospect.levantamientoData || {}) as Record<string, unknown>;
     setLevData({
       generalInfo: raw.generalInfo || {},
       wasteTypes: raw.wasteTypes || [],
@@ -303,8 +303,8 @@ export function ProspectLevantamiento({ prospectId }: ProspectLevantamientoProps
       await sendToOps.mutateAsync(prospectId);
       toast({ title: "Enviado a Operaciones" });
       setShowOpsConfirm(false);
-    } catch (err: any) {
-      const msg = err?.message || "Error al enviar a Operaciones";
+    } catch (err: unknown) {
+      const msg = (err instanceof Error ? err.message : null) || "Error al enviar a Operaciones";
       toast({ title: msg, variant: "destructive" });
       setShowOpsConfirm(false);
     }
@@ -331,23 +331,23 @@ export function ProspectLevantamiento({ prospectId }: ProspectLevantamientoProps
 
       {/* 5 Sections */}
       <GeneralInfoSection
-        data={levData.generalInfo}
+        data={levData.generalInfo as Record<string, unknown>}
         onChange={(gi) => setLevData({ ...levData, generalInfo: gi })}
       />
       <WasteTypesSection
-        data={levData.wasteTypes}
+        data={levData.wasteTypes as Record<string, unknown>[]}
         onChange={(wt) => setLevData({ ...levData, wasteTypes: wt })}
       />
       <CurrentServicesSection
-        data={levData.currentServices}
+        data={levData.currentServices as Record<string, unknown>}
         onChange={(cs) => setLevData({ ...levData, currentServices: cs })}
       />
       <InfrastructureSection
-        data={levData.infrastructure}
+        data={levData.infrastructure as Record<string, unknown>}
         onChange={(inf) => setLevData({ ...levData, infrastructure: inf })}
       />
       <NeedsSection
-        data={levData.needs}
+        data={levData.needs as Record<string, unknown>}
         onChange={(n) => setLevData({ ...levData, needs: n })}
       />
 

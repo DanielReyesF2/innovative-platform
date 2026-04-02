@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useLocation } from 'wouter';
 import { DollarSign, ClipboardList, RotateCcw, Users, Recycle, FileText, BarChart3 } from 'lucide-react';
+import type { TeamMember } from '@shared/types/comercial';
 import { fmtM } from '@/lib/utils';
 import {
   KANBAN_STAGES,
@@ -34,7 +35,7 @@ export default function ComercialPage() {
   } = useComercialData();
 
   const [comercialTab, setComercialTab] = useState<'pipeline' | 'presupuesto' | 'rechazadas' | 'reportes' | 'resumen'>('pipeline');
-  const [hubEjecutivo, setHubEjecutivo] = useState<any>(null);
+  const [hubEjecutivo, setHubEjecutivo] = useState<TeamMember | null>(null);
   const [showNuevoLead, setShowNuevoLead] = useState(false);
 
   if (isLoading) {
@@ -215,8 +216,8 @@ export default function ComercialPage() {
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all flex-1 justify-center ${comercialTab === tab.id ? 'bg-[#1c2c4a] text-white shadow-sm' : 'text-[#6b7280] hover:bg-[#f3f4f6]'}`}>
               <tab.icon size={15} />
               {tab.label}
-              {'badge' in tab && (tab as any).badge > 0 && (
-                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${comercialTab === tab.id ? 'bg-white/20 text-white' : 'bg-[#F59E0B]/10 text-[#F59E0B]'}`}>{(tab as any).badge}</span>
+              {'badge' in tab && (tab as { badge: number }).badge > 0 && (
+                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${comercialTab === tab.id ? 'bg-white/20 text-white' : 'bg-[#F59E0B]/10 text-[#F59E0B]'}`}>{(tab as { badge: number }).badge}</span>
               )}
             </button>
           ))}
@@ -235,7 +236,7 @@ export default function ComercialPage() {
         <LeadForm
           onClose={() => setShowNuevoLead(false)}
           salesTeam={salesTeamData}
-          defaultAssignee={hubEjecutivo?.dbUserId || authUser?.id}
+          defaultAssignee={authUser?.id}
         />
       )}
     </div>

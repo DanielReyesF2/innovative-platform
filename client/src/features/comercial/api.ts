@@ -1,23 +1,37 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import type { ApiProspect } from "@/lib/comercial-constants";
+import type {
+  Lead,
+  RejectionReason,
+  SalesMetrics,
+  PipelineSnapshot,
+  ProspectActivity,
+  ProspectNote,
+  ProspectMeeting,
+  ProspectDocument,
+  ProposalVersion,
+  FollowUpAlert,
+  ComercialWeeklyReport,
+} from "@shared/schema/comercial";
 
 // --- Prospects ---
 
 export function useProspects() {
-  return useQuery<any[]>({
+  return useQuery<ApiProspect[]>({
     queryKey: ["/api/comercial/prospects"],
   });
 }
 
 export function useProspect(id: number) {
-  return useQuery<any>({
+  return useQuery<ApiProspect>({
     queryKey: [`/api/comercial/prospects/${id}`],
     enabled: !!id,
   });
 }
 
 export function useProspectsByStage(stage: string) {
-  return useQuery<any[]>({
+  return useQuery<ApiProspect[]>({
     queryKey: [`/api/comercial/prospects/stage/${stage}`],
     enabled: !!stage,
   });
@@ -25,7 +39,7 @@ export function useProspectsByStage(stage: string) {
 
 export function useCreateProspect() {
   return useMutation({
-    mutationFn: async (data: any) => {
+    mutationFn: async (data: Record<string, unknown>) => {
       const res = await apiRequest("POST", "/api/comercial/prospects", data);
       return res.json();
     },
@@ -38,7 +52,7 @@ export function useCreateProspect() {
 
 export function useQualifyProspect() {
   return useMutation({
-    mutationFn: async ({ id, ...data }: { id: number; [key: string]: any }) => {
+    mutationFn: async ({ id, ...data }: { id: number; [key: string]: unknown }) => {
       const res = await apiRequest("POST", `/api/comercial/prospects/${id}/qualify`, data);
       return res.json();
     },
@@ -51,7 +65,7 @@ export function useQualifyProspect() {
 
 export function useUpdateProspect() {
   return useMutation({
-    mutationFn: async ({ id, ...data }: any) => {
+    mutationFn: async ({ id, ...data }: { id: number; [key: string]: unknown }) => {
       const res = await apiRequest("PATCH", `/api/comercial/prospects/${id}`, data);
       return res.json();
     },
@@ -91,14 +105,14 @@ export function useRejectProspect() {
 // --- Leads ---
 
 export function useLeads() {
-  return useQuery<any[]>({
+  return useQuery<Lead[]>({
     queryKey: ["/api/comercial/leads"],
   });
 }
 
 export function useCreateLead() {
   return useMutation({
-    mutationFn: async (data: any) => {
+    mutationFn: async (data: Record<string, unknown>) => {
       const res = await apiRequest("POST", "/api/comercial/leads", data);
       return res.json();
     },
@@ -150,8 +164,20 @@ export function useConvertLead() {
 
 // --- Comercial Team ---
 
+interface ApiTeamMember {
+  id: number;
+  codigo: string | null;
+  name: string;
+  email: string;
+  role: string;
+  presupuestoMensual: number;
+  presupuestoAnual: number;
+  presupuestosMensuales: Record<string, number>;
+  ventasReales: number;
+}
+
 export function useComercialTeam() {
-  return useQuery<any[]>({
+  return useQuery<ApiTeamMember[]>({
     queryKey: ["/api/comercial/team"],
     staleTime: 5 * 60 * 1000,
   });
@@ -160,7 +186,7 @@ export function useComercialTeam() {
 // --- Pipeline ---
 
 export function usePipeline() {
-  return useQuery<any[]>({
+  return useQuery<PipelineSnapshot[]>({
     queryKey: ["/api/comercial/pipeline"],
   });
 }
@@ -168,7 +194,7 @@ export function usePipeline() {
 // --- Rejection Reasons ---
 
 export function useRejectionReasons() {
-  return useQuery<any[]>({
+  return useQuery<RejectionReason[]>({
     queryKey: ["/api/comercial/rejection-reasons"],
   });
 }
@@ -191,13 +217,13 @@ export function useSendToOperaciones() {
 // --- Sales Metrics ---
 
 export function useSalesMetrics(period?: string) {
-  return useQuery<any[]>({
+  return useQuery<SalesMetrics[]>({
     queryKey: ["/api/comercial/sales-metrics", period].filter(Boolean),
   });
 }
 
 export function useUserSalesMetrics(userId: number) {
-  return useQuery<any[]>({
+  return useQuery<SalesMetrics[]>({
     queryKey: [`/api/comercial/sales-metrics/user/${userId}`],
     enabled: !!userId,
   });
@@ -208,7 +234,7 @@ export function useUserSalesMetrics(userId: number) {
 // --- Activities ---
 
 export function useProspectActivities(prospectId: number) {
-  return useQuery<any[]>({
+  return useQuery<ProspectActivity[]>({
     queryKey: [`/api/comercial/prospects/${prospectId}/activities`],
     enabled: !!prospectId,
   });
@@ -216,7 +242,7 @@ export function useProspectActivities(prospectId: number) {
 
 export function useCreateActivity() {
   return useMutation({
-    mutationFn: async ({ prospectId, ...data }: any) => {
+    mutationFn: async ({ prospectId, ...data }: { prospectId: number; [key: string]: unknown }) => {
       const res = await apiRequest("POST", `/api/comercial/prospects/${prospectId}/activities`, data);
       return res.json();
     },
@@ -230,7 +256,7 @@ export function useCreateActivity() {
 // --- Notes ---
 
 export function useProspectNotes(prospectId: number) {
-  return useQuery<any[]>({
+  return useQuery<ProspectNote[]>({
     queryKey: [`/api/comercial/prospects/${prospectId}/notes`],
     enabled: !!prospectId,
   });
@@ -288,7 +314,7 @@ export function useToggleNotePin() {
 // --- Meetings ---
 
 export function useProspectMeetings(prospectId: number) {
-  return useQuery<any[]>({
+  return useQuery<ProspectMeeting[]>({
     queryKey: [`/api/comercial/prospects/${prospectId}/meetings`],
     enabled: !!prospectId,
   });
@@ -296,7 +322,7 @@ export function useProspectMeetings(prospectId: number) {
 
 export function useCreateMeeting() {
   return useMutation({
-    mutationFn: async ({ prospectId, ...data }: any) => {
+    mutationFn: async ({ prospectId, ...data }: { prospectId: number; title: string; scheduledAt: string; location?: string; [key: string]: unknown }) => {
       const res = await apiRequest("POST", `/api/comercial/prospects/${prospectId}/meetings`, data);
       return res.json();
     },
@@ -334,7 +360,7 @@ export function useCancelMeeting() {
 // --- Documents ---
 
 export function useProspectDocuments(prospectId: number) {
-  return useQuery<any[]>({
+  return useQuery<ProspectDocument[]>({
     queryKey: [`/api/comercial/prospects/${prospectId}/documents`],
     enabled: !!prospectId,
   });
@@ -342,7 +368,7 @@ export function useProspectDocuments(prospectId: number) {
 
 export function useCreateDocument() {
   return useMutation({
-    mutationFn: async ({ prospectId, ...data }: any) => {
+    mutationFn: async ({ prospectId, ...data }: { prospectId: number; name: string; type: string; url?: string; [key: string]: unknown }) => {
       const res = await apiRequest("POST", `/api/comercial/prospects/${prospectId}/documents`, data);
       return res.json();
     },
@@ -368,7 +394,7 @@ export function useDeleteDocument() {
 // --- Proposals ---
 
 export function useProposalVersions(prospectId: number) {
-  return useQuery<any[]>({
+  return useQuery<ProposalVersion[]>({
     queryKey: [`/api/comercial/prospects/${prospectId}/proposals`],
     enabled: !!prospectId,
   });
@@ -376,7 +402,7 @@ export function useProposalVersions(prospectId: number) {
 
 export function useCreateProposal() {
   return useMutation({
-    mutationFn: async ({ prospectId, ...data }: any) => {
+    mutationFn: async ({ prospectId, ...data }: { prospectId: number; [key: string]: unknown }) => {
       const res = await apiRequest("POST", `/api/comercial/prospects/${prospectId}/proposals`, data);
       return res.json();
     },
@@ -414,7 +440,7 @@ export function useChangeProposalStatus() {
 // --- Alerts ---
 
 export function useAlerts(status?: string) {
-  return useQuery<any[]>({
+  return useQuery<FollowUpAlert[]>({
     queryKey: ["/api/comercial/alerts", status].filter(Boolean),
   });
 }
@@ -463,26 +489,52 @@ export function useGenerateAlerts() {
 
 // --- Reports ---
 
+interface LeadSourceReport {
+  source: string;
+  count: number;
+  value: number;
+}
+
+interface ForecastEntry {
+  month: string;
+  predicted: number;
+  actual: number;
+}
+
+interface WinLossAnalysis {
+  totalWon: number;
+  totalLost: number;
+  winRate: number;
+  avgDealSize: number;
+  topReasons: { reason: string; count: number }[];
+}
+
+interface CompetitorEntry {
+  name: string;
+  deals: number;
+  wins: number;
+}
+
 export function useLeadSourcesReport() {
-  return useQuery<any[]>({
+  return useQuery<LeadSourceReport[]>({
     queryKey: ["/api/comercial/reports/lead-sources"],
   });
 }
 
 export function useSalesForecast() {
-  return useQuery<any[]>({
+  return useQuery<ForecastEntry[]>({
     queryKey: ["/api/comercial/reports/forecast"],
   });
 }
 
 export function useWinLossAnalysis() {
-  return useQuery<any>({
+  return useQuery<WinLossAnalysis>({
     queryKey: ["/api/comercial/reports/win-loss"],
   });
 }
 
 export function useCompetitorAnalysis() {
-  return useQuery<any[]>({
+  return useQuery<CompetitorEntry[]>({
     queryKey: ["/api/comercial/reports/competitors"],
   });
 }
@@ -490,7 +542,7 @@ export function useCompetitorAnalysis() {
 // === RESUMEN SEMANAL ===
 
 export function useWeeklyReport(weekStart: string) {
-  return useQuery<any>({
+  return useQuery<ComercialWeeklyReport>({
     queryKey: ["/api/comercial/weekly-report", weekStart],
     queryFn: async () => {
       const res = await apiRequest("GET", `/api/comercial/weekly-report?week=${weekStart}`);

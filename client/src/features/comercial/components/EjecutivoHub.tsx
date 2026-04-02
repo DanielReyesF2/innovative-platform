@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { ArrowLeft, Plus, Lock, ChevronDown, ChevronUp, X, AlertCircle, Calendar, Bell, DollarSign, Edit3, Save, Target, Check } from 'lucide-react';
 import { DndContext, closestCenter, DragOverlay, useDroppable } from '@dnd-kit/core';
+import type { DragStartEvent, DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { fmtM } from '@/lib/utils';
 import {
@@ -17,6 +18,7 @@ import { StageGateModal } from './StageGateModal';
 import { ProspectoDrawer } from './ProspectoDrawer';
 import { InsightsBanner } from './InsightsBanner';
 import { apiRequest, queryClient } from '@/lib/queryClient';
+import type { KanbanProspecto, TeamMember, PendingMove } from '@shared/types/comercial';
 
 function HubDroppableColumn({ stageId, children }: { stageId: string; children: React.ReactNode }) {
   const { isOver, setNodeRef } = useDroppable({ id: `hub-${stageId}`, data: { stageId } });
@@ -28,7 +30,7 @@ function HubDroppableColumn({ stageId, children }: { stageId: string; children: 
 }
 
 interface Props {
-  member: any;
+  member: TeamMember;
   onBack: () => void;
   onShowNuevoLead?: (ejecutivo?: string) => void;
 }
@@ -48,7 +50,7 @@ export function EjecutivoHub({ member, onBack, onShowNuevoLead }: Props) {
   const memberRechazados = memberProspectos.filter(p => p.status === 'cierre_perdido');
 
   // State
-  const [selectedProspecto, setSelectedProspecto] = useState<any>(null);
+  const [selectedProspecto, setSelectedProspecto] = useState<KanbanProspecto | null>(null);
   const [hubActiveKanbanId, setHubActiveKanbanId] = useState<number | null>(null);
   const [showRechazadasModal, setShowRechazadasModal] = useState(false);
   const [showVentasRealesModal, setShowVentasRealesModal] = useState(false);
@@ -57,14 +59,14 @@ export function EjecutivoHub({ member, onBack, onShowNuevoLead }: Props) {
   const [ventaRealAño, setVentaRealAño] = useState(new Date().getFullYear());
   const [expandedColumns, setExpandedColumns] = useState<Record<string, boolean>>({});
   const [showStageGateModal, setShowStageGateModal] = useState(false);
-  const [pendingMove, setPendingMove] = useState<any>(null);
+  const [pendingMove, setPendingMove] = useState<PendingMove | null>(null);
 
   // DnD handlers
-  const hubHandleDragStart = useCallback((event: any) => {
-    setHubActiveKanbanId(event.active.id);
+  const hubHandleDragStart = useCallback((event: DragStartEvent) => {
+    setHubActiveKanbanId(event.active.id as number);
   }, []);
 
-  const hubHandleDragEnd = useCallback((event: any) => {
+  const hubHandleDragEnd = useCallback((event: DragEndEvent) => {
     setHubActiveKanbanId(null);
     const { active, over } = event;
     if (!over || !active) return;
@@ -75,7 +77,7 @@ export function EjecutivoHub({ member, onBack, onShowNuevoLead }: Props) {
       ? memberProspectos.find(p => p.id === over.id)?.status
       : overId.startsWith('hub-') ? overId.replace('hub-', '') : overId;
     if (!targetStage || targetStage === prospecto.status) return;
-    const validStages = HUB_KANBAN_STAGES.map(s => s.id);
+    const validStages: string[] = HUB_KANBAN_STAGES.map(s => s.id);
     if (!validStages.includes(targetStage)) return;
     const gate = STAGE_GATES[targetStage];
     if (gate && !gate.validate(prospecto)) {
@@ -86,7 +88,7 @@ export function EjecutivoHub({ member, onBack, onShowNuevoLead }: Props) {
     updateProspectMutation.mutate(
       { id: prospecto.id, stage: targetStage },
       {
-        onSuccess: () => setSelectedProspecto((prev: any) => prev && prev.id === prospecto.id ? { ...prev, status: targetStage } : prev),
+        onSuccess: () => setSelectedProspecto((prev) => prev && prev.id === prospecto.id ? { ...prev, status: targetStage } : prev),
         onError: () => toast({ title: 'Error al cambiar etapa', variant: 'destructive' }),
       }
     );
@@ -365,7 +367,7 @@ export function EjecutivoHub({ member, onBack, onShowNuevoLead }: Props) {
                         userId: member.dbUserId, mes: ventaRealMes, año: ventaRealAño, monto: Number(ventaRealMonto)
                       });
                       const editKey = `${member.id}-${ventaRealMes}-${ventaRealAño}`;
-                      setVentasRealesEditadas((prev: any) => ({ ...prev, [editKey]: Number(ventaRealMonto) }));
+                      setVentasRealesEditadas((prev) => ({ ...prev, [editKey]: Number(ventaRealMonto) }));
                       await queryClient.invalidateQueries({ queryKey: ['/api/comercial/ventas-reales'] });
                       await queryClient.invalidateQueries({ queryKey: ['/api/comercial/team'] });
                       setShowVentasRealesModal(false);

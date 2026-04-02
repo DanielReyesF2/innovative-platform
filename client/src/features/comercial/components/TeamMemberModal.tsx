@@ -1,9 +1,10 @@
 import { X, TrendingUp, DollarSign, Target, ArrowRight } from 'lucide-react';
 import { fmtK } from '@/lib/utils';
 import { ExecutiveAvatar } from '@/lib/comercial-constants';
+import type { TeamMember } from '@shared/types/comercial';
 
 interface Props {
-  member: any;
+  member: TeamMember;
   onClose: () => void;
   onViewHub: () => void;
 }

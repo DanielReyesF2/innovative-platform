@@ -1,5 +1,27 @@
 import React, { useState } from 'react';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, type LucideIcon } from 'lucide-react';
+import type { Prospect } from '@shared/schema/comercial';
+import type { User } from '@shared/schema/common';
+import type { KanbanProspecto, SeguimientoData, SeguimientoUrgency, CampoCompleto, StageGate } from '@shared/types/comercial';
+export type { GateMissingField } from '@shared/types/comercial';
+
+/**
+ * Prospect row as returned by the API (JSON).
+ * - Timestamps arrive as ISO strings (not Date objects)
+ * - Includes joined rejection reason fields
+ */
+export type ApiProspect = Omit<Prospect, 'createdAt' | 'updatedAt' | 'rejectionDate' | 'proposalDate' | 'lastContactAt' | 'nextFollowUpAt' | 'fechaVencimientoContrato' | 'sentToOpsAt'> & {
+  createdAt: string | null;
+  updatedAt: string | null;
+  rejectionDate?: string | null;
+  proposalDate?: string | null;
+  lastContactAt?: string | null;
+  nextFollowUpAt?: string | null;
+  fechaVencimientoContrato?: string | null;
+  sentToOpsAt?: string | null;
+  rejectionReasonText?: string | null;
+  rejectionReasonCategory?: string | null;
+};
 
 // ═══════ SERVICIOS ═══════
 export const SERVICIOS_INNOVATIVE = [
@@ -169,7 +191,7 @@ export const urgencyColor = (dateStr: string | null | undefined): string => {
   return '#EF4444';
 };
 
-export const estimarFechaProspecto = (p: any): string | null => {
+export const estimarFechaProspecto = (p: KanbanProspecto): string | null => {
   return p.fecha || null;
 };
 
@@ -187,7 +209,7 @@ export const getBarColor = (pct: number): string => {
   return '#EF4444';
 };
 
-export const calcularWeightedPipeline = (prospectos: any[]): number => {
+export const calcularWeightedPipeline = (prospectos: KanbanProspecto[]): number => {
   return prospectos.reduce((sum, p) => {
     const valor = p.propuesta?.ventaTotal || p.facturacionEstimada || 0;
     const prob = STAGE_PROBABILITY[p.status] || 0.05;
@@ -195,14 +217,14 @@ export const calcularWeightedPipeline = (prospectos: any[]): number => {
   }, 0);
 };
 
-export const calcularWinRate = (prospectos: any[]): number => {
+export const calcularWinRate = (prospectos: KanbanProspecto[]): number => {
   const ganadas = prospectos.filter(p => p.status === 'cierre_ganado').length;
   const perdidas = prospectos.filter(p => p.status === 'cierre_perdido').length;
   const total = ganadas + perdidas;
   return total > 0 ? ((ganadas / total) * 100) : 0;
 };
 
-export const calcularPipelineVelocity = (prospectos: any[]): number => {
+export const calcularPipelineVelocity = (prospectos: KanbanProspecto[]): number => {
   const oportunidadesActivas = prospectos.filter(p =>
     !['cierre_perdido', 'cierre_ganado'].includes(p.status)
   );
@@ -215,11 +237,11 @@ export const calcularPipelineVelocity = (prospectos: any[]): number => {
   return avgCycleDays > 0 ? (numOpps * avgDeal * winRate) / avgCycleDays : 0;
 };
 
-export const esProspectoCalificado = (lead: any): boolean => {
+export const esProspectoCalificado = (lead: KanbanProspecto): boolean => {
   return !!(lead.empresa && lead.industria && lead.contacto?.nombre && lead.contacto?.puesto && lead.contacto?.correo && lead.contacto?.telefono);
 };
 
-export const camposFaltantes = (lead: any): string[] => {
+export const camposFaltantes = (lead: KanbanProspecto): string[] => {
   const faltantes: string[] = [];
   if (!lead.empresa) faltantes.push('Empresa');
   if (!lead.industria) faltantes.push('Industria');
@@ -230,9 +252,9 @@ export const camposFaltantes = (lead: any): string[] => {
   return faltantes;
 };
 
-export const dbProspectToKanban = (prospect: any, usersMap: Record<number, any> = {}): any => {
-  const user = usersMap[prospect.assignedToId];
-  const ejecutivoCode = user?.codigo || (user?.name ? user.name.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase() : '');
+export const dbProspectToKanban = (prospect: ApiProspect, usersMap: Record<number, Pick<User, 'name' | 'codigo'>> = {}): KanbanProspecto => {
+  const user = prospect.assignedToId ? usersMap[prospect.assignedToId] : undefined;
+  const ejecutivoCode = user?.codigo || (user?.name ? user.name.split(' ').map((n) => n[0]).join('').substring(0, 2).toUpperCase() : '');
   return {
     id: prospect.id,
     empresa: prospect.name,
@@ -250,8 +272,8 @@ export const dbProspectToKanban = (prospect: any, usersMap: Record<number, any> 
     servicios: prospect.services || [],
     status: prospect.stage,
     semana: null,
-    fecha: prospect.firstContactDate || (prospect.createdAt ? new Date(prospect.createdAt).toISOString().split('T')[0] : null),
-    fechaRegistro: prospect.createdAt ? new Date(prospect.createdAt).toISOString().split('T')[0] : null,
+    fecha: prospect.firstContactDate || (prospect.createdAt ? prospect.createdAt.split('T')[0] : null),
+    fechaRegistro: prospect.createdAt ? prospect.createdAt.split('T')[0] : null,
     propuesta: {
       status: null,
       ventaTotal: prospect.estimatedValue ? Number(prospect.estimatedValue) : null,
@@ -265,10 +287,10 @@ export const dbProspectToKanban = (prospect: any, usersMap: Record<number, any> 
     volumenEstimado: prospect.estimatedVolume || null,
     facturacionEstimada: prospect.estimatedValue ? Number(prospect.estimatedValue) : null,
     fuente: prospect.source || 'otro',
-    fechaSeguimiento: prospect.nextFollowUpAt ? new Date(prospect.nextFollowUpAt).toISOString().split('T')[0] : null,
+    fechaSeguimiento: prospect.nextFollowUpAt ? prospect.nextFollowUpAt.split('T')[0] : null,
     followUpAction: prospect.followUpAction || null,
     recoveryStatus: prospect.recoveryStatus || null,
-    fechaVencimientoContrato: prospect.fechaVencimientoContrato ? new Date(prospect.fechaVencimientoContrato).toISOString().split('T')[0] : null,
+    fechaVencimientoContrato: prospect.fechaVencimientoContrato ? prospect.fechaVencimientoContrato.split('T')[0] : null,
     levantamientoData: prospect.levantamientoData || null,
     serviceVolumes: prospect.serviceVolumes || {},
     potential: prospect.potential || null,
@@ -281,7 +303,7 @@ export const dbProspectToKanban = (prospect: any, usersMap: Record<number, any> 
   };
 };
 
-export const calcularPipelineData = (prospectos: any[]) => {
+export const calcularPipelineData = (prospectos: KanbanProspecto[]) => {
   const stages = ['contacto_inicial', 'presentacion', 'levantamiento', 'propuesta', 'negociacion', 'cierre_ganado'];
   const labels: Record<string, string> = { contacto_inicial: 'Lead nuevo', presentacion: 'Reunión', levantamiento: 'Levantamiento', propuesta: 'Propuesta', negociacion: 'Negociación', cierre_ganado: 'Socio Ambiental' };
   const objetivos: Record<string, number> = { contacto_inicial: 50, presentacion: 30, levantamiento: 20, propuesta: 15, negociacion: 10, cierre_ganado: 5 };
@@ -296,7 +318,7 @@ export const calcularPipelineData = (prospectos: any[]) => {
   });
 };
 
-export const calcularCamposCompletos = (p: any) => {
+export const calcularCamposCompletos = (p: KanbanProspecto): CampoCompleto[] => {
   return [
     { label: 'Empresa', ok: !!p.empresa },
     { label: 'Industria', ok: !!p.industria },
@@ -305,12 +327,12 @@ export const calcularCamposCompletos = (p: any) => {
     { label: 'Correo', ok: !!p.contacto?.correo },
     { label: 'Servicios', ok: !!(p.servicios?.length > 0) },
     { label: 'Ciudad', ok: !!p.ciudad },
-    { label: 'Tipos de residuos', ok: !!p.tiposResiduos },
+    { label: 'Tipos de residuos', ok: !!p.levantamientoData },
     { label: 'Volumen estimado', ok: !!p.volumenEstimado },
   ];
 };
 
-export const getRecoveryState = (seg: any) => {
+export const getRecoveryState = (seg: SeguimientoData | null | undefined) => {
   if (!seg) return RECOVERY_STATES.sin_seguimiento;
   if (seg.recoveryStatus === 're_contactada') return RECOVERY_STATES.re_contactada;
   if (seg.fechaSeguimiento) return RECOVERY_STATES.en_seguimiento;
@@ -339,7 +361,7 @@ export const classifyRechazo = (motivoRechazo: string | null | undefined, dbCate
   return RECHAZO_CATEGORIES.operational;
 };
 
-export const getSeguimientoUrgency = (seg: any) => {
+export const getSeguimientoUrgency = (seg: SeguimientoData | null | undefined): SeguimientoUrgency | null => {
   if (!seg?.fechaSeguimiento) return null;
   const today = new Date();
   const target = new Date(seg.fechaSeguimiento);
@@ -381,21 +403,8 @@ export function tabUnlockLabel(tabId: string): string {
 }
 
 // ═══════ STAGE GATES ═══════
-export interface GateMissingField {
-  key: string;
-  label: string;
-  type: 'text' | 'number' | 'services';
-  placeholder?: string;
-}
 
-export const STAGE_GATES: Record<string, {
-  label: string;
-  validate: (p: any) => boolean;
-  message: (p: any) => string;
-  requirement: string;
-  /** Returns fields the user can fill inline to pass the gate. Empty = use special flow (e.g. QualifyLeadDialog) */
-  missingFields: (p: any) => GateMissingField[];
-}> = {
+export const STAGE_GATES: Record<string, StageGate> = {
   presentacion: {
     label: 'Lead Calificado',
     validate: (p) => esProspectoCalificado(p),
@@ -473,7 +482,7 @@ export function ExecutiveAvatar({ codigo, name, size = 'md', className = '' }: {
 
 export function SectionHeader({ color, icon: Icon, label, linkLabel, onLinkClick }: {
   color: string;
-  icon: React.ComponentType<any>;
+  icon: LucideIcon;
   label: string;
   linkLabel?: string;
   onLinkClick?: () => void;

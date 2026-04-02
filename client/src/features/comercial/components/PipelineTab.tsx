@@ -10,9 +10,10 @@ import {
 } from '@/lib/comercial-constants';
 import { useComercialData } from '../hooks/useComercialData';
 import { ProspectoDrawer } from './ProspectoDrawer';
+import type { KanbanProspecto, TeamMember } from '@shared/types/comercial';
 
 interface Props {
-  onViewHub: (member: any) => void;
+  onViewHub: (member: TeamMember) => void;
 }
 
 export function PipelineTab({ onViewHub }: Props) {
@@ -27,7 +28,7 @@ export function PipelineTab({ onViewHub }: Props) {
   const [filterEtapa, setFilterEtapa] = useState('todos');
 
   // Prospect drawer
-  const [selectedProspecto, setSelectedProspecto] = useState<any>(null);
+  const [selectedProspecto, setSelectedProspecto] = useState<KanbanProspecto | null>(null);
 
   return (
     <>
@@ -170,7 +171,7 @@ export function PipelineTab({ onViewHub }: Props) {
           .filter(p => filterEjecutivo === 'todos' || p.ejecutivo === filterEjecutivo)
           .filter(p => filterEtapa === 'todos' || p.status === filterEtapa)
           .sort((a, b) => {
-            const stageOrder = KANBAN_STAGES.map(s => s.id);
+            const stageOrder: string[] = KANBAN_STAGES.map(s => s.id);
             return stageOrder.indexOf(b.status) - stageOrder.indexOf(a.status);
           });
 

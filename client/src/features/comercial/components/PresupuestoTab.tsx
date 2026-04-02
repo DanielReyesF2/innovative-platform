@@ -146,12 +146,12 @@ export function PresupuestoTab() {
                           type="number"
                           autoFocus
                           value={ventasRealesEditadas[editKey] ?? ''}
-                          onChange={(e) => setVentasRealesEditadas((prev: any) => ({ ...prev, [editKey]: e.target.value }))}
+                          onChange={(e) => setVentasRealesEditadas((prev) => ({ ...prev, [editKey]: parseFloat(e.target.value) || 0 }))}
                           onKeyDown={(e) => {
                             if (e.key === 'Enter' || e.key === 'Tab') {
                               e.preventDefault();
                               const monto = Number(ventasRealesEditadas[editKey] || 0);
-                              setVentasRealesEditadas((prev: any) => ({ ...prev, [editKey]: monto }));
+                              setVentasRealesEditadas((prev) => ({ ...prev, [editKey]: monto }));
                               setEditingVentaReal(null);
                               apiRequest('POST', '/api/comercial/ventas-reales', { userId: member.dbUserId, mes: ventaRealMes, año: ventaRealAño, monto })
                                 .then(() => {
@@ -163,13 +163,13 @@ export function PresupuestoTab() {
                                   toast({ title: 'Error al guardar', variant: 'destructive' });
                                 });
                             } else if (e.key === 'Escape') {
-                              setVentasRealesEditadas((prev: any) => { const n = { ...prev }; delete n[editKey]; return n; });
+                              setVentasRealesEditadas((prev) => { const n = { ...prev }; delete n[editKey]; return n; });
                               setEditingVentaReal(null);
                             }
                           }}
                           onBlur={() => {
                             const monto = Number(ventasRealesEditadas[editKey] || 0);
-                            setVentasRealesEditadas((prev: any) => ({ ...prev, [editKey]: monto }));
+                            setVentasRealesEditadas((prev) => ({ ...prev, [editKey]: monto }));
                             setEditingVentaReal(null);
                             if (monto > 0) {
                               apiRequest('POST', '/api/comercial/ventas-reales', { userId: member.dbUserId, mes: ventaRealMes, año: ventaRealAño, monto })
@@ -198,7 +198,7 @@ export function PresupuestoTab() {
                         <button
                           onClick={() => {
                             setEditingVentaReal(editKey);
-                            setVentasRealesEditadas((prev: any) => ({ ...prev, [editKey]: ventaActual || '' }));
+                            setVentasRealesEditadas((prev) => ({ ...prev, [editKey]: ventaActual || 0 }));
                           }}
                           className="text-[#00a8a8] hover:bg-[#00a8a8]/10 p-1.5 rounded-lg transition-colors"
                           title="Editar venta real"
@@ -255,7 +255,7 @@ export function PresupuestoTab() {
           '09': 'Septiembre', '10': 'Octubre', '11': 'Noviembre', '12': 'Diciembre',
         };
 
-        const formatMesCierre = (val: string) => {
+        const formatMesCierre = (val: string | null) => {
           if (!val) return '—';
           const parts = val.split('-');
           if (parts.length >= 2) {

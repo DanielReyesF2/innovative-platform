@@ -6,9 +6,10 @@ import { useUpdateProspect } from "../api";
 import { useToast } from "@/components/ui/use-toast";
 import { X, Save } from "lucide-react";
 import { INDUSTRIAS, SERVICIOS_INNOVATIVE } from "@/lib/comercial-constants";
+import type { KanbanProspecto } from "@shared/types/comercial";
 
 interface ProspectEditDialogProps {
-  prospect: any;
+  prospect: KanbanProspecto;
   onClose: () => void;
   onSaved?: () => void;
 }
@@ -38,13 +39,13 @@ export function ProspectEditDialog({ prospect, onClose, onSaved }: ProspectEditD
     reason: p.reason || "",
   });
 
-  const set = (key: string, val: any) => setForm((prev) => ({ ...prev, [key]: val }));
+  const set = (key: string, val: string | number | string[]) => setForm((prev) => ({ ...prev, [key]: val }));
 
   const toggleService = (svcId: string) => {
     setForm((prev) => ({
       ...prev,
       services: prev.services.includes(svcId)
-        ? prev.services.filter((s: string) => s !== svcId)
+        ? prev.services.filter((s) => s !== svcId)
         : [...prev.services, svcId],
     }));
   };

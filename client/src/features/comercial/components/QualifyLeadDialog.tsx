@@ -6,7 +6,6 @@ import { useUpdateProspect, useConvertLead } from "../api";
 import { useToast } from "@/components/ui/use-toast";
 import { ArrowRight, UserCheck, ChevronLeft, ChevronRight } from "lucide-react";
 import { KANBAN_STAGES } from "@/lib/comercial-constants";
-
 const INDUSTRIES = [
   "Manufactura",
   "Alimentos",
@@ -34,8 +33,22 @@ const WASTE_TYPES = [
   "Otro",
 ];
 
+interface QualifyProspect {
+  id: number;
+  empresa?: string;
+  name?: string;
+  industria?: string | null;
+  industry?: string | null;
+  ciudad?: string | null;
+  location?: string | null;
+  status?: string;
+  contacto?: { nombre?: string; telefono?: string };
+  contactName?: string | null;
+  contactPhone?: string | null;
+}
+
 interface QualifyLeadDialogProps {
-  prospect: any;
+  prospect: QualifyProspect;
   isLead?: boolean;
   onClose: () => void;
   onQualified?: () => void;

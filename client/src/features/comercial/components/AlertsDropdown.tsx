@@ -25,6 +25,7 @@ import {
   useAcknowledgeAlert,
   useDismissAlert,
 } from "../api";
+import type { FollowUpAlert } from "@shared/schema/comercial";
 
 const alertTypeIcons: Record<string, React.ReactNode> = {
   overdue_follow_up: <Clock className="h-4 w-4 text-orange-500" />,
@@ -116,19 +117,19 @@ export function AlertsDropdown() {
         ) : (
           <ScrollArea className="h-[400px]">
             <div className="p-2 space-y-2">
-              {alerts.map((alert: any) => (
+              {alerts.map((alert: FollowUpAlert) => (
                 <div
                   key={alert.id}
                   className="bg-card border rounded-lg p-3 hover:bg-accent/50 transition-colors"
                 >
                   <div className="flex items-start gap-3">
                     <div className="flex-shrink-0 mt-0.5">
-                      {alertTypeIcons[alert.alertType] || <Bell className="h-4 w-4" />}
+                      {alertTypeIcons[alert.alertType ?? ''] || <Bell className="h-4 w-4" />}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <p className="font-medium text-sm">{alert.title}</p>
-                        <Badge className={priorityColors[alert.priority] || priorityColors.media}>
+                        <Badge className={priorityColors[alert.priority ?? 'media'] || priorityColors.media}>
                           {alert.priority}
                         </Badge>
                       </div>

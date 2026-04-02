@@ -36,6 +36,7 @@ import {
   useCompleteMeeting,
   useCancelMeeting,
 } from "../api";
+import type { ProspectMeeting } from "@shared/schema/comercial";
 
 interface ProspectMeetingsProps {
   prospectId: number;
@@ -59,7 +60,7 @@ export function ProspectMeetings({ prospectId }: ProspectMeetingsProps) {
   const { toast } = useToast();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isCompleteOpen, setIsCompleteOpen] = useState(false);
-  const [selectedMeeting, setSelectedMeeting] = useState<any>(null);
+  const [selectedMeeting, setSelectedMeeting] = useState<ProspectMeeting | null>(null);
   const [outcome, setOutcome] = useState("");
   const [newMeeting, setNewMeeting] = useState({
     title: "",
@@ -157,10 +158,10 @@ export function ProspectMeetings({ prospectId }: ProspectMeetingsProps) {
   };
 
   const upcomingMeetings = meetings.filter(
-    (m: any) => m.status === "programada" || m.status === "reprogramada"
+    (m: ProspectMeeting) => m.status === "programada" || m.status === "reprogramada"
   );
   const pastMeetings = meetings.filter(
-    (m: any) => m.status === "completada" || m.status === "cancelada"
+    (m: ProspectMeeting) => m.status === "completada" || m.status === "cancelada"
   );
 
   return (
@@ -282,14 +283,14 @@ export function ProspectMeetings({ prospectId }: ProspectMeetingsProps) {
             <div>
               <h5 className="text-sm font-medium text-muted-foreground mb-3">Proximas</h5>
               <div className="space-y-3">
-                {upcomingMeetings.map((meeting: any) => (
+                {upcomingMeetings.map((meeting: ProspectMeeting) => (
                   <div key={meeting.id} className="bg-card border rounded-lg p-4">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
                           <p className="font-medium">{meeting.title}</p>
-                          <Badge className={statusColors[meeting.status]}>
-                            {statusLabels[meeting.status]}
+                          <Badge className={statusColors[meeting.status ?? '']}>
+                            {statusLabels[meeting.status ?? '']}
                           </Badge>
                         </div>
                         <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
@@ -354,12 +355,12 @@ export function ProspectMeetings({ prospectId }: ProspectMeetingsProps) {
             <div>
               <h5 className="text-sm font-medium text-muted-foreground mb-3">Historial</h5>
               <div className="space-y-3">
-                {pastMeetings.map((meeting: any) => (
+                {pastMeetings.map((meeting: ProspectMeeting) => (
                   <div key={meeting.id} className="bg-card border rounded-lg p-4 opacity-75">
                     <div className="flex items-center gap-2">
                       <p className="font-medium">{meeting.title}</p>
-                      <Badge className={statusColors[meeting.status]}>
-                        {statusLabels[meeting.status]}
+                      <Badge className={statusColors[meeting.status ?? '']}>
+                        {statusLabels[meeting.status ?? '']}
                       </Badge>
                     </div>
                     <p className="text-sm text-muted-foreground mt-1">

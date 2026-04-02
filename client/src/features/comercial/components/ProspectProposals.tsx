@@ -37,6 +37,7 @@ import {
   useSendProposal,
   useChangeProposalStatus,
 } from "../api";
+import type { ProposalVersion } from "@shared/schema/comercial";
 
 interface ProspectProposalsProps {
   prospectId: number;
@@ -145,7 +146,7 @@ export function ProspectProposals({ prospectId }: ProspectProposalsProps) {
 
   // Get next version number
   const nextVersion = proposals.length > 0
-    ? Math.max(...proposals.map((p: any) => p.version || 1)) + 1
+    ? Math.max(...proposals.map((p: ProposalVersion) => p.version || 1)) + 1
     : 1;
 
   return (
@@ -251,8 +252,8 @@ export function ProspectProposals({ prospectId }: ProspectProposalsProps) {
       ) : (
         <div className="space-y-4">
           {[...proposals]
-            .sort((a: any, b: any) => (b.version || 1) - (a.version || 1))
-            .map((proposal: any) => (
+            .sort((a: ProposalVersion, b: ProposalVersion) => (b.version || 1) - (a.version || 1))
+            .map((proposal: ProposalVersion) => (
               <div
                 key={proposal.id}
                 className={`bg-card border rounded-lg p-4 ${
@@ -266,8 +267,8 @@ export function ProspectProposals({ prospectId }: ProspectProposalsProps) {
                         v{proposal.version || 1}
                       </span>
                       <p className="font-medium">{proposal.name}</p>
-                      <Badge className={statusColors[proposal.status]}>
-                        {statusLabels[proposal.status]}
+                      <Badge className={statusColors[proposal.status ?? '']}>
+                        {statusLabels[proposal.status ?? '']}
                       </Badge>
                     </div>
 

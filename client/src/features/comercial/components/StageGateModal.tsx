@@ -6,9 +6,10 @@ import { useUpdateProspect } from '../api';
 import { useToast } from '@/components/ui/use-toast';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import type { PendingMove } from '@shared/types/comercial';
 
 interface Props {
-  pendingMove: { prospecto: any; fromStage: string; toStage: string };
+  pendingMove: PendingMove;
   isHub?: boolean;
   onForce: () => void;
   onCancel: () => void;
@@ -21,8 +22,8 @@ export function StageGateModal({ pendingMove, isHub, onForce, onCancel }: Props)
   const missingFields = gate?.missingFields(pendingMove.prospecto) || [];
   const canCompleteInline = missingFields.length > 0;
 
-  const [formValues, setFormValues] = useState<Record<string, any>>(() => {
-    const initial: Record<string, any> = {};
+  const [formValues, setFormValues] = useState<Record<string, string | string[]>>(() => {
+    const initial: Record<string, string | string[]> = {};
     for (const field of missingFields) {
       initial[field.key] = field.type === 'services' ? [] : '';
     }
@@ -33,15 +34,16 @@ export function StageGateModal({ pendingMove, isHub, onForce, onCancel }: Props)
   const updateProspect = useUpdateProspect();
   const { toast } = useToast();
 
-  const set = (key: string, val: any) => setFormValues(prev => ({ ...prev, [key]: val }));
+  const set = (key: string, val: string) => setFormValues(prev => ({ ...prev, [key]: val }));
 
   const toggleService = (svcId: string) => {
-    setFormValues(prev => ({
-      ...prev,
-      services: prev.services?.includes(svcId)
-        ? prev.services.filter((s: string) => s !== svcId)
-        : [...(prev.services || []), svcId],
-    }));
+    setFormValues(prev => {
+      const currentServices = Array.isArray(prev.services) ? prev.services : [];
+      const updated = currentServices.includes(svcId)
+        ? currentServices.filter((s: string) => s !== svcId)
+        : [...currentServices, svcId];
+      return { ...prev, services: updated };
+    });
   };
 
   const isFormValid = missingFields.every(field => {

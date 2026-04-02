@@ -39,6 +39,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useProspectDocuments, useCreateDocument, useDeleteDocument } from "../api";
+import type { ProspectDocument } from "@shared/schema/comercial";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { getAuthToken } from "@/lib/queryClient";
 
@@ -235,7 +236,7 @@ export function ProspectDocuments({ prospectId }: ProspectDocumentsProps) {
   };
 
   // Group documents by type
-  const groupedDocs = documents.reduce((acc: Record<string, any[]>, doc: any) => {
+  const groupedDocs = documents.reduce((acc: Record<string, ProspectDocument[]>, doc: ProspectDocument) => {
     const type = doc.type || "otro";
     if (!acc[type]) acc[type] = [];
     acc[type].push(doc);
@@ -425,13 +426,13 @@ export function ProspectDocuments({ prospectId }: ProspectDocumentsProps) {
                 {documentTypeLabels[type] || type}
               </h5>
               <div className="grid gap-3">
-                {docs.map((doc: any) => (
+                {docs.map((doc: ProspectDocument) => (
                   <div
                     key={doc.id}
                     className="bg-card border rounded-lg p-4 flex items-center gap-4"
                   >
                     <div className="flex-shrink-0">
-                      {getFileIcon(doc.mimeType)}
+                      {getFileIcon(doc.mimeType ?? undefined)}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">

@@ -3,10 +3,11 @@ import {
   KPI_METAS,
   ExecutiveAvatar,
 } from '@/lib/comercial-constants';
+import type { KanbanProspecto, TeamMember } from '@shared/types/comercial';
 
 interface ComercialReportsProps {
-  kanbanProspectos: any[];
-  salesTeamData: any[];
+  kanbanProspectos: KanbanProspecto[];
+  salesTeamData: TeamMember[];
 }
 
 export function ComercialReports({ kanbanProspectos, salesTeamData }: ComercialReportsProps) {

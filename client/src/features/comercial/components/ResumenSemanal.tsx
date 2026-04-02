@@ -113,7 +113,7 @@ export function ResumenSemanal() {
           {isSent ? (
             <span className="inline-flex items-center gap-1.5 text-xs font-medium text-[#2E7D32] bg-[#2E7D32]/10 px-3 py-1.5 rounded-full">
               <CheckCircle2 size={14} />
-              Enviado {formatDate(report?.sentAt)}
+              Enviado {formatDate(report?.sentAt ? String(report.sentAt) : null)}
             </span>
           ) : (
             <span className="inline-flex items-center gap-1.5 text-xs font-medium text-[#F57C00] bg-[#F57C00]/10 px-3 py-1.5 rounded-full">

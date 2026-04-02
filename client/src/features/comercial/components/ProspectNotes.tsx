@@ -25,6 +25,7 @@ import {
   useDeleteNote,
   useToggleNotePin,
 } from "../api";
+import type { ProspectNote } from "@shared/schema/comercial";
 
 interface ProspectNotesProps {
   prospectId: number;
@@ -115,10 +116,10 @@ export function ProspectNotes({ prospectId }: ProspectNotesProps) {
   };
 
   // Sort notes: pinned first, then by date
-  const sortedNotes = [...notes].sort((a: any, b: any) => {
+  const sortedNotes = [...notes].sort((a: ProspectNote, b: ProspectNote) => {
     if (a.isPinned && !b.isPinned) return -1;
     if (!a.isPinned && b.isPinned) return 1;
-    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    return new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime();
   });
 
   return (
@@ -167,7 +168,7 @@ export function ProspectNotes({ prospectId }: ProspectNotesProps) {
         </div>
       ) : (
         <div className="space-y-3">
-          {sortedNotes.map((note: any) => (
+          {sortedNotes.map((note: ProspectNote) => (
             <div
               key={note.id}
               className={`bg-card border rounded-lg p-4 ${

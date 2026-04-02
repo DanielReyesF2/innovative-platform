@@ -33,6 +33,15 @@ import {
 } from "../../../shared/schema/operaciones";
 import { users } from "../../../shared/schema/common";
 
+// Drizzle pgEnum columns expect the exact union type, but runtime values are strings.
+// This helper casts safely to avoid `as any` while keeping TypeScript happy.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const enumCast = <T>(value: string): T => value as unknown as T;
+type ProspectStage = (typeof prospects.stage)["_"]["data"];
+type AlertStatus = (typeof followUpAlerts.status)["_"]["data"];
+type Priority = (typeof prospects.priority)["_"]["data"];
+type ProposalStatus = (typeof proposalVersions.status)["_"]["data"];
+
 // --- Prospects ---
 
 export async function getProspects() {
@@ -61,7 +70,7 @@ export async function getProspectById(id: number) {
 
 export async function getProspectsByStage(stage: string) {
   return db.query.prospects.findMany({
-    where: eq(prospects.stage, stage as any),
+    where: eq(prospects.stage, enumCast<ProspectStage>(stage)),
     orderBy: [desc(prospects.probability)],
   });
 }
@@ -148,7 +157,7 @@ export async function qualifyProspect(id: number, data: {
       estimatedValue: data.estimatedValue ? String(data.estimatedValue) : null,
       estimatedVolume: data.estimatedVolume || null,
       probability: data.probability,
-      priority: data.priority as any,
+      priority: enumCast<Priority>(data.priority || "media"),
       contactRole: data.contactRole || null,
       contactEmail: data.contactEmail || null,
       reason: data.reason || null,
@@ -265,7 +274,7 @@ export async function getPipelineSummary() {
   const results = [];
 
   for (const group of stageGroups) {
-    const conditions = group.values.map((v) => eq(prospects.stage, v as any));
+    const conditions = group.values.map((v) => eq(prospects.stage, enumCast<ProspectStage>(v)));
     const [row] = await db
       .select({
         count: sql<number>`count(*)::int`,
@@ -330,7 +339,11 @@ export async function sendProspectToOperaciones(prospectId: number, sentById: nu
   }
 
   // Validate levantamiento data
-  const levData = prospect.levantamientoData as any;
+  // DEBT: levantamientoData is JSONB with dynamic structure from the levantamiento form.
+  // Proper fix: define a LevantamientoData interface matching the form schema.
+  // For now, typed as Record to avoid `as any` while keeping indexability.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const levData = prospect.levantamientoData as Record<string, any> | null;
   if (!levData?.generalInfo?.razonSocial) {
     throw new Error("VALIDATION:Se requiere al menos razon social en datos de levantamiento");
   }
@@ -603,7 +616,7 @@ export async function sendProposal(id: number, sentById: number) {
 export async function changeProposalStatus(id: number, status: string) {
   const [updated] = await db
     .update(proposalVersions)
-    .set({ status: status as any, updatedAt: new Date() })
+    .set({ status: enumCast<ProposalStatus>(status), updatedAt: new Date() })
     .where(eq(proposalVersions.id, id))
     .returning();
   return updated;
@@ -613,7 +626,7 @@ export async function changeProposalStatus(id: number, status: string) {
 
 export async function getAlerts(status?: string, assignedToId?: number) {
   const conditions = [];
-  if (status) conditions.push(eq(followUpAlerts.status, status as any));
+  if (status) conditions.push(eq(followUpAlerts.status, enumCast<AlertStatus>(status)));
   if (assignedToId) conditions.push(eq(followUpAlerts.assignedToId, assignedToId));
 
   return db.query.followUpAlerts.findMany({
@@ -663,7 +676,7 @@ export async function generateAlerts() {
   const overdueProspects = await db.query.prospects.findMany({
     where: and(
       lte(prospects.nextFollowUpAt, now),
-      or(...activeStages.map((s) => eq(prospects.stage, s as any)))
+      or(...activeStages.map((s) => eq(prospects.stage, enumCast<ProspectStage>(s))))
     ),
   });
 
@@ -694,7 +707,7 @@ export async function generateAlerts() {
   const staleProspects = await db.query.prospects.findMany({
     where: and(
       or(isNull(prospects.lastContactAt), lte(prospects.lastContactAt, sevenDaysAgo)),
-      or(...activeStages.map((s) => eq(prospects.stage, s as any)))
+      or(...activeStages.map((s) => eq(prospects.stage, enumCast<ProspectStage>(s))))
     ),
   });
 

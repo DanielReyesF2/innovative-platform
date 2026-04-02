@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { X, AlertCircle } from 'lucide-react';
+import type { KanbanProspecto } from '@shared/types/comercial';
 
 interface Props {
-  prospecto: any;
+  prospecto: KanbanProspecto;
   onClose: () => void;
   onSave: (data: { motivoRechazo: number; motivoRechazoDetalle: string; fechaRechazo: string }) => void;
 }

@@ -1,4 +1,6 @@
 import React, { useState, createRef } from 'react';
+import type { KanbanProspecto, PendingMove, SeguimientoData } from '@shared/types/comercial';
+import type { ProspectNote, ProspectDocument } from '@shared/schema/comercial';
 import { useQuery } from '@tanstack/react-query';
 import {
   X, ChevronRight, Edit3, Trash2, Users, Package, ClipboardList, Clock,
@@ -27,9 +29,9 @@ import { QualifyLeadDialog } from './QualifyLeadDialog';
 import { useComercialData } from '../hooks/useComercialData';
 
 interface Props {
-  prospecto: any;
+  prospecto: KanbanProspecto;
   onClose: () => void;
-  onEdit?: (p: any) => void;
+  onEdit?: (p: KanbanProspecto) => void;
 }
 
 export function ProspectoDrawer({ prospecto, onClose, onEdit }: Props) {
@@ -49,19 +51,19 @@ export function ProspectoDrawer({ prospecto, onClose, onEdit }: Props) {
   const [showQualifyDialog, setShowQualifyDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showRechazoModal, setShowRechazoModal] = useState(false);
-  const [pendingStageGate, setPendingStageGate] = useState<{ prospecto: any; fromStage: string; toStage: string } | null>(null);
+  const [pendingStageGate, setPendingStageGate] = useState<PendingMove | null>(null);
   const rejectProspect = useRejectProspect();
 
   if (!prospecto) return null;
   const p = prospecto;
   const realProspectId = p.id;
 
-  const { data: apiNotas = [] } = useQuery<any[]>({
+  const { data: apiNotas = [] } = useQuery<ProspectNote[]>({
     queryKey: [`/api/comercial/prospects/${realProspectId}/notes`],
     enabled: !!realProspectId,
     staleTime: 10 * 1000,
   });
-  const { data: apiDocumentos = [] } = useQuery<any[]>({
+  const { data: apiDocumentos = [] } = useQuery<ProspectDocument[]>({
     queryKey: [`/api/comercial/prospects/${realProspectId}/documents`],
     enabled: !!realProspectId,
     staleTime: 10 * 1000,
@@ -70,7 +72,7 @@ export function ProspectoDrawer({ prospecto, onClose, onEdit }: Props) {
   const stageInfo = KANBAN_STAGES.find(s => s.id === p.status);
   const dias = p.fecha ? Math.floor((new Date().getTime() - new Date(p.fecha).getTime()) / (1000 * 60 * 60 * 24)) : null;
   const valor = p.propuesta?.ventaTotal || p.facturacionEstimada || 0;
-  const sc = p.servicios?.map((s: string) => {
+  const sc = p.servicios?.map((s) => {
     const svc = SERVICIOS_INNOVATIVE.find(si => si.id === s);
     const col = SERVICE_COLORS[s] || { bg: '#f3f4f6', text: '#6b7280', label: s, border: '#6b7280' };
     return { ...col, nombre: svc?.nombre || s, id: s };
@@ -91,8 +93,8 @@ export function ProspectoDrawer({ prospecto, onClose, onEdit }: Props) {
     }
   };
 
-  const guardarSeguimiento = async (prospectoId: number, data: any) => {
-    const updates: any = {};
+  const guardarSeguimiento = async (prospectoId: number, data: Partial<SeguimientoData>) => {
+    const updates: Record<string, string | null> = {};
     if (data.fechaSeguimiento !== undefined) updates.nextFollowUpAt = data.fechaSeguimiento || null;
     if (data.accion !== undefined) updates.followUpAction = data.accion || null;
     if (data.recoveryStatus !== undefined) updates.recoveryStatus = data.recoveryStatus || null;
@@ -190,7 +192,7 @@ export function ProspectoDrawer({ prospecto, onClose, onEdit }: Props) {
             <div className="flex items-center gap-1.5">
               {/* Avanzar Etapa */}
               {(() => {
-                const stageIds = KANBAN_STAGES.map(s => s.id);
+                const stageIds: string[] = KANBAN_STAGES.map(s => s.id);
                 const currentIdx = stageIds.indexOf(p.status);
                 const nextStage = currentIdx >= 0 && currentIdx < stageIds.length - 1 ? KANBAN_STAGES[currentIdx + 1] : null;
                 if (!nextStage) return null;
@@ -458,7 +460,7 @@ export function ProspectoDrawer({ prospecto, onClose, onEdit }: Props) {
                 </div>
 
                 {/* Contact */}
-                {p.contacto?.nombre && (
+                {(p.contacto && p.contacto.nombre) ? (
                   <div className="bg-white rounded-xl border border-[#e5e7eb] overflow-hidden">
                     <div className="px-4 py-3 bg-[#f9fafb] border-b border-[#e5e7eb]">
                       <h3 className="text-sm font-semibold text-[#1c2c4a] flex items-center gap-2"><Users size={14} /> Contacto</h3>
@@ -504,7 +506,7 @@ export function ProspectoDrawer({ prospecto, onClose, onEdit }: Props) {
                       )}
                     </div>
                   </div>
-                )}
+                ) : null}
 
                 {/* Services */}
                 {sc.length > 0 && (
@@ -513,7 +515,7 @@ export function ProspectoDrawer({ prospecto, onClose, onEdit }: Props) {
                       <h3 className="text-sm font-semibold text-[#1c2c4a] flex items-center gap-2"><Package size={14} /> Servicios</h3>
                     </div>
                     <div className="p-4 flex flex-wrap gap-2">
-                      {sc.map((s: any) => (
+                      {sc.map((s) => (
                         <span key={s.id} className="px-3 py-1.5 rounded-lg text-xs font-semibold" style={{ backgroundColor: s.bg, color: s.text, border: `1px solid ${s.border || s.text}20` }}>
                           {s.nombre}
                         </span>
@@ -523,15 +525,21 @@ export function ProspectoDrawer({ prospecto, onClose, onEdit }: Props) {
                 )}
 
                 {/* Qualification Waste Data */}
-                {p.levantamientoData?.qualificationWaste && (() => {
-                  const qw = p.levantamientoData.qualificationWaste;
+                {!!(p.levantamientoData as Record<string, unknown>)?.qualificationWaste && (() => {
+                  const qw = (p.levantamientoData as Record<string, unknown>).qualificationWaste as {
+                    wasteTypes?: string[];
+                    estimatedVolume?: string;
+                    hasCurrentProvider?: boolean;
+                    currentProviderName?: string;
+                    reasonForChange?: string;
+                  };
                   return (
                     <div className="bg-white rounded-xl border border-[#e5e7eb] overflow-hidden">
                       <div className="px-4 py-3 bg-[#f0fdf4] border-b border-[#e5e7eb]">
                         <h3 className="text-sm font-semibold text-[#1c2c4a] flex items-center gap-2"><Leaf size={14} className="text-[#22C55E]" /> Residuos (Calificacion)</h3>
                       </div>
                       <div className="p-4 space-y-3">
-                        {qw.wasteTypes?.length > 0 && (
+                        {qw.wasteTypes && qw.wasteTypes.length > 0 && (
                           <div className="flex flex-wrap gap-1.5">
                             {qw.wasteTypes.map((wt: string) => (
                               <span key={wt} className="px-2.5 py-1 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-200">
@@ -671,7 +679,7 @@ export function ProspectoDrawer({ prospecto, onClose, onEdit }: Props) {
                   <div className="px-4 py-3 bg-[#f9fafb] border-b border-[#e5e7eb]">
                     <h3 className="text-sm font-semibold text-[#1c2c4a] flex items-center gap-2">
                       <MessageSquare size={14} /> Notas
-                      {(apiNotas as any[]).length > 0 && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#e5e7eb] text-[#6b7280]">{(apiNotas as any[]).length}</span>}
+                      {apiNotas.length > 0 && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#e5e7eb] text-[#6b7280]">{apiNotas.length}</span>}
                     </h3>
                   </div>
                   <div className="p-4 space-y-3">
@@ -689,9 +697,9 @@ export function ProspectoDrawer({ prospecto, onClose, onEdit }: Props) {
                         <Send size={14} />
                       </button>
                     </div>
-                    {(apiNotas as any[]).length > 0 ? (
+                    {apiNotas.length > 0 ? (
                       <div className="space-y-2 max-h-48 overflow-y-auto">
-                        {[...(apiNotas as any[])].reverse().map((nota: any) => (
+                        {[...apiNotas].reverse().map((nota) => (
                           <div key={nota.id} className="bg-[#f9fafb] rounded-lg p-3 group">
                             <div className="flex items-start justify-between gap-2">
                               <p className="text-sm text-[#1c2c4a] flex-1 whitespace-pre-wrap">{nota.content}</p>
@@ -704,7 +712,7 @@ export function ProspectoDrawer({ prospecto, onClose, onEdit }: Props) {
                               </button>
                             </div>
                             <div className="flex items-center gap-1 mt-1.5 text-[10px] text-[#9ca3af]">
-                              <Clock size={9} /> {timeAgo(nota.createdAt) || 'ahora'}
+                              <Clock size={9} /> {timeAgo(nota.createdAt ? String(nota.createdAt) : null) || 'ahora'}
                             </div>
                           </div>
                         ))}
@@ -720,7 +728,7 @@ export function ProspectoDrawer({ prospecto, onClose, onEdit }: Props) {
                   <div className="px-4 py-3 bg-[#f9fafb] border-b border-[#e5e7eb]">
                     <h3 className="text-sm font-semibold text-[#1c2c4a] flex items-center gap-2">
                       <Paperclip size={14} /> Archivos
-                      {(apiDocumentos as any[]).length > 0 && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#e5e7eb] text-[#6b7280]">{(apiDocumentos as any[]).length}</span>}
+                      {apiDocumentos.length > 0 && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#e5e7eb] text-[#6b7280]">{apiDocumentos.length}</span>}
                     </h3>
                   </div>
                   <div className="p-4 space-y-3">
@@ -732,16 +740,16 @@ export function ProspectoDrawer({ prospecto, onClose, onEdit }: Props) {
                       <Upload size={16} className="text-[#d1d5db] mx-auto mb-1" />
                       <p className="text-xs text-[#6b7280]">Click para subir archivos</p>
                     </div>
-                    {(apiDocumentos as any[]).length > 0 ? (
+                    {apiDocumentos.length > 0 ? (
                       <div className="space-y-1.5 max-h-40 overflow-y-auto">
-                        {[...(apiDocumentos as any[])].reverse().map((archivo: any) => (
+                        {[...apiDocumentos].reverse().map((archivo) => (
                           <div key={archivo.id} className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-[#f9fafb] group transition-colors">
                             <div className="w-7 h-7 rounded-md bg-[#f3f4f6] flex items-center justify-center flex-shrink-0">
-                              {getFileIcon(archivo.mimeType)}
+                              {getFileIcon(archivo.mimeType ?? undefined)}
                             </div>
                             <div className="flex-1 min-w-0">
                               <div className="text-xs font-medium text-[#1c2c4a] truncate">{archivo.name}</div>
-                              <div className="text-[10px] text-[#9ca3af]">{formatFileSize(archivo.fileSize)} · {timeAgo(archivo.createdAt)}</div>
+                              <div className="text-[10px] text-[#9ca3af]">{formatFileSize(archivo.fileSize ?? 0)} · {timeAgo(archivo.createdAt ? String(archivo.createdAt) : null)}</div>
                             </div>
                             <button onClick={async () => {
                               try { await deleteDocumentMutation.mutateAsync({ prospectId: realProspectId, docId: archivo.id }); }
