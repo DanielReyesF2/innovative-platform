@@ -68,6 +68,16 @@ import { z } from "zod";
 import { insertProspectSchema, insertLeadSchema, insertVentaRealSchema, insertKpiMensualSchema, qualifyProspectSchema, insertActivitySchema, insertNoteSchema, insertMeetingSchema, insertProspectDocumentSchema, insertProposalSchema, proposalStatusEnum, insertWeeklyReportSchema } from "../../../shared/schema/comercial";
 import { triggerWebhook } from "../../lib/webhook";
 
+/** Extract error message safely without `as any` */
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  return "Internal server error";
+}
+
+function isZodError(error: unknown): error is { name: "ZodError"; errors: unknown[] } {
+  return error instanceof Error && error.name === "ZodError" && "errors" in error;
+}
+
 // Inline schemas for simple routes
 const rejectProspectSchema = z.object({
   rejectionReasonId: z.number({ required_error: "Motivo de rechazo requerido" }).int().positive(),
@@ -202,12 +212,15 @@ router.get("/prospects/stage/:stage", async (req, res) => {
 
 router.post("/prospects", async (req, res) => {
   try {
-    const parsed = insertProspectSchema.parse(req.body);
-    const prospect = await createProspect(parsed);
+    const parsed = insertProspectSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ message: "Datos invalidos", errors: parsed.error.errors });
+    }
+    const prospect = await createProspect(parsed.data);
     res.status(201).json(prospect);
   } catch (error) {
     console.error("[comercial] Create prospect error:", error);
-    res.status(400).json({ message: "Datos invalidos" });
+    res.status(500).json({ message: "Internal server error" });
   }
 });
 
@@ -266,15 +279,17 @@ router.post("/prospects/:id/reject", async (req, res) => {
 
 router.post("/prospects/:id/qualify", async (req, res) => {
   try {
-    const parsed = qualifyProspectSchema.parse(req.body);
-    const updated = await qualifyProspect(Number(req.params.id), parsed);
+    const parsed = qualifyProspectSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ message: "Datos invalidos", errors: parsed.error.errors });
+    }
+    const updated = await qualifyProspect(Number(req.params.id), parsed.data);
     res.json(updated);
-  } catch (error: any) {
+  } catch (error) {
     console.error("[comercial] Qualify prospect error:", error);
-    const msg = error.message || "Internal server error";
+    const msg = getErrorMessage(error);
     if (msg.startsWith("NOT_FOUND")) return res.status(404).json({ message: "Prospecto no encontrado" });
     if (msg.startsWith("CONFLICT:")) return res.status(409).json({ message: msg.slice(9) });
-    if (error.name === "ZodError") return res.status(400).json({ message: "Datos invalidos", errors: error.errors });
     res.status(500).json({ message: "Internal server error" });
   }
 });
@@ -291,9 +306,9 @@ router.post(
         req.user!.id
       );
       res.json(result);
-    } catch (error: any) {
+    } catch (error) {
       console.error("[comercial] Send to operaciones error:", error);
-      const msg = error.message || "Internal server error";
+      const msg = getErrorMessage(error);
       if (msg.startsWith("NOT_FOUND")) return res.status(404).json({ message: "Prospecto no encontrado" });
       if (msg.startsWith("CONFLICT:")) return res.status(409).json({ message: msg.slice(9) });
       if (msg.startsWith("VALIDATION:")) return res.status(400).json({ message: msg.slice(11) });
@@ -316,12 +331,15 @@ router.get("/leads", async (_req, res) => {
 
 router.post("/leads", async (req, res) => {
   try {
-    const parsed = insertLeadSchema.parse(req.body);
-    const lead = await createLead(parsed);
+    const parsed = insertLeadSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ message: "Datos invalidos", errors: parsed.error.errors });
+    }
+    const lead = await createLead(parsed.data);
     res.status(201).json(lead);
   } catch (error) {
     console.error("[comercial] Create lead error:", error);
-    res.status(400).json({ message: "Datos invalidos" });
+    res.status(500).json({ message: "Internal server error" });
   }
 });
 
@@ -348,9 +366,9 @@ router.post("/leads/:id/convert", async (req, res) => {
     }
     const result = await convertLeadToProspect(Number(req.params.id), parsed.data);
     res.status(201).json(result);
-  } catch (error: any) {
+  } catch (error) {
     console.error("[comercial] Convert lead error:", error);
-    const msg = error.message || "Internal server error";
+    const msg = getErrorMessage(error);
     if (msg === "NOT_FOUND") return res.status(404).json({ message: "Lead no encontrado" });
     if (msg.startsWith("CONFLICT:")) return res.status(409).json({ message: msg.slice(9) });
     res.status(500).json({ message: "Internal server error" });
@@ -420,11 +438,15 @@ router.get("/prospects/:id/activities", async (req, res) => {
 
 router.post("/prospects/:id/activities", async (req, res) => {
   try {
+    const { type, title, description, activityDate, metadata } = req.body;
     const parsed = insertActivitySchema.safeParse({
-      ...req.body,
+      type,
+      title,
+      description,
+      metadata,
       prospectId: Number(req.params.id),
       createdById: req.user!.id,
-      ...(req.body.activityDate && { activityDate: new Date(req.body.activityDate) }),
+      ...(activityDate && { activityDate: new Date(activityDate) }),
     });
     if (!parsed.success) {
       return res.status(400).json({ message: "Datos invalidos", errors: parsed.error.errors });
@@ -433,7 +455,7 @@ router.post("/prospects/:id/activities", async (req, res) => {
     res.status(201).json(activity);
   } catch (error) {
     console.error("[comercial] Create activity error:", error);
-    res.status(400).json({ message: "Datos invalidos" });
+    res.status(500).json({ message: "Internal server error" });
   }
 });
 
@@ -511,12 +533,18 @@ router.get("/prospects/:id/meetings", async (req, res) => {
 
 router.post("/prospects/:id/meetings", async (req, res) => {
   try {
-    const scheduledAt = new Date(req.body.scheduledAt);
+    const { title, description, scheduledAt: rawScheduledAt, duration, location, meetingUrl, attendees } = req.body;
+    const scheduledAt = new Date(rawScheduledAt);
     if (isNaN(scheduledAt.getTime())) {
       return res.status(400).json({ message: "Fecha de reunion invalida" });
     }
     const parsed = insertMeetingSchema.safeParse({
-      ...req.body,
+      title,
+      description,
+      duration,
+      location,
+      meetingUrl,
+      attendees,
       prospectId: Number(req.params.id),
       createdById: req.user!.id,
       scheduledAt,
@@ -528,7 +556,7 @@ router.post("/prospects/:id/meetings", async (req, res) => {
     res.status(201).json(meeting);
   } catch (error) {
     console.error("[comercial] Create meeting error:", error);
-    res.status(400).json({ message: "Datos invalidos" });
+    res.status(500).json({ message: "Internal server error" });
   }
 });
 
@@ -570,8 +598,14 @@ router.get("/prospects/:id/documents", async (req, res) => {
 
 router.post("/prospects/:id/documents", async (req, res) => {
   try {
+    const { name, type, url, fileSize, mimeType, description } = req.body;
     const parsed = insertProspectDocumentSchema.safeParse({
-      ...req.body,
+      name,
+      type,
+      url,
+      fileSize,
+      mimeType,
+      description,
       prospectId: Number(req.params.id),
       uploadedById: req.user!.id,
     });
@@ -582,7 +616,7 @@ router.post("/prospects/:id/documents", async (req, res) => {
     res.status(201).json(document);
   } catch (error) {
     console.error("[comercial] Create document error:", error);
-    res.status(400).json({ message: "Datos invalidos" });
+    res.status(500).json({ message: "Internal server error" });
   }
 });
 
@@ -610,8 +644,14 @@ router.get("/prospects/:id/proposals", async (req, res) => {
 
 router.post("/prospects/:id/proposals", async (req, res) => {
   try {
+    const { name, url, amount, validUntil, notes, version } = req.body;
     const parsed = insertProposalSchema.safeParse({
-      ...req.body,
+      name,
+      url,
+      amount,
+      validUntil,
+      notes,
+      version,
       prospectId: Number(req.params.id),
       createdById: req.user!.id,
     });
@@ -622,7 +662,7 @@ router.post("/prospects/:id/proposals", async (req, res) => {
     res.status(201).json(proposal);
   } catch (error) {
     console.error("[comercial] Create proposal error:", error);
-    res.status(400).json({ message: "Datos invalidos" });
+    res.status(500).json({ message: "Internal server error" });
   }
 });
 
@@ -786,12 +826,15 @@ router.get("/ventas-reales/user/:userId", async (req, res) => {
 
 router.post("/ventas-reales", async (req, res) => {
   try {
-    const parsed = insertVentaRealSchema.parse(req.body);
-    const venta = await createOrUpdateVentaReal(parsed);
+    const parsed = insertVentaRealSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ message: "Datos invalidos", errors: parsed.error.errors });
+    }
+    const venta = await createOrUpdateVentaReal(parsed.data);
     res.status(201).json(venta);
   } catch (error) {
     console.error("[comercial] Create venta real error:", error);
-    res.status(400).json({ message: "Datos invalidos" });
+    res.status(500).json({ message: "Internal server error" });
   }
 });
 
@@ -822,12 +865,15 @@ router.get("/kpis-mensuales/user/:userId", async (req, res) => {
 
 router.post("/kpis-mensuales", requireRole("admin"), async (req, res) => {
   try {
-    const parsed = insertKpiMensualSchema.parse(req.body);
-    const kpi = await createOrUpdateKpiMensual(parsed);
+    const parsed = insertKpiMensualSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ message: "Datos invalidos", errors: parsed.error.errors });
+    }
+    const kpi = await createOrUpdateKpiMensual(parsed.data);
     res.status(201).json(kpi);
   } catch (error) {
     console.error("[comercial] Create kpi mensual error:", error);
-    res.status(400).json({ message: "Datos invalidos" });
+    res.status(500).json({ message: "Internal server error" });
   }
 });
 
@@ -856,6 +902,11 @@ router.get("/rechazadas/proximas-a-vencer", async (req, res) => {
 
 // --- Document Upload ---
 
+const uploadBodySchema = z.object({
+  tipo: z.string().max(50).default("otro"),
+  markAsClosed: z.enum(["true", "false"]).default("false"),
+});
+
 router.post("/prospects/:id/documents/upload", upload.single("file"), async (req, res) => {
   try {
     const file = req.file;
@@ -864,8 +915,12 @@ router.post("/prospects/:id/documents/upload", upload.single("file"), async (req
     }
 
     const prospectId = Number(req.params.id);
-    const tipo = (req.body.tipo as string) || "otro";
-    const markAsClosed = req.body.markAsClosed === "true";
+    const bodyParsed = uploadBodySchema.safeParse(req.body);
+    if (!bodyParsed.success) {
+      return res.status(400).json({ message: "Datos invalidos", errors: bodyParsed.error.errors });
+    }
+    const { tipo, markAsClosed: markAsClosedStr } = bodyParsed.data;
+    const markAsClosed = markAsClosedStr === "true";
 
     // Create document record
     const relativePath = `/uploads/comercial/${prospectId}/${file.filename}`;
