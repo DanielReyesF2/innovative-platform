@@ -554,12 +554,13 @@ export function useWeeklyReport(weekStart: string) {
 
 export function useSaveWeeklyReport() {
   return useMutation({
-    mutationFn: async (data: { weekStart: string; content: string }) => {
+    mutationFn: async (data: { weekStart: string; content: string; meetingNotes?: string }) => {
       const res = await apiRequest("PUT", "/api/comercial/weekly-report", data);
       return res.json();
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["/api/comercial/weekly-report", variables.weekStart] });
+      queryClient.invalidateQueries({ queryKey: ["/api/comercial/weekly-reports"] });
     },
   });
 }
@@ -572,6 +573,82 @@ export function useSendWeeklyReport() {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["/api/comercial/weekly-report", variables.weekStart] });
+      queryClient.invalidateQueries({ queryKey: ["/api/comercial/weekly-reports"] });
+    },
+  });
+}
+
+// === CALENDAR VIEW ===
+
+export function useWeeklyReportsRange(from: string, to: string) {
+  return useQuery<ComercialWeeklyReport[]>({
+    queryKey: ["/api/comercial/weekly-reports", from, to],
+    queryFn: async () => {
+      const res = await apiRequest("GET", `/api/comercial/weekly-reports?from=${from}&to=${to}`);
+      return res.json();
+    },
+    enabled: !!from && !!to,
+  });
+}
+
+// === COMPROMISOS ===
+
+interface WeeklyCommitment {
+  id: number;
+  weekStart: string;
+  description: string;
+  responsible: string;
+  dueDate: string | null;
+  status: string;
+  createdById: number | null;
+  createdAt: string;
+}
+
+export function useCommitments(weekStart?: string) {
+  const url = weekStart
+    ? `/api/comercial/commitments?week=${weekStart}`
+    : "/api/comercial/commitments";
+  return useQuery<WeeklyCommitment[]>({
+    queryKey: ["/api/comercial/commitments", weekStart || "pending"],
+    queryFn: async () => {
+      const res = await apiRequest("GET", url);
+      return res.json();
+    },
+  });
+}
+
+export function useCreateCommitment() {
+  return useMutation({
+    mutationFn: async (data: { weekStart: string; description: string; responsible: string; dueDate?: string | null }) => {
+      const res = await apiRequest("POST", "/api/comercial/commitments", data);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/comercial/commitments"] });
+    },
+  });
+}
+
+export function useUpdateCommitmentStatus() {
+  return useMutation({
+    mutationFn: async ({ id, status }: { id: number; status: "pendiente" | "cumplido" }) => {
+      const res = await apiRequest("PATCH", `/api/comercial/commitments/${id}/status`, { status });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/comercial/commitments"] });
+    },
+  });
+}
+
+export function useDeleteCommitment() {
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const res = await apiRequest("DELETE", `/api/comercial/commitments/${id}`);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/comercial/commitments"] });
     },
   });
 }

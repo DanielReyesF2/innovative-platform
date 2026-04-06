@@ -64,6 +64,12 @@ import {
   getWeeklyReport,
   upsertWeeklyReport,
   markWeeklyReportAsSent,
+  getWeeklyReportsInRange,
+  getCommitmentsByWeek,
+  getPendingCommitments,
+  createCommitment,
+  updateCommitmentStatus,
+  deleteCommitment,
 } from "./storage";
 import { z } from "zod";
 import { insertProspectSchema, insertLeadSchema, insertVentaRealSchema, insertKpiMensualSchema, qualifyProspectSchema, insertActivitySchema, insertNoteSchema, insertMeetingSchema, insertProspectDocumentSchema, insertProposalSchema, proposalStatusEnum, insertWeeklyReportSchema } from "../../../shared/schema/comercial";
@@ -118,6 +124,7 @@ const proposalStatusChangeSchema = z.object({
 const weeklyReportSaveSchema = z.object({
   weekStart: z.string().min(1, "weekStart requerido"),
   content: z.string().max(50000).optional().default(""),
+  meetingNotes: z.string().max(50000).optional(),
 });
 
 const weeklyReportSendSchema = z.object({
@@ -1009,6 +1016,8 @@ router.put("/weekly-report", async (req, res) => {
       req.user!.id,
       parsed.data.weekStart,
       parsed.data.content,
+      "draft",
+      parsed.data.meetingNotes,
     );
     res.json(report);
   } catch (error) {
@@ -1062,6 +1071,88 @@ router.post("/weekly-report/send", async (req, res) => {
     res.json(updated);
   } catch (error) {
     console.error("[comercial] Send weekly report error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+// --- Weekly Reports Range (calendar view) ---
+
+router.get("/weekly-reports", async (req, res) => {
+  try {
+    const { from, to } = req.query;
+    if (!from || !to) return res.status(400).json({ message: "Parámetros 'from' y 'to' requeridos" });
+    const reports = await getWeeklyReportsInRange(req.user!.id, from as string, to as string);
+    res.json(reports);
+  } catch (error) {
+    console.error("[comercial] Get weekly reports range error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+// --- Weekly Commitments ---
+
+const commitmentCreateSchema = z.object({
+  weekStart: z.string().min(1),
+  description: z.string().min(1).max(500),
+  responsible: z.string().min(1).max(100),
+  dueDate: z.string().nullable().optional(),
+});
+
+router.get("/commitments", async (req, res) => {
+  try {
+    const week = req.query.week as string;
+    if (week) {
+      const commitments = await getCommitmentsByWeek(req.user!.id, week);
+      return res.json(commitments);
+    }
+    // No week param = get all pending
+    const pending = await getPendingCommitments(req.user!.id);
+    res.json(pending);
+  } catch (error) {
+    console.error("[comercial] Get commitments error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+router.post("/commitments", async (req, res) => {
+  try {
+    const parsed = commitmentCreateSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ message: "Datos inválidos", errors: parsed.error.errors });
+    }
+    const commitment = await createCommitment({
+      ...parsed.data,
+      dueDate: parsed.data.dueDate || undefined,
+      createdById: req.user!.id,
+    });
+    res.status(201).json(commitment);
+  } catch (error) {
+    console.error("[comercial] Create commitment error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+router.patch("/commitments/:id/status", async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    const status = req.body.status;
+    if (!["pendiente", "cumplido"].includes(status)) {
+      return res.status(400).json({ message: "Status debe ser 'pendiente' o 'cumplido'" });
+    }
+    const updated = await updateCommitmentStatus(id, status);
+    res.json(updated);
+  } catch (error) {
+    console.error("[comercial] Update commitment status error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+router.delete("/commitments/:id", async (req, res) => {
+  try {
+    const deleted = await deleteCommitment(Number(req.params.id));
+    res.json(deleted);
+  } catch (error) {
+    console.error("[comercial] Delete commitment error:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 });

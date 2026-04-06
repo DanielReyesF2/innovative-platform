@@ -25,6 +25,7 @@ import {
   type InsertVentaReal,
   type InsertKpiMensual,
   comercialWeeklyReports,
+  weeklyCommitments,
 } from "../../../shared/schema/comercial";
 import {
   surveys,
@@ -1092,13 +1093,16 @@ export async function upsertWeeklyReport(
   weekStart: string,
   content: string,
   status: string = "draft",
+  meetingNotes?: string,
 ) {
   const existing = await getWeeklyReport(userId, weekStart);
 
   if (existing) {
+    const updates: Record<string, unknown> = { content, status, updatedAt: new Date() };
+    if (meetingNotes !== undefined) updates.meetingNotes = meetingNotes;
     const [updated] = await db
       .update(comercialWeeklyReports)
-      .set({ content, status, updatedAt: new Date() })
+      .set(updates)
       .where(eq(comercialWeeklyReports.id, existing.id))
       .returning();
     return updated;
@@ -1106,7 +1110,7 @@ export async function upsertWeeklyReport(
 
   const [created] = await db
     .insert(comercialWeeklyReports)
-    .values({ weekStart, content, status, createdById: userId })
+    .values({ weekStart, content, meetingNotes: meetingNotes || "", status, createdById: userId })
     .returning();
   return created;
 }
@@ -1118,4 +1122,70 @@ export async function markWeeklyReportAsSent(reportId: number, recipients: strin
     .where(eq(comercialWeeklyReports.id, reportId))
     .returning();
   return updated;
+}
+
+// --- Weekly Reports Range (for calendar view) ---
+
+export async function getWeeklyReportsInRange(userId: number, from: string, to: string) {
+  return db.query.comercialWeeklyReports.findMany({
+    where: and(
+      eq(comercialWeeklyReports.createdById, userId),
+      gte(comercialWeeklyReports.weekStart, from),
+      lte(comercialWeeklyReports.weekStart, to),
+    ),
+    orderBy: [desc(comercialWeeklyReports.weekStart)],
+  });
+}
+
+// --- Weekly Commitments ---
+
+export async function getCommitmentsByWeek(userId: number, weekStart: string) {
+  return db.query.weeklyCommitments.findMany({
+    where: and(
+      eq(weeklyCommitments.createdById, userId),
+      eq(weeklyCommitments.weekStart, weekStart),
+    ),
+    orderBy: [desc(weeklyCommitments.createdAt)],
+  });
+}
+
+export async function getPendingCommitments(userId: number) {
+  return db.query.weeklyCommitments.findMany({
+    where: and(
+      eq(weeklyCommitments.createdById, userId),
+      eq(weeklyCommitments.status, "pendiente"),
+    ),
+    orderBy: [desc(weeklyCommitments.createdAt)],
+  });
+}
+
+export async function createCommitment(data: {
+  weekStart: string;
+  description: string;
+  responsible: string;
+  dueDate?: string | null;
+  createdById: number;
+}) {
+  const [created] = await db
+    .insert(weeklyCommitments)
+    .values(data)
+    .returning();
+  return created;
+}
+
+export async function updateCommitmentStatus(id: number, status: "pendiente" | "cumplido") {
+  const [updated] = await db
+    .update(weeklyCommitments)
+    .set({ status })
+    .where(eq(weeklyCommitments.id, id))
+    .returning();
+  return updated;
+}
+
+export async function deleteCommitment(id: number) {
+  const [deleted] = await db
+    .delete(weeklyCommitments)
+    .where(eq(weeklyCommitments.id, id))
+    .returning();
+  return deleted;
 }
