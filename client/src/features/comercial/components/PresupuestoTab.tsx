@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { DollarSign, Edit3, Package, CalendarDays, Filter } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { fmtM } from '@/lib/utils';
+import { fmtM, fmtCurrency } from '@/lib/utils';
 import { ExecutiveAvatar, KANBAN_STAGES } from '@/lib/comercial-constants';
 import { useComercialData } from '../hooks/useComercialData';
 import { useToast } from '@/components/ui/use-toast';
@@ -192,7 +192,7 @@ export function PresupuestoTab() {
                           }}
                           title={canEditBudget ? 'Click para editar presupuesto' : undefined}
                         >
-                          {fmtM(memberBudgetMes, 2)}
+                          {fmtCurrency(memberBudgetMes)}
                         </span>
                       )}
                     </td>
@@ -243,7 +243,7 @@ export function PresupuestoTab() {
                           placeholder="0"
                         />
                       ) : (
-                        <span className="text-sm font-semibold text-[#00a8a8]">{fmtM(Number(ventaActual), 2)}</span>
+                        <span className="text-sm font-semibold text-[#00a8a8]">{fmtCurrency(ventaActual)}</span>
                       )}
                     </td>
                     <td className="py-2.5 px-2 text-right">
@@ -278,10 +278,10 @@ export function PresupuestoTab() {
                   <tr className="bg-[#f9fafb]">
                     <td className="py-2.5 px-2 font-semibold text-[#1c2c4a]">Total Equipo</td>
                     <td className="py-2.5 px-2 text-right font-semibold text-[#1c2c4a]">
-                      {fmtM(totalPres, 2)}
+                      {fmtCurrency(totalPres)}
                     </td>
                     <td className="py-2.5 px-2 text-right font-bold text-[#00a8a8]">
-                      {fmtM(totalReal, 2)}
+                      {fmtCurrency(totalReal)}
                     </td>
                     <td className="py-2.5 px-2 text-right font-bold" style={{ color: pctColor }}>{pct}%</td>
                     <td></td>
@@ -377,7 +377,7 @@ export function PresupuestoTab() {
                         </td>
                         <td className="py-2 px-2 text-sm text-[#6b7280]">{formatMesCierre(p.estimatedCloseTime)}</td>
                         <td className="py-2 px-2 text-right text-sm font-semibold text-[#00a8a8]">
-                          {fmtM(p.propuesta?.ventaTotal || p.facturacionEstimada || 0, 2)}
+                          {fmtCurrency(p.propuesta?.ventaTotal || p.facturacionEstimada || 0)}
                         </td>
                       </tr>
                     );
@@ -386,7 +386,7 @@ export function PresupuestoTab() {
                 <tfoot>
                   <tr className="bg-[#f9fafb]">
                     <td colSpan={4} className="py-2 px-2 font-semibold text-[#1c2c4a]">{cuentas.length} cuentas</td>
-                    <td className="py-2 px-2 text-right font-bold text-[#00a8a8]">{fmtM(totalCuentasValor, 2)}</td>
+                    <td className="py-2 px-2 text-right font-bold text-[#00a8a8]">{fmtCurrency(totalCuentasValor)}</td>
                   </tr>
                 </tfoot>
               </table>

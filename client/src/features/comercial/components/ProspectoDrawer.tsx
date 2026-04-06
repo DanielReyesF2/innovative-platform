@@ -17,7 +17,7 @@ import { ProspectEditDialog } from './ProspectEditDialog';
 import { ProspectLevantamiento } from './ProspectLevantamiento';
 import { ModalMotivoRechazo } from './ModalMotivoRechazo';
 import { StageGateModal } from './StageGateModal';
-import { fmtK } from '@/lib/utils';
+import { fmtK, fmtCurrency } from '@/lib/utils';
 import { useToast } from '@/components/ui/use-toast';
 import {
   KANBAN_STAGES, SERVICIOS_INNOVATIVE, SERVICE_COLORS, STAGE_GATES,
@@ -451,7 +451,7 @@ export function ProspectoDrawer({ prospecto, onClose, onEdit }: Props) {
                 <div className="flex items-center gap-3">
                   <div className="flex-1 bg-[#EFF6FF] rounded-xl p-3 text-center">
                     <div className="text-xs text-[#6b7280] mb-0.5">Valor estimado</div>
-                    <div className="text-xl font-bold text-[#0D47A1]">{valor > 0 ? fmtK(valor) : '—'}</div>
+                    <div className="text-xl font-bold text-[#0D47A1]">{valor > 0 ? fmtCurrency(valor) : '—'}</div>
                   </div>
                   <div className="flex-1 bg-[#f3f4f6] rounded-xl p-3 text-center">
                     <div className="text-xs text-[#6b7280] mb-0.5">Días en seguimiento</div>
@@ -631,7 +631,7 @@ export function ProspectoDrawer({ prospecto, onClose, onEdit }: Props) {
                       {p.propuesta?.ventaTotal && (
                         <div className="flex items-center justify-between text-sm">
                           <span className="text-[#6b7280]">Venta total (contrato)</span>
-                          <span className="font-bold text-[#0D47A1]">{fmtK(p.propuesta.ventaTotal)}</span>
+                          <span className="font-bold text-[#0D47A1]">{fmtCurrency(p.propuesta.ventaTotal)}</span>
                         </div>
                       )}
                       {p.motivoRechazo && (() => {

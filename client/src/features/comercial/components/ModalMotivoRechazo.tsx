@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { X, AlertCircle } from 'lucide-react';
+import { fmtCurrency } from '@/lib/utils';
 import type { KanbanProspecto } from '@shared/types/comercial';
 
 interface Props {
@@ -78,7 +79,7 @@ export function ModalMotivoRechazo({ prospecto, onClose, onSave }: Props) {
                 <p className="font-semibold mb-1">Información importante</p>
                 <p>
                   El registro del motivo de rechazo es obligatorio y ayudará a mejorar nuestros procesos comerciales.
-                  Valor estimado de esta propuesta: ${(prospecto?.facturacionEstimada || prospecto?.propuesta?.ventaTotal || 0).toLocaleString('es-MX')}
+                  Valor estimado de esta propuesta: {fmtCurrency(prospecto?.facturacionEstimada || prospecto?.propuesta?.ventaTotal || 0)}
                 </p>
               </div>
             </div>
