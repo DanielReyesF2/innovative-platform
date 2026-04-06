@@ -51,7 +51,7 @@ export function PresupuestoTab() {
             Presupuesto Mensual 2026 vs Real
           </h3>
           <div className="flex items-center gap-3 text-[10px] text-[#6b7280]">
-            <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded bg-[#94a3b8] inline-block" /> Presupuesto</span>
+            <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded bg-[#1B5E20] inline-block" /> Presupuesto</span>
             <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded bg-[#00a8a8] inline-block" /> Real</span>
           </div>
         </div>
@@ -65,7 +65,7 @@ export function PresupuestoTab() {
               formatter={(value: number) => [fmtM(value), '']}
               labelStyle={{ fontWeight: 600, color: '#1c2c4a' }}
             />
-            <Bar dataKey="presupuesto" name="Presupuesto" fill="#94a3b8" radius={[3, 3, 0, 0]} />
+            <Bar dataKey="presupuesto" name="Presupuesto" fill="#1B5E20" radius={[3, 3, 0, 0]} />
             <Bar dataKey="real" name="Real" fill="#00a8a8" radius={[3, 3, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
