@@ -24,6 +24,7 @@ export function PresupuestoTab() {
   const [ventaRealMes, setVentaRealMes] = useState(new Date().getMonth() + 1);
   const [ventaRealAño, setVentaRealAño] = useState(new Date().getFullYear());
   const [quarterFilter, setQuarterFilter] = useState<string>('all');
+  const [cuentasSubTab, setCuentasSubTab] = useState<'ejecutivo' | 'pipeline'>('ejecutivo');
 
   const canEditBudget = authUser?.role === 'admin' || authUser?.role === 'director';
 
@@ -91,14 +92,32 @@ export function PresupuestoTab() {
         </div>
       </div>
 
-      {/* Editable Sales Table */}
+      {/* Combined: Presupuesto y Cuentas */}
       <div className="mt-4 bg-white rounded-xl border border-[#e5e7eb] p-4">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <Edit3 size={14} className="text-[#00a8a8]" />
-            <h4 className="text-xs font-semibold text-[#1c2c4a] uppercase tracking-wide">Ventas Cerradas por Ejecutivo</h4>
+            <DollarSign size={14} className="text-[#00a8a8]" />
+            <h4 className="text-xs font-semibold text-[#1c2c4a] uppercase tracking-wide">Presupuesto y Cuentas</h4>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 bg-[#f3f4f6] rounded-lg p-0.5">
+            <button
+              onClick={() => setCuentasSubTab('ejecutivo')}
+              className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${cuentasSubTab === 'ejecutivo' ? 'bg-white text-[#1c2c4a] shadow-sm' : 'text-[#6b7280] hover:text-[#1c2c4a]'}`}
+            >
+              Por Ejecutivo
+            </button>
+            <button
+              onClick={() => setCuentasSubTab('pipeline')}
+              className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${cuentasSubTab === 'pipeline' ? 'bg-white text-[#1c2c4a] shadow-sm' : 'text-[#6b7280] hover:text-[#1c2c4a]'}`}
+            >
+              Pipeline de Cierre
+            </button>
+          </div>
+        </div>
+
+        {cuentasSubTab === 'ejecutivo' && (
+        <div>
+        <div className="flex items-center justify-end gap-2 mb-3">
             <select value={ventaRealMes} onChange={(e) => setVentaRealMes(Number(e.target.value))}
               className="text-xs border border-[#e5e7eb] rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#00a8a8]">
               {['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'].map((m, i) => (
@@ -110,7 +129,6 @@ export function PresupuestoTab() {
               {[2025, 2026, 2027].map(y => <option key={y} value={y}>{y}</option>)}
             </select>
           </div>
-        </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -294,10 +312,10 @@ export function PresupuestoTab() {
         <p className="text-[10px] text-[#9ca3af] mt-3 flex items-center gap-1">
           <Edit3 size={10} /> Click en el icono de lápiz para editar la venta cerrada. Presiona Enter para guardar.
         </p>
-      </div>
+        </div>
+        )}
 
-      {/* Cuentas del Mes */}
-      {(() => {
+        {cuentasSubTab === 'pipeline' && (() => {
         const QUARTER_MONTHS: Record<string, number[]> = {
           Q1: [1, 2, 3], Q2: [4, 5, 6], Q3: [7, 8, 9], Q4: [10, 11, 12],
         };
@@ -311,8 +329,6 @@ export function PresupuestoTab() {
               return QUARTER_MONTHS[quarterFilter]?.includes(month);
             });
         const totalCuentasValor = cuentas.reduce((s, p) => s + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0);
-
-        if (allCuentas.length === 0) return null;
 
         const MESES_MAP: Record<string, string> = {
           '01': 'Enero', '02': 'Febrero', '03': 'Marzo', '04': 'Abril',
@@ -330,16 +346,14 @@ export function PresupuestoTab() {
         };
 
         return (
-          <div className="mt-4 bg-white rounded-xl border border-[#e5e7eb] p-4">
-            <div className="flex items-center gap-2 mb-4">
-              <CalendarDays size={14} className="text-[#7C3AED]" />
-              <h4 className="text-xs font-semibold text-[#1c2c4a] uppercase tracking-wide">Cuentas del Mes</h4>
+          <div>
+            <div className="flex items-center gap-2 mb-3">
               <select
                 value={quarterFilter}
                 onChange={(e) => setQuarterFilter(e.target.value)}
-                className="text-xs border border-[#e5e7eb] rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#7C3AED] ml-2"
+                className="text-xs border border-[#e5e7eb] rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#7C3AED]"
               >
-                <option value="all">Todos</option>
+                <option value="all">Todos los Q</option>
                 <option value="Q1">Q1 (Ene-Mar)</option>
                 <option value="Q2">Q2 (Abr-Jun)</option>
                 <option value="Q3">Q3 (Jul-Sep)</option>
@@ -347,6 +361,9 @@ export function PresupuestoTab() {
               </select>
               <span className="text-[10px] text-[#6b7280] ml-auto">{cuentas.length} cuentas · {fmtM(totalCuentasValor)} total</span>
             </div>
+            {cuentas.length === 0 ? (
+              <p className="text-sm text-[#9ca3af] text-center py-6">Sin cuentas en este período</p>
+            ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
@@ -391,9 +408,11 @@ export function PresupuestoTab() {
                 </tfoot>
               </table>
             </div>
+            )}
           </div>
         );
       })()}
+      </div>
 
       {/* Material Volume */}
       <div className="mt-4 bg-white rounded-xl border border-[#e5e7eb] p-4">
