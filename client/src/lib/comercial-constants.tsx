@@ -414,16 +414,8 @@ export const STAGE_GATES: Record<string, StageGate> = {
     // Gate 'presentacion' uses QualifyLeadDialog for lead→prospect conversion logic
     missingFields: () => [],
   },
-  levantamiento: {
-    label: 'Volumen Verificado',
-    validate: (p) => !!(p.volumenEstimado || p.facturacionEstimada),
-    message: () => 'Falta volumen estimado o facturación estimada',
-    requirement: 'Requiere: Volumen estimado o Facturación estimada',
-    missingFields: (p) => [
-      ...(!p.volumenEstimado ? [{ key: 'estimatedVolume', label: 'Volumen estimado', type: 'text' as const, placeholder: 'Ej: 120 ton/mes' }] : []),
-      ...(!p.facturacionEstimada && !p.volumenEstimado ? [{ key: 'estimatedValue', label: 'Facturación estimada ($)', type: 'number' as const, placeholder: '0.00' }] : []),
-    ],
-  },
+  // Gate 'levantamiento' removed — no lock needed to move to this stage.
+  // PR4 will add meetingDate field + gate requiring fecha de reunión.
   propuesta: {
     label: 'Levantamiento Completado',
     validate: (p) => !!(p.volumenEstimado && (p.servicios?.length > 0)),
