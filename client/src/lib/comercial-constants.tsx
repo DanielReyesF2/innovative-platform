@@ -87,11 +87,12 @@ export const STAGE_PROBABILITY: Record<string, number> = {
 
 // ═══════ KPI METAS ═══════
 export const KPI_METAS: Record<string, { meta: number; frecuencia: string; label: string; peso: number }> = {
-  leadsNuevos: { meta: 5, frecuencia: 'semanal', label: 'Leads Nuevos', peso: 0.20 },
-  reunionesAgendadas: { meta: 2, frecuencia: 'semanal', label: 'Reuniones Agendadas', peso: 0.25 },
-  levantamientos: { meta: 2, frecuencia: 'mensual', label: 'Levantamientos', peso: 0.30 },
-  propuestasEnviadas: { meta: 0, frecuencia: 'semanal', label: 'Propuestas Enviadas', peso: 0.25 },
-  propuestasRechazadas: { meta: 0, frecuencia: 'semanal', label: 'Propuestas Rechazadas', peso: 0 },
+  leadsNuevos: { meta: 5, frecuencia: 'mensual', label: 'Leads Nuevos', peso: 0.15 },
+  reunionesAgendadas: { meta: 4, frecuencia: 'mensual', label: 'Reuniones Agendadas', peso: 0.15 },
+  levantamientos: { meta: 2, frecuencia: 'mensual', label: 'Levantamientos', peso: 0.20 },
+  propuestasEnviadas: { meta: 3, frecuencia: 'mensual', label: 'Propuestas Presentadas', peso: 0.20 },
+  propuestasRechazadas: { meta: 0, frecuencia: 'mensual', label: 'Propuestas Rechazadas', peso: 0.10 },
+  propuestasGanadas: { meta: 1, frecuencia: 'mensual', label: 'Propuestas Ganadas', peso: 0.20 },
 };
 
 // MOTIVOS_RECHAZO removed — rejection reasons now loaded from API: GET /api/comercial/rejection-reasons
