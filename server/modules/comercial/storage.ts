@@ -1026,6 +1026,15 @@ export async function getComercialTeam() {
   });
   const ventasMap = new Map(ventasRows.map(v => [v.userId, Number(v.monto)]));
 
+  // Get ALL months of current year for annual ventas sum
+  const ventasAnualRows = await db.query.ventasReales.findMany({
+    where: eq(ventasReales.año, currentYear),
+  });
+  const ventasAnualMap = new Map<number, number>();
+  for (const v of ventasAnualRows) {
+    ventasAnualMap.set(v.userId, (ventasAnualMap.get(v.userId) || 0) + Number(v.monto));
+  }
+
   return comercialUsers.map(u => {
     const metrics = metricsMap.get(u.id);
     const monthlyBudget = metrics ? Number(metrics.monthlyBudget) || 0 : 0;
@@ -1041,8 +1050,30 @@ export async function getComercialTeam() {
       presupuestoAnual: annualBudget,
       presupuestosMensuales: monthlyBudgetsMap.get(u.id) || {},
       ventasReales: ventaReal,
+      ventasRealesAnual: ventasAnualMap.get(u.id) || 0,
     };
   });
+}
+
+// --- Editable Budgets ---
+
+export async function upsertSalesMetric(userId: number, period: string, monthlyBudget: number) {
+  const existing = await db.query.salesMetrics.findFirst({
+    where: and(eq(salesMetrics.userId, userId), eq(salesMetrics.period, period)),
+  });
+  if (existing) {
+    const [updated] = await db
+      .update(salesMetrics)
+      .set({ monthlyBudget: String(monthlyBudget) })
+      .where(and(eq(salesMetrics.userId, userId), eq(salesMetrics.period, period)))
+      .returning();
+    return updated;
+  }
+  const [inserted] = await db
+    .insert(salesMetrics)
+    .values({ userId, period, monthlyBudget: String(monthlyBudget) })
+    .returning();
+  return inserted;
 }
 
 // === RESUMEN SEMANAL (Weekly Management Report) ===

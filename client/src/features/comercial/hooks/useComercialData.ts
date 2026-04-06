@@ -25,6 +25,7 @@ interface ApiTeamMember {
   presupuestoAnual: number;
   presupuestosMensuales: Record<string, number>;
   ventasReales: number;
+  ventasRealesAnual: number;
 }
 
 /** Shape returned by GET /api/comercial/ventas-reales */
@@ -104,6 +105,7 @@ export function useComercialData() {
       presupuestoMensual: m.presupuestoMensual || 0,
       presupuestosMensuales: m.presupuestosMensuales || {},
       ventasReales: m.ventasReales || 0,
+      ventasRealesAnual: m.ventasRealesAnual || 0,
       cumplimientoPresupuesto: m.presupuestoMensual > 0
         ? Math.round((m.ventasReales / m.presupuestoMensual) * 100) : 0,
       leads: 0, levantamientos: 0, propuestasEnviadas: 0, reuniones: 0, cierres: 0,

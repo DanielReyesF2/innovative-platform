@@ -58,6 +58,7 @@ import {
   getKpisMensuales,
   getKpisMensualesByUser,
   createOrUpdateKpiMensual,
+  upsertSalesMetric,
   getRechazadasConVencimiento,
   getRechazadasProximasAVencer,
   getWeeklyReport,
@@ -418,6 +419,27 @@ router.get("/sales-metrics/user/:userId", async (req, res) => {
     res.json(metrics);
   } catch (error) {
     console.error("[comercial] Get user sales metrics error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+const upsertSalesMetricSchema = z.object({
+  userId: z.number().int().positive(),
+  period: z.string().regex(/^\d{4}-\d{2}$/, "Formato requerido: YYYY-MM"),
+  monthlyBudget: z.number().min(0, "El presupuesto no puede ser negativo"),
+});
+
+router.patch("/sales-metrics", requireRole("admin", "director"), async (req, res) => {
+  try {
+    const parsed = upsertSalesMetricSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ message: "Datos invalidos", errors: parsed.error.errors });
+    }
+    const { userId, period, monthlyBudget } = parsed.data;
+    const result = await upsertSalesMetric(userId, period, monthlyBudget);
+    res.json(result);
+  } catch (error) {
+    console.error("[comercial] Upsert sales metric error:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 });

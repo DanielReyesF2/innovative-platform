@@ -14,19 +14,24 @@ export function PresupuestoTab() {
     presupuestoEvolution,
     ventasRealesEditadas,
     setVentasRealesEditadas,
+    authUser,
   } = useComercialData();
   const { toast } = useToast();
 
   const [editingVentaReal, setEditingVentaReal] = useState<string | null>(null);
+  const [editingBudget, setEditingBudget] = useState<string | null>(null);
+  const [budgetEditValue, setBudgetEditValue] = useState<string>('');
   const [ventaRealMes, setVentaRealMes] = useState(new Date().getMonth() + 1);
   const [ventaRealAño, setVentaRealAño] = useState(new Date().getFullYear());
   const [quarterFilter, setQuarterFilter] = useState<string>('all');
+
+  const canEditBudget = authUser?.role === 'admin' || authUser?.role === 'director';
 
   const MESES_NOMBRE = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
   const mesNombre = MESES_NOMBRE[ventaRealMes - 1];
 
   const presupuestoTotal = salesTeamData.reduce((s, m) => s + (m.presupuestoAnual2026 || 0), 0);
-  const ventasReales = salesTeamData.reduce((s, m) => s + (m.ventasReales || 0), 0);
+  const ventasCerradasAnual = salesTeamData.reduce((s, m) => s + (m.ventasRealesAnual || 0), 0);
   const presupuestoMesEquipo = salesTeamData.reduce((s, m) => s + (m.presupuestoMensual || 0), 0);
 
   // Material tracking
@@ -70,13 +75,13 @@ export function PresupuestoTab() {
             <div className="text-sm font-bold text-[#1c2c4a]">{fmtM(presupuestoTotal, 0)}</div>
           </div>
           <div className="text-center">
-            <div className="text-[10px] text-[#6b7280]">Ventas Cerradas</div>
-            <div className="text-sm font-bold text-[#00a8a8]">{fmtM(ventasReales)}</div>
+            <div className="text-[10px] text-[#6b7280]">Venta Cerrada Anual</div>
+            <div className="text-sm font-bold text-[#00a8a8]">{fmtM(ventasCerradasAnual)}</div>
           </div>
           <div className="text-center">
             <div className="text-[10px] text-[#6b7280]">% Avance</div>
-            <div className={`text-sm font-bold ${presupuestoTotal > 0 && (ventasReales / presupuestoTotal) >= 0.5 ? 'text-[#2E7D32]' : 'text-[#F57C00]'}`}>
-              {presupuestoTotal > 0 ? Math.round(ventasReales / presupuestoTotal * 100) : 0}%
+            <div className={`text-sm font-bold ${presupuestoTotal > 0 && (ventasCerradasAnual / presupuestoTotal) >= 0.5 ? 'text-[#2E7D32]' : 'text-[#F57C00]'}`}>
+              {presupuestoTotal > 0 ? Math.round(ventasCerradasAnual / presupuestoTotal * 100) : 0}%
             </div>
           </div>
           <div className="text-center">
@@ -139,7 +144,57 @@ export function PresupuestoTab() {
                       </div>
                     </td>
                     <td className="py-2.5 px-2 text-right">
-                      <span className="text-sm text-[#6b7280]">{fmtM(memberBudgetMes, 2)}</span>
+                      {editingBudget === editKey ? (
+                        <input
+                          type="number"
+                          autoFocus
+                          value={budgetEditValue}
+                          onChange={(e) => setBudgetEditValue(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === 'Tab') {
+                              e.preventDefault();
+                              const monto = Number(budgetEditValue) || 0;
+                              setEditingBudget(null);
+                              apiRequest('PATCH', '/api/comercial/sales-metrics', { userId: member.dbUserId, period: selectedPeriod, monthlyBudget: monto })
+                                .then(() => {
+                                  queryClient.invalidateQueries({ queryKey: ['/api/comercial/team'] });
+                                  queryClient.invalidateQueries({ queryKey: ['/api/comercial/sales-metrics'] });
+                                  toast({ title: `Presupuesto actualizado: $${monto.toLocaleString()}` });
+                                })
+                                .catch(() => toast({ title: 'Error al guardar presupuesto', variant: 'destructive' }));
+                            } else if (e.key === 'Escape') {
+                              setEditingBudget(null);
+                            }
+                          }}
+                          onBlur={() => {
+                            const monto = Number(budgetEditValue) || 0;
+                            setEditingBudget(null);
+                            if (monto !== memberBudgetMes) {
+                              apiRequest('PATCH', '/api/comercial/sales-metrics', { userId: member.dbUserId, period: selectedPeriod, monthlyBudget: monto })
+                                .then(() => {
+                                  queryClient.invalidateQueries({ queryKey: ['/api/comercial/team'] });
+                                  queryClient.invalidateQueries({ queryKey: ['/api/comercial/sales-metrics'] });
+                                  toast({ title: `Presupuesto actualizado: $${monto.toLocaleString()}` });
+                                })
+                                .catch(() => toast({ title: 'Error al guardar presupuesto', variant: 'destructive' }));
+                            }
+                          }}
+                          className="w-28 px-2 py-1 text-sm text-right border border-[#7C3AED] rounded focus:outline-none focus:ring-1 focus:ring-[#7C3AED]"
+                          placeholder="0"
+                        />
+                      ) : (
+                        <span
+                          className={`text-sm text-[#6b7280] ${canEditBudget ? 'cursor-pointer hover:text-[#7C3AED] hover:underline' : ''}`}
+                          onClick={() => {
+                            if (!canEditBudget) return;
+                            setEditingBudget(editKey);
+                            setBudgetEditValue(String(memberBudgetMes || ''));
+                          }}
+                          title={canEditBudget ? 'Click para editar presupuesto' : undefined}
+                        >
+                          {fmtM(memberBudgetMes, 2)}
+                        </span>
+                      )}
                     </td>
                     <td className="py-2.5 px-2 text-right">
                       {isEditing ? (

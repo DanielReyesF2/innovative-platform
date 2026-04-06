@@ -77,6 +77,7 @@ export interface TeamMember {
   presupuestoMensual: number;
   presupuestosMensuales: Record<string, number>;
   ventasReales: number;
+  ventasRealesAnual: number;
   cumplimientoPresupuesto: number;
   leads: number;
   levantamientos: number;
