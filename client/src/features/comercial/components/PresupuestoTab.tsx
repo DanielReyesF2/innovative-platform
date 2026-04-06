@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { DollarSign, Edit3, Package, CalendarDays, Filter } from 'lucide-react';
+import { DollarSign, Edit3 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { fmtM, fmtCurrency } from '@/lib/utils';
 import { ExecutiveAvatar, KANBAN_STAGES } from '@/lib/comercial-constants';
@@ -71,7 +71,7 @@ export function PresupuestoTab() {
             <Bar dataKey="real" name="Real" fill="#00a8a8" radius={[3, 3, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
-        <div className="mt-3 pt-3 border-t border-[#e5e7eb] grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="mt-3 pt-3 border-t border-[#e5e7eb] grid grid-cols-3 md:grid-cols-6 gap-3">
           <div className="text-center">
             <div className="text-[10px] text-[#6b7280]">Presupuesto Anual</div>
             <div className="text-sm font-bold text-[#1c2c4a]">{fmtM(presupuestoTotal, 0)}</div>
@@ -89,6 +89,14 @@ export function PresupuestoTab() {
           <div className="text-center">
             <div className="text-[10px] text-[#6b7280]">Presupuesto {new Date().toLocaleDateString('es-MX', { month: 'long' }).replace(/^\w/, c => c.toUpperCase())}</div>
             <div className="text-sm font-bold text-[#1c2c4a]">{fmtM(presupuestoMesEquipo)}</div>
+          </div>
+          <div className="text-center">
+            <div className="text-[10px] text-[#6b7280]">Cartón</div>
+            <div className="text-sm font-bold text-[#F59E0B]">{totalCarton >= 1000 ? `${(totalCarton / 1000).toFixed(0)}k` : totalCarton.toLocaleString()} <span className="text-[10px] font-normal text-[#6b7280]">kg</span></div>
+          </div>
+          <div className="text-center">
+            <div className="text-[10px] text-[#6b7280]">Playo</div>
+            <div className="text-sm font-bold text-[#3B82F6]">{totalPlayo >= 1000 ? `${(totalPlayo / 1000).toFixed(0)}k` : totalPlayo.toLocaleString()} <span className="text-[10px] font-normal text-[#6b7280]">kg</span></div>
           </div>
         </div>
       </div>
@@ -413,35 +421,6 @@ export function PresupuestoTab() {
           </div>
         );
       })()}
-      </div>
-
-      {/* Material Volume */}
-      <div className="mt-4 bg-white rounded-xl border border-[#e5e7eb] p-4">
-        <div className="flex items-center gap-2 mb-3">
-          <Package size={14} className="text-[#F59E0B]" />
-          <h4 className="text-xs font-semibold text-[#1c2c4a] uppercase tracking-wide">Volumen por Material</h4>
-          <span className="text-[10px] text-[#6b7280] ml-auto">{materialData.length} prospectos</span>
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          <div className="flex items-center gap-3 bg-[#F59E0B]/5 rounded-lg px-3 py-2.5 border border-[#F59E0B]/15">
-            <div className="w-8 h-8 rounded-lg bg-[#F59E0B]/10 flex items-center justify-center flex-shrink-0">
-              <Package className="text-[#F59E0B]" size={16} />
-            </div>
-            <div className="min-w-0">
-              <div className="text-[10px] text-[#6b7280]">Cartón</div>
-              <div className="text-base font-bold text-[#1c2c4a]">{totalCarton >= 1000 ? `${(totalCarton / 1000).toFixed(0)}k` : totalCarton.toLocaleString()} <span className="text-[10px] font-normal text-[#6b7280]">kg</span></div>
-            </div>
-          </div>
-          <div className="flex items-center gap-3 bg-[#3B82F6]/5 rounded-lg px-3 py-2.5 border border-[#3B82F6]/15">
-            <div className="w-8 h-8 rounded-lg bg-[#3B82F6]/10 flex items-center justify-center flex-shrink-0">
-              <Package className="text-[#3B82F6]" size={16} />
-            </div>
-            <div className="min-w-0">
-              <div className="text-[10px] text-[#6b7280]">Playo</div>
-              <div className="text-base font-bold text-[#1c2c4a]">{totalPlayo >= 1000 ? `${(totalPlayo / 1000).toFixed(0)}k` : totalPlayo.toLocaleString()} <span className="text-[10px] font-normal text-[#6b7280]">kg</span></div>
-            </div>
-          </div>
-        </div>
       </div>
     </>
   );
