@@ -31,8 +31,6 @@ export function ProspectEditDialog({ prospect, onClose, onSaved }: ProspectEditD
     contactEmail: p.contacto?.correo || "",
     potential: p.potential || "Medio",
     probability: p.probability ?? "",
-    estimatedValue: p.facturacionEstimada || p.propuesta?.ventaTotal || "",
-    estimatedVolume: p.volumenEstimado || "",
     estimatedCloseTime: p.estimatedCloseTime || "",
     priority: p.priority || "media",
     nextStep: p.comentarios || "",
@@ -69,8 +67,6 @@ export function ProspectEditDialog({ prospect, onClose, onSaved }: ProspectEditD
         contactEmail: form.contactEmail.trim() || undefined,
         potential: form.potential || undefined,
         probability: form.probability !== "" ? Number(form.probability) : undefined,
-        estimatedValue: form.estimatedValue !== "" ? String(form.estimatedValue) : undefined,
-        estimatedVolume: form.estimatedVolume.trim() || undefined,
         estimatedCloseTime: form.estimatedCloseTime || undefined,
         priority: form.priority || undefined,
         nextStep: form.nextStep.trim() || undefined,
@@ -189,14 +185,6 @@ export function ProspectEditDialog({ prospect, onClose, onSaved }: ProspectEditD
               <div>
                 <Label className="text-xs">Probabilidad %</Label>
                 <Input type="number" min={0} max={100} value={form.probability} onChange={(e) => set("probability", e.target.value)} className="mt-1" />
-              </div>
-              <div>
-                <Label className="text-xs">Valor estimado ($)</Label>
-                <Input type="number" value={form.estimatedValue} onChange={(e) => set("estimatedValue", e.target.value)} className="mt-1" />
-              </div>
-              <div>
-                <Label className="text-xs">Volumen estimado</Label>
-                <Input value={form.estimatedVolume} onChange={(e) => set("estimatedVolume", e.target.value)} className="mt-1" placeholder="Ej: 120 ton/mes" />
               </div>
               <div>
                 <Label className="text-xs">Mes de cierre estimado</Label>

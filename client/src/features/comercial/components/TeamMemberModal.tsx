@@ -88,7 +88,7 @@ export function TeamMemberModal({ member, onClose, onViewHub }: Props) {
                 </div>
               </div>
               <div>
-                <div className="text-sm text-[#6b7280] font-medium mb-2">Ventas Reales</div>
+                <div className="text-sm text-[#6b7280] font-medium mb-2">Ventas Cerradas</div>
                 <div className="text-2xl font-semibold text-[#1c2c4a]">
                   {fmtK(member.ventasReales)}
                 </div>

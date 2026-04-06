@@ -304,7 +304,7 @@ export function EjecutivoHub({ member, onBack, onShowNuevoLead }: Props) {
                     <DollarSign size={20} className="text-[#00a8a8]" />
                   </div>
                   <div>
-                    <h2 className="text-lg font-bold text-[#1c2c4a]">Registrar Venta Real</h2>
+                    <h2 className="text-lg font-bold text-[#1c2c4a]">Registrar Venta Cerrada</h2>
                     <p className="text-xs text-[#6b7280]">{member.name}</p>
                   </div>
                 </div>
@@ -343,7 +343,7 @@ export function EjecutivoHub({ member, onBack, onShowNuevoLead }: Props) {
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-[#6b7280] mb-1">
-                    Venta Real {['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'][ventaRealMes - 1]} {ventaRealAño} (MXN)
+                    Venta Cerrada {['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'][ventaRealMes - 1]} {ventaRealAño} (MXN)
                   </label>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6b7280]">$</span>
@@ -372,9 +372,9 @@ export function EjecutivoHub({ member, onBack, onShowNuevoLead }: Props) {
                       await queryClient.invalidateQueries({ queryKey: ['/api/comercial/team'] });
                       setShowVentasRealesModal(false);
                       setVentaRealMonto('');
-                      toast({ title: `Venta real guardada: $${Number(ventaRealMonto).toLocaleString()}` });
+                      toast({ title: `Venta cerrada guardada: $${Number(ventaRealMonto).toLocaleString()}` });
                     } catch (err) {
-                      toast({ title: 'Error al guardar venta real', variant: 'destructive' });
+                      toast({ title: 'Error al guardar venta cerrada', variant: 'destructive' });
                     }
                   }}
                   disabled={!ventaRealMonto}

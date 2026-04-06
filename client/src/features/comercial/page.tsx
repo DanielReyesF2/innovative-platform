@@ -34,7 +34,7 @@ export default function ComercialPage() {
     authUser,
   } = useComercialData();
 
-  const [comercialTab, setComercialTab] = useState<'pipeline' | 'presupuesto' | 'rechazadas' | 'reportes' | 'resumen'>('pipeline');
+  const [comercialTab, setComercialTab] = useState<'pipeline' | 'presupuesto' | 'rechazadas' | 'reportes' | 'resumen'>('presupuesto');
   const [hubEjecutivo, setHubEjecutivo] = useState<TeamMember | null>(null);
   const [showNuevoLead, setShowNuevoLead] = useState(false);
 
@@ -206,11 +206,11 @@ export default function ComercialPage() {
         {/* TAB BAR */}
         <div className="mt-5 flex items-center gap-1 bg-white rounded-xl border border-[#e5e7eb] p-1">
           {([
-            { id: 'pipeline' as const, label: 'Oportunidades', icon: ClipboardList },
             { id: 'presupuesto' as const, label: 'Presupuesto', icon: DollarSign },
-            { id: 'rechazadas' as const, label: 'Rechazadas', icon: RotateCcw, badge: kanbanProspectos.filter(p => p.status === 'cierre_perdido').length },
-            { id: 'reportes' as const, label: 'KPIs', icon: BarChart3 },
             { id: 'resumen' as const, label: 'Resumen Semanal', icon: FileText },
+            { id: 'pipeline' as const, label: 'Oportunidades', icon: ClipboardList },
+            { id: 'reportes' as const, label: 'KPIs', icon: BarChart3 },
+            { id: 'rechazadas' as const, label: 'Rechazadas', icon: RotateCcw, badge: kanbanProspectos.filter(p => p.status === 'cierre_perdido').length },
           ]).map(tab => (
             <button key={tab.id} onClick={() => setComercialTab(tab.id)}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all flex-1 justify-center ${comercialTab === tab.id ? 'bg-[#1c2c4a] text-white shadow-sm' : 'text-[#6b7280] hover:bg-[#f3f4f6]'}`}>

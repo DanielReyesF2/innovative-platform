@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { DollarSign, Edit3, Package, CalendarDays } from 'lucide-react';
+import { DollarSign, Edit3, Package, CalendarDays, Filter } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { fmtM } from '@/lib/utils';
 import { ExecutiveAvatar, KANBAN_STAGES } from '@/lib/comercial-constants';
@@ -20,6 +20,7 @@ export function PresupuestoTab() {
   const [editingVentaReal, setEditingVentaReal] = useState<string | null>(null);
   const [ventaRealMes, setVentaRealMes] = useState(new Date().getMonth() + 1);
   const [ventaRealAño, setVentaRealAño] = useState(new Date().getFullYear());
+  const [quarterFilter, setQuarterFilter] = useState<string>('all');
 
   const MESES_NOMBRE = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
   const mesNombre = MESES_NOMBRE[ventaRealMes - 1];
@@ -45,7 +46,7 @@ export function PresupuestoTab() {
             Presupuesto Mensual 2026 vs Real
           </h3>
           <div className="flex items-center gap-3 text-[10px] text-[#6b7280]">
-            <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded bg-[#e5e7eb] inline-block" /> Presupuesto</span>
+            <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded bg-[#94a3b8] inline-block" /> Presupuesto</span>
             <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded bg-[#00a8a8] inline-block" /> Real</span>
           </div>
         </div>
@@ -59,7 +60,7 @@ export function PresupuestoTab() {
               formatter={(value: number) => [fmtM(value), '']}
               labelStyle={{ fontWeight: 600, color: '#1c2c4a' }}
             />
-            <Bar dataKey="presupuesto" name="Presupuesto" fill="#e5e7eb" radius={[3, 3, 0, 0]} />
+            <Bar dataKey="presupuesto" name="Presupuesto" fill="#94a3b8" radius={[3, 3, 0, 0]} />
             <Bar dataKey="real" name="Real" fill="#00a8a8" radius={[3, 3, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
@@ -69,7 +70,7 @@ export function PresupuestoTab() {
             <div className="text-sm font-bold text-[#1c2c4a]">{fmtM(presupuestoTotal, 0)}</div>
           </div>
           <div className="text-center">
-            <div className="text-[10px] text-[#6b7280]">Ventas Reales</div>
+            <div className="text-[10px] text-[#6b7280]">Ventas Cerradas</div>
             <div className="text-sm font-bold text-[#00a8a8]">{fmtM(ventasReales)}</div>
           </div>
           <div className="text-center">
@@ -90,7 +91,7 @@ export function PresupuestoTab() {
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <Edit3 size={14} className="text-[#00a8a8]" />
-            <h4 className="text-xs font-semibold text-[#1c2c4a] uppercase tracking-wide">Ventas Reales por Ejecutivo</h4>
+            <h4 className="text-xs font-semibold text-[#1c2c4a] uppercase tracking-wide">Ventas Cerradas por Ejecutivo</h4>
           </div>
           <div className="flex items-center gap-2">
             <select value={ventaRealMes} onChange={(e) => setVentaRealMes(Number(e.target.value))}
@@ -111,7 +112,7 @@ export function PresupuestoTab() {
               <tr className="border-b border-[#e5e7eb]">
                 <th className="text-left py-2 px-2 text-[10px] font-semibold text-[#6b7280] uppercase">Ejecutivo</th>
                 <th className="text-right py-2 px-2 text-[10px] font-semibold text-[#6b7280] uppercase">Presupuesto {mesNombre}</th>
-                <th className="text-right py-2 px-2 text-[10px] font-semibold text-[#6b7280] uppercase">Venta Real {mesNombre}</th>
+                <th className="text-right py-2 px-2 text-[10px] font-semibold text-[#6b7280] uppercase">Venta Cerrada {mesNombre}</th>
                 <th className="text-right py-2 px-2 text-[10px] font-semibold text-[#6b7280] uppercase">%</th>
                 <th className="text-center py-2 px-2 text-[10px] font-semibold text-[#6b7280] uppercase w-20"></th>
               </tr>
@@ -157,7 +158,7 @@ export function PresupuestoTab() {
                                 .then(() => {
                                   queryClient.invalidateQueries({ queryKey: ['/api/comercial/ventas-reales'] });
                                   queryClient.invalidateQueries({ queryKey: ['/api/comercial/team'] });
-                                  toast({ title: `Venta real guardada: $${monto.toLocaleString()}` });
+                                  toast({ title: `Venta cerrada guardada: $${monto.toLocaleString()}` });
                                 })
                                 .catch(() => {
                                   toast({ title: 'Error al guardar', variant: 'destructive' });
@@ -176,7 +177,7 @@ export function PresupuestoTab() {
                                 .then(() => {
                                   queryClient.invalidateQueries({ queryKey: ['/api/comercial/ventas-reales'] });
                                   queryClient.invalidateQueries({ queryKey: ['/api/comercial/team'] });
-                                  toast({ title: `Venta real guardada: $${monto.toLocaleString()}` });
+                                  toast({ title: `Venta cerrada guardada: $${monto.toLocaleString()}` });
                                 })
                                 .catch(() => {
                                   toast({ title: 'Error al guardar', variant: 'destructive' });
@@ -201,7 +202,7 @@ export function PresupuestoTab() {
                             setVentasRealesEditadas((prev) => ({ ...prev, [editKey]: ventaActual || 0 }));
                           }}
                           className="text-[#00a8a8] hover:bg-[#00a8a8]/10 p-1.5 rounded-lg transition-colors"
-                          title="Editar venta real"
+                          title="Editar venta cerrada"
                         >
                           <Edit3 size={14} />
                         </button>
@@ -236,18 +237,27 @@ export function PresupuestoTab() {
           </table>
         </div>
         <p className="text-[10px] text-[#9ca3af] mt-3 flex items-center gap-1">
-          <Edit3 size={10} /> Click en el icono de lápiz para editar la venta real. Presiona Enter para guardar.
+          <Edit3 size={10} /> Click en el icono de lápiz para editar la venta cerrada. Presiona Enter para guardar.
         </p>
       </div>
 
       {/* Cuentas del Mes */}
       {(() => {
-        const cuentas = kanbanProspectos
+        const QUARTER_MONTHS: Record<string, number[]> = {
+          Q1: [1, 2, 3], Q2: [4, 5, 6], Q3: [7, 8, 9], Q4: [10, 11, 12],
+        };
+        const allCuentas = kanbanProspectos
           .filter(p => p.estimatedCloseTime && p.status !== 'cierre_perdido')
           .sort((a, b) => (a.estimatedCloseTime || '').localeCompare(b.estimatedCloseTime || ''));
+        const cuentas = quarterFilter === 'all'
+          ? allCuentas
+          : allCuentas.filter(p => {
+              const month = parseInt(p.estimatedCloseTime?.split('-')[1] || '0', 10);
+              return QUARTER_MONTHS[quarterFilter]?.includes(month);
+            });
         const totalCuentasValor = cuentas.reduce((s, p) => s + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0);
 
-        if (cuentas.length === 0) return null;
+        if (allCuentas.length === 0) return null;
 
         const MESES_MAP: Record<string, string> = {
           '01': 'Enero', '02': 'Febrero', '03': 'Marzo', '04': 'Abril',
@@ -269,6 +279,17 @@ export function PresupuestoTab() {
             <div className="flex items-center gap-2 mb-4">
               <CalendarDays size={14} className="text-[#7C3AED]" />
               <h4 className="text-xs font-semibold text-[#1c2c4a] uppercase tracking-wide">Cuentas del Mes</h4>
+              <select
+                value={quarterFilter}
+                onChange={(e) => setQuarterFilter(e.target.value)}
+                className="text-xs border border-[#e5e7eb] rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#7C3AED] ml-2"
+              >
+                <option value="all">Todos</option>
+                <option value="Q1">Q1 (Ene-Mar)</option>
+                <option value="Q2">Q2 (Abr-Jun)</option>
+                <option value="Q3">Q3 (Jul-Sep)</option>
+                <option value="Q4">Q4 (Oct-Dic)</option>
+              </select>
               <span className="text-[10px] text-[#6b7280] ml-auto">{cuentas.length} cuentas · {fmtM(totalCuentasValor)} total</span>
             </div>
             <div className="overflow-x-auto">

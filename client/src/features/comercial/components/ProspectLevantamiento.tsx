@@ -146,31 +146,8 @@ function CurrentServicesSection({ data, onChange }: { data: Record<string, unkno
   return (
     <CollapsibleSection title="Servicios Actuales" icon={<Truck className="h-4 w-4" />}>
       <div className="grid gap-3 sm:grid-cols-2">
-        <Field label="Proveedor" value={data.providerName} onChange={(v) => set("providerName", v)} />
+        <Field label="Proveedor Actual" value={data.providerName} onChange={(v) => set("providerName", v)} />
         <BoolField label="Contrato Activo" value={!!data.contractActive} onChange={(v) => set("contractActive", v)} />
-        <Field label="Costo Mensual" value={data.monthlyCost} onChange={(v) => set("monthlyCost", v)} type="number" />
-        <Field label="Frecuencia Recoleccion" value={data.collectionFrequency} onChange={(v) => set("collectionFrequency", v)} />
-        <Field label="Tipo de Servicio" value={data.serviceType} onChange={(v) => set("serviceType", v)} />
-        <div>
-          <Label className="text-xs">Nivel de Satisfaccion (1-10)</Label>
-          <Input
-            type="number"
-            min={1}
-            max={10}
-            value={(data.satisfactionLevel as number) || ""}
-            onChange={(e) => set("satisfactionLevel", Number(e.target.value))}
-            className="mt-1"
-          />
-        </div>
-        <div className="sm:col-span-2">
-          <Label className="text-xs">Razon de Cambio</Label>
-          <textarea
-            value={(data.reasonForChange as string) || ""}
-            onChange={(e) => set("reasonForChange", e.target.value)}
-            className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-            rows={2}
-          />
-        </div>
       </div>
     </CollapsibleSection>
   );
