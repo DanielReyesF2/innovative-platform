@@ -23,8 +23,9 @@ export function PresupuestoTab() {
   const [budgetEditValue, setBudgetEditValue] = useState<string>('');
   const [ventaRealMes, setVentaRealMes] = useState(new Date().getMonth() + 1);
   const [ventaRealAño, setVentaRealAño] = useState(new Date().getFullYear());
-  const [quarterFilter, setQuarterFilter] = useState<string>('all');
-  const [cuentasSubTab, setCuentasSubTab] = useState<'ejecutivo' | 'pipeline'>('ejecutivo');
+  const currentQuarter = `Q${Math.ceil((new Date().getMonth() + 1) / 3)}`;
+  const [quarterFilter, setQuarterFilter] = useState<string>(currentQuarter);
+  const [cuentasSubTab, setCuentasSubTab] = useState<'ejecutivo' | 'pipeline'>('pipeline');
 
   const canEditBudget = authUser?.role === 'admin' || authUser?.role === 'director';
 
@@ -353,11 +354,11 @@ export function PresupuestoTab() {
                 onChange={(e) => setQuarterFilter(e.target.value)}
                 className="text-xs border border-[#e5e7eb] rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#7C3AED]"
               >
-                <option value="all">Todos los Q</option>
-                <option value="Q1">Q1 (Ene-Mar)</option>
-                <option value="Q2">Q2 (Abr-Jun)</option>
-                <option value="Q3">Q3 (Jul-Sep)</option>
-                <option value="Q4">Q4 (Oct-Dic)</option>
+                <option value="all">Todos los trimestres</option>
+                <option value="Q1">Q1 — Ene, Feb, Mar</option>
+                <option value="Q2">Q2 — Abr, May, Jun</option>
+                <option value="Q3">Q3 — Jul, Ago, Sep</option>
+                <option value="Q4">Q4 — Oct, Nov, Dic</option>
               </select>
               <span className="text-[10px] text-[#6b7280] ml-auto">{cuentas.length} cuentas · {fmtM(totalCuentasValor)} total</span>
             </div>
