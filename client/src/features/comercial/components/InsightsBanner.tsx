@@ -1,7 +1,7 @@
 import { Clock, CalendarCheck, Flame, TrendingUp, AlertTriangle, CheckCircle } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { fmtM } from '@/lib/utils';
-import { HUB_KANBAN_STAGES } from '@/lib/comercial-constants';
+import { KANBAN_STAGES } from '@/lib/comercial-constants';
 import type { KanbanProspecto } from '@shared/types/comercial';
 
 // ═══════ TYPES ═══════
@@ -42,7 +42,7 @@ export function calcularInsights(prospectos: KanbanProspecto[]): Insight[] {
 
   if (stagnant.length > 0) {
     const worst = stagnant[0];
-    const stageName = HUB_KANBAN_STAGES.find(s => s.id === worst.status)?.label || worst.status;
+    const stageName = KANBAN_STAGES.find(s => s.id === worst.status)?.label || worst.status;
     insights.push({
       id: 'stagnant',
       icon: 'stagnant',
@@ -98,7 +98,7 @@ export function calcularInsights(prospectos: KanbanProspecto[]): Insight[] {
   if (hotDeals.length > 0) {
     const hot = hotDeals[0];
     const valor = hot.propuesta?.ventaTotal || hot.facturacionEstimada || 0;
-    const stageName = HUB_KANBAN_STAGES.find(s => s.id === hot.status)?.label || hot.status;
+    const stageName = KANBAN_STAGES.find(s => s.id === hot.status)?.label || hot.status;
     insights.push({
       id: 'hot-deal',
       icon: 'hot',

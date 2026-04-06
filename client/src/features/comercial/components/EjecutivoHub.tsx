@@ -5,7 +5,7 @@ import type { DragStartEvent, DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { fmtM } from '@/lib/utils';
 import {
-  HUB_KANBAN_STAGES,
+  KANBAN_STAGES,
   STAGE_GATES,
   ExecutiveAvatar,
   getSeguimientoUrgency,
@@ -77,7 +77,7 @@ export function EjecutivoHub({ member, onBack, onShowNuevoLead }: Props) {
       ? memberProspectos.find(p => p.id === over.id)?.status
       : overId.startsWith('hub-') ? overId.replace('hub-', '') : overId;
     if (!targetStage || targetStage === prospecto.status) return;
-    const validStages: string[] = HUB_KANBAN_STAGES.map(s => s.id);
+    const validStages: string[] = KANBAN_STAGES.map(s => s.id);
     if (!validStages.includes(targetStage)) return;
     const gate = STAGE_GATES[targetStage];
     if (gate && !gate.validate(prospecto)) {
@@ -172,7 +172,7 @@ export function EjecutivoHub({ member, onBack, onShowNuevoLead }: Props) {
           {/* KANBAN GRID */}
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={hubHandleDragStart} onDragEnd={hubHandleDragEnd}>
             <div className="grid grid-cols-6 gap-2">
-              {HUB_KANBAN_STAGES.map(stage => {
+              {KANBAN_STAGES.map(stage => {
                 const stageItems = memberProspectos.filter(p => p.status === stage.id);
                 const gate = STAGE_GATES[stage.id];
 

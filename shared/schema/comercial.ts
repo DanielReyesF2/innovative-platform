@@ -130,6 +130,7 @@ export const prospects = pgTable("prospects", {
   followUpAction: text("follow_up_action"),
   recoveryStatus: text("recovery_status"), // sin_seguimiento, en_seguimiento, re_contactada
   firstContactDate: date("first_contact_date"), // business date: when initial contact happened
+  meetingDate: date("meeting_date"), // when the meeting is scheduled
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

@@ -59,6 +59,7 @@ export interface KanbanProspecto {
   nextStep: string | null;
   reason: string | null;
   estimatedCloseTime: string | null;
+  meetingDate: string | null;
   updatedAt: string | null;
 }
 
@@ -117,7 +118,7 @@ export interface SeguimientoUrgency {
 export interface GateMissingField {
   key: string;
   label: string;
-  type: 'text' | 'number' | 'services';
+  type: 'text' | 'number' | 'services' | 'date';
   placeholder?: string;
 }
 

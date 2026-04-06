@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Lock, Unlock, CheckCircle2, ArrowRight } from 'lucide-react';
-import { STAGE_GATES, KANBAN_STAGES, HUB_KANBAN_STAGES, SERVICIOS_INNOVATIVE } from '@/lib/comercial-constants';
+import { STAGE_GATES, KANBAN_STAGES, SERVICIOS_INNOVATIVE } from '@/lib/comercial-constants';
 import type { GateMissingField } from '@/lib/comercial-constants';
 import { useUpdateProspect } from '../api';
 import { useToast } from '@/components/ui/use-toast';
@@ -16,7 +16,7 @@ interface Props {
 }
 
 export function StageGateModal({ pendingMove, isHub, onForce, onCancel }: Props) {
-  const stages = isHub ? HUB_KANBAN_STAGES : KANBAN_STAGES;
+  const stages = KANBAN_STAGES;
   const stageLabel = stages.find(s => s.id === pendingMove.toStage)?.label || pendingMove.toStage;
   const gate = STAGE_GATES[pendingMove.toStage];
   const missingFields = gate?.missingFields(pendingMove.prospecto) || [];
@@ -148,7 +148,7 @@ export function StageGateModal({ pendingMove, isHub, onForce, onCancel }: Props)
                   <div>
                     <Label className="text-xs font-medium text-[#1c2c4a]">{field.label}</Label>
                     <Input
-                      type={field.type === 'number' ? 'number' : 'text'}
+                      type={field.type === 'number' ? 'number' : field.type === 'date' ? 'date' : 'text'}
                       value={formValues[field.key] || ''}
                       onChange={e => set(field.key, e.target.value)}
                       placeholder={field.placeholder}

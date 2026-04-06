@@ -57,22 +57,15 @@ export const INDUSTRIAS = [
 ];
 
 // ═══════ KANBAN STAGES ═══════
+// Labels reflect the BUSINESS flow, not the DB stage IDs.
+// See CLAUDE.md "Stage ID vs Business Label Mismatch" for details.
 export const KANBAN_STAGES = [
-  { id: 'contacto_inicial', label: 'Lead Nuevo', color: '#6b7280', prob: '5%' },
-  { id: 'presentacion', label: 'Reunión', color: '#0D47A1', prob: '20%' },
-  { id: 'levantamiento', label: 'Levantamiento', color: '#F57C00', prob: '35%' },
-  { id: 'propuesta', label: 'Propuesta', color: '#00a8a8', prob: '50%' },
-  { id: 'negociacion', label: 'Negociación', color: '#7C3AED', prob: '70%' },
+  { id: 'contacto_inicial', label: 'Lead', color: '#6b7280', prob: '5%' },
+  { id: 'presentacion', label: 'Prospecto', color: '#0D47A1', prob: '20%' },
+  { id: 'levantamiento', label: 'Reunión', color: '#F57C00', prob: '35%' },
+  { id: 'propuesta', label: 'Levantamiento', color: '#00a8a8', prob: '50%' },
+  { id: 'negociacion', label: 'Propuesta', color: '#7C3AED', prob: '70%' },
   { id: 'cierre_ganado', label: 'Socio Ambiental', color: '#2E7D32', prob: '100%' },
-] as const;
-
-export const HUB_KANBAN_STAGES = [
-  { id: 'contacto_inicial', label: 'Lead', color: '#6b7280' },
-  { id: 'presentacion', label: 'Prospecto', color: '#0D47A1' },
-  { id: 'levantamiento', label: 'Reunión', color: '#F57C00' },
-  { id: 'propuesta', label: 'Levantamiento', color: '#00a8a8' },
-  { id: 'negociacion', label: 'Propuesta', color: '#7C3AED' },
-  { id: 'cierre_ganado', label: 'Socio Ambiental', color: '#2E7D32' },
 ] as const;
 
 export const STAGE_PROBABILITY: Record<string, number> = {
@@ -300,6 +293,7 @@ export const dbProspectToKanban = (prospect: ApiProspect, usersMap: Record<numbe
     nextStep: prospect.nextStep || null,
     reason: prospect.reason || null,
     estimatedCloseTime: prospect.estimatedCloseTime || null,
+    meetingDate: prospect.meetingDate || null,
     updatedAt: prospect.updatedAt || null,
   };
 };
@@ -414,8 +408,15 @@ export const STAGE_GATES: Record<string, StageGate> = {
     // Gate 'presentacion' uses QualifyLeadDialog for lead→prospect conversion logic
     missingFields: () => [],
   },
-  // Gate 'levantamiento' removed — no lock needed to move to this stage.
-  // PR4 will add meetingDate field + gate requiring fecha de reunión.
+  levantamiento: {
+    label: 'Fecha de Reunión',
+    validate: (p) => !!p.meetingDate,
+    message: () => 'Falta agendar fecha de reunión',
+    requirement: 'Requiere: Fecha de reunión agendada',
+    missingFields: (p) => [
+      ...(!p.meetingDate ? [{ key: 'meetingDate', label: 'Fecha de reunión', type: 'date' as const, placeholder: '' }] : []),
+    ],
+  },
   propuesta: {
     label: 'Levantamiento Completado',
     validate: (p) => !!(p.volumenEstimado && (p.servicios?.length > 0)),
