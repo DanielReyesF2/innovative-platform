@@ -37,6 +37,58 @@ export const SERVICIOS_INNOVATIVE = [
   { id: 'limpieza', nombre: 'Limpieza Especializada', descripcion: 'Servicios de limpieza industrial' },
 ] as const;
 
+// ═══════ CATÁLOGO DE RESIDUOS ═══════
+export const WASTE_TYPES_CATALOG = [
+  // Reciclables
+  { id: 'carton', category: 'Reciclables', label: 'Cartón' },
+  { id: 'papel', category: 'Reciclables', label: 'Papel' },
+  { id: 'pet', category: 'Reciclables', label: 'PET' },
+  { id: 'hdpe', category: 'Reciclables', label: 'Plástico HDPE' },
+  { id: 'plastico_mixto', category: 'Reciclables', label: 'Plástico Mixto' },
+  { id: 'playo', category: 'Reciclables', label: 'Playo / Película Stretch' },
+  { id: 'aluminio', category: 'Reciclables', label: 'Aluminio' },
+  { id: 'fierro_metales', category: 'Reciclables', label: 'Fierro / Metales' },
+  { id: 'vidrio', category: 'Reciclables', label: 'Vidrio' },
+  { id: 'chatarra', category: 'Reciclables', label: 'Chatarra' },
+  // Madera
+  { id: 'tarima_madera_estandar', category: 'Madera', label: 'Tarima Madera Estándar' },
+  { id: 'tarima_madera_chica', category: 'Madera', label: 'Tarima Madera Chica' },
+  { id: 'tarima_plastico', category: 'Madera', label: 'Tarima de Plástico' },
+  { id: 'madera_suelta', category: 'Madera', label: 'Madera Suelta' },
+  // Orgánicos
+  { id: 'organicos_alimentos', category: 'Orgánicos', label: 'Orgánicos (Alimentos)' },
+  { id: 'organicos_poda', category: 'Orgánicos', label: 'Orgánicos (Poda / Jardinería)' },
+  { id: 'organicos_mixtos', category: 'Orgánicos', label: 'Orgánicos Mixtos' },
+  // Especiales
+  { id: 'lodos_ptar', category: 'Especiales', label: 'Lodos de PTAR' },
+  { id: 'textiles', category: 'Especiales', label: 'Textiles / Tela' },
+  { id: 'unicel', category: 'Especiales', label: 'Unicel / EPS' },
+  { id: 'aceite_usado', category: 'Especiales', label: 'Aceite Usado' },
+  { id: 'electronico', category: 'Especiales', label: 'Residuo Electrónico (RAEE)' },
+  { id: 'destruccion_fiscal', category: 'Especiales', label: 'Destrucción Fiscal' },
+  // Peligrosos
+  { id: 'rp_solventes', category: 'Peligrosos', label: 'RP — Solventes' },
+  { id: 'rp_aceites', category: 'Peligrosos', label: 'RP — Aceites y Grasas' },
+  { id: 'rp_baterias', category: 'Peligrosos', label: 'RP — Baterías' },
+  { id: 'rp_contenedores', category: 'Peligrosos', label: 'RP — Contenedores Contaminados' },
+  { id: 'rpbi', category: 'Peligrosos', label: 'RPBI — Biológico-Infecciosos' },
+  // Genérico
+  { id: 'rsu_general', category: 'General', label: 'RSU General' },
+  { id: 'otro', category: 'General', label: 'Otro' },
+] as const;
+
+// ═══════ EPP OPTIONS ═══════
+export const EPP_OPTIONS = [
+  { id: 'casco', label: 'Casco' },
+  { id: 'chaleco', label: 'Chaleco Reflejante' },
+  { id: 'botas', label: 'Botas de Seguridad' },
+  { id: 'lentes', label: 'Lentes de Seguridad' },
+  { id: 'guantes', label: 'Guantes' },
+  { id: 'cubrebocas', label: 'Cubrebocas' },
+  { id: 'tapones', label: 'Tapones Auditivos' },
+  { id: 'pantalon_largo', label: 'Pantalón Largo' },
+] as const;
+
 export const SERVICE_COLORS: Record<string, { bg: string; border: string; text: string; label: string }> = {
   rme:            { bg: '#EFF6FF', border: '#3B82F6', text: '#2563EB', label: 'RME' },
   rsu:            { bg: '#F0FDF4', border: '#22C55E', text: '#16A34A', label: 'RSU' },

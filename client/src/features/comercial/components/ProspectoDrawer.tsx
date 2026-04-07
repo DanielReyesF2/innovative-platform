@@ -160,7 +160,7 @@ export function ProspectoDrawer({ prospecto, onClose, onEdit }: Props) {
     { id: 'timeline', label: 'Timeline', icon: Clock },
     { id: 'notas', label: 'Notas', icon: MessageSquare },
     { id: 'reuniones', label: 'Reuniones', icon: Users },
-    { id: 'levantamiento', label: 'Levantamiento', icon: Target },
+    { id: 'levantamiento', label: 'Agendar Levantamiento', icon: Target },
     { id: 'docs', label: 'Docs', icon: FileText },
     { id: 'propuestas', label: 'Propuestas', icon: Send },
   ];

@@ -1,14 +1,17 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { useProspect, useUpdateProspect, useSendToOperaciones } from "../api";
 import { useToast } from "@/components/ui/use-toast";
+import { WASTE_TYPES_CATALOG, EPP_OPTIONS } from "@/lib/comercial-constants";
+import type { User } from "@shared/schema/common";
 import {
-  Building2, Recycle, Truck, Warehouse, Target,
+  Building2, Recycle, Truck, CalendarCheck, HardHat,
   ChevronDown, ChevronRight, Trash2, Plus, Save,
-  Send, CheckCircle, AlertCircle,
+  Send, CheckCircle, Users, Phone, Mail,
 } from "lucide-react";
 
 // ─── Collapsible Section ───
@@ -43,28 +46,14 @@ function CollapsibleSection({
 
 // ─── Field helpers ───
 function Field({
-  label,
-  value,
-  onChange,
-  type = "text",
-  placeholder,
+  label, value, onChange, type = "text", placeholder,
 }: {
-  label: string;
-  value: unknown;
-  onChange: (v: string) => void;
-  type?: string;
-  placeholder?: string;
+  label: string; value: unknown; onChange: (v: string) => void; type?: string; placeholder?: string;
 }) {
   return (
     <div>
       <Label className="text-xs">{label}</Label>
-      <Input
-        type={type}
-        value={(value as string) || ""}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        className="mt-1"
-      />
+      <Input type={type} value={(value as string) || ""} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} className="mt-1" />
     </div>
   );
 }
@@ -73,11 +62,8 @@ function BoolField({ label, value, onChange }: { label: string; value: boolean; 
   return (
     <div>
       <Label className="text-xs">{label}</Label>
-      <select
-        value={value ? "true" : "false"}
-        onChange={(e) => onChange(e.target.value === "true")}
-        className="mt-1 h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
-      >
+      <select value={value ? "true" : "false"} onChange={(e) => onChange(e.target.value === "true")}
+        className="mt-1 h-10 w-full rounded-md border border-input bg-background px-3 text-sm">
         <option value="false">No</option>
         <option value="true">Si</option>
       </select>
@@ -85,8 +71,7 @@ function BoolField({ label, value, onChange }: { label: string; value: boolean; 
   );
 }
 
-// ─── Section Components ───
-
+// ─── Section: Datos de la Empresa ───
 function GeneralInfoSection({ data, onChange }: { data: Record<string, unknown>; onChange: (d: Record<string, unknown>) => void }) {
   const set = (key: string, val: string) => onChange({ ...data, [key]: val });
   return (
@@ -103,9 +88,9 @@ function GeneralInfoSection({ data, onChange }: { data: Record<string, unknown>;
   );
 }
 
+// ─── Section: Tipos de Residuo (with dropdown catalog) ───
 function WasteTypesSection({ data, onChange }: { data: Record<string, unknown>[]; onChange: (d: Record<string, unknown>[]) => void }) {
-  const addRow = () =>
-    onChange([...data, { wasteType: "", quantity: "", currentDestination: "", monthlyCost: "" }]);
+  const addRow = () => onChange([...data, { wasteType: "", quantity: "", currentDestination: "" }]);
   const removeRow = (i: number) => onChange(data.filter((_, idx) => idx !== i));
   const updateRow = (i: number, key: string, val: string) => {
     const updated = [...data];
@@ -113,27 +98,53 @@ function WasteTypesSection({ data, onChange }: { data: Record<string, unknown>[]
     onChange(updated);
   };
 
+  // Group catalog by category
+  const categories = [...new Set(WASTE_TYPES_CATALOG.map(w => w.category))];
+
   return (
     <CollapsibleSection title="Tipos de Residuo" icon={<Recycle className="h-4 w-4" />}>
       {data.length === 0 && (
         <p className="mb-3 text-sm text-muted-foreground">Agrega al menos un tipo de residuo *</p>
       )}
-      {data.map((row: Record<string, unknown>, i: number) => (
-        <div key={i} className="mb-3 rounded-lg border p-3">
-          <div className="mb-2 flex items-center justify-between">
-            <span className="text-xs font-medium">Residuo #{i + 1}</span>
-            <Button variant="ghost" size="sm" onClick={() => removeRow(i)}>
-              <Trash2 className="h-3 w-3" />
-            </Button>
+      {data.map((row: Record<string, unknown>, i: number) => {
+        const currentType = row.wasteType as string;
+        const isLegacyValue = currentType && !WASTE_TYPES_CATALOG.some(w => w.id === currentType || w.label === currentType);
+        return (
+          <div key={i} className="mb-3 rounded-lg border p-3">
+            <div className="mb-2 flex items-center justify-between">
+              <span className="text-xs font-medium">Residuo #{i + 1}</span>
+              <Button variant="ghost" size="sm" onClick={() => removeRow(i)}>
+                <Trash2 className="h-3 w-3" />
+              </Button>
+            </div>
+            <div className="grid gap-2 sm:grid-cols-2">
+              <div>
+                <Label className="text-xs">Tipo *</Label>
+                {isLegacyValue ? (
+                  <Input value={currentType} onChange={(e) => updateRow(i, "wasteType", e.target.value)} className="mt-1" />
+                ) : (
+                  <select
+                    value={currentType}
+                    onChange={(e) => updateRow(i, "wasteType", e.target.value)}
+                    className="mt-1 h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                  >
+                    <option value="">Seleccionar residuo...</option>
+                    {categories.map(cat => (
+                      <optgroup key={cat} label={cat}>
+                        {WASTE_TYPES_CATALOG.filter(w => w.category === cat).map(w => (
+                          <option key={w.id} value={w.id}>{w.label}</option>
+                        ))}
+                      </optgroup>
+                    ))}
+                  </select>
+                )}
+              </div>
+              <Field label="Cantidad" value={row.quantity} onChange={(v) => updateRow(i, "quantity", v)} placeholder="Ej: 18 ton/mes" />
+              <Field label="Destino Actual" value={row.currentDestination} onChange={(v) => updateRow(i, "currentDestination", v)} />
+            </div>
           </div>
-          <div className="grid gap-2 sm:grid-cols-2">
-            <Field label="Tipo *" value={row.wasteType} onChange={(v) => updateRow(i, "wasteType", v)} placeholder="Ej: Organicos" />
-            <Field label="Cantidad" value={row.quantity} onChange={(v) => updateRow(i, "quantity", v)} placeholder="Ej: 18 ton/mes" />
-            <Field label="Destino Actual" value={row.currentDestination} onChange={(v) => updateRow(i, "currentDestination", v)} />
-            <Field label="Costo Mensual" value={row.monthlyCost} onChange={(v) => updateRow(i, "monthlyCost", v)} type="number" />
-          </div>
-        </div>
-      ))}
+        );
+      })}
       <Button variant="outline" size="sm" onClick={addRow}>
         <Plus className="mr-1 h-3 w-3" /> Agregar residuo
       </Button>
@@ -141,6 +152,7 @@ function WasteTypesSection({ data, onChange }: { data: Record<string, unknown>[]
   );
 }
 
+// ─── Section: Servicios Actuales (simplified) ───
 function CurrentServicesSection({ data, onChange }: { data: Record<string, unknown>; onChange: (d: Record<string, unknown>) => void }) {
   const set = (key: string, val: string | number | boolean) => onChange({ ...data, [key]: val });
   return (
@@ -148,64 +160,6 @@ function CurrentServicesSection({ data, onChange }: { data: Record<string, unkno
       <div className="grid gap-3 sm:grid-cols-2">
         <Field label="Proveedor Actual" value={data.providerName} onChange={(v) => set("providerName", v)} />
         <BoolField label="Contrato Activo" value={!!data.contractActive} onChange={(v) => set("contractActive", v)} />
-      </div>
-    </CollapsibleSection>
-  );
-}
-
-function InfrastructureSection({ data, onChange }: { data: Record<string, unknown>; onChange: (d: Record<string, unknown>) => void }) {
-  const set = (key: string, val: string | number | boolean) => onChange({ ...data, [key]: val });
-  return (
-    <CollapsibleSection title="Infraestructura" icon={<Warehouse className="h-4 w-4" />}>
-      <div className="grid gap-3 sm:grid-cols-2">
-        <BoolField label="Tiene Area de Almacenamiento" value={!!data.hasStorageArea} onChange={(v) => set("hasStorageArea", v)} />
-        <Field label="Tamano Area" value={data.storageAreaSize} onChange={(v) => set("storageAreaSize", v)} />
-        <Field label="Tipo de Almacenamiento" value={data.storageType} onChange={(v) => set("storageType", v)} />
-        <Field label="Num. Contenedores" value={data.containerCount} onChange={(v) => set("containerCount", v)} type="number" />
-        <BoolField label="Tiene Compactadora" value={!!data.hasCompactor} onChange={(v) => set("hasCompactor", v)} />
-        <BoolField label="Tiene Bodega" value={!!data.hasWarehouse} onChange={(v) => set("hasWarehouse", v)} />
-        <Field label="Acceso Vehicular" value={data.vehicleAccess} onChange={(v) => set("vehicleAccess", v)} />
-        <Field label="Restricciones de Horario" value={data.scheduleRestrictions} onChange={(v) => set("scheduleRestrictions", v)} />
-        <Field label="Espacio Disponible" value={data.availableSpace} onChange={(v) => set("availableSpace", v)} />
-      </div>
-    </CollapsibleSection>
-  );
-}
-
-function NeedsSection({ data, onChange }: { data: Record<string, unknown>; onChange: (d: Record<string, unknown>) => void }) {
-  const set = (key: string, val: string | number | boolean) => onChange({ ...data, [key]: val });
-  return (
-    <CollapsibleSection title="Necesidades" icon={<Target className="h-4 w-4" />}>
-      <div className="grid gap-3 sm:grid-cols-2">
-        <BoolField label="Separacion" value={!!data.needsSeparation} onChange={(v) => set("needsSeparation", v)} />
-        <BoolField label="Valorizacion" value={!!data.needsValorization} onChange={(v) => set("needsValorization", v)} />
-        <BoolField label="Trazabilidad" value={!!data.needsTraceability} onChange={(v) => set("needsTraceability", v)} />
-        <BoolField label="Reportes Mensuales" value={!!data.needsMonthlyReporting} onChange={(v) => set("needsMonthlyReporting", v)} />
-        <Field label="Certificaciones" value={data.certifications} onChange={(v) => set("certifications", v)} placeholder="ISO 14001, etc." />
-        <Field label="Presupuesto Disponible" value={data.availableBudget} onChange={(v) => set("availableBudget", v)} type="number" />
-        <div>
-          <Label className="text-xs">Urgencia</Label>
-          <select
-            value={(data.urgency as string) || ""}
-            onChange={(e) => set("urgency", e.target.value)}
-            className="mt-1 h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
-          >
-            <option value="">Seleccionar</option>
-            <option value="Baja">Baja</option>
-            <option value="Media">Media</option>
-            <option value="Alta">Alta</option>
-          </select>
-        </div>
-        <Field label="Tomador de Decision" value={data.decisionMaker} onChange={(v) => set("decisionMaker", v)} />
-        <div className="sm:col-span-2">
-          <Label className="text-xs">Metas Ambientales</Label>
-          <textarea
-            value={(data.environmentalGoals as string) || ""}
-            onChange={(e) => set("environmentalGoals", e.target.value)}
-            className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-            rows={2}
-          />
-        </div>
       </div>
     </CollapsibleSection>
   );
@@ -222,10 +176,21 @@ export function ProspectLevantamiento({ prospectId }: ProspectLevantamientoProps
   const updateProspect = useUpdateProspect();
   const sendToOps = useSendToOperaciones();
   const { toast } = useToast();
-  const [showOpsConfirm, setShowOpsConfirm] = useState(false);
-  const [schedProposedDate, setSchedProposedDate] = useState("");
-  const [schedProposedTime, setSchedProposedTime] = useState("");
-  const [schedResponsible, setSchedResponsible] = useState("");
+
+  // Team members for responsable dropdown
+  const { data: teamMembers = [] } = useQuery<Pick<User, "id" | "name" | "codigo" | "email">[]>({
+    queryKey: ["/api/auth/team"],
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Scheduling state
+  const [schedDate, setSchedDate] = useState("");
+  const [schedTime, setSchedTime] = useState("");
+  const [schedResponsibles, setSchedResponsibles] = useState<number[]>([]);
+  const [schedEpp, setSchedEpp] = useState<string[]>([]);
+  const [schedContactName, setSchedContactName] = useState("");
+  const [schedContactPhone, setSchedContactPhone] = useState("");
+  const [schedContactEmail, setSchedContactEmail] = useState("");
   const [schedNotes, setSchedNotes] = useState("");
 
   const [levData, setLevData] = useState<Record<string, unknown> | null>(null);
@@ -238,9 +203,19 @@ export function ProspectLevantamiento({ prospectId }: ProspectLevantamientoProps
       generalInfo: raw.generalInfo || {},
       wasteTypes: raw.wasteTypes || [],
       currentServices: raw.currentServices || {},
-      infrastructure: raw.infrastructure || {},
-      needs: raw.needs || {},
     });
+    // Restore scheduling data if previously saved
+    const sched = raw.scheduling as Record<string, unknown> | undefined;
+    if (sched) {
+      setSchedDate((sched.proposedDate as string) || "");
+      setSchedTime((sched.proposedTime as string) || "");
+      setSchedResponsibles((sched.responsibleIds as number[]) || []);
+      setSchedEpp((sched.epp as string[]) || []);
+      setSchedContactName((sched.contactName as string) || "");
+      setSchedContactPhone((sched.contactPhone as string) || "");
+      setSchedContactEmail((sched.contactEmail as string) || "");
+      setSchedNotes((sched.notes as string) || "");
+    }
     setInitialized(true);
   }
 
@@ -252,9 +227,25 @@ export function ProspectLevantamiento({ prospectId }: ProspectLevantamientoProps
     );
   }
 
+  const buildFullData = () => ({
+    ...levData,
+    scheduling: {
+      proposedDate: schedDate,
+      proposedTime: schedTime,
+      responsibleIds: schedResponsibles,
+      responsibleNames: schedResponsibles.map(id => teamMembers.find(m => m.id === id)?.name || "").filter(Boolean),
+      responsibleEmails: schedResponsibles.map(id => teamMembers.find(m => m.id === id)?.email || "").filter(Boolean),
+      epp: schedEpp,
+      contactName: schedContactName.trim(),
+      contactPhone: schedContactPhone.trim(),
+      contactEmail: schedContactEmail.trim(),
+      notes: schedNotes.trim() || null,
+    },
+  });
+
   const handleSave = async () => {
     try {
-      await updateProspect.mutateAsync({ id: prospectId, levantamientoData: levData });
+      await updateProspect.mutateAsync({ id: prospectId, levantamientoData: buildFullData() });
       toast({ title: "Levantamiento guardado" });
     } catch {
       toast({ title: "Error al guardar", variant: "destructive" });
@@ -262,28 +253,21 @@ export function ProspectLevantamiento({ prospectId }: ProspectLevantamientoProps
   };
 
   const handleSendToOps = async () => {
-    if (!schedProposedDate || !schedProposedTime || !schedResponsible.trim()) {
-      toast({ title: "Fecha, hora y responsable son requeridos", variant: "destructive" });
+    if (!schedDate || !schedTime) {
+      toast({ title: "Fecha y hora son requeridos", variant: "destructive" });
+      return;
+    }
+    if (schedResponsibles.length === 0) {
+      toast({ title: "Selecciona al menos un responsable", variant: "destructive" });
       return;
     }
     try {
-      const dataWithScheduling = {
-        ...levData,
-        scheduling: {
-          proposedDate: schedProposedDate,
-          proposedTime: schedProposedTime,
-          responsibleName: schedResponsible.trim(),
-          notes: schedNotes.trim() || null,
-        },
-      };
-      await updateProspect.mutateAsync({ id: prospectId, levantamientoData: dataWithScheduling });
+      await updateProspect.mutateAsync({ id: prospectId, levantamientoData: buildFullData() });
       await sendToOps.mutateAsync(prospectId);
-      toast({ title: "Enviado a Operaciones" });
-      setShowOpsConfirm(false);
+      toast({ title: "Levantamiento agendado y enviado a Operaciones" });
     } catch (err: unknown) {
       const msg = (err instanceof Error ? err.message : null) || "Error al enviar a Operaciones";
       toast({ title: msg, variant: "destructive" });
-      setShowOpsConfirm(false);
     }
   };
 
@@ -293,6 +277,14 @@ export function ProspectLevantamiento({ prospectId }: ProspectLevantamientoProps
     !prospect.surveyId;
 
   const sentToOps = prospect?.sentToOpsAt;
+
+  const toggleResponsible = (id: number) => {
+    setSchedResponsibles(prev => prev.includes(id) ? prev.filter(r => r !== id) : [...prev, id]);
+  };
+
+  const toggleEpp = (id: string) => {
+    setSchedEpp(prev => prev.includes(id) ? prev.filter(e => e !== id) : [...prev, id]);
+  };
 
   return (
     <div className="space-y-4">
@@ -306,27 +298,134 @@ export function ProspectLevantamiento({ prospectId }: ProspectLevantamientoProps
         </div>
       )}
 
-      {/* 5 Sections */}
+      {/* Section 1: Datos de la Empresa */}
       <GeneralInfoSection
         data={levData.generalInfo as Record<string, unknown>}
         onChange={(gi) => setLevData({ ...levData, generalInfo: gi })}
       />
+
+      {/* Section 2: Tipos de Residuo (dropdown catalog) */}
       <WasteTypesSection
         data={levData.wasteTypes as Record<string, unknown>[]}
         onChange={(wt) => setLevData({ ...levData, wasteTypes: wt })}
       />
+
+      {/* Section 3: Servicios Actuales (simplified) */}
       <CurrentServicesSection
         data={levData.currentServices as Record<string, unknown>}
         onChange={(cs) => setLevData({ ...levData, currentServices: cs })}
       />
-      <InfrastructureSection
-        data={levData.infrastructure as Record<string, unknown>}
-        onChange={(inf) => setLevData({ ...levData, infrastructure: inf })}
-      />
-      <NeedsSection
-        data={levData.needs as Record<string, unknown>}
-        onChange={(n) => setLevData({ ...levData, needs: n })}
-      />
+
+      {/* Section 4: Agendar Levantamiento (inline, not modal) */}
+      <Card>
+        <button
+          onClick={() => {}} // Always open
+          className="flex w-full items-center justify-between px-4 py-3 text-left"
+        >
+          <div className="flex items-center gap-2 text-sm font-semibold">
+            <CalendarCheck className="h-4 w-4" />
+            Agendar Levantamiento
+          </div>
+        </button>
+        <CardContent className="pt-0 space-y-4">
+          {/* Date & Time */}
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div>
+              <Label className="text-xs">Fecha Propuesta *</Label>
+              <Input type="date" value={schedDate} onChange={(e) => setSchedDate(e.target.value)} className="mt-1" />
+            </div>
+            <div>
+              <Label className="text-xs">Hora Propuesta *</Label>
+              <Input type="time" value={schedTime} onChange={(e) => setSchedTime(e.target.value)} className="mt-1" />
+            </div>
+          </div>
+
+          {/* Responsables (multi-select from team) */}
+          <div>
+            <Label className="text-xs flex items-center gap-1">
+              <Users className="h-3 w-3" /> Responsables del Levantamiento *
+            </Label>
+            <p className="text-[10px] text-muted-foreground mb-2">Selecciona quién(es) irán al levantamiento</p>
+            <div className="flex flex-wrap gap-1.5">
+              {teamMembers.map(member => (
+                <button
+                  key={member.id}
+                  type="button"
+                  onClick={() => toggleResponsible(member.id)}
+                  className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors flex items-center gap-1.5 ${
+                    schedResponsibles.includes(member.id)
+                      ? "bg-[#00a8a8] text-white"
+                      : "bg-[#f3f4f6] text-[#6b7280] hover:bg-[#e5e7eb]"
+                  }`}
+                >
+                  <span className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-[9px] font-bold">
+                    {member.codigo || member.name.split(" ").map(n => n[0]).join("").substring(0, 2)}
+                  </span>
+                  {member.name.split(" ").slice(0, 2).join(" ")}
+                </button>
+              ))}
+            </div>
+            {schedResponsibles.length > 0 && (
+              <div className="mt-2 text-[10px] text-[#6b7280]">
+                {schedResponsibles.map(id => {
+                  const m = teamMembers.find(t => t.id === id);
+                  return m ? `${m.name} (${m.email})` : "";
+                }).filter(Boolean).join(" · ")}
+              </div>
+            )}
+          </div>
+
+          {/* Contacto en sitio */}
+          <div>
+            <Label className="text-xs flex items-center gap-1 mb-2">
+              <Phone className="h-3 w-3" /> Contacto que recibe en sitio
+            </Label>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <Field label="Nombre" value={schedContactName} onChange={setSchedContactName} placeholder="Quien recibe" />
+              <Field label="Teléfono" value={schedContactPhone} onChange={setSchedContactPhone} placeholder="55 1234 5678" />
+              <div>
+                <Label className="text-xs">Correo</Label>
+                <Input type="email" value={schedContactEmail} onChange={(e) => setSchedContactEmail(e.target.value)} placeholder="contacto@empresa.com" className="mt-1" />
+              </div>
+            </div>
+          </div>
+
+          {/* EPP (multi-select chips) */}
+          <div>
+            <Label className="text-xs flex items-center gap-1">
+              <HardHat className="h-3 w-3" /> EPP Necesario
+            </Label>
+            <div className="flex flex-wrap gap-1.5 mt-2">
+              {EPP_OPTIONS.map(epp => (
+                <button
+                  key={epp.id}
+                  type="button"
+                  onClick={() => toggleEpp(epp.id)}
+                  className={`rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
+                    schedEpp.includes(epp.id)
+                      ? "bg-[#F57C00] text-white"
+                      : "bg-[#f3f4f6] text-[#6b7280] hover:bg-[#e5e7eb]"
+                  }`}
+                >
+                  {epp.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Notes */}
+          <div>
+            <Label className="text-xs">Notas (opcional)</Label>
+            <textarea
+              value={schedNotes}
+              onChange={(e) => setSchedNotes(e.target.value)}
+              className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              rows={2}
+              placeholder="Ej: Llegar por la puerta de carga, preguntar por Juan..."
+            />
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Footer actions */}
       <div className="flex items-center gap-3 pt-2 border-t">
@@ -337,78 +436,15 @@ export function ProspectLevantamiento({ prospectId }: ProspectLevantamientoProps
 
         {canSendToOps && (
           <Button
-            variant="outline"
-            onClick={() => setShowOpsConfirm(true)}
-            disabled={sendToOps.isPending}
+            onClick={handleSendToOps}
+            disabled={sendToOps.isPending || updateProspect.isPending}
+            className="bg-[#00a8a8] hover:bg-[#008b8b]"
           >
             <Send className="mr-1 h-4 w-4" />
-            Enviar a Operaciones
+            {sendToOps.isPending || updateProspect.isPending ? "Enviando..." : "Agendar Levantamiento"}
           </Button>
         )}
       </div>
-
-      {/* Scheduling + confirmation dialog */}
-      {showOpsConfirm && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4" onClick={() => setShowOpsConfirm(false)}>
-          <div className="w-full max-w-lg rounded-lg bg-white shadow-xl p-6" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-start gap-3 mb-4">
-              <AlertCircle className="h-6 w-6 text-[#F57C00] flex-shrink-0 mt-0.5" />
-              <div>
-                <h3 className="font-semibold text-[#1c2c4a]">Enviar a Operaciones</h3>
-                <p className="text-sm text-[#6b7280] mt-1">
-                  Propone una fecha, hora y responsable para el levantamiento. Operaciones puede aceptar o ajustar.
-                </p>
-              </div>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2 mb-4">
-              <div>
-                <Label className="text-xs">Fecha Propuesta *</Label>
-                <Input
-                  type="date"
-                  value={schedProposedDate}
-                  onChange={(e) => setSchedProposedDate(e.target.value)}
-                  className="mt-1"
-                />
-              </div>
-              <div>
-                <Label className="text-xs">Hora Propuesta *</Label>
-                <Input
-                  type="time"
-                  value={schedProposedTime}
-                  onChange={(e) => setSchedProposedTime(e.target.value)}
-                  className="mt-1"
-                />
-              </div>
-              <div className="sm:col-span-2">
-                <Label className="text-xs">Responsable del Levantamiento *</Label>
-                <Input
-                  value={schedResponsible}
-                  onChange={(e) => setSchedResponsible(e.target.value)}
-                  placeholder="Nombre del responsable"
-                  className="mt-1"
-                />
-              </div>
-              <div className="sm:col-span-2">
-                <Label className="text-xs">Notas (opcional)</Label>
-                <textarea
-                  value={schedNotes}
-                  onChange={(e) => setSchedNotes(e.target.value)}
-                  className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                  rows={2}
-                  placeholder="Ej: Llegar por la puerta de carga..."
-                />
-              </div>
-            </div>
-            <div className="flex justify-end gap-3">
-              <Button variant="outline" onClick={() => setShowOpsConfirm(false)}>Cancelar</Button>
-              <Button onClick={handleSendToOps} disabled={sendToOps.isPending || updateProspect.isPending}>
-                <Send className="mr-1 h-4 w-4" />
-                {sendToOps.isPending || updateProspect.isPending ? "Enviando..." : "Confirmar y Enviar"}
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
