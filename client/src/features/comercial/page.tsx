@@ -81,8 +81,9 @@ export default function ComercialPage() {
 
   // Derived KPIs
   const presupuestoMesEquipo = salesTeamData.reduce((s, m) => s + (m.presupuestoMensual || 0), 0);
-  const propuestasEnviadas = kanbanProspectos.filter(p => p.status === 'propuesta');
-  const montoPropuestas = propuestasEnviadas.reduce((s, p) => s + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0);
+  const ventasCerradasAnual = salesTeamData.reduce((s, m) => s + (m.ventasRealesAnual || 0), 0);
+  const presupuestoAnualTotal = salesTeamData.reduce((s, m) => s + (m.presupuestoAnual2026 || 0), 0);
+  const propuestasEnviadas = kanbanProspectos.filter(p => p.status === 'propuesta' || p.status === 'negociacion');
   const levantamientosActivos = kanbanProspectos.filter(p => p.status === 'levantamiento');
   const biodigestores = kanbanProspectos.filter(p => (p.servicios || []).includes('biodigestores'));
 
@@ -109,10 +110,10 @@ export default function ComercialPage() {
                 <div className="text-[13px] font-medium text-[#6b7280] mb-1">Presupuesto {new Date().toLocaleDateString('es-MX', { month: 'long' }).replace(/^\w/, c => c.toUpperCase())}</div>
                 <div className="text-2xl font-bold text-[#1c2c4a]">{fmtM(presupuestoMesEquipo)}</div>
                 <div className="text-xs text-[#6b7280] mt-1">
-                  Cierre: <span className="font-semibold text-[#00a8a8]">{fmtM(montoPropuestas)}</span>
-                  {presupuestoMesEquipo > 0 && (
-                    <span className={`ml-1.5 font-semibold ${(montoPropuestas / presupuestoMesEquipo) >= 1 ? 'text-[#2E7D32]' : 'text-[#F57C00]'}`}>
-                      ({Math.round((montoPropuestas / presupuestoMesEquipo) * 100)}%)
+                  Venta Cerrada: <span className="font-semibold text-[#00a8a8]">{fmtM(ventasCerradasAnual)}</span>
+                  {presupuestoAnualTotal > 0 && (
+                    <span className={`ml-1.5 font-semibold ${(ventasCerradasAnual / presupuestoAnualTotal) >= 1 ? 'text-[#2E7D32]' : 'text-[#F57C00]'}`}>
+                      ({Math.round((ventasCerradasAnual / presupuestoAnualTotal) * 100)}%)
                     </span>
                   )}
                 </div>
