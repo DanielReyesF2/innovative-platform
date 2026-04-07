@@ -719,6 +719,60 @@ router.post("/prospects/:prospectId/proposals/:proposalId/status", async (req, r
   }
 });
 
+// --- Proposal File Upload (20MB limit) ---
+
+const proposalUpload = multer({
+  storage,
+  limits: { fileSize: 20 * 1024 * 1024 }, // 20MB max for proposals
+  fileFilter: (_req, file, cb) => {
+    const allowedTypes = [
+      "application/pdf",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "application/vnd.ms-excel",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "application/vnd.ms-powerpoint",
+      "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+      "image/jpeg",
+      "image/png",
+    ];
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error("Tipo de archivo no permitido. Usa PDF, Word, Excel, PowerPoint o imágenes."));
+    }
+  },
+});
+
+router.post("/prospects/:id/proposals/upload", proposalUpload.single("file"), async (req, res) => {
+  try {
+    const file = req.file;
+    if (!file) {
+      return res.status(400).json({ message: "Archivo requerido" });
+    }
+
+    const prospectId = Number(req.params.id);
+    const relativePath = `/uploads/comercial/${prospectId}/${file.filename}`;
+
+    // Get next version number
+    const existing = await getProposalVersions(prospectId);
+    const nextVersion = existing.length > 0 ? Math.max(...existing.map((p: { version: number | null }) => p.version || 1)) + 1 : 1;
+
+    const proposal = await createProposal({
+      prospectId,
+      name: file.originalname,
+      url: relativePath,
+      version: nextVersion,
+      createdById: req.user!.id,
+    });
+
+    res.status(201).json(proposal);
+  } catch (error) {
+    console.error("[comercial] Upload proposal error:", error);
+    res.status(500).json({ message: getErrorMessage(error) });
+  }
+});
+
 // --- Alerts ---
 
 router.get("/alerts", async (req, res) => {
