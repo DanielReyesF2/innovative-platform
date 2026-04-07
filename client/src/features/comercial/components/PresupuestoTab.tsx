@@ -447,7 +447,7 @@ export function PresupuestoTab() {
   );
 }
 
-// ─── Budget Edit Modal ───
+// ─── Budget Edit Modal (1 total per month, auto-split across team) ───
 
 function BudgetEditModal({ salesTeamData, year, onClose }: {
   salesTeamData: { dbUserId: number; name: string; codigo: string; presupuestosMensuales: Record<string, number>; presupuestoAnual2026: number }[];
@@ -456,61 +456,56 @@ function BudgetEditModal({ salesTeamData, year, onClose }: {
 }) {
   const { toast } = useToast();
   const [saving, setSaving] = useState(false);
-  const MESES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+  const MESES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 
   const comercialMembers = salesTeamData.filter(m => m.presupuestoAnual2026 > 0 || Object.keys(m.presupuestosMensuales).length > 0);
+  const memberCount = comercialMembers.length || 1;
 
-  // Initialize form: { "userId-MM": value }
-  const [values, setValues] = useState<Record<string, string>>(() => {
-    const initial: Record<string, string> = {};
-    comercialMembers.forEach(m => {
-      for (let mes = 1; mes <= 12; mes++) {
-        const period = `${year}-${String(mes).padStart(2, '0')}`;
-        const val = m.presupuestosMensuales[period] || 0;
-        initial[`${m.dbUserId}-${mes}`] = val > 0 ? String(val) : '';
-      }
+  // Initialize: total per month (sum of all members)
+  const [monthTotals, setMonthTotals] = useState<string[]>(() => {
+    return Array.from({ length: 12 }, (_, i) => {
+      const period = `${year}-${String(i + 1).padStart(2, '0')}`;
+      const total = comercialMembers.reduce((s, m) => s + (m.presupuestosMensuales[period] || 0), 0);
+      return total > 0 ? String(total) : '';
     });
-    return initial;
   });
 
-  const set = (key: string, val: string) => setValues(prev => ({ ...prev, [key]: val }));
-
-  const getMonthTotal = (mes: number) =>
-    comercialMembers.reduce((s, m) => s + (Number(values[`${m.dbUserId}-${mes}`]) || 0), 0);
-
-  const getMemberTotal = (userId: number) => {
-    let total = 0;
-    for (let mes = 1; mes <= 12; mes++) total += Number(values[`${userId}-${mes}`]) || 0;
-    return total;
+  const setMonth = (idx: number, val: string) => {
+    setMonthTotals(prev => { const n = [...prev]; n[idx] = val; return n; });
   };
 
-  const grandTotal = comercialMembers.reduce((s, m) => s + getMemberTotal(m.dbUserId), 0);
+  const grandTotal = monthTotals.reduce((s, v) => s + (Number(v) || 0), 0);
 
   const handleSave = async () => {
     setSaving(true);
     try {
       const promises: Promise<unknown>[] = [];
-      comercialMembers.forEach(m => {
-        for (let mes = 1; mes <= 12; mes++) {
-          const period = `${year}-${String(mes).padStart(2, '0')}`;
+      for (let mes = 0; mes < 12; mes++) {
+        const period = `${year}-${String(mes + 1).padStart(2, '0')}`;
+        const totalMonth = Number(monthTotals[mes]) || 0;
+        const perMember = Math.round(totalMonth / memberCount);
+        const remainder = totalMonth - (perMember * memberCount);
+
+        comercialMembers.forEach((m, idx) => {
+          // First member gets remainder to avoid rounding loss
+          const budget = perMember + (idx === 0 ? remainder : 0);
           const oldVal = m.presupuestosMensuales[period] || 0;
-          const newVal = Number(values[`${m.dbUserId}-${mes}`]) || 0;
-          if (newVal !== oldVal) {
+          if (budget !== oldVal) {
             promises.push(
               apiRequest('PATCH', '/api/comercial/sales-metrics', {
-                userId: m.dbUserId, period, monthlyBudget: newVal,
+                userId: m.dbUserId, period, monthlyBudget: budget,
               })
             );
           }
-        }
-      });
+        });
+      }
       await Promise.all(promises);
       queryClient.invalidateQueries({ queryKey: ['/api/comercial/team'] });
       queryClient.invalidateQueries({ queryKey: ['/api/comercial/sales-metrics'] });
-      toast({ title: `Presupuestos actualizados (${promises.length} cambios)` });
+      toast({ title: `Objetivos guardados — se divide entre ${memberCount} ejecutivos` });
       onClose();
     } catch {
-      toast({ title: 'Error al guardar presupuestos', variant: 'destructive' });
+      toast({ title: 'Error al guardar', variant: 'destructive' });
     } finally {
       setSaving(false);
     }
@@ -518,76 +513,43 @@ function BudgetEditModal({ salesTeamData, year, onClose }: {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg" onClick={e => e.stopPropagation()}>
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-[#e5e7eb]">
           <div>
-            <h3 className="text-base font-semibold text-[#1c2c4a]">Editar Objetivos Mensuales {year}</h3>
-            <p className="text-xs text-[#6b7280] mt-0.5">Presupuesto por ejecutivo por mes</p>
+            <h3 className="text-base font-semibold text-[#1c2c4a]">Objetivos Mensuales {year}</h3>
+            <p className="text-xs text-[#6b7280] mt-0.5">El total de cada mes se divide entre {memberCount} ejecutivos</p>
           </div>
           <button onClick={onClose} className="text-[#6b7280] hover:text-[#1c2c4a] p-1"><X size={20} /></button>
         </div>
 
-        {/* Table */}
-        <div className="flex-1 overflow-auto px-6 py-4">
-          <table className="w-full text-sm">
-            <thead className="sticky top-0 bg-white">
-              <tr className="border-b border-[#e5e7eb]">
-                <th className="text-left py-2 px-1 text-[10px] font-semibold text-[#6b7280] uppercase sticky left-0 bg-white min-w-[120px]">Ejecutivo</th>
-                {MESES.map((m, i) => (
-                  <th key={i} className="text-center py-2 px-1 text-[10px] font-semibold text-[#6b7280] uppercase min-w-[80px]">{m}</th>
-                ))}
-                <th className="text-right py-2 px-1 text-[10px] font-semibold text-[#1c2c4a] uppercase min-w-[90px]">Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              {comercialMembers.map(m => (
-                <tr key={m.dbUserId} className="border-b border-[#f3f4f6]">
-                  <td className="py-1.5 px-1 sticky left-0 bg-white">
-                    <div className="flex items-center gap-1.5">
-                      <ExecutiveAvatar codigo={m.codigo} name={m.name} size="xs" />
-                      <span className="text-xs font-medium text-[#1c2c4a] truncate">{m.name.split(' ').slice(0, 2).join(' ')}</span>
-                    </div>
-                  </td>
-                  {Array.from({ length: 12 }, (_, i) => i + 1).map(mes => {
-                    const key = `${m.dbUserId}-${mes}`;
-                    return (
-                      <td key={mes} className="py-1.5 px-0.5">
-                        <input
-                          type="number"
-                          value={values[key] || ''}
-                          onChange={e => set(key, e.target.value)}
-                          placeholder="0"
-                          className="w-full px-1.5 py-1 text-xs text-right border border-[#e5e7eb] rounded focus:outline-none focus:ring-1 focus:ring-[#7C3AED] focus:border-[#7C3AED]"
-                        />
-                      </td>
-                    );
-                  })}
-                  <td className="py-1.5 px-1 text-right text-xs font-bold text-[#1c2c4a]">
-                    {fmtM(getMemberTotal(m.dbUserId), 1)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-            <tfoot>
-              <tr className="bg-[#f9fafb] border-t-2 border-[#e5e7eb]">
-                <td className="py-2 px-1 font-semibold text-xs text-[#1c2c4a] sticky left-0 bg-[#f9fafb]">Total Equipo</td>
-                {Array.from({ length: 12 }, (_, i) => i + 1).map(mes => (
-                  <td key={mes} className="py-2 px-1 text-center text-[10px] font-bold text-[#1c2c4a]">
-                    {fmtM(getMonthTotal(mes), 1)}
-                  </td>
-                ))}
-                <td className="py-2 px-1 text-right text-xs font-bold text-[#7C3AED]">
-                  {fmtM(grandTotal, 1)}
-                </td>
-              </tr>
-            </tfoot>
-          </table>
+        {/* Month inputs */}
+        <div className="px-6 py-4 space-y-2 max-h-[60vh] overflow-y-auto">
+          {MESES.map((mes, i) => (
+            <div key={i} className="flex items-center gap-3">
+              <span className="text-sm font-medium text-[#1c2c4a] w-24">{mes}</span>
+              <div className="flex-1 relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-[#9ca3af]">$</span>
+                <input
+                  type="number"
+                  value={monthTotals[i]}
+                  onChange={e => setMonth(i, e.target.value)}
+                  placeholder="0"
+                  className="w-full pl-7 pr-3 py-2 text-sm text-right border border-[#e5e7eb] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7C3AED]/30 focus:border-[#7C3AED]"
+                />
+              </div>
+              {Number(monthTotals[i]) > 0 && (
+                <span className="text-[10px] text-[#6b7280] w-20 text-right">
+                  {fmtM(Number(monthTotals[i]) / memberCount, 2)}/ej
+                </span>
+              )}
+            </div>
+          ))}
         </div>
 
         {/* Footer */}
         <div className="flex items-center justify-between px-6 py-4 border-t border-[#e5e7eb]">
-          <span className="text-xs text-[#6b7280]">Total anual: <span className="font-bold text-[#1c2c4a]">{fmtM(grandTotal, 1)}</span></span>
+          <span className="text-sm text-[#6b7280]">Total anual: <span className="font-bold text-[#1c2c4a]">{fmtM(grandTotal, 1)}</span></span>
           <div className="flex gap-3">
             <button onClick={onClose} className="px-4 py-2 text-sm font-medium text-[#6b7280] hover:bg-[#f3f4f6] rounded-lg">Cancelar</button>
             <button
