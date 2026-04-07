@@ -462,17 +462,23 @@ function BudgetEditModal({ salesTeamData, year, onClose }: {
   const memberCount = comercialMembers.length || 1;
 
   // Initialize: total per month (sum of all members)
-  const [monthTotals, setMonthTotals] = useState<string[]>(() => {
+  const [monthValues, setMonthValues] = useState<number[]>(() => {
     return Array.from({ length: 12 }, (_, i) => {
       const period = `${year}-${String(i + 1).padStart(2, '0')}`;
-      const total = comercialMembers.reduce((s, m) => s + (m.presupuestosMensuales[period] || 0), 0);
-      return total > 0 ? String(total) : '';
+      return comercialMembers.reduce((s, m) => s + (m.presupuestosMensuales[period] || 0), 0);
     });
   });
+  const [editingMonth, setEditingMonth] = useState<number | null>(null);
+  const [editText, setEditText] = useState('');
 
-  const setMonth = (idx: number, val: string) => {
-    setMonthTotals(prev => { const n = [...prev]; n[idx] = val; return n; });
+  // For display we use monthValues, for the raw total string we derive
+  const monthTotals = monthValues.map(v => v > 0 ? String(v) : '');
+
+  const setMonthVal = (idx: number, val: number) => {
+    setMonthValues(prev => { const n = [...prev]; n[idx] = val; return n; });
   };
+
+  const formatDisplay = (val: number) => val > 0 ? `$${val.toLocaleString('es-MX')}` : '';
 
   const grandTotal = monthTotals.reduce((s, v) => s + (Number(v) || 0), 0);
 
@@ -528,19 +534,36 @@ function BudgetEditModal({ salesTeamData, year, onClose }: {
           {MESES.map((mes, i) => (
             <div key={i} className="flex items-center gap-3">
               <span className="text-sm font-medium text-[#1c2c4a] w-24">{mes}</span>
-              <div className="flex-1 relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-[#9ca3af]">$</span>
-                <input
-                  type="number"
-                  value={monthTotals[i]}
-                  onChange={e => setMonth(i, e.target.value)}
-                  placeholder="0"
-                  className="w-full pl-7 pr-3 py-2 text-sm text-right border border-[#e5e7eb] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7C3AED]/30 focus:border-[#7C3AED]"
-                />
+              <div className="flex-1">
+                {editingMonth === i ? (
+                  <input
+                    type="number"
+                    autoFocus
+                    value={editText}
+                    onChange={e => setEditText(e.target.value)}
+                    onBlur={() => {
+                      setMonthVal(i, Number(editText) || 0);
+                      setEditingMonth(null);
+                    }}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') { setMonthVal(i, Number(editText) || 0); setEditingMonth(null); }
+                      if (e.key === 'Escape') setEditingMonth(null);
+                    }}
+                    placeholder="0"
+                    className="w-full px-3 py-2 text-sm text-right border border-[#7C3AED] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7C3AED]/30"
+                  />
+                ) : (
+                  <div
+                    onClick={() => { setEditingMonth(i); setEditText(monthValues[i] > 0 ? String(monthValues[i]) : ''); }}
+                    className="w-full px-3 py-2 text-sm text-right border border-[#e5e7eb] rounded-lg cursor-pointer hover:border-[#7C3AED]/50 transition-colors"
+                  >
+                    {formatDisplay(monthValues[i]) || <span className="text-[#9ca3af]">$0</span>}
+                  </div>
+                )}
               </div>
-              {Number(monthTotals[i]) > 0 && (
+              {monthValues[i] > 0 && (
                 <span className="text-[10px] text-[#6b7280] w-20 text-right">
-                  {fmtM(Number(monthTotals[i]) / memberCount, 2)}/ej
+                  {fmtM(monthValues[i] / memberCount, 2)}/ej
                 </span>
               )}
             </div>
