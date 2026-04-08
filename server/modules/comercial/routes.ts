@@ -1225,7 +1225,7 @@ router.get("/commitments/calendar", async (req, res) => {
     const from = req.query.from as string;
     const to = req.query.to as string;
     if (!from || !to) return res.status(400).json({ message: "from y to requeridos" });
-    const commitments = await getCommitmentsInRange(req.user!.id, from, to);
+    const commitments = await getCommitmentsInRange(from, to);
     res.json(commitments);
   } catch (error) {
     console.error("[comercial] Get commitments calendar error:", error);

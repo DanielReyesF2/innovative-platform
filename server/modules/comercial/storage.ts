@@ -1174,14 +1174,11 @@ export async function createCommitment(data: {
   return created;
 }
 
-export async function getCommitmentsInRange(userId: number, from: string, to: string) {
+export async function getCommitmentsInRange(from: string, to: string) {
   return db.query.weeklyCommitments.findMany({
-    where: and(
-      eq(weeklyCommitments.createdById, userId),
-      or(
-        and(gte(weeklyCommitments.dueDate, from), lte(weeklyCommitments.dueDate, to)),
-        and(gte(weeklyCommitments.weekStart, from), lte(weeklyCommitments.weekStart, to)),
-      ),
+    where: or(
+      and(gte(weeklyCommitments.dueDate, from), lte(weeklyCommitments.dueDate, to)),
+      and(gte(weeklyCommitments.weekStart, from), lte(weeklyCommitments.weekStart, to)),
     ),
     orderBy: [desc(weeklyCommitments.createdAt)],
   });
