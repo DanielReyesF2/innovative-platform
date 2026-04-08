@@ -1158,6 +1158,19 @@ const commitmentCreateSchema = z.object({
   dueDate: z.string().nullable().optional(),
 });
 
+router.get("/commitments/calendar", async (req, res) => {
+  try {
+    const from = req.query.from as string;
+    const to = req.query.to as string;
+    if (!from || !to) return res.status(400).json({ message: "from y to requeridos" });
+    const commitments = await getCommitmentsInRange(from, to);
+    res.json(commitments);
+  } catch (error) {
+    console.error("[comercial] Get commitments calendar error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
 router.get("/commitments", async (req, res) => {
   try {
     const week = req.query.week as string;
@@ -1216,19 +1229,6 @@ router.post("/commitments", async (req, res) => {
     res.status(201).json(commitment);
   } catch (error) {
     console.error("[comercial] Create commitment error:", error);
-    res.status(500).json({ message: "Internal server error" });
-  }
-});
-
-router.get("/commitments/calendar", async (req, res) => {
-  try {
-    const from = req.query.from as string;
-    const to = req.query.to as string;
-    if (!from || !to) return res.status(400).json({ message: "from y to requeridos" });
-    const commitments = await getCommitmentsInRange(from, to);
-    res.json(commitments);
-  } catch (error) {
-    console.error("[comercial] Get commitments calendar error:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 });
