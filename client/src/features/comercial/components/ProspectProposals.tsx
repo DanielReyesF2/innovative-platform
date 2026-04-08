@@ -1,4 +1,6 @@
 import { useState, useCallback, useRef } from "react";
+import { useMutation as useRQMutation } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { Badge } from "@/components/ui/badge";
@@ -37,6 +39,54 @@ const statusLabels: Record<string, string> = {
   aceptada: "Aceptada",
   rechazada: "Rechazada",
 };
+
+// Inline editable amount
+function ProposalAmountInput({ prospectId: pid, proposal }: { prospectId: number; proposal: ProposalVersion }) {
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState(proposal.amount ? String(proposal.amount) : "");
+  const { toast } = useToast();
+
+  const saveMutation = useRQMutation({
+    mutationFn: async (amount: string) => {
+      const res = await apiRequest("PATCH", `/api/comercial/prospects/${pid}/proposals/${proposal.id}/amount`, { amount });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/comercial/prospects/${pid}/proposals`] });
+      setEditing(false);
+      toast({ title: "Monto actualizado" });
+    },
+  });
+
+  if (editing) {
+    return (
+      <span className="flex items-center gap-1">
+        <DollarSign className="h-3.5 w-3.5" />
+        <input
+          autoFocus
+          type="number"
+          value={value}
+          onChange={e => setValue(e.target.value)}
+          onBlur={() => { if (value.trim()) saveMutation.mutate(value); else setEditing(false); }}
+          onKeyDown={e => { if (e.key === "Enter" && value.trim()) saveMutation.mutate(value); if (e.key === "Escape") setEditing(false); }}
+          className="w-28 px-1.5 py-0.5 text-sm border border-[#00a8a8] rounded focus:outline-none focus:ring-1 focus:ring-[#00a8a8]"
+          placeholder="0.00"
+        />
+      </span>
+    );
+  }
+
+  return (
+    <button
+      onClick={() => setEditing(true)}
+      className="flex items-center gap-1 hover:text-[#00a8a8] transition-colors"
+      title="Click para editar monto"
+    >
+      <DollarSign className="h-3.5 w-3.5" />
+      {proposal.amount ? fmtCurrency(proposal.amount) : <span className="text-[#F57C00] text-xs font-medium">+ Agregar monto</span>}
+    </button>
+  );
+}
 
 export function ProspectProposals({ prospectId }: ProspectProposalsProps) {
   const { toast } = useToast();
@@ -207,12 +257,7 @@ export function ProspectProposals({ prospectId }: ProspectProposalsProps) {
                     </div>
 
                     <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground flex-wrap">
-                      {proposal.amount && (
-                        <span className="flex items-center gap-1">
-                          <DollarSign className="h-3.5 w-3.5" />
-                          {fmtCurrency(proposal.amount)}
-                        </span>
-                      )}
+                      <ProposalAmountInput prospectId={prospectId} proposal={proposal} />
                       {proposal.validUntil && (
                         <span className="flex items-center gap-1">
                           <Clock className="h-3.5 w-3.5" />

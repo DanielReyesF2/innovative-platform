@@ -41,6 +41,7 @@ import {
   createProposal,
   sendProposal,
   changeProposalStatus,
+  updateProposalAmount,
   getAlerts,
   getPendingAlertsCount,
   acknowledgeAlert,
@@ -720,6 +721,20 @@ router.post("/prospects/:prospectId/proposals/:proposalId/status", async (req, r
     res.json(updated);
   } catch (error) {
     console.error("[comercial] Change proposal status error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+router.patch("/prospects/:prospectId/proposals/:proposalId/amount", async (req, res) => {
+  try {
+    const amount = req.body.amount;
+    if (!amount || isNaN(Number(amount))) {
+      return res.status(400).json({ message: "Monto inválido" });
+    }
+    const updated = await updateProposalAmount(Number(req.params.proposalId), String(amount));
+    res.json(updated);
+  } catch (error) {
+    console.error("[comercial] Update proposal amount error:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 });

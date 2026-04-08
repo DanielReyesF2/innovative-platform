@@ -623,6 +623,15 @@ export async function changeProposalStatus(id: number, status: string) {
   return updated;
 }
 
+export async function updateProposalAmount(id: number, amount: string) {
+  const [updated] = await db
+    .update(proposalVersions)
+    .set({ amount, updatedAt: new Date() })
+    .where(eq(proposalVersions.id, id))
+    .returning();
+  return updated;
+}
+
 // --- Alerts ---
 
 export async function getAlerts(status?: string, assignedToId?: number) {
