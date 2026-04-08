@@ -6,11 +6,12 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { useProspect, useUpdateProspect, useSendToOperaciones } from "../api";
 import { useToast } from "@/components/ui/use-toast";
-import { EPP_OPTIONS } from "@/lib/comercial-constants";
+import { EPP_OPTIONS, WASTE_TYPES_CATALOG } from "@/lib/comercial-constants";
 import type { User } from "@shared/schema/common";
 import {
-  CalendarCheck, HardHat, Save,
+  CalendarCheck, HardHat, Save, Recycle,
   Send, CheckCircle, Users, Phone, Mail,
+  ChevronDown, ChevronRight, Trash2, Plus,
 } from "lucide-react";
 
 // ─── Field helper ───
@@ -24,6 +25,75 @@ function Field({
       <Label className="text-xs">{label}</Label>
       <Input type={type} value={(value as string) || ""} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} className="mt-1" />
     </div>
+  );
+}
+
+// ─── Collapsible Section ───
+function CollapsibleSection({ title, icon, children, defaultOpen = false }: {
+  title: string; icon: React.ReactNode; children: React.ReactNode; defaultOpen?: boolean;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <Card>
+      <button onClick={() => setOpen(!open)} className="flex w-full items-center justify-between px-4 py-3 text-left">
+        <div className="flex items-center gap-2 text-sm font-semibold">{icon}{title}</div>
+        {open ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+      </button>
+      {open && <CardContent className="pt-0">{children}</CardContent>}
+    </Card>
+  );
+}
+
+// ─── Section: Tipos de Residuo ───
+function WasteTypesSection({ data, onChange }: { data: Record<string, unknown>[]; onChange: (d: Record<string, unknown>[]) => void }) {
+  const addRow = () => onChange([...data, { wasteType: "", quantity: "", currentDestination: "" }]);
+  const removeRow = (i: number) => onChange(data.filter((_, idx) => idx !== i));
+  const updateRow = (i: number, key: string, val: string) => {
+    const updated = [...data];
+    updated[i] = { ...updated[i], [key]: val } as Record<string, unknown>;
+    onChange(updated);
+  };
+  const categories = [...new Set(WASTE_TYPES_CATALOG.map(w => w.category))];
+
+  return (
+    <CollapsibleSection title="Tipos de Residuo" icon={<Recycle className="h-4 w-4" />} defaultOpen>
+      {data.length === 0 && <p className="mb-3 text-sm text-muted-foreground">Agrega al menos un tipo de residuo</p>}
+      {data.map((row: Record<string, unknown>, i: number) => {
+        const currentType = row.wasteType as string;
+        const isLegacyValue = currentType && !WASTE_TYPES_CATALOG.some(w => w.id === currentType || w.label === currentType);
+        return (
+          <div key={i} className="mb-3 rounded-lg border p-3">
+            <div className="mb-2 flex items-center justify-between">
+              <span className="text-xs font-medium">Residuo #{i + 1}</span>
+              <Button variant="ghost" size="sm" onClick={() => removeRow(i)}><Trash2 className="h-3 w-3" /></Button>
+            </div>
+            <div className="grid gap-2 sm:grid-cols-2">
+              <div>
+                <Label className="text-xs">Tipo *</Label>
+                {isLegacyValue ? (
+                  <Input value={currentType} onChange={(e) => updateRow(i, "wasteType", e.target.value)} className="mt-1" />
+                ) : (
+                  <select value={currentType} onChange={(e) => updateRow(i, "wasteType", e.target.value)}
+                    className="mt-1 h-10 w-full rounded-md border border-input bg-background px-3 text-sm">
+                    <option value="">Seleccionar residuo...</option>
+                    {categories.map(cat => (
+                      <optgroup key={cat} label={cat}>
+                        {WASTE_TYPES_CATALOG.filter(w => w.category === cat).map(w => (
+                          <option key={w.id} value={w.id}>{w.label}</option>
+                        ))}
+                      </optgroup>
+                    ))}
+                  </select>
+                )}
+              </div>
+              <Field label="Cantidad" value={row.quantity} onChange={(v) => updateRow(i, "quantity", v)} placeholder="Ej: 18 ton/mes" />
+              <Field label="Destino Actual" value={row.currentDestination} onChange={(v) => updateRow(i, "currentDestination", v)} />
+            </div>
+          </div>
+        );
+      })}
+      <Button variant="outline" size="sm" onClick={addRow}><Plus className="mr-1 h-3 w-3" /> Agregar residuo</Button>
+    </CollapsibleSection>
   );
 }
 
@@ -55,11 +125,13 @@ export function ProspectLevantamiento({ prospectId }: ProspectLevantamientoProps
   const [schedContactEmail, setSchedContactEmail] = useState("");
   const [schedNotes, setSchedNotes] = useState("");
 
+  const [wasteTypes, setWasteTypes] = useState<Record<string, unknown>[]>([]);
   const [initialized, setInitialized] = useState(false);
 
-  // Initialize scheduling fields from API data once loaded
+  // Initialize from API data once loaded
   if (prospect && !initialized) {
     const raw = (prospect.levantamientoData || {}) as Record<string, unknown>;
+    setWasteTypes((raw.wasteTypes as Record<string, unknown>[]) || []);
     const sched = raw.scheduling as Record<string, unknown> | undefined;
     if (sched) {
       setSchedDate((sched.proposedDate as string) || "");
@@ -86,6 +158,7 @@ export function ProspectLevantamiento({ prospectId }: ProspectLevantamientoProps
   const existingData = (prospect?.levantamientoData || {}) as Record<string, unknown>;
   const buildFullData = () => ({
     ...existingData,
+    wasteTypes,
     scheduling: {
       proposedDate: schedDate,
       proposedTime: schedTime,
@@ -154,6 +227,12 @@ export function ProspectLevantamiento({ prospectId }: ProspectLevantamientoProps
           </span>
         </div>
       )}
+
+      {/* Tipos de Residuo */}
+      <WasteTypesSection
+        data={wasteTypes}
+        onChange={setWasteTypes}
+      />
 
       {/* Agendar Levantamiento */}
       <Card>

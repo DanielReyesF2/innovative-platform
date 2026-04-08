@@ -1018,14 +1018,47 @@ export async function getComercialTeam() {
     }
   }
 
-  // Get current month ventas reales
+  // Calculate closed deal values from proposal amounts for prospects in cierre_ganado
+  // This replaces the manual ventasReales entry — the real value comes from uploaded proposals
+  const closedProspects = await db.query.prospects.findMany({
+    where: eq(prospects.stage, "cierre_ganado"),
+    columns: { id: true, assignedToId: true },
+  });
+  const closedProspectIds = closedProspects.map(p => p.id);
+
+  // Get max proposal amount per closed prospect
+  const closedValueMap = new Map<number, number>(); // userId → total closed value
+  if (closedProspectIds.length > 0) {
+    const allProposals = await db.query.proposalVersions.findMany({
+      columns: { prospectId: true, amount: true },
+    });
+    for (const cp of closedProspects) {
+      if (!cp.assignedToId) continue;
+      const prospectProposals = allProposals.filter(p => p.prospectId === cp.id && p.amount);
+      if (prospectProposals.length > 0) {
+        // Use the highest proposal amount for this prospect
+        const maxAmount = Math.max(...prospectProposals.map(p => Number(p.amount) || 0));
+        closedValueMap.set(cp.assignedToId, (closedValueMap.get(cp.assignedToId) || 0) + maxAmount);
+      }
+    }
+  }
+
+  // Fallback: also get manual ventas reales (for backwards compatibility)
   const ventasRows = await db.query.ventasReales.findMany({
     where: and(
       eq(ventasReales.mes, currentMonth),
       eq(ventasReales.año, currentYear),
     ),
   });
-  const ventasMap = new Map(ventasRows.map(v => [v.userId, Number(v.monto)]));
+  const ventasManualMap = new Map(ventasRows.map(v => [v.userId, Number(v.monto)]));
+
+  // Use closed deal value if available, otherwise fall back to manual entry
+  const ventasMap = new Map<number, number>();
+  for (const u of comercialUsers) {
+    const fromProposals = closedValueMap.get(u.id) || 0;
+    const fromManual = ventasManualMap.get(u.id) || 0;
+    ventasMap.set(u.id, Math.max(fromProposals, fromManual));
+  }
 
   // Get ALL months of current year for annual ventas sum
   const ventasAnualRows = await db.query.ventasReales.findMany({
@@ -1034,6 +1067,10 @@ export async function getComercialTeam() {
   const ventasAnualMap = new Map<number, number>();
   for (const v of ventasAnualRows) {
     ventasAnualMap.set(v.userId, (ventasAnualMap.get(v.userId) || 0) + Number(v.monto));
+  }
+  // Add closed deal values to annual totals
+  for (const [userId, amount] of closedValueMap) {
+    ventasAnualMap.set(userId, Math.max(ventasAnualMap.get(userId) || 0, amount));
   }
 
   return comercialUsers.map(u => {

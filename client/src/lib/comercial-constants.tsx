@@ -472,15 +472,7 @@ export const STAGE_GATES: Record<string, StageGate> = {
       ...(!p.surveyDate ? [{ key: 'surveyDate', label: 'Fecha de levantamiento', type: 'date' as const, placeholder: '' }] : []),
     ],
   },
-  negociacion: {
-    label: 'Propuesta Acusada',
-    validate: (p) => !!(p.propuesta?.ventaTotal || p.facturacionEstimada),
-    message: () => 'Falta monto de propuesta o facturación estimada',
-    requirement: 'Requiere: Monto de propuesta definido',
-    missingFields: (p) => [
-      ...(!p.facturacionEstimada && !p.propuesta?.ventaTotal ? [{ key: 'estimatedValue', label: 'Valor estimado ($)', type: 'number' as const, placeholder: '0.00' }] : []),
-    ],
-  },
+  // No gate for negociacion: movimiento libre, el valor se toma de la propuesta subida
 };
 
 // ═══════ SHARED COMPONENTS ═══════
