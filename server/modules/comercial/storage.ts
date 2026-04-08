@@ -1196,6 +1196,15 @@ export async function updateCommitmentStatus(id: number, status: "pendiente" | "
   return updated;
 }
 
+export async function updateCommitment(id: number, data: { description?: string; responsible?: string; responsibleUserId?: number | null; dueDate?: string | null }) {
+  const [updated] = await db
+    .update(weeklyCommitments)
+    .set(data)
+    .where(eq(weeklyCommitments.id, id))
+    .returning();
+  return updated;
+}
+
 export async function deleteCommitment(id: number) {
   const [deleted] = await db
     .delete(weeklyCommitments)

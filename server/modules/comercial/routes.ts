@@ -69,6 +69,7 @@ import {
   getPendingCommitments,
   createCommitment,
   updateCommitmentStatus,
+  updateCommitment,
   deleteCommitment,
   getCommitmentsInRange,
 } from "./storage";
@@ -1243,6 +1244,26 @@ router.patch("/commitments/:id/status", async (req, res) => {
     res.json(updated);
   } catch (error) {
     console.error("[comercial] Update commitment status error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+const commitmentUpdateSchema = z.object({
+  description: z.string().min(1).max(500).optional(),
+  responsible: z.string().min(1).max(100).optional(),
+  responsibleUserId: z.number().int().positive().nullable().optional(),
+  dueDate: z.string().nullable().optional(),
+});
+
+router.patch("/commitments/:id", async (req, res) => {
+  try {
+    const parsed = commitmentUpdateSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ message: "Datos inválidos" });
+    const updated = await updateCommitment(Number(req.params.id), parsed.data);
+    if (!updated) return res.status(404).json({ message: "Compromiso no encontrado" });
+    res.json(updated);
+  } catch (error) {
+    console.error("[comercial] Update commitment error:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 });

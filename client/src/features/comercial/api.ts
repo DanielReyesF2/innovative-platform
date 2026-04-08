@@ -642,6 +642,18 @@ export function useUpdateCommitmentStatus() {
   });
 }
 
+export function useUpdateCommitment() {
+  return useMutation({
+    mutationFn: async ({ id, ...data }: { id: number; description?: string; responsible?: string; responsibleUserId?: number | null; dueDate?: string | null }) => {
+      const res = await apiRequest("PATCH", `/api/comercial/commitments/${id}`, data);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/comercial/commitments"] });
+    },
+  });
+}
+
 export function useDeleteCommitment() {
   return useMutation({
     mutationFn: async (id: number) => {
