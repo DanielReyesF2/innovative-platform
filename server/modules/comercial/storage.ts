@@ -1018,27 +1018,31 @@ export async function getComercialTeam() {
     }
   }
 
-  // Calculate closed deal values from proposal amounts for prospects in cierre_ganado
-  // This replaces the manual ventasReales entry — the real value comes from uploaded proposals
+  // Calculate closed deal values from cierre_ganado prospects
+  // Priority: proposal amount > estimatedValue > 0
   const closedProspects = await db.query.prospects.findMany({
     where: eq(prospects.stage, "cierre_ganado"),
-    columns: { id: true, assignedToId: true },
+    columns: { id: true, assignedToId: true, estimatedValue: true },
   });
-  const closedProspectIds = closedProspects.map(p => p.id);
 
-  // Get max proposal amount per closed prospect
   const closedValueMap = new Map<number, number>(); // userId → total closed value
-  if (closedProspectIds.length > 0) {
+  if (closedProspects.length > 0) {
     const allProposals = await db.query.proposalVersions.findMany({
       columns: { prospectId: true, amount: true },
     });
     for (const cp of closedProspects) {
       if (!cp.assignedToId) continue;
+      // Try proposal amount first
       const prospectProposals = allProposals.filter(p => p.prospectId === cp.id && p.amount);
+      let dealValue = 0;
       if (prospectProposals.length > 0) {
-        // Use the highest proposal amount for this prospect
-        const maxAmount = Math.max(...prospectProposals.map(p => Number(p.amount) || 0));
-        closedValueMap.set(cp.assignedToId, (closedValueMap.get(cp.assignedToId) || 0) + maxAmount);
+        dealValue = Math.max(...prospectProposals.map(p => Number(p.amount) || 0));
+      } else if (cp.estimatedValue) {
+        // Fallback to estimatedValue from prospect
+        dealValue = Number(cp.estimatedValue) || 0;
+      }
+      if (dealValue > 0) {
+        closedValueMap.set(cp.assignedToId, (closedValueMap.get(cp.assignedToId) || 0) + dealValue);
       }
     }
   }
