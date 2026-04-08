@@ -1163,6 +1163,7 @@ export async function createCommitment(data: {
   weekStart: string;
   description: string;
   responsible: string;
+  responsibleUserId?: number | null;
   dueDate?: string | null;
   createdById: number;
 }) {
@@ -1171,6 +1172,19 @@ export async function createCommitment(data: {
     .values(data)
     .returning();
   return created;
+}
+
+export async function getCommitmentsInRange(userId: number, from: string, to: string) {
+  return db.query.weeklyCommitments.findMany({
+    where: and(
+      eq(weeklyCommitments.createdById, userId),
+      or(
+        and(gte(weeklyCommitments.dueDate, from), lte(weeklyCommitments.dueDate, to)),
+        and(gte(weeklyCommitments.weekStart, from), lte(weeklyCommitments.weekStart, to)),
+      ),
+    ),
+    orderBy: [desc(weeklyCommitments.createdAt)],
+  });
 }
 
 export async function updateCommitmentStatus(id: number, status: "pendiente" | "cumplido") {

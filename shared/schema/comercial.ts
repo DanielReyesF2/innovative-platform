@@ -445,6 +445,7 @@ export const weeklyCommitments = pgTable("weekly_commitments", {
   weekStart: date("week_start").notNull(),
   description: text("description").notNull(),
   responsible: text("responsible").notNull(),
+  responsibleUserId: integer("responsible_user_id").references(() => users.id),
   dueDate: date("due_date"),
   status: text("status").notNull().default("pendiente"), // 'pendiente' | 'cumplido'
   createdById: integer("created_by_id").references(() => users.id),
@@ -454,6 +455,7 @@ export const weeklyCommitments = pgTable("weekly_commitments", {
 export const insertWeeklyCommitmentSchema = createInsertSchema(weeklyCommitments, {
   description: z.string().min(1).max(500),
   responsible: z.string().min(1).max(100),
+  responsibleUserId: z.number().int().positive().optional(),
   status: z.enum(["pendiente", "cumplido"]).default("pendiente"),
 }).omit({ id: true, createdAt: true });
 

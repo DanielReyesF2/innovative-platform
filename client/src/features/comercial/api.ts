@@ -598,6 +598,7 @@ interface WeeklyCommitment {
   weekStart: string;
   description: string;
   responsible: string;
+  responsibleUserId: number | null;
   dueDate: string | null;
   status: string;
   createdById: number | null;
@@ -619,7 +620,7 @@ export function useCommitments(weekStart?: string) {
 
 export function useCreateCommitment() {
   return useMutation({
-    mutationFn: async (data: { weekStart: string; description: string; responsible: string; dueDate?: string | null }) => {
+    mutationFn: async (data: { weekStart: string; description: string; responsible: string; responsibleUserId?: number; dueDate?: string | null }) => {
       const res = await apiRequest("POST", "/api/comercial/commitments", data);
       return res.json();
     },
@@ -650,5 +651,16 @@ export function useDeleteCommitment() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/comercial/commitments"] });
     },
+  });
+}
+
+export function useCommitmentsRange(from: string, to: string) {
+  return useQuery<WeeklyCommitment[]>({
+    queryKey: ["/api/comercial/commitments/calendar", from, to],
+    queryFn: async () => {
+      const res = await apiRequest("GET", `/api/comercial/commitments/calendar?from=${from}&to=${to}`);
+      return res.json();
+    },
+    enabled: !!from && !!to,
   });
 }

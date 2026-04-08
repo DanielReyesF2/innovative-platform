@@ -70,10 +70,14 @@ import {
   createCommitment,
   updateCommitmentStatus,
   deleteCommitment,
+  getCommitmentsInRange,
 } from "./storage";
 import { z } from "zod";
 import { insertProspectSchema, insertLeadSchema, insertVentaRealSchema, insertKpiMensualSchema, qualifyProspectSchema, insertActivitySchema, insertNoteSchema, insertMeetingSchema, insertProspectDocumentSchema, insertProposalSchema, proposalStatusEnum, insertWeeklyReportSchema } from "../../../shared/schema/comercial";
 import { triggerWebhook } from "../../lib/webhook";
+import { db } from "../../db";
+import { users } from "../../../shared/schema/common";
+import { eq } from "drizzle-orm";
 
 /** Extract error message safely without `as any` */
 function getErrorMessage(error: unknown): string {
@@ -1149,6 +1153,7 @@ const commitmentCreateSchema = z.object({
   weekStart: z.string().min(1),
   description: z.string().min(1).max(500),
   responsible: z.string().min(1).max(100),
+  responsibleUserId: z.number().int().positive().optional(),
   dueDate: z.string().nullable().optional(),
 });
 
@@ -1177,11 +1182,52 @@ router.post("/commitments", async (req, res) => {
     const commitment = await createCommitment({
       ...parsed.data,
       dueDate: parsed.data.dueDate || undefined,
+      responsibleUserId: parsed.data.responsibleUserId || undefined,
       createdById: req.user!.id,
     });
+
+    // Notify assigned user via n8n webhook
+    if (parsed.data.responsibleUserId) {
+      const webhookUrl = process.env.N8N_WEBHOOK_COMPROMISO_URL;
+      if (webhookUrl) {
+        try {
+          const assignee = await db.query.users.findFirst({
+            where: eq(users.id, parsed.data.responsibleUserId),
+            columns: { name: true, email: true },
+          });
+          if (assignee?.email) {
+            await triggerWebhook(webhookUrl, {
+              to: assignee.email,
+              assigneeName: assignee.name,
+              description: parsed.data.description,
+              dueDate: parsed.data.dueDate || null,
+              weekStart: parsed.data.weekStart,
+              assignedBy: req.user!.name || "Comercial",
+              subject: `Nuevo compromiso asignado — ${parsed.data.description.substring(0, 50)}`,
+            });
+          }
+        } catch (webhookErr) {
+          console.error("[comercial] Commitment webhook failed (non-blocking):", webhookErr);
+        }
+      }
+    }
+
     res.status(201).json(commitment);
   } catch (error) {
     console.error("[comercial] Create commitment error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+router.get("/commitments/calendar", async (req, res) => {
+  try {
+    const from = req.query.from as string;
+    const to = req.query.to as string;
+    if (!from || !to) return res.status(400).json({ message: "from y to requeridos" });
+    const commitments = await getCommitmentsInRange(req.user!.id, from, to);
+    res.json(commitments);
+  } catch (error) {
+    console.error("[comercial] Get commitments calendar error:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 });

@@ -1,14 +1,16 @@
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   ChevronLeft, ChevronRight, FileText, Save, Send, Clock,
-  CheckCircle2, Plus, Trash2, Check, X, CalendarDays,
+  CheckCircle2, Plus, Trash2, Check, X, CalendarDays, AlertCircle,
 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import {
   useWeeklyReport, useSaveWeeklyReport, useSendWeeklyReport,
   useWeeklyReportsRange, useCommitments, useCreateCommitment,
-  useUpdateCommitmentStatus, useDeleteCommitment,
+  useUpdateCommitmentStatus, useDeleteCommitment, useCommitmentsRange,
 } from "../api";
+import type { User } from "@shared/schema/common";
 
 // ─── Helpers ───
 
@@ -77,6 +79,20 @@ export function ResumenSemanal() {
 
   const { data: monthReports = [] } = useWeeklyReportsRange(rangeFrom, rangeTo);
   const reportsMap = new Map(monthReports.map(r => [r.weekStart, r]));
+
+  // Commitments in range for calendar indicators
+  const { data: rangeCommitments = [] } = useCommitmentsRange(rangeFrom, rangeTo);
+  const commitmentsByDate = new Map<string, { pending: number; overdue: number }>();
+  rangeCommitments.forEach(c => {
+    const dateKey = c.dueDate || c.weekStart;
+    if (!dateKey) return;
+    const entry = commitmentsByDate.get(dateKey) || { pending: 0, overdue: 0 };
+    if (c.status === "pendiente") {
+      entry.pending++;
+      if (c.dueDate && new Date(c.dueDate) < now) entry.overdue++;
+    }
+    commitmentsByDate.set(dateKey, entry);
+  });
 
   const calendarDays = getCalendarDays(viewYear, viewMonth);
   const todayStr = now.toISOString().split("T")[0];
@@ -164,6 +180,19 @@ export function ResumenSemanal() {
                     )}
                   </div>
                 )}
+                {/* Commitment indicators */}
+                {isCurrentMonth && (() => {
+                  const ci = commitmentsByDate.get(dateStr);
+                  if (!ci || ci.pending === 0) return null;
+                  return (
+                    <div className={`flex items-center gap-0.5 mt-0.5 text-[8px] font-semibold rounded px-1 py-0.5 ${
+                      ci.overdue > 0 ? "text-[#EF4444] bg-[#EF4444]/10" : "text-[#7C3AED] bg-[#7C3AED]/10"
+                    }`}>
+                      {ci.overdue > 0 ? <AlertCircle size={8} /> : <CheckCircle2 size={8} />}
+                      {ci.pending}
+                    </div>
+                  );
+                })()}
               </div>
             );
           })}
@@ -207,10 +236,17 @@ function WeekReportModal({ weekStart, onClose }: { weekStart: string; onClose: (
   const [showSendConfirm, setShowSendConfirm] = useState(false);
   const [initialized, setInitialized] = useState(false);
 
+  // Team members for assignment
+  const { data: teamMembers = [] } = useQuery<Pick<User, "id" | "name" | "codigo" | "email">[]>({
+    queryKey: ["/api/auth/team"],
+    staleTime: 5 * 60 * 1000,
+  });
+
   // New commitment form
   const [showNewCommitment, setShowNewCommitment] = useState(false);
   const [newDesc, setNewDesc] = useState("");
   const [newResponsible, setNewResponsible] = useState("");
+  const [newResponsibleUserId, setNewResponsibleUserId] = useState<number | null>(null);
   const [newDueDate, setNewDueDate] = useState("");
 
   useEffect(() => {
@@ -270,10 +306,12 @@ function WeekReportModal({ weekStart, onClose }: { weekStart: string; onClose: (
         weekStart,
         description: newDesc.trim(),
         responsible: newResponsible.trim(),
+        responsibleUserId: newResponsibleUserId || undefined,
         dueDate: newDueDate || null,
       });
       setNewDesc("");
       setNewResponsible("");
+      setNewResponsibleUserId(null);
       setNewDueDate("");
       setShowNewCommitment(false);
       toast({ title: "Compromiso agregado" });
@@ -424,18 +462,36 @@ function WeekReportModal({ weekStart, onClose }: { weekStart: string; onClose: (
                   placeholder="Descripcion del compromiso..."
                   className="w-full px-2 py-1.5 rounded border border-[#e5e7eb] text-sm focus:outline-none focus:ring-1 focus:ring-[#00a8a8]"
                 />
-                <div className="grid grid-cols-2 gap-2">
-                  <input
-                    value={newResponsible}
-                    onChange={e => setNewResponsible(e.target.value)}
-                    placeholder="Responsable"
-                    className="px-2 py-1.5 rounded border border-[#e5e7eb] text-sm focus:outline-none focus:ring-1 focus:ring-[#00a8a8]"
-                  />
+                {/* Responsable — team member chips */}
+                <div>
+                  <div className="text-[10px] text-[#6b7280] mb-1">Responsable</div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {teamMembers.map(m => (
+                      <button
+                        key={m.id}
+                        type="button"
+                        onClick={() => {
+                          setNewResponsible(m.name);
+                          setNewResponsibleUserId(m.id);
+                        }}
+                        className={`rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
+                          newResponsibleUserId === m.id
+                            ? "bg-[#00a8a8] text-white"
+                            : "bg-[#f3f4f6] text-[#6b7280] hover:bg-[#e5e7eb]"
+                        }`}
+                      >
+                        {m.name.split(" ").slice(0, 2).join(" ")}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-[10px] text-[#6b7280] mb-1">Fecha límite</div>
                   <input
                     type="date"
                     value={newDueDate}
                     onChange={e => setNewDueDate(e.target.value)}
-                    className="px-2 py-1.5 rounded border border-[#e5e7eb] text-sm focus:outline-none focus:ring-1 focus:ring-[#00a8a8]"
+                    className="w-full px-2 py-1.5 rounded border border-[#e5e7eb] text-sm focus:outline-none focus:ring-1 focus:ring-[#00a8a8]"
                   />
                 </div>
                 <div className="flex justify-end gap-2">
