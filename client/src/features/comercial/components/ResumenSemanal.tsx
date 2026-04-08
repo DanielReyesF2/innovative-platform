@@ -177,7 +177,7 @@ export function ResumenSemanal() {
                     )}
                   </div>
                 )}
-                {/* Commitment cards */}
+                {/* Commitment cards — click opens the week modal */}
                 {isCurrentMonth && (() => {
                   const items = commitmentsByDate.get(dateStr);
                   if (!items || items.length === 0) return null;
@@ -186,19 +186,29 @@ export function ResumenSemanal() {
                       {items.slice(0, 2).map(c => {
                         const isOverdue = c.status === "pendiente" && c.dueDate && new Date(c.dueDate) < now;
                         return (
-                          <div key={c.id} className={`text-[8px] font-medium rounded px-1 py-0.5 truncate ${
-                            c.status === "cumplido"
-                              ? "text-[#2E7D32] bg-[#2E7D32]/10 line-through"
-                              : isOverdue
-                                ? "text-white bg-[#EF4444]"
-                                : "text-white bg-[#0067B0]"
-                          }`}>
-                            {c.responsible.split(" ")[0]}
+                          <div
+                            key={c.id}
+                            onClick={(e) => { e.stopPropagation(); setSelectedWeek(c.weekStart); }}
+                            className={`text-[8px] font-medium rounded px-1 py-0.5 truncate cursor-pointer hover:opacity-80 transition-opacity ${
+                              c.status === "cumplido"
+                                ? "text-[#2E7D32] bg-[#2E7D32]/10 line-through"
+                                : isOverdue
+                                  ? "text-white bg-[#EF4444]"
+                                  : "text-white bg-[#0067B0]"
+                            }`}
+                            title={`${c.responsible}: ${c.description}`}
+                          >
+                            {c.description.length > 18 ? c.description.substring(0, 18) + "…" : c.description}
                           </div>
                         );
                       })}
                       {items.length > 2 && (
-                        <div className="text-[7px] text-[#6b7280] px-1">+{items.length - 2}</div>
+                        <div
+                          onClick={(e) => { e.stopPropagation(); setSelectedWeek(items[0].weekStart); }}
+                          className="text-[7px] text-[#0067B0] font-semibold px-1 cursor-pointer hover:underline"
+                        >
+                          +{items.length - 2} más
+                        </div>
                       )}
                     </div>
                   );
