@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Lock, Unlock, CheckCircle2, ArrowRight } from 'lucide-react';
+import { Lock, CheckCircle2, ArrowRight } from 'lucide-react';
 import { STAGE_GATES, KANBAN_STAGES, SERVICIOS_INNOVATIVE } from '@/lib/comercial-constants';
 import type { GateMissingField } from '@/lib/comercial-constants';
 import { useUpdateProspect } from '../api';
@@ -181,25 +181,12 @@ export function StageGateModal({ pendingMove, isHub, onForce, onCancel }: Props)
             </button>
           )}
 
-          <div className={`flex gap-3 ${canCompleteInline ? 'pt-1' : ''}`}>
-            <button
-              onClick={onForce}
-              className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
-                canCompleteInline
-                  ? 'text-orange-600 hover:bg-orange-50 border border-orange-200'
-                  : 'bg-orange-500 hover:bg-orange-600 text-white'
-              }`}
-            >
-              <Unlock size={14} />
-              Forzar Movimiento
-            </button>
-            <button
-              onClick={onCancel}
-              className="flex-1 px-4 py-2 bg-[#f3f4f6] hover:bg-[#e5e7eb] text-[#1c2c4a] rounded-lg text-sm font-medium transition-colors"
-            >
-              Cancelar
-            </button>
-          </div>
+          <button
+            onClick={onCancel}
+            className="w-full px-4 py-2 bg-[#f3f4f6] hover:bg-[#e5e7eb] text-[#1c2c4a] rounded-lg text-sm font-medium transition-colors"
+          >
+            Cancelar
+          </button>
         </div>
       </div>
     </div>
