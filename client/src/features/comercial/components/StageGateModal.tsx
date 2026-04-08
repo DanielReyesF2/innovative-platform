@@ -107,7 +107,7 @@ export function StageGateModal({ pendingMove, isHub, onForce, onCancel }: Props)
           </div>
         )}
 
-        {/* Requirement message — only for non-inline (presentacion gate) */}
+        {/* Requirement message — shown when gate has no inline form */}
         {!canCompleteInline && (
           <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-4">
             <p className="text-sm text-orange-800 font-medium mb-2">

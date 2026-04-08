@@ -60,6 +60,7 @@ export interface KanbanProspecto {
   reason: string | null;
   estimatedCloseTime: string | null;
   meetingDate: string | null;
+  surveyDate: string | null;
   updatedAt: string | null;
 }
 

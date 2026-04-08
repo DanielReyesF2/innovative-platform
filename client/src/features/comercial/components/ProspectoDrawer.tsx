@@ -459,6 +459,34 @@ export function ProspectoDrawer({ prospecto, onClose, onEdit }: Props) {
                   </div>
                 </div>
 
+                {/* Fechas clave */}
+                {(p.meetingDate || p.surveyDate) && (
+                  <div className="flex items-center gap-3">
+                    {p.meetingDate && (
+                      <div className="flex-1 bg-white rounded-xl border border-[#e5e7eb] p-3 flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-orange-50 flex items-center justify-center flex-shrink-0">
+                          <CalendarClock size={16} className="text-orange-600" />
+                        </div>
+                        <div>
+                          <div className="text-[11px] text-[#6b7280]">Fecha de reunión</div>
+                          <div className="text-sm font-semibold text-[#1c2c4a]">{new Date(p.meetingDate + 'T12:00:00').toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
+                        </div>
+                      </div>
+                    )}
+                    {p.surveyDate && (
+                      <div className="flex-1 bg-white rounded-xl border border-[#e5e7eb] p-3 flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-teal-50 flex items-center justify-center flex-shrink-0">
+                          <Target size={16} className="text-teal-600" />
+                        </div>
+                        <div>
+                          <div className="text-[11px] text-[#6b7280]">Fecha de levantamiento</div>
+                          <div className="text-sm font-semibold text-[#1c2c4a]">{new Date(p.surveyDate + 'T12:00:00').toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {/* Contact */}
                 {(p.contacto && p.contacto.nombre) ? (
                   <div className="bg-white rounded-xl border border-[#e5e7eb] overflow-hidden">

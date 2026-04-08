@@ -6,45 +6,14 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { useProspect, useUpdateProspect, useSendToOperaciones } from "../api";
 import { useToast } from "@/components/ui/use-toast";
-import { WASTE_TYPES_CATALOG, EPP_OPTIONS } from "@/lib/comercial-constants";
+import { EPP_OPTIONS } from "@/lib/comercial-constants";
 import type { User } from "@shared/schema/common";
 import {
-  Building2, Recycle, Truck, CalendarCheck, HardHat,
-  ChevronDown, ChevronRight, Trash2, Plus, Save,
+  CalendarCheck, HardHat, Save,
   Send, CheckCircle, Users, Phone, Mail,
 } from "lucide-react";
 
-// ─── Collapsible Section ───
-function CollapsibleSection({
-  title,
-  icon,
-  children,
-  defaultOpen = false,
-}: {
-  title: string;
-  icon: React.ReactNode;
-  children: React.ReactNode;
-  defaultOpen?: boolean;
-}) {
-  const [open, setOpen] = useState(defaultOpen);
-  return (
-    <Card>
-      <button
-        onClick={() => setOpen(!open)}
-        className="flex w-full items-center justify-between px-4 py-3 text-left"
-      >
-        <div className="flex items-center gap-2 text-sm font-semibold">
-          {icon}
-          {title}
-        </div>
-        {open ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-      </button>
-      {open && <CardContent className="pt-0">{children}</CardContent>}
-    </Card>
-  );
-}
-
-// ─── Field helpers ───
+// ─── Field helper ───
 function Field({
   label, value, onChange, type = "text", placeholder,
 }: {
@@ -55,113 +24,6 @@ function Field({
       <Label className="text-xs">{label}</Label>
       <Input type={type} value={(value as string) || ""} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} className="mt-1" />
     </div>
-  );
-}
-
-function BoolField({ label, value, onChange }: { label: string; value: boolean; onChange: (v: boolean) => void }) {
-  return (
-    <div>
-      <Label className="text-xs">{label}</Label>
-      <select value={value ? "true" : "false"} onChange={(e) => onChange(e.target.value === "true")}
-        className="mt-1 h-10 w-full rounded-md border border-input bg-background px-3 text-sm">
-        <option value="false">No</option>
-        <option value="true">Si</option>
-      </select>
-    </div>
-  );
-}
-
-// ─── Section: Datos de la Empresa ───
-function GeneralInfoSection({ data, onChange }: { data: Record<string, unknown>; onChange: (d: Record<string, unknown>) => void }) {
-  const set = (key: string, val: string) => onChange({ ...data, [key]: val });
-  return (
-    <CollapsibleSection title="Datos de la Empresa" icon={<Building2 className="h-4 w-4" />} defaultOpen>
-      <div className="grid gap-3 sm:grid-cols-2">
-        <Field label="Razon Social *" value={data.razonSocial} onChange={(v) => set("razonSocial", v)} />
-        <Field label="RFC" value={data.rfc} onChange={(v) => set("rfc", v)} />
-        <Field label="Direccion" value={data.direccion} onChange={(v) => set("direccion", v)} />
-        <Field label="Giro" value={data.giro} onChange={(v) => set("giro", v)} />
-        <Field label="Contacto Operativo" value={data.contactoOperativo} onChange={(v) => set("contactoOperativo", v)} />
-        <Field label="Telefono Operativo" value={data.telefonoOperativo} onChange={(v) => set("telefonoOperativo", v)} />
-      </div>
-    </CollapsibleSection>
-  );
-}
-
-// ─── Section: Tipos de Residuo (with dropdown catalog) ───
-function WasteTypesSection({ data, onChange }: { data: Record<string, unknown>[]; onChange: (d: Record<string, unknown>[]) => void }) {
-  const addRow = () => onChange([...data, { wasteType: "", quantity: "", currentDestination: "" }]);
-  const removeRow = (i: number) => onChange(data.filter((_, idx) => idx !== i));
-  const updateRow = (i: number, key: string, val: string) => {
-    const updated = [...data];
-    updated[i] = { ...updated[i], [key]: val } as Record<string, unknown>;
-    onChange(updated);
-  };
-
-  // Group catalog by category
-  const categories = [...new Set(WASTE_TYPES_CATALOG.map(w => w.category))];
-
-  return (
-    <CollapsibleSection title="Tipos de Residuo" icon={<Recycle className="h-4 w-4" />}>
-      {data.length === 0 && (
-        <p className="mb-3 text-sm text-muted-foreground">Agrega al menos un tipo de residuo *</p>
-      )}
-      {data.map((row: Record<string, unknown>, i: number) => {
-        const currentType = row.wasteType as string;
-        const isLegacyValue = currentType && !WASTE_TYPES_CATALOG.some(w => w.id === currentType || w.label === currentType);
-        return (
-          <div key={i} className="mb-3 rounded-lg border p-3">
-            <div className="mb-2 flex items-center justify-between">
-              <span className="text-xs font-medium">Residuo #{i + 1}</span>
-              <Button variant="ghost" size="sm" onClick={() => removeRow(i)}>
-                <Trash2 className="h-3 w-3" />
-              </Button>
-            </div>
-            <div className="grid gap-2 sm:grid-cols-2">
-              <div>
-                <Label className="text-xs">Tipo *</Label>
-                {isLegacyValue ? (
-                  <Input value={currentType} onChange={(e) => updateRow(i, "wasteType", e.target.value)} className="mt-1" />
-                ) : (
-                  <select
-                    value={currentType}
-                    onChange={(e) => updateRow(i, "wasteType", e.target.value)}
-                    className="mt-1 h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
-                  >
-                    <option value="">Seleccionar residuo...</option>
-                    {categories.map(cat => (
-                      <optgroup key={cat} label={cat}>
-                        {WASTE_TYPES_CATALOG.filter(w => w.category === cat).map(w => (
-                          <option key={w.id} value={w.id}>{w.label}</option>
-                        ))}
-                      </optgroup>
-                    ))}
-                  </select>
-                )}
-              </div>
-              <Field label="Cantidad" value={row.quantity} onChange={(v) => updateRow(i, "quantity", v)} placeholder="Ej: 18 ton/mes" />
-              <Field label="Destino Actual" value={row.currentDestination} onChange={(v) => updateRow(i, "currentDestination", v)} />
-            </div>
-          </div>
-        );
-      })}
-      <Button variant="outline" size="sm" onClick={addRow}>
-        <Plus className="mr-1 h-3 w-3" /> Agregar residuo
-      </Button>
-    </CollapsibleSection>
-  );
-}
-
-// ─── Section: Servicios Actuales (simplified) ───
-function CurrentServicesSection({ data, onChange }: { data: Record<string, unknown>; onChange: (d: Record<string, unknown>) => void }) {
-  const set = (key: string, val: string | number | boolean) => onChange({ ...data, [key]: val });
-  return (
-    <CollapsibleSection title="Servicios Actuales" icon={<Truck className="h-4 w-4" />}>
-      <div className="grid gap-3 sm:grid-cols-2">
-        <Field label="Proveedor Actual" value={data.providerName} onChange={(v) => set("providerName", v)} />
-        <BoolField label="Contrato Activo" value={!!data.contractActive} onChange={(v) => set("contractActive", v)} />
-      </div>
-    </CollapsibleSection>
   );
 }
 
@@ -193,18 +55,11 @@ export function ProspectLevantamiento({ prospectId }: ProspectLevantamientoProps
   const [schedContactEmail, setSchedContactEmail] = useState("");
   const [schedNotes, setSchedNotes] = useState("");
 
-  const [levData, setLevData] = useState<Record<string, unknown> | null>(null);
   const [initialized, setInitialized] = useState(false);
 
-  // Initialize from API data once loaded
+  // Initialize scheduling fields from API data once loaded
   if (prospect && !initialized) {
     const raw = (prospect.levantamientoData || {}) as Record<string, unknown>;
-    setLevData({
-      generalInfo: raw.generalInfo || {},
-      wasteTypes: raw.wasteTypes || [],
-      currentServices: raw.currentServices || {},
-    });
-    // Restore scheduling data if previously saved
     const sched = raw.scheduling as Record<string, unknown> | undefined;
     if (sched) {
       setSchedDate((sched.proposedDate as string) || "");
@@ -219,7 +74,7 @@ export function ProspectLevantamiento({ prospectId }: ProspectLevantamientoProps
     setInitialized(true);
   }
 
-  if (isLoading || !levData) {
+  if (isLoading || !initialized) {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#00a8a8]" />
@@ -227,8 +82,10 @@ export function ProspectLevantamiento({ prospectId }: ProspectLevantamientoProps
     );
   }
 
+  // Preserve any existing levantamientoData (generalInfo, wasteTypes, etc.) and update scheduling
+  const existingData = (prospect?.levantamientoData || {}) as Record<string, unknown>;
   const buildFullData = () => ({
-    ...levData,
+    ...existingData,
     scheduling: {
       proposedDate: schedDate,
       proposedTime: schedTime,
@@ -298,35 +155,14 @@ export function ProspectLevantamiento({ prospectId }: ProspectLevantamientoProps
         </div>
       )}
 
-      {/* Section 1: Datos de la Empresa */}
-      <GeneralInfoSection
-        data={levData.generalInfo as Record<string, unknown>}
-        onChange={(gi) => setLevData({ ...levData, generalInfo: gi })}
-      />
-
-      {/* Section 2: Tipos de Residuo (dropdown catalog) */}
-      <WasteTypesSection
-        data={levData.wasteTypes as Record<string, unknown>[]}
-        onChange={(wt) => setLevData({ ...levData, wasteTypes: wt })}
-      />
-
-      {/* Section 3: Servicios Actuales (simplified) */}
-      <CurrentServicesSection
-        data={levData.currentServices as Record<string, unknown>}
-        onChange={(cs) => setLevData({ ...levData, currentServices: cs })}
-      />
-
-      {/* Section 4: Agendar Levantamiento (inline, not modal) */}
+      {/* Agendar Levantamiento */}
       <Card>
-        <button
-          onClick={() => {}} // Always open
-          className="flex w-full items-center justify-between px-4 py-3 text-left"
-        >
+        <div className="px-4 py-3">
           <div className="flex items-center gap-2 text-sm font-semibold">
             <CalendarCheck className="h-4 w-4" />
             Agendar Levantamiento
           </div>
-        </button>
+        </div>
         <CardContent className="pt-0 space-y-4">
           {/* Date & Time */}
           <div className="grid gap-3 sm:grid-cols-2">

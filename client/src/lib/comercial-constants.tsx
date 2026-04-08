@@ -115,7 +115,7 @@ export const KANBAN_STAGES = [
   { id: 'contacto_inicial', label: 'Lead', color: '#6b7280', prob: '5%' },
   { id: 'presentacion', label: 'Prospecto', color: '#0D47A1', prob: '20%' },
   { id: 'levantamiento', label: 'Reunión', color: '#F57C00', prob: '35%' },
-  { id: 'propuesta', label: 'Levantamiento', color: '#00a8a8', prob: '50%' },
+  { id: 'propuesta', label: 'Agendar levantamiento', color: '#00a8a8', prob: '50%' },
   { id: 'negociacion', label: 'Propuesta', color: '#7C3AED', prob: '70%' },
   { id: 'cierre_ganado', label: 'Socio Ambiental', color: '#2E7D32', prob: '100%' },
 ] as const;
@@ -346,6 +346,7 @@ export const dbProspectToKanban = (prospect: ApiProspect, usersMap: Record<numbe
     reason: prospect.reason || null,
     estimatedCloseTime: prospect.estimatedCloseTime || null,
     meetingDate: prospect.meetingDate || null,
+    surveyDate: prospect.surveyDate || null,
     updatedAt: prospect.updatedAt || null,
   };
 };
@@ -452,14 +453,7 @@ export function tabUnlockLabel(tabId: string): string {
 // ═══════ STAGE GATES ═══════
 
 export const STAGE_GATES: Record<string, StageGate> = {
-  presentacion: {
-    label: 'Lead Calificado',
-    validate: (p) => esProspectoCalificado(p),
-    message: () => 'Usa "Calificar" en el detalle del lead para completar datos',
-    requirement: 'Requiere: Calificar lead con datos de negocio',
-    // Gate 'presentacion' uses QualifyLeadDialog for lead→prospect conversion logic
-    missingFields: () => [],
-  },
+  // No gate for presentacion (Lead→Prospecto): movimiento libre
   levantamiento: {
     label: 'Fecha de Reunión',
     validate: (p) => !!p.meetingDate,
@@ -470,13 +464,12 @@ export const STAGE_GATES: Record<string, StageGate> = {
     ],
   },
   propuesta: {
-    label: 'Levantamiento Completado',
-    validate: (p) => !!(p.volumenEstimado && (p.servicios?.length > 0)),
-    message: (p) => `Completa: ${[!p.volumenEstimado && 'volumen estimado', !p.servicios?.length && 'servicios seleccionados'].filter(Boolean).join(', ')}`,
-    requirement: 'Requiere: Volumen + Servicios',
+    label: 'Levantamiento Agendado',
+    validate: (p) => !!p.surveyDate,
+    message: () => 'Falta agendar fecha de levantamiento',
+    requirement: 'Requiere: Fecha de levantamiento agendada',
     missingFields: (p) => [
-      ...(!p.volumenEstimado ? [{ key: 'estimatedVolume', label: 'Volumen estimado', type: 'text' as const, placeholder: 'Ej: 120 ton/mes' }] : []),
-      ...(!(p.servicios?.length > 0) ? [{ key: 'services', label: 'Servicios', type: 'services' as const }] : []),
+      ...(!p.surveyDate ? [{ key: 'surveyDate', label: 'Fecha de levantamiento', type: 'date' as const, placeholder: '' }] : []),
     ],
   },
   negociacion: {
