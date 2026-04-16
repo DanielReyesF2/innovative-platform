@@ -93,6 +93,7 @@ export const prospects = pgTable("prospects", {
   location: text("location"),
   potential: text("potential"), // Bajo, Medio, Alto, Muy Alto
   estimatedVolume: text("estimated_volume"), // e.g. "120 ton/mes"
+  services: text("services").array().default([]),  // selected services (e.g. ["rme", "biodigestores"])
   estimatedValue: numeric("estimated_value", { precision: 12, scale: 2 }),
   probability: integer("probability").default(0), // 0-100
   stage: prospectStageEnum("stage").notNull().default("contacto_inicial"),
@@ -189,6 +190,7 @@ export const prospectActivities = pgTable("prospect_activities", {
   type: activityTypeEnum("type").notNull(),
   title: text("title").notNull(),
   description: text("description"),
+  activityDate: timestamp("activity_date"),  // when the activity happened (business date)
   metadata: jsonb("metadata"),
   createdById: integer("created_by_id").references(() => users.id).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
@@ -279,6 +281,7 @@ export const insertProspectSchema = createInsertSchema(prospects, {
   location: z.string().max(200).optional(),
   potential: z.string().max(20).optional(),
   probability: z.number().min(0).max(100).optional(),
+  services: z.array(z.string().max(50)).max(10).optional(),
 }).omit({ id: true, createdAt: true, updatedAt: true });
 
 export const qualifyProspectSchema = z.object({
@@ -315,6 +318,7 @@ export const insertSalesMetricsSchema = createInsertSchema(salesMetrics).omit({
 // Validators for new tables
 export const insertActivitySchema = createInsertSchema(prospectActivities, {
   title: z.string().min(1).max(200),
+  activityDate: z.date().optional(),
 }).omit({ id: true, createdAt: true });
 
 export const insertNoteSchema = createInsertSchema(prospectNotes, {

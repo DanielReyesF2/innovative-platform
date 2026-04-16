@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { CheckCircle, AlertCircle, Calendar } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+import { fmtM } from '@/lib/utils';
 import {
   RECHAZO_CATEGORIES,
   getRecoveryState,
@@ -63,7 +64,7 @@ export function RechazadasTab({ onSelectProspecto }: Props) {
         <div className="bg-white rounded-xl border border-[#e5e7eb] p-5">
           <div className="text-[10px] text-[#6b7280] mb-1">Total Rechazadas</div>
           <div className="text-3xl font-bold text-[#1c2c4a]">{allRejected.length}</div>
-          <div className="text-xs text-[#6b7280] mt-1">${(totalValue / 1000000).toFixed(1)}M en valor perdido</div>
+          <div className="text-xs text-[#6b7280] mt-1">{fmtM(totalValue)} en valor perdido</div>
           <div className="mt-4 flex items-center gap-3">
             {pieData.map(d => (
               <div key={d.name} className="flex items-center gap-1.5">
@@ -132,7 +133,7 @@ export function RechazadasTab({ onSelectProspecto }: Props) {
                       </div>
                       <div className="text-[10px] text-[#9ca3af] truncate mb-1">{p.motivoRechazo || 'Sin motivo'}</div>
                       <div className="flex items-center justify-between">
-                        <span className="text-[10px] text-[#6b7280]">{p.ejecutivo} · ${((p.propuesta?.ventaTotal || p.facturacionEstimada || 0) / 1000000).toFixed(1)}M</span>
+                        <span className="text-[10px] text-[#6b7280]">{p.ejecutivo} · {fmtM(p.propuesta?.ventaTotal || p.facturacionEstimada || 0)}</span>
                         {urgency?.overdue && <span className="text-[9px] font-bold text-red-500"><AlertCircle size={8} className="inline" /> Vencido {urgency.days}d</span>}
                         {!seg?.fechaSeguimiento && cat.recoverable && (
                           <button onClick={(e) => {

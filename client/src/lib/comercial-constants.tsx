@@ -257,7 +257,7 @@ export const dbProspectToKanban = (prospect: any, usersMap: Record<number, any> 
       correo: prospect.contactEmail || '',
       telefono: prospect.contactPhone || '',
     },
-    servicios: [],
+    servicios: prospect.services || [],
     status: prospect.stage,
     semana: null,
     fecha: prospect.createdAt ? new Date(prospect.createdAt).toISOString().split('T')[0] : null,
@@ -395,8 +395,8 @@ export const STAGE_GATES: Record<string, {
   propuesta: {
     label: 'Levantamiento Completado',
     validate: (p) => !!(p.volumenEstimado && (p.servicios?.length > 0)),
-    message: (p) => `Falta: ${!p.volumenEstimado ? 'volumen estimado' : ''}${!p.servicios?.length ? ' servicios seleccionados' : ''}`,
-    requirement: 'Requiere: Volumen + Servicios seleccionados',
+    message: (p) => `Edita el prospecto para completar: ${[!p.volumenEstimado && 'volumen estimado', !p.servicios?.length && 'servicios seleccionados'].filter(Boolean).join(', ')}`,
+    requirement: 'Requiere: Volumen + Servicios (edita el prospecto para completar)',
   },
   negociacion: {
     label: 'Propuesta Acusada',

@@ -76,6 +76,7 @@ export function ProspectTimeline({ prospectId }: ProspectTimelineProps) {
     type: "llamada",
     title: "",
     description: "",
+    date: new Date().toISOString().split("T")[0],
   });
 
   const { data: activities = [], isLoading } = useProspectActivities(prospectId);
@@ -97,10 +98,11 @@ export function ProspectTimeline({ prospectId }: ProspectTimelineProps) {
         type: newActivity.type,
         title: newActivity.title,
         description: newActivity.description || undefined,
+        activityDate: new Date(newActivity.date + "T12:00:00").toISOString(),
       });
       toast({ title: "Actividad registrada" });
       setIsDialogOpen(false);
-      setNewActivity({ type: "llamada", title: "", description: "" });
+      setNewActivity({ type: "llamada", title: "", description: "", date: new Date().toISOString().split("T")[0] });
     } catch {
       toast({
         title: "Error",
@@ -142,6 +144,15 @@ export function ProspectTimeline({ prospectId }: ProspectTimelineProps) {
                     <SelectItem value="otro">Otro</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+              <div>
+                <label className="text-sm font-medium">Fecha</label>
+                <Input
+                  type="date"
+                  className="mt-1"
+                  value={newActivity.date}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewActivity({ ...newActivity, date: e.target.value })}
+                />
               </div>
               <div>
                 <label className="text-sm font-medium">Titulo</label>

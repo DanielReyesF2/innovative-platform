@@ -61,10 +61,11 @@ import {
   getRechazadasConVencimiento,
   getRechazadasProximasAVencer,
   getWeeklyReport,
+  listWeeklyReports,
   upsertWeeklyReport,
   markWeeklyReportAsSent,
 } from "./storage";
-import { insertProspectSchema, insertLeadSchema, insertVentaRealSchema, insertKpiMensualSchema, qualifyProspectSchema } from "../../../shared/schema/comercial";
+import { insertProspectSchema, insertLeadSchema, insertVentaRealSchema, insertKpiMensualSchema, qualifyProspectSchema, insertActivitySchema, insertMeetingSchema, insertProspectDocumentSchema, insertProposalSchema } from "../../../shared/schema/comercial";
 import { triggerWebhook } from "../../lib/webhook";
 
 export const router = Router();
@@ -165,7 +166,6 @@ router.post("/prospects", async (req, res) => {
 
 router.patch("/prospects/:id", async (req, res) => {
   try {
-    // Validate: only allow known prospect fields
     const allowed = insertProspectSchema.partial().safeParse(req.body);
     if (!allowed.success) {
       return res.status(400).json({ message: "Datos invalidos", errors: allowed.error.errors });
@@ -369,11 +369,16 @@ router.get("/prospects/:id/activities", async (req, res) => {
 
 router.post("/prospects/:id/activities", async (req, res) => {
   try {
-    const activity = await createActivity({
+    const parsed = insertActivitySchema.safeParse({
       ...req.body,
       prospectId: Number(req.params.id),
       createdById: (req as any).user.id,
+      ...(req.body.activityDate && { activityDate: new Date(req.body.activityDate) }),
     });
+    if (!parsed.success) {
+      return res.status(400).json({ message: "Datos invalidos", errors: parsed.error.errors });
+    }
+    const activity = await createActivity(parsed.data);
     res.status(201).json(activity);
   } catch (error) {
     console.error("[comercial] Create activity error:", error);
@@ -451,11 +456,20 @@ router.get("/prospects/:id/meetings", async (req, res) => {
 
 router.post("/prospects/:id/meetings", async (req, res) => {
   try {
-    const meeting = await createMeeting({
+    const scheduledAt = new Date(req.body.scheduledAt);
+    if (isNaN(scheduledAt.getTime())) {
+      return res.status(400).json({ message: "Fecha de reunion invalida" });
+    }
+    const parsed = insertMeetingSchema.safeParse({
       ...req.body,
       prospectId: Number(req.params.id),
       createdById: (req as any).user.id,
+      scheduledAt,
     });
+    if (!parsed.success) {
+      return res.status(400).json({ message: "Datos invalidos", errors: parsed.error.errors });
+    }
+    const meeting = await createMeeting(parsed.data);
     res.status(201).json(meeting);
   } catch (error) {
     console.error("[comercial] Create meeting error:", error);
@@ -499,11 +513,15 @@ router.get("/prospects/:id/documents", async (req, res) => {
 
 router.post("/prospects/:id/documents", async (req, res) => {
   try {
-    const document = await createDocument({
+    const parsed = insertProspectDocumentSchema.safeParse({
       ...req.body,
       prospectId: Number(req.params.id),
       uploadedById: (req as any).user.id,
     });
+    if (!parsed.success) {
+      return res.status(400).json({ message: "Datos invalidos", errors: parsed.error.errors });
+    }
+    const document = await createDocument(parsed.data);
     res.status(201).json(document);
   } catch (error) {
     console.error("[comercial] Create document error:", error);
@@ -535,11 +553,15 @@ router.get("/prospects/:id/proposals", async (req, res) => {
 
 router.post("/prospects/:id/proposals", async (req, res) => {
   try {
-    const proposal = await createProposal({
+    const parsed = insertProposalSchema.safeParse({
       ...req.body,
       prospectId: Number(req.params.id),
       createdById: (req as any).user.id,
     });
+    if (!parsed.success) {
+      return res.status(400).json({ message: "Datos invalidos", errors: parsed.error.errors });
+    }
+    const proposal = await createProposal(parsed.data);
     res.status(201).json(proposal);
   } catch (error) {
     console.error("[comercial] Create proposal error:", error);
@@ -828,6 +850,16 @@ router.get("/uploads/:prospectId/:filename", async (req, res) => {
 });
 
 // === RESUMEN SEMANAL (Weekly Management Report) ===
+
+router.get("/weekly-reports", async (req, res) => {
+  try {
+    const reports = await listWeeklyReports((req as any).user.id);
+    res.json(reports);
+  } catch (error) {
+    console.error("[comercial] List weekly reports error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
 
 router.get("/weekly-report", async (req, res) => {
   try {

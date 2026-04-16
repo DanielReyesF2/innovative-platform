@@ -1,4 +1,5 @@
 import { X, TrendingUp, DollarSign, Target, ArrowRight } from 'lucide-react';
+import { fmtK } from '@/lib/utils';
 import { ExecutiveAvatar } from '@/lib/comercial-constants';
 
 interface Props {
@@ -82,13 +83,13 @@ export function TeamMemberModal({ member, onClose, onViewHub }: Props) {
               <div>
                 <div className="text-sm text-[#6b7280] font-medium mb-2">Presupuesto Mensual</div>
                 <div className="text-2xl font-semibold text-[#1c2c4a]">
-                  ${(member.presupuestoMensual / 1000).toFixed(0)}k
+                  {fmtK(member.presupuestoMensual)}
                 </div>
               </div>
               <div>
                 <div className="text-sm text-[#6b7280] font-medium mb-2">Ventas Reales</div>
                 <div className="text-2xl font-semibold text-[#1c2c4a]">
-                  ${(member.ventasReales / 1000).toFixed(0)}k
+                  {fmtK(member.ventasReales)}
                 </div>
               </div>
             </div>

@@ -15,6 +15,8 @@ import { ProspectEditDialog } from './ProspectEditDialog';
 import { ProspectLevantamiento } from './ProspectLevantamiento';
 import { ModalMotivoRechazo } from './ModalMotivoRechazo';
 import { StageGateModal } from './StageGateModal';
+import { fmtK } from '@/lib/utils';
+import { useToast } from '@/components/ui/use-toast';
 import {
   KANBAN_STAGES, SERVICIOS_INNOVATIVE, SERVICE_COLORS, STAGE_GATES,
   classifyRechazo, getSeguimientoUrgency, getRecoveryState, RECHAZO_CATEGORIES,
@@ -31,6 +33,7 @@ interface Props {
 }
 
 export function ProspectoDrawer({ prospecto, onClose, onEdit }: Props) {
+  const { toast } = useToast();
   const {
     authUser,
     updateProspectMutation,
@@ -422,7 +425,7 @@ export function ProspectoDrawer({ prospecto, onClose, onEdit }: Props) {
                 <div className="flex items-center gap-3">
                   <div className="flex-1 bg-[#EFF6FF] rounded-xl p-3 text-center">
                     <div className="text-xs text-[#6b7280] mb-0.5">Valor estimado</div>
-                    <div className="text-xl font-bold text-[#0D47A1]">{valor > 0 ? `$${(valor / 1000).toFixed(0)}K` : '—'}</div>
+                    <div className="text-xl font-bold text-[#0D47A1]">{valor > 0 ? fmtK(valor) : '—'}</div>
                   </div>
                   <div className="flex-1 bg-[#f3f4f6] rounded-xl p-3 text-center">
                     <div className="text-xs text-[#6b7280] mb-0.5">Días en seguimiento</div>
@@ -579,7 +582,7 @@ export function ProspectoDrawer({ prospecto, onClose, onEdit }: Props) {
                       {p.propuesta?.ventaTotal && (
                         <div className="flex items-center justify-between text-sm">
                           <span className="text-[#6b7280]">Venta total (contrato)</span>
-                          <span className="font-bold text-[#0D47A1]">${(p.propuesta.ventaTotal / 1000).toFixed(0)}K</span>
+                          <span className="font-bold text-[#0D47A1]">{fmtK(p.propuesta.ventaTotal)}</span>
                         </div>
                       )}
                       {p.motivoRechazo && (() => {
@@ -751,8 +754,9 @@ export function ProspectoDrawer({ prospecto, onClose, onEdit }: Props) {
                 });
                 setShowRechazoModal(false);
                 onClose();
-              } catch {
-                // error handled by React Query
+              } catch (err) {
+                console.error('[comercial] Error al rechazar prospecto:', err);
+                toast({ title: "Error al guardar el rechazo", description: "Intenta de nuevo", variant: "destructive" });
               }
             }}
           />

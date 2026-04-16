@@ -489,12 +489,21 @@ export function useCompetitorAnalysis() {
 
 // === RESUMEN SEMANAL ===
 
+export function useWeeklyReports() {
+  return useQuery<any[]>({
+    queryKey: ["/api/comercial/weekly-reports"],
+    queryFn: async () => {
+      const res = await apiRequest("GET", "/api/comercial/weekly-reports");
+      return res.json();
+    },
+  });
+}
+
 export function useWeeklyReport(weekStart: string) {
   return useQuery<any>({
     queryKey: ["/api/comercial/weekly-report", weekStart],
     queryFn: async () => {
-      const res = await fetch(`/api/comercial/weekly-report?week=${weekStart}`, { credentials: "include" });
-      if (!res.ok) throw new Error("Error al obtener reporte");
+      const res = await apiRequest("GET", `/api/comercial/weekly-report?week=${weekStart}`);
       return res.json();
     },
     enabled: !!weekStart,
@@ -509,6 +518,7 @@ export function useSaveWeeklyReport() {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["/api/comercial/weekly-report", variables.weekStart] });
+      queryClient.invalidateQueries({ queryKey: ["/api/comercial/weekly-reports"] });
     },
   });
 }
@@ -521,6 +531,7 @@ export function useSendWeeklyReport() {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["/api/comercial/weekly-report", variables.weekStart] });
+      queryClient.invalidateQueries({ queryKey: ["/api/comercial/weekly-reports"] });
     },
   });
 }

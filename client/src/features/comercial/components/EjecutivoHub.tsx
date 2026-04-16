@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { ArrowLeft, Plus, Lock, ChevronDown, ChevronUp, X, AlertCircle, Calendar, Bell, DollarSign, Edit3, Save, Target, Check } from 'lucide-react';
 import { DndContext, closestCenter, DragOverlay, useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { fmtM } from '@/lib/utils';
 import {
   HUB_KANBAN_STAGES,
   STAGE_GATES,
@@ -108,8 +109,8 @@ export function EjecutivoHub({ member, onBack, onShowNuevoLead }: Props) {
           </div>
           <div className="text-right hidden md:block">
             <div className="text-sm text-[#6b7280]">Presupuesto Anual</div>
-            <div className="text-xl font-bold text-[#0D47A1]">${(member.presupuestoAnual2026 / 1000000).toFixed(1)}M</div>
-            <div className="text-xs text-[#9ca3af]">${(member.presupuestoMensual / 1000000).toFixed(2)}M / mes</div>
+            <div className="text-xl font-bold text-[#0D47A1]">{fmtM(member.presupuestoAnual2026)}</div>
+            <div className="text-xs text-[#9ca3af]">{fmtM(member.presupuestoMensual, 2)} / mes</div>
           </div>
           {onShowNuevoLead && (
             <button onClick={() => onShowNuevoLead(member.codigo)}
@@ -177,7 +178,7 @@ export function EjecutivoHub({ member, onBack, onShowNuevoLead }: Props) {
           {/* Quick summary */}
           <div className="flex items-center gap-4 text-xs">
             <span className="text-[#6b7280]"><strong className="text-[#1c2c4a]">{memberProspectos.filter(p => p.status !== 'cierre_perdido').length}</strong> prospectos</span>
-            <span className="text-[#6b7280]"><strong className="text-[#0D47A1]">${(totalPipeline / 1000000).toFixed(1)}M</strong> presupuesto</span>
+            <span className="text-[#6b7280]"><strong className="text-[#0D47A1]">{fmtM(totalPipeline)}</strong> presupuesto</span>
             {memberRechazados.length > 0 && <span className="text-red-500"><strong>{memberRechazados.length}</strong> rechazadas</span>}
             <div className="flex items-center gap-2 ml-auto">
               {HUB_KANBAN_STAGES.map(s => {
@@ -211,7 +212,7 @@ export function EjecutivoHub({ member, onBack, onShowNuevoLead }: Props) {
                         </div>
                         {gate && <Lock size={10} className="text-[#9ca3af]" />}
                       </div>
-                      {stageValue > 0 && <div className="text-[10px] text-[#6b7280]">${(stageValue / 1000000).toFixed(1)}M</div>}
+                      {stageValue > 0 && <div className="text-[10px] text-[#6b7280]">{fmtM(stageValue)}</div>}
                     </div>
                     <HubDroppableColumn stageId={stage.id}>
                       <SortableContext items={stageItems.map(p => p.id)} strategy={verticalListSortingStrategy}>
@@ -342,11 +343,11 @@ export function EjecutivoHub({ member, onBack, onShowNuevoLead }: Props) {
                 <div className="bg-[#f9fafb] rounded-lg p-3 flex items-center justify-between">
                   <div>
                     <div className="text-xs text-[#6b7280]">Presupuesto mensual</div>
-                    <div className="text-lg font-bold text-[#1c2c4a]">${(member.presupuestoMensual / 1000000).toFixed(2)}M</div>
+                    <div className="text-lg font-bold text-[#1c2c4a]">{fmtM(member.presupuestoMensual, 2)}</div>
                   </div>
                   <div className="text-right">
                     <div className="text-xs text-[#6b7280]">Venta registrada</div>
-                    <div className="text-lg font-bold text-[#00a8a8]">${(member.ventasReales / 1000000).toFixed(2)}M</div>
+                    <div className="text-lg font-bold text-[#00a8a8]">{fmtM(member.ventasReales, 2)}</div>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">

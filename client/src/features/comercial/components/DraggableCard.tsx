@@ -1,6 +1,7 @@
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { MessageSquare, Paperclip } from 'lucide-react';
+import { fmtM } from '@/lib/utils';
 import {
   SERVICE_COLORS,
   estimarFechaProspecto,
@@ -51,7 +52,7 @@ export function DraggableCard({ prospecto, onSelect, notesCount = 0, filesCount 
       <div className="flex items-center justify-between gap-1 mb-0.5">
         <h4 className="text-[12px] font-semibold text-[#1c2c4a] truncate leading-tight flex-1 min-w-0">{prospecto.empresa}</h4>
         <div className="flex items-center gap-1 flex-shrink-0">
-          {valor > 0 && <span className="text-[10px] font-bold text-[#0D47A1]">${(valor / 1000000).toFixed(1)}M</span>}
+          {valor > 0 && <span className="text-[10px] font-bold text-[#0D47A1]">{fmtM(valor)}</span>}
           <span className="text-[8px] font-bold px-1 py-px rounded-full whitespace-nowrap" style={{ backgroundColor: `${svc.border}18`, color: svc.text }}>
             {svc.label}
           </span>

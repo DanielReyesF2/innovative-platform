@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useUpdateProspect } from "../api";
+import { useUpdateProspect, useConvertLead } from "../api";
 import { useToast } from "@/components/ui/use-toast";
 import { ArrowRight, UserCheck, ChevronLeft, ChevronRight } from "lucide-react";
 import { KANBAN_STAGES } from "@/lib/comercial-constants";
@@ -36,17 +36,18 @@ const WASTE_TYPES = [
 
 interface QualifyLeadDialogProps {
   prospect: any;
+  isLead?: boolean;
   onClose: () => void;
   onQualified?: () => void;
 }
 
-export function QualifyLeadDialog({ prospect, onClose, onQualified }: QualifyLeadDialogProps) {
+export function QualifyLeadDialog({ prospect, isLead, onClose, onQualified }: QualifyLeadDialogProps) {
   const [step, setStep] = useState(1);
 
   // Step 1: Business data
   const [business, setBusiness] = useState({
-    industry: prospect.industria || "",
-    location: prospect.ciudad || "",
+    industry: prospect.industria || prospect.industry || "",
+    location: prospect.ciudad || prospect.location || "",
     potential: "Medio",
     estimatedValue: "",
   });
@@ -61,6 +62,7 @@ export function QualifyLeadDialog({ prospect, onClose, onQualified }: QualifyLea
   });
 
   const updateProspect = useUpdateProspect();
+  const convertLead = useConvertLead();
   const { toast } = useToast();
 
   const setBiz = (key: string, val: string) => setBusiness({ ...business, [key]: val });
@@ -76,27 +78,41 @@ export function QualifyLeadDialog({ prospect, onClose, onQualified }: QualifyLea
 
   const handleSubmit = async () => {
     try {
-      await updateProspect.mutateAsync({
-        id: prospect.id,
-        industry: business.industry || undefined,
-        location: business.location.trim() || undefined,
-        potential: business.potential || undefined,
-        estimatedValue: business.estimatedValue || undefined,
-        estimatedVolume: waste.estimatedVolume.trim() || undefined,
-        levantamientoData: waste.wasteTypes.length > 0
-          ? {
-              qualificationWaste: {
-                wasteTypes: waste.wasteTypes,
-                estimatedVolume: waste.estimatedVolume.trim(),
-                hasCurrentProvider: waste.hasCurrentProvider,
-                currentProviderName: waste.currentProviderName.trim() || undefined,
-                reasonForChange: waste.reasonForChange.trim() || undefined,
-              },
-            }
-          : undefined,
-        stage: "presentacion",
-        probability: 20,
-      });
+      const wasteInfo = waste.wasteTypes.length > 0
+        ? {
+            wasteTypes: waste.wasteTypes,
+            estimatedVolume: waste.estimatedVolume.trim(),
+            hasCurrentProvider: waste.hasCurrentProvider,
+            currentProviderName: waste.currentProviderName.trim() || undefined,
+            reasonForChange: waste.reasonForChange.trim() || undefined,
+          }
+        : undefined;
+
+      if (isLead) {
+        // Lead from leads table → convert to prospect via dedicated endpoint
+        await convertLead.mutateAsync({
+          id: prospect.id,
+          industry: business.industry || undefined,
+          location: business.location.trim() || undefined,
+          potential: business.potential || undefined,
+          estimatedValue: business.estimatedValue || undefined,
+          estimatedVolume: waste.estimatedVolume.trim() || undefined,
+          wasteInfo,
+        });
+      } else {
+        // Existing prospect → update via PATCH
+        await updateProspect.mutateAsync({
+          id: prospect.id,
+          industry: business.industry || undefined,
+          location: business.location.trim() || undefined,
+          potential: business.potential || undefined,
+          estimatedValue: business.estimatedValue || undefined,
+          estimatedVolume: waste.estimatedVolume.trim() || undefined,
+          levantamientoData: wasteInfo ? { qualificationWaste: wasteInfo } : undefined,
+          stage: "presentacion",
+          probability: 20,
+        });
+      }
       toast({ title: "Lead calificado exitosamente" });
       onQualified?.();
     } catch {
@@ -109,9 +125,9 @@ export function QualifyLeadDialog({ prospect, onClose, onQualified }: QualifyLea
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-lg max-h-[90vh] flex flex-col rounded-lg bg-background shadow-lg">
+      <div className="w-full max-w-lg rounded-lg bg-background shadow-lg">
         {/* Header */}
-        <div className="flex items-center justify-between border-b px-6 py-4 shrink-0">
+        <div className="flex items-center justify-between border-b px-6 py-4">
           <div className="flex items-center gap-2">
             <UserCheck className="h-5 w-5 text-primary" />
             <h2 className="text-lg font-bold">Calificar Lead</h2>
@@ -172,7 +188,7 @@ export function QualifyLeadDialog({ prospect, onClose, onQualified }: QualifyLea
         </div>
 
         {/* Step content */}
-        <div className="space-y-4 px-6 py-4 overflow-y-auto">
+        <div className="space-y-4 px-6 py-4">
           {step === 1 && (
             <>
               <div>
@@ -317,7 +333,7 @@ export function QualifyLeadDialog({ prospect, onClose, onQualified }: QualifyLea
         </div>
 
         {/* Footer */}
-        <div className="flex justify-between border-t px-6 py-3 shrink-0">
+        <div className="flex justify-between border-t px-6 py-3">
           <div>
             {step === 2 && (
               <Button variant="ghost" onClick={() => setStep(1)}>
@@ -337,8 +353,8 @@ export function QualifyLeadDialog({ prospect, onClose, onQualified }: QualifyLea
               </Button>
             )}
             {step === 2 && (
-              <Button onClick={handleSubmit} disabled={updateProspect.isPending}>
-                {updateProspect.isPending ? "Calificando..." : "Calificar Lead"}
+              <Button onClick={handleSubmit} disabled={updateProspect.isPending || convertLead.isPending}>
+                {(updateProspect.isPending || convertLead.isPending) ? "Calificando..." : "Calificar Lead"}
               </Button>
             )}
           </div>
