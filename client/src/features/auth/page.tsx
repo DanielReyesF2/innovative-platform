@@ -81,16 +81,22 @@ export default function LoginPage() {
             <div>
               <label className="block text-sm font-medium text-[#1c2c4a] mb-2">Usuario</label>
               <div className="relative">
-                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6b7280]">
+                <div
+                  className="pointer-events-none absolute left-3 top-1/2 z-0 -translate-y-1/2 text-[#6b7280]"
+                  aria-hidden
+                >
                   <Send size={16} />
                 </div>
                 <input
                   type="text"
                   value={username}
-                  onChange={(e) => { setUsername(e.target.value); setError(""); }}
-                  placeholder="Usuario"
-                  className="w-full pl-10 pr-4 py-3 bg-white border border-[#e5e7eb] rounded-lg text-sm text-[#1c2c4a] placeholder-[#6b7280]/50 focus:outline-none focus:ring-2 focus:ring-[#2E7D32]/30 focus:border-[#2E7D32] transition-all"
-                  autoComplete="off"
+                  onChange={(e) => {
+                    setUsername(e.target.value);
+                    setError("");
+                  }}
+                  placeholder="Usuario o correo"
+                  className="relative z-10 w-full pl-10 pr-4 py-3 bg-white border border-[#e5e7eb] rounded-lg text-sm text-[#1c2c4a] placeholder-[#6b7280]/50 focus:outline-none focus:ring-2 focus:ring-[#2E7D32]/30 focus:border-[#2E7D32] transition-all"
+                  autoComplete="username"
                 />
               </div>
             </div>
@@ -99,16 +105,22 @@ export default function LoginPage() {
             <div>
               <label className="block text-sm font-medium text-[#1c2c4a] mb-2">Contrasena</label>
               <div className="relative">
-                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6b7280]">
+                <div
+                  className="pointer-events-none absolute left-3 top-1/2 z-0 -translate-y-1/2 text-[#6b7280]"
+                  aria-hidden
+                >
                   <Lock size={16} />
                 </div>
                 <input
                   type={showPassword ? "text" : "password"}
                   value={password}
-                  onChange={(e) => { setPassword(e.target.value); setError(""); }}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    setError("");
+                  }}
                   placeholder="********"
-                  className="w-full pl-10 pr-12 py-3 bg-white border border-[#e5e7eb] rounded-lg text-sm text-[#1c2c4a] placeholder-[#6b7280]/50 focus:outline-none focus:ring-2 focus:ring-[#2E7D32]/30 focus:border-[#2E7D32] transition-all"
-                  autoComplete="off"
+                  className="relative z-10 w-full pl-10 pr-12 py-3 bg-white border border-[#e5e7eb] rounded-lg text-sm text-[#1c2c4a] placeholder-[#6b7280]/50 focus:outline-none focus:ring-2 focus:ring-[#2E7D32]/30 focus:border-[#2E7D32] transition-all"
+                  autoComplete="current-password"
                 />
                 <button
                   type="button"

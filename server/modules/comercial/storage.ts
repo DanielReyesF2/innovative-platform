@@ -1146,6 +1146,14 @@ export async function getWeeklyReport(userId: number, weekStart: string) {
   });
 }
 
+export async function listWeeklyReports(userId: number, limit = 12) {
+  return db.query.comercialWeeklyReports.findMany({
+    where: eq(comercialWeeklyReports.createdById, userId),
+    orderBy: [desc(comercialWeeklyReports.weekStart)],
+    limit,
+  });
+}
+
 export async function upsertWeeklyReport(
   userId: number,
   weekStart: string,
