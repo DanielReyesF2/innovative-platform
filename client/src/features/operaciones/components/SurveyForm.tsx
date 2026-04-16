@@ -68,6 +68,9 @@ export default function SurveyForm({ surveyId }: SurveyFormProps) {
             onSuccess: () => {
               toast({ description: "Guardado", duration: 1500 });
             },
+            onError: () => {
+              toast({ title: "Error al guardar", description: "Intenta de nuevo", variant: "destructive" });
+            },
           }
         );
       }, 800);
@@ -85,6 +88,9 @@ export default function SurveyForm({ surveyId }: SurveyFormProps) {
           {
             onSuccess: () => {
               toast({ description: "Guardado", duration: 1500 });
+            },
+            onError: () => {
+              toast({ title: "Error al guardar", description: "Intenta de nuevo", variant: "destructive" });
             },
           }
         );
@@ -409,10 +415,10 @@ export default function SurveyForm({ surveyId }: SurveyFormProps) {
         <div className="sticky bottom-4 flex justify-end pt-4">
           <Button
             onClick={handleAdvance}
-            disabled={advanceStatus.isLoading || (isCommercialPhase && progressPercent < 100)}
+            disabled={advanceStatus.isPending || (isCommercialPhase && progressPercent < 100)}
             className="gap-2"
           >
-            {advanceStatus.isLoading ? (
+            {advanceStatus.isPending ? (
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
             ) : (
               <Check className="h-4 w-4" />

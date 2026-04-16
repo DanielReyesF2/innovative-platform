@@ -16,3 +16,9 @@ export function fmtK(value: number, decimals = 0): string {
   const v = Number(value) || 0;
   return `$${(v / 1_000).toLocaleString("es-MX", { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}K`;
 }
+
+/** Format number as full currency with commas and 2 fixed decimals: 3928000 → "$3,928,000.00" */
+export function fmtCurrency(value: number | string | null): string {
+  const v = Number(value) || 0;
+  return v.toLocaleString("es-MX", { style: "currency", currency: "MXN", minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}

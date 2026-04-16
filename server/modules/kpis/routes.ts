@@ -127,7 +127,7 @@ router.get("/", async (req, res) => {
 router.post("/", async (req, res) => {
   try {
     const parsed = insertKpiSchema.parse(req.body);
-    const currentUser = (req as any).user;
+    const currentUser = req.user!;
     const kpi = await createKpi(parsed, currentUser.id);
     res.status(201).json(kpi);
   } catch (error) {
@@ -159,7 +159,7 @@ router.patch("/entries/:entryId", async (req, res) => {
 router.post("/action-plans", async (req, res) => {
   try {
     const parsed = insertActionPlanSchema.parse(req.body);
-    const currentUser = (req as any).user;
+    const currentUser = req.user!;
     const plan = await createActionPlan(parsed, currentUser.id);
     res.status(201).json(plan);
   } catch (error) {
@@ -254,7 +254,7 @@ router.post("/:id/entries", async (req, res) => {
       ...req.body,
       kpiId: Number(req.params.id),
     });
-    const currentUser = (req as any).user;
+    const currentUser = req.user!;
     const entry = await createKpiEntry({
       ...parsed,
       recordedById: currentUser.id,

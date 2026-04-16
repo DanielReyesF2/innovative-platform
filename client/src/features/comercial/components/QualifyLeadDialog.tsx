@@ -6,7 +6,7 @@ import { useUpdateProspect, useConvertLead } from "../api";
 import { useToast } from "@/components/ui/use-toast";
 import { ArrowRight, UserCheck, ChevronLeft, ChevronRight } from "lucide-react";
 import { KANBAN_STAGES } from "@/lib/comercial-constants";
-
+import { STAGE } from "@shared/schema/comercial-stages";
 const INDUSTRIES = [
   "Manufactura",
   "Alimentos",
@@ -34,8 +34,22 @@ const WASTE_TYPES = [
   "Otro",
 ];
 
+interface QualifyProspect {
+  id: number;
+  empresa?: string;
+  name?: string;
+  industria?: string | null;
+  industry?: string | null;
+  ciudad?: string | null;
+  location?: string | null;
+  status?: string;
+  contacto?: { nombre?: string; telefono?: string };
+  contactName?: string | null;
+  contactPhone?: string | null;
+}
+
 interface QualifyLeadDialogProps {
-  prospect: any;
+  prospect: QualifyProspect;
   isLead?: boolean;
   onClose: () => void;
   onQualified?: () => void;
@@ -109,7 +123,7 @@ export function QualifyLeadDialog({ prospect, isLead, onClose, onQualified }: Qu
           estimatedValue: business.estimatedValue || undefined,
           estimatedVolume: waste.estimatedVolume.trim() || undefined,
           levantamientoData: wasteInfo ? { qualificationWaste: wasteInfo } : undefined,
-          stage: "presentacion",
+          stage: STAGE.PRESENTACION,
           probability: 20,
         });
       }
@@ -121,13 +135,13 @@ export function QualifyLeadDialog({ prospect, isLead, onClose, onQualified }: Qu
   };
 
   const fromLabel = KANBAN_STAGES.find(s => s.id === prospect.status)?.label || "Lead Nuevo";
-  const toLabel = KANBAN_STAGES.find(s => s.id === "presentacion")?.label || "Reunión";
+  const toLabel = KANBAN_STAGES.find(s => s.id === STAGE.PRESENTACION)?.label || "Reunión";
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-lg rounded-lg bg-background shadow-lg">
+      <div className="w-full max-w-lg max-h-[90vh] flex flex-col rounded-lg bg-background shadow-lg">
         {/* Header */}
-        <div className="flex items-center justify-between border-b px-6 py-4">
+        <div className="flex items-center justify-between border-b px-6 py-4 shrink-0">
           <div className="flex items-center gap-2">
             <UserCheck className="h-5 w-5 text-primary" />
             <h2 className="text-lg font-bold">Calificar Lead</h2>
@@ -188,7 +202,7 @@ export function QualifyLeadDialog({ prospect, isLead, onClose, onQualified }: Qu
         </div>
 
         {/* Step content */}
-        <div className="space-y-4 px-6 py-4">
+        <div className="space-y-4 px-6 py-4 overflow-y-auto">
           {step === 1 && (
             <>
               <div>
@@ -333,7 +347,7 @@ export function QualifyLeadDialog({ prospect, isLead, onClose, onQualified }: Qu
         </div>
 
         {/* Footer */}
-        <div className="flex justify-between border-t px-6 py-3">
+        <div className="flex justify-between border-t px-6 py-3 shrink-0">
           <div>
             {step === 2 && (
               <Button variant="ghost" onClick={() => setStep(1)}>

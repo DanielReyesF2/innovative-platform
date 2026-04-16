@@ -143,7 +143,7 @@ export default function EditableTable({
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => onDelete(item.id)}
+                          onClick={() => { if (window.confirm("¿Seguro que deseas eliminar este registro?")) onDelete(item.id); }}
                           className="h-7 w-7 p-0 text-destructive hover:text-destructive"
                         >
                           <Trash2 className="h-3 w-3" />

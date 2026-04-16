@@ -67,6 +67,7 @@ import {
 import {
   insertSurveySchema,
   insertDocumentSchema,
+  insertSurveyWasteTypeSchema,
   insertSurveyPhotoSchema,
   insertSurveySubproductSchema,
   insertSurveyServiceSchema,
@@ -132,7 +133,7 @@ router.post(
           assignedToId: parsed.assignedToId,
           schedulingNotes: parsed.schedulingNotes,
         },
-        (req as any).user.id
+        req.user!.id
       );
       res.json(updated);
     } catch (error: any) {
@@ -157,7 +158,7 @@ router.post(
       const result = await rejectSurvey(
         Number(req.params.id),
         parsed.rejectionReason,
-        (req as any).user.id
+        req.user!.id
       );
       res.json(result);
     } catch (error: any) {
@@ -210,7 +211,7 @@ router.post("/surveys", async (req, res) => {
     const { prospectId, assignedCommercialId } = req.body;
 
     if (prospectId) {
-      const userId = assignedCommercialId || (req as any).user?.id;
+      const userId = assignedCommercialId || req.user!?.id;
       const survey = await createSurveyFromProspect(prospectId, userId);
       return res.status(201).json(survey);
     }
@@ -229,7 +230,11 @@ router.post("/surveys", async (req, res) => {
 
 router.patch("/surveys/:id", async (req, res) => {
   try {
-    const updated = await updateSurvey(Number(req.params.id), req.body);
+    const parsed = insertSurveySchema.partial().safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ message: "Datos inválidos", errors: parsed.error.errors });
+    }
+    const updated = await updateSurvey(Number(req.params.id), parsed.data);
     if (!updated) return res.status(404).json({ message: "Levantamiento no encontrado" });
     res.json(updated);
   } catch (error) {
@@ -240,11 +245,24 @@ router.patch("/surveys/:id", async (req, res) => {
 
 // ─── Section JSONB update ───────────────────────────────
 
+const validSectionNames = [
+  "installations",
+  "personnelPolicies",
+  "transportPolicies",
+  "allowedEquipment",
+  "legalRequirements",
+  "operationArea",
+] as const;
+
 router.patch("/surveys/:id/section/:name", async (req, res) => {
   try {
+    const sectionName = req.params.name;
+    if (!validSectionNames.includes(sectionName as any)) {
+      return res.status(400).json({ message: `Sección inválida: ${sectionName}. Secciones válidas: ${validSectionNames.join(", ")}` });
+    }
     const updated = await updateSurveySection(
       Number(req.params.id),
-      req.params.name,
+      sectionName,
       req.body
     );
     res.json(updated);
@@ -269,12 +287,16 @@ router.get("/surveys/:id/gate-status", async (req, res) => {
 
 // ─── Status advancement ─────────────────────────────────
 
+const advanceStatusSchema = z.object({ targetStatus: z.string().min(1) });
+
 router.post("/surveys/:id/advance", async (req, res) => {
   try {
-    const { targetStatus } = req.body;
-    if (!targetStatus) return res.status(400).json({ message: "targetStatus requerido" });
+    const parsed = advanceStatusSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ message: "targetStatus requerido", errors: parsed.error.errors });
+    }
 
-    const result = await advanceSurveyStatus(Number(req.params.id), targetStatus);
+    const result = await advanceSurveyStatus(Number(req.params.id), parsed.data.targetStatus);
     if (!result.success) {
       return res.status(422).json(result);
     }
@@ -289,9 +311,20 @@ router.post("/surveys/:id/advance", async (req, res) => {
 
 router.post("/surveys/:id/waste-types", async (req, res) => {
   try {
+    const data = { ...req.body, surveyId: Number(req.params.id) };
+    const parsed = insertSurveyWasteTypeSchema.safeParse(data);
+    if (!parsed.success) {
+      return res.status(400).json({ message: "Datos inválidos", errors: parsed.error.errors });
+    }
+    // Strip null values — storage function expects undefined, not null
+    const { surveyId, wasteType, quantity, percentage, currentDestination, monthlyCost } = parsed.data;
     const wt = await addSurveyWasteType({
-      surveyId: Number(req.params.id),
-      ...req.body,
+      surveyId,
+      wasteType,
+      ...(quantity != null && { quantity }),
+      ...(percentage != null && { percentage }),
+      ...(currentDestination != null && { currentDestination }),
+      ...(monthlyCost != null && { monthlyCost }),
     });
     res.status(201).json(wt);
   } catch (error) {
@@ -315,7 +348,11 @@ router.get("/surveys/:id/photos", async (req, res) => {
 router.post("/surveys/:id/photos", async (req, res) => {
   try {
     const data = { ...req.body, surveyId: Number(req.params.id) };
-    const photo = await createSurveyPhoto(data);
+    const parsed = insertSurveyPhotoSchema.safeParse(data);
+    if (!parsed.success) {
+      return res.status(400).json({ message: "Datos inválidos", errors: parsed.error.errors });
+    }
+    const photo = await createSurveyPhoto(parsed.data);
     res.status(201).json(photo);
   } catch (error) {
     console.error("[operaciones] Create photo error:", error);
@@ -325,7 +362,11 @@ router.post("/surveys/:id/photos", async (req, res) => {
 
 router.patch("/surveys/:id/photos/:itemId", async (req, res) => {
   try {
-    const updated = await updateSurveyPhoto(Number(req.params.itemId), req.body);
+    const parsed = insertSurveyPhotoSchema.partial().safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ message: "Datos inválidos", errors: parsed.error.errors });
+    }
+    const updated = await updateSurveyPhoto(Number(req.params.itemId), parsed.data);
     res.json(updated);
   } catch (error) {
     console.error("[operaciones] Update photo error:", error);
@@ -358,7 +399,11 @@ router.get("/surveys/:id/subproducts", async (req, res) => {
 router.post("/surveys/:id/subproducts", async (req, res) => {
   try {
     const data = { ...req.body, surveyId: Number(req.params.id) };
-    const item = await createSurveySubproduct(data);
+    const parsed = insertSurveySubproductSchema.safeParse(data);
+    if (!parsed.success) {
+      return res.status(400).json({ message: "Datos inválidos", errors: parsed.error.errors });
+    }
+    const item = await createSurveySubproduct(parsed.data);
     res.status(201).json(item);
   } catch (error) {
     console.error("[operaciones] Create subproduct error:", error);
@@ -368,7 +413,11 @@ router.post("/surveys/:id/subproducts", async (req, res) => {
 
 router.patch("/surveys/:id/subproducts/:itemId", async (req, res) => {
   try {
-    const updated = await updateSurveySubproduct(Number(req.params.itemId), req.body);
+    const parsed = insertSurveySubproductSchema.partial().safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ message: "Datos inválidos", errors: parsed.error.errors });
+    }
+    const updated = await updateSurveySubproduct(Number(req.params.itemId), parsed.data);
     res.json(updated);
   } catch (error) {
     console.error("[operaciones] Update subproduct error:", error);
@@ -401,7 +450,11 @@ router.get("/surveys/:id/services", async (req, res) => {
 router.post("/surveys/:id/services", async (req, res) => {
   try {
     const data = { ...req.body, surveyId: Number(req.params.id) };
-    const item = await createSurveyService(data);
+    const parsed = insertSurveyServiceSchema.safeParse(data);
+    if (!parsed.success) {
+      return res.status(400).json({ message: "Datos inválidos", errors: parsed.error.errors });
+    }
+    const item = await createSurveyService(parsed.data);
     res.status(201).json(item);
   } catch (error) {
     console.error("[operaciones] Create service error:", error);
@@ -411,7 +464,11 @@ router.post("/surveys/:id/services", async (req, res) => {
 
 router.patch("/surveys/:id/services/:itemId", async (req, res) => {
   try {
-    const updated = await updateSurveyService(Number(req.params.itemId), req.body);
+    const parsed = insertSurveyServiceSchema.partial().safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ message: "Datos inválidos", errors: parsed.error.errors });
+    }
+    const updated = await updateSurveyService(Number(req.params.itemId), parsed.data);
     res.json(updated);
   } catch (error) {
     console.error("[operaciones] Update service error:", error);
@@ -444,7 +501,11 @@ router.get("/surveys/:id/proposal-personnel", async (req, res) => {
 router.post("/surveys/:id/proposal-personnel", async (req, res) => {
   try {
     const data = { ...req.body, surveyId: Number(req.params.id) };
-    const item = await createProposalPersonnel(data);
+    const parsed = insertSurveyProposalPersonnelSchema.safeParse(data);
+    if (!parsed.success) {
+      return res.status(400).json({ message: "Datos inválidos", errors: parsed.error.errors });
+    }
+    const item = await createProposalPersonnel(parsed.data);
     res.status(201).json(item);
   } catch (error) {
     console.error("[operaciones] Create proposal personnel error:", error);
@@ -454,7 +515,11 @@ router.post("/surveys/:id/proposal-personnel", async (req, res) => {
 
 router.patch("/surveys/:id/proposal-personnel/:itemId", async (req, res) => {
   try {
-    const updated = await updateProposalPersonnel(Number(req.params.itemId), req.body);
+    const parsed = insertSurveyProposalPersonnelSchema.partial().safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ message: "Datos inválidos", errors: parsed.error.errors });
+    }
+    const updated = await updateProposalPersonnel(Number(req.params.itemId), parsed.data);
     res.json(updated);
   } catch (error) {
     console.error("[operaciones] Update proposal personnel error:", error);
@@ -487,7 +552,11 @@ router.get("/surveys/:id/proposal-equipment", async (req, res) => {
 router.post("/surveys/:id/proposal-equipment", async (req, res) => {
   try {
     const data = { ...req.body, surveyId: Number(req.params.id) };
-    const item = await createProposalEquipment(data);
+    const parsed = insertSurveyProposalEquipmentSchema.safeParse(data);
+    if (!parsed.success) {
+      return res.status(400).json({ message: "Datos inválidos", errors: parsed.error.errors });
+    }
+    const item = await createProposalEquipment(parsed.data);
     res.status(201).json(item);
   } catch (error) {
     console.error("[operaciones] Create proposal equipment error:", error);
@@ -497,7 +566,11 @@ router.post("/surveys/:id/proposal-equipment", async (req, res) => {
 
 router.patch("/surveys/:id/proposal-equipment/:itemId", async (req, res) => {
   try {
-    const updated = await updateProposalEquipment(Number(req.params.itemId), req.body);
+    const parsed = insertSurveyProposalEquipmentSchema.partial().safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ message: "Datos inválidos", errors: parsed.error.errors });
+    }
+    const updated = await updateProposalEquipment(Number(req.params.itemId), parsed.data);
     res.json(updated);
   } catch (error) {
     console.error("[operaciones] Update proposal equipment error:", error);
@@ -530,7 +603,11 @@ router.get("/surveys/:id/proposal-supplies", async (req, res) => {
 router.post("/surveys/:id/proposal-supplies", async (req, res) => {
   try {
     const data = { ...req.body, surveyId: Number(req.params.id) };
-    const item = await createProposalSupplies(data);
+    const parsed = insertSurveyProposalSuppliesSchema.safeParse(data);
+    if (!parsed.success) {
+      return res.status(400).json({ message: "Datos inválidos", errors: parsed.error.errors });
+    }
+    const item = await createProposalSupplies(parsed.data);
     res.status(201).json(item);
   } catch (error) {
     console.error("[operaciones] Create proposal supplies error:", error);
@@ -540,7 +617,11 @@ router.post("/surveys/:id/proposal-supplies", async (req, res) => {
 
 router.patch("/surveys/:id/proposal-supplies/:itemId", async (req, res) => {
   try {
-    const updated = await updateProposalSupplies(Number(req.params.itemId), req.body);
+    const parsed = insertSurveyProposalSuppliesSchema.partial().safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ message: "Datos inválidos", errors: parsed.error.errors });
+    }
+    const updated = await updateProposalSupplies(Number(req.params.itemId), parsed.data);
     res.json(updated);
   } catch (error) {
     console.error("[operaciones] Update proposal supplies error:", error);
@@ -573,7 +654,11 @@ router.get("/surveys/:id/proposal-rentals", async (req, res) => {
 router.post("/surveys/:id/proposal-rentals", async (req, res) => {
   try {
     const data = { ...req.body, surveyId: Number(req.params.id) };
-    const item = await createProposalRentals(data);
+    const parsed = insertSurveyProposalRentalsSchema.safeParse(data);
+    if (!parsed.success) {
+      return res.status(400).json({ message: "Datos inválidos", errors: parsed.error.errors });
+    }
+    const item = await createProposalRentals(parsed.data);
     res.status(201).json(item);
   } catch (error) {
     console.error("[operaciones] Create proposal rentals error:", error);
@@ -583,7 +668,11 @@ router.post("/surveys/:id/proposal-rentals", async (req, res) => {
 
 router.patch("/surveys/:id/proposal-rentals/:itemId", async (req, res) => {
   try {
-    const updated = await updateProposalRentals(Number(req.params.itemId), req.body);
+    const parsed = insertSurveyProposalRentalsSchema.partial().safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ message: "Datos inválidos", errors: parsed.error.errors });
+    }
+    const updated = await updateProposalRentals(Number(req.params.itemId), parsed.data);
     res.json(updated);
   } catch (error) {
     console.error("[operaciones] Update proposal rentals error:", error);
@@ -626,7 +715,11 @@ router.post("/gate-configs", async (req, res) => {
 
 router.patch("/gate-configs/:id", async (req, res) => {
   try {
-    const updated = await updateGateConfig(Number(req.params.id), req.body);
+    const parsed = insertGateConfigSchema.partial().safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ message: "Datos inválidos", errors: parsed.error.errors });
+    }
+    const updated = await updateGateConfig(Number(req.params.id), parsed.data);
     if (!updated) return res.status(404).json({ message: "Config no encontrada" });
     res.json(updated);
   } catch (error) {
@@ -695,7 +788,11 @@ router.post("/documents", async (req, res) => {
 
 router.patch("/documents/:id", async (req, res) => {
   try {
-    const updated = await updateDocument(Number(req.params.id), req.body);
+    const parsed = insertDocumentSchema.partial().safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ message: "Datos inválidos", errors: parsed.error.errors });
+    }
+    const updated = await updateDocument(Number(req.params.id), parsed.data);
     if (!updated) return res.status(404).json({ message: "Documento no encontrado" });
     res.json(updated);
   } catch (error) {

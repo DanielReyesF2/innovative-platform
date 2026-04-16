@@ -1,55 +1,98 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { apiRequest, queryClient } from '@/lib/queryClient';
+import { apiRequest, invalidateByPrefix } from '@/lib/queryClient';
 import { useAuth } from '@/lib/auth';
 import {
   dbProspectToKanban,
   calcularPipelineData,
-  KANBAN_STAGES,
-  HUB_KANBAN_STAGES,
-  STAGE_GATES,
-  STAGE_PROBABILITY,
   MONTH_LABELS,
 } from '@/lib/comercial-constants';
+import type { ApiProspect } from '@/lib/comercial-constants';
+import type { KanbanProspecto, TeamMember } from '@shared/types/comercial';
+import type { User } from '@shared/schema/common';
 import { PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+
+// ═══════ API RESPONSE SHAPES ═══════
+
+/** Shape returned by GET /api/comercial/team */
+interface ApiTeamMember {
+  id: number;
+  codigo: string | null;
+  name: string;
+  email: string;
+  role: string;
+  presupuestoMensual: number;
+  presupuestoAnual: number;
+  presupuestosMensuales: Record<string, number>;
+  ventasReales: number;
+  ventasRealesAnual: number;
+}
+
+/** Shape returned by GET /api/comercial/ventas-reales */
+interface ApiVentaReal {
+  id: number;
+  userId: number;
+  mes: number;
+  año: number;
+  monto: string; // numeric comes as string from DB
+}
+
+// ═══════ MUTATION PAYLOADS ═══════
+
+interface UpdateProspectPayload {
+  id: number;
+  [key: string]: unknown;
+}
+
+interface RejectProspectPayload {
+  id: number;
+  rejectionReasonId?: number;
+  rejectionDetail?: string;
+  [key: string]: unknown;
+}
+
+interface CreateDocumentPayload {
+  prospectId: number;
+  [key: string]: unknown;
+}
 
 export function useComercialData() {
   const { user: authUser } = useAuth();
 
   // ═══════ QUERIES ═══════
-  const { data: dbProspectsRaw = [], isLoading: prospectsLoading } = useQuery({
+  const { data: dbProspectsRaw = [], isLoading: prospectsLoading, isError: prospectsError } = useQuery<ApiProspect[]>({
     queryKey: ['/api/comercial/prospects'],
     staleTime: 30 * 1000,
   });
 
-  const { data: dbUsers = [] } = useQuery<any[]>({
+  const { data: dbUsers = [] } = useQuery<Pick<User, 'id' | 'name' | 'codigo'>[]>({
     queryKey: ['/api/auth/team'],
     staleTime: 5 * 60 * 1000,
   });
 
   const usersMap = useMemo(() => {
-    const map: Record<number, any> = {};
-    (dbUsers as any[]).forEach((u: any) => { map[u.id] = u; });
+    const map: Record<number, Pick<User, 'name' | 'codigo'>> = {};
+    dbUsers.forEach((u) => { map[u.id] = u; });
     return map;
   }, [dbUsers]);
 
-  const { data: dbTeamRaw = [], isLoading: teamLoading } = useQuery<any[]>({
+  const { data: dbTeamRaw = [], isLoading: teamLoading, isError: teamError } = useQuery<ApiTeamMember[]>({
     queryKey: ['/api/comercial/team'],
     staleTime: 5 * 60 * 1000,
   });
 
-  const { data: dbVentasReales = [] } = useQuery<any[]>({
+  const { data: dbVentasReales = [] } = useQuery<ApiVentaReal[]>({
     queryKey: ['/api/comercial/ventas-reales'],
     staleTime: 60 * 1000,
   });
 
   // ═══════ DERIVED DATA ═══════
-  const kanbanProspectos = useMemo(() => {
-    return (dbProspectsRaw as any[]).map((p: any) => dbProspectToKanban(p, usersMap));
+  const kanbanProspectos: KanbanProspecto[] = useMemo(() => {
+    return dbProspectsRaw.map((p) => dbProspectToKanban(p, usersMap));
   }, [dbProspectsRaw, usersMap]);
 
-  const salesTeamData = useMemo(() => {
-    return (dbTeamRaw as any[]).map((m: any) => ({
+  const salesTeamData: TeamMember[] = useMemo(() => {
+    return dbTeamRaw.map((m) => ({
       id: m.id,
       dbUserId: m.id,
       codigo: m.codigo || '',
@@ -62,6 +105,7 @@ export function useComercialData() {
       presupuestoMensual: m.presupuestoMensual || 0,
       presupuestosMensuales: m.presupuestosMensuales || {},
       ventasReales: m.ventasReales || 0,
+      ventasRealesAnual: m.ventasRealesAnual || 0,
       cumplimientoPresupuesto: m.presupuestoMensual > 0
         ? Math.round((m.ventasReales / m.presupuestoMensual) * 100) : 0,
       leads: 0, levantamientos: 0, propuestasEnviadas: 0, reuniones: 0, cierres: 0,
@@ -73,14 +117,14 @@ export function useComercialData() {
 
   const presupuestoEvolution = useMemo(() => {
     const realPorMes: Record<string, number> = {};
-    (dbVentasReales as any[]).forEach((vr: any) => {
+    dbVentasReales.forEach((vr) => {
       const key = `${vr.año}-${vr.mes}`;
       realPorMes[key] = (realPorMes[key] || 0) + Number(vr.monto);
     });
     const currentYear = new Date().getFullYear();
     return MONTH_LABELS.map(row => {
       const period = `${currentYear}-${String(row.mesNum).padStart(2, '0')}`;
-      const monthBudget = (dbTeamRaw as any[]).reduce((sum: number, m: any) => {
+      const monthBudget = dbTeamRaw.reduce((sum, m) => {
         const budgets = m.presupuestosMensuales || {};
         return sum + (budgets[period] || 0);
       }, 0);
@@ -96,24 +140,24 @@ export function useComercialData() {
 
   // ═══════ MUTATIONS ═══════
   const updateProspectMutation = useMutation({
-    mutationFn: async ({ id, ...data }: any) => {
+    mutationFn: async ({ id, ...data }: UpdateProspectPayload) => {
       const res = await apiRequest("PATCH", `/api/comercial/prospects/${id}`, data);
       return res.json();
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/comercial/prospects'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/comercial/pipeline'] });
+      invalidateByPrefix('/api/comercial/prospects');
+      invalidateByPrefix('/api/comercial/pipeline');
     },
   });
 
   const createProspectMutation = useMutation({
-    mutationFn: async (data: any) => {
+    mutationFn: async (data: Record<string, unknown>) => {
       const res = await apiRequest("POST", "/api/comercial/prospects", data);
       return res.json();
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/comercial/prospects'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/comercial/pipeline'] });
+      invalidateByPrefix('/api/comercial/prospects');
+      invalidateByPrefix('/api/comercial/pipeline');
     },
   });
 
@@ -123,19 +167,19 @@ export function useComercialData() {
       return res.json();
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/comercial/prospects'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/comercial/pipeline'] });
+      invalidateByPrefix('/api/comercial/prospects');
+      invalidateByPrefix('/api/comercial/pipeline');
     },
   });
 
   const rejectProspectMutation = useMutation({
-    mutationFn: async ({ id, ...data }: any) => {
+    mutationFn: async ({ id, ...data }: RejectProspectPayload) => {
       const res = await apiRequest("POST", `/api/comercial/prospects/${id}/reject`, data);
       return res.json();
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/comercial/prospects'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/comercial/pipeline'] });
+      invalidateByPrefix('/api/comercial/prospects');
+      invalidateByPrefix('/api/comercial/pipeline');
     },
   });
 
@@ -144,8 +188,8 @@ export function useComercialData() {
       const res = await apiRequest("POST", `/api/comercial/prospects/${prospectId}/notes`, { content, createdById: authUser?.id });
       return res.json();
     },
-    onSettled: (_: any, __: any, variables: any) => {
-      queryClient.invalidateQueries({ queryKey: [`/api/comercial/prospects/${variables.prospectId}/notes`] });
+    onSettled: (_data, _error, variables) => {
+      invalidateByPrefix('/api/comercial/prospects');
     },
   });
 
@@ -154,18 +198,18 @@ export function useComercialData() {
       const res = await apiRequest("DELETE", `/api/comercial/prospects/${prospectId}/notes/${noteId}`);
       return res.json();
     },
-    onSettled: (_: any, __: any, variables: any) => {
-      queryClient.invalidateQueries({ queryKey: [`/api/comercial/prospects/${variables.prospectId}/notes`] });
+    onSettled: (_data, _error, variables) => {
+      invalidateByPrefix('/api/comercial/prospects');
     },
   });
 
   const createDocumentMutation = useMutation({
-    mutationFn: async ({ prospectId, ...data }: any) => {
+    mutationFn: async ({ prospectId, ...data }: CreateDocumentPayload) => {
       const res = await apiRequest("POST", `/api/comercial/prospects/${prospectId}/documents`, data);
       return res.json();
     },
-    onSettled: (_: any, __: any, variables: any) => {
-      queryClient.invalidateQueries({ queryKey: [`/api/comercial/prospects/${variables.prospectId}/documents`] });
+    onSettled: (_data, _error, variables) => {
+      invalidateByPrefix('/api/comercial/prospects');
     },
   });
 
@@ -174,8 +218,8 @@ export function useComercialData() {
       const res = await apiRequest("DELETE", `/api/comercial/prospects/${prospectId}/documents/${docId}`);
       return res.json();
     },
-    onSettled: (_: any, __: any, variables: any) => {
-      queryClient.invalidateQueries({ queryKey: [`/api/comercial/prospects/${variables.prospectId}/documents`] });
+    onSettled: (_data, _error, variables) => {
+      invalidateByPrefix('/api/comercial/prospects');
     },
   });
 
@@ -185,8 +229,8 @@ export function useComercialData() {
   useEffect(() => {
     if (salesTeamData.length > 0) {
       const map: Record<string, number> = {};
-      (dbVentasReales as any[]).forEach((vr: any) => {
-        const member = salesTeamData.find((m: any) => m.dbUserId === vr.userId);
+      dbVentasReales.forEach((vr) => {
+        const member = salesTeamData.find((m) => m.dbUserId === vr.userId);
         if (member) {
           map[`${member.id}-${vr.mes}-${vr.año}`] = Number(vr.monto);
         }
@@ -203,7 +247,7 @@ export function useComercialData() {
   // ═══════ USER INFO ═══════
   const currentUserCodigo = useMemo(() => {
     if (!authUser) return 'VA';
-    const member = salesTeamData.find((m: any) => m.dbUserId === authUser.id);
+    const member = salesTeamData.find((m) => m.dbUserId === authUser.id);
     return member?.codigo || 'VA';
   }, [authUser, salesTeamData]);
 
@@ -220,8 +264,9 @@ export function useComercialData() {
   })();
 
   return {
-    // Loading
+    // Loading / Error
     isLoading: prospectsLoading || teamLoading,
+    isError: prospectsError || teamError,
     // Data
     kanbanProspectos,
     salesTeamData,

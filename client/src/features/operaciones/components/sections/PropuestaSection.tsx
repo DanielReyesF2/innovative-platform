@@ -1,5 +1,6 @@
 import { useState } from "react";
 import EditableTable, { type ColumnDef } from "../EditableTable";
+import { useToast } from "@/components/ui/use-toast";
 import {
   proposalPersonnelApi,
   proposalEquipmentApi,
@@ -40,6 +41,7 @@ const RENTALS_COLS: ColumnDef[] = [
 type SubTab = "personnel" | "equipment" | "supplies" | "rentals";
 
 export default function PropuestaSection({ surveyId, disabled }: Props) {
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<SubTab>("personnel");
 
   const personnel = proposalPersonnelApi.useItems(surveyId);
@@ -61,6 +63,10 @@ export default function PropuestaSection({ surveyId, disabled }: Props) {
   const rentalsCreate = proposalRentalsApi.useCreate();
   const rentalsUpdate = proposalRentalsApi.useUpdate();
   const rentalsDelete = proposalRentalsApi.useDelete();
+
+  const onError = () => {
+    toast({ title: "Error al guardar", description: "Intenta de nuevo", variant: "destructive" });
+  };
 
   const tabs: { key: SubTab; label: string; count: number }[] = [
     { key: "personnel", label: "Personal", count: (personnel.data || []).length },
@@ -91,9 +97,9 @@ export default function PropuestaSection({ surveyId, disabled }: Props) {
         <EditableTable
           columns={PERSONNEL_COLS}
           data={personnel.data || []}
-          onAdd={(item) => personnelCreate.mutate({ surveyId, ...item })}
-          onUpdate={(itemId, data) => personnelUpdate.mutate({ surveyId, itemId, ...data })}
-          onDelete={(itemId) => personnelDelete.mutate({ surveyId, itemId })}
+          onAdd={(item) => personnelCreate.mutate({ surveyId, ...item }, { onError })}
+          onUpdate={(itemId, data) => personnelUpdate.mutate({ surveyId, itemId, ...data }, { onError })}
+          onDelete={(itemId) => personnelDelete.mutate({ surveyId, itemId }, { onError })}
           disabled={disabled}
           emptyText="No hay personal en la propuesta"
         />
@@ -102,9 +108,9 @@ export default function PropuestaSection({ surveyId, disabled }: Props) {
         <EditableTable
           columns={EQUIPMENT_COLS}
           data={equipment.data || []}
-          onAdd={(item) => equipmentCreate.mutate({ surveyId, ...item })}
-          onUpdate={(itemId, data) => equipmentUpdate.mutate({ surveyId, itemId, ...data })}
-          onDelete={(itemId) => equipmentDelete.mutate({ surveyId, itemId })}
+          onAdd={(item) => equipmentCreate.mutate({ surveyId, ...item }, { onError })}
+          onUpdate={(itemId, data) => equipmentUpdate.mutate({ surveyId, itemId, ...data }, { onError })}
+          onDelete={(itemId) => equipmentDelete.mutate({ surveyId, itemId }, { onError })}
           disabled={disabled}
           emptyText="No hay equipo en la propuesta"
         />
@@ -113,9 +119,9 @@ export default function PropuestaSection({ surveyId, disabled }: Props) {
         <EditableTable
           columns={SUPPLIES_COLS}
           data={supplies.data || []}
-          onAdd={(item) => suppliesCreate.mutate({ surveyId, ...item })}
-          onUpdate={(itemId, data) => suppliesUpdate.mutate({ surveyId, itemId, ...data })}
-          onDelete={(itemId) => suppliesDelete.mutate({ surveyId, itemId })}
+          onAdd={(item) => suppliesCreate.mutate({ surveyId, ...item }, { onError })}
+          onUpdate={(itemId, data) => suppliesUpdate.mutate({ surveyId, itemId, ...data }, { onError })}
+          onDelete={(itemId) => suppliesDelete.mutate({ surveyId, itemId }, { onError })}
           disabled={disabled}
           emptyText="No hay insumos en la propuesta"
         />
@@ -124,9 +130,9 @@ export default function PropuestaSection({ surveyId, disabled }: Props) {
         <EditableTable
           columns={RENTALS_COLS}
           data={rentals.data || []}
-          onAdd={(item) => rentalsCreate.mutate({ surveyId, ...item })}
-          onUpdate={(itemId, data) => rentalsUpdate.mutate({ surveyId, itemId, ...data })}
-          onDelete={(itemId) => rentalsDelete.mutate({ surveyId, itemId })}
+          onAdd={(item) => rentalsCreate.mutate({ surveyId, ...item }, { onError })}
+          onUpdate={(itemId, data) => rentalsUpdate.mutate({ surveyId, itemId, ...data }, { onError })}
+          onDelete={(itemId) => rentalsDelete.mutate({ surveyId, itemId }, { onError })}
           disabled={disabled}
           emptyText="No hay rentas en la propuesta"
         />

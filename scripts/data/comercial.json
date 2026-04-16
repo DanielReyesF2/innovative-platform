@@ -1,6 +1,7 @@
 {
   "rejectionReasons": [
     { "reason": "Precio fuera de presupuesto", "category": "Comercial" },
+    { "reason": "Precios no competitivos", "category": "Comercial" },
     { "reason": "No hay interés en el servicio actualmente", "category": "Comercial" },
     { "reason": "Proceso de licitación cancelado", "category": "Proceso" },
     { "reason": "Cambio de prioridades internas", "category": "Proceso" },
@@ -41,11 +42,6 @@
     },
     {
       "email": "molmos@ig-la.com",
-      "period": "2026-03",
-      "monthlyBudget": 0
-    },
-    {
-      "email": "lsobrino@ig-la.com",
       "period": "2026-03",
       "monthlyBudget": 0
     }

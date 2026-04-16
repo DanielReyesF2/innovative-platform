@@ -81,6 +81,7 @@ Color tokens are defined in `client/src/index.css` as HSL CSS custom properties.
 - Login field is `username` (not `email`) in POST /api/auth/login body
 - Traceability has no list-all endpoint — query by client (`/traceability/client/:id`) or period (`/traceability/period/:period`)
 - Admin user created via `npx tsx scripts/create-admin.ts` (needs DATABASE_URL env var set)
+- **Stage ID vs Business Label Mismatch (deuda técnica)**: DB stage IDs don't match business names. KANBAN_STAGES labels reflect the BUSINESS flow: `contacto_inicial`="Lead", `presentacion`="Prospecto", `levantamiento`="Reunión", `propuesta`="Levantamiento", `negociacion`="Propuesta". Code referencing `stage === 'propuesta'` is actually checking for the "Levantamiento" business stage.
 
 # Deployment — Innovative's Own Servers
 

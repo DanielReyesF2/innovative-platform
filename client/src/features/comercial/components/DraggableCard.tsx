@@ -9,10 +9,11 @@ import {
   timeAgo,
   calcularCamposCompletos,
 } from '@/lib/comercial-constants';
+import type { KanbanProspecto, CampoCompleto } from '@shared/types/comercial';
 
 interface Props {
-  prospecto: any;
-  onSelect: (p: any) => void;
+  prospecto: KanbanProspecto;
+  onSelect: (p: KanbanProspecto) => void;
   notesCount?: number;
   filesCount?: number;
 }
@@ -28,7 +29,7 @@ export function DraggableCard({ prospecto, onSelect, notesCount = 0, filesCount 
   const svc = SERVICE_COLORS[primaryService] || SERVICE_COLORS.rme;
   const fechaRef = estimarFechaProspecto(prospecto);
   const campos = calcularCamposCompletos(prospecto);
-  const completos = campos.filter((c: any) => c.ok).length;
+  const completos = campos.filter((c: CampoCompleto) => c.ok).length;
   const total = campos.length;
   const pct = (completos / total) * 100;
   const barColor = completos === total ? '#2E7D32' : pct >= 60 ? '#F57C00' : '#ef4444';

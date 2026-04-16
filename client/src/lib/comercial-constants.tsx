@@ -1,5 +1,28 @@
 import React, { useState } from 'react';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, type LucideIcon } from 'lucide-react';
+import type { Prospect } from '@shared/schema/comercial';
+import type { User } from '@shared/schema/common';
+import { STAGE } from '@shared/schema/comercial-stages';
+import type { KanbanProspecto, SeguimientoData, SeguimientoUrgency, CampoCompleto, StageGate } from '@shared/types/comercial';
+export type { GateMissingField } from '@shared/types/comercial';
+
+/**
+ * Prospect row as returned by the API (JSON).
+ * - Timestamps arrive as ISO strings (not Date objects)
+ * - Includes joined rejection reason fields
+ */
+export type ApiProspect = Omit<Prospect, 'createdAt' | 'updatedAt' | 'rejectionDate' | 'proposalDate' | 'lastContactAt' | 'nextFollowUpAt' | 'fechaVencimientoContrato' | 'sentToOpsAt'> & {
+  createdAt: string | null;
+  updatedAt: string | null;
+  rejectionDate?: string | null;
+  proposalDate?: string | null;
+  lastContactAt?: string | null;
+  nextFollowUpAt?: string | null;
+  fechaVencimientoContrato?: string | null;
+  sentToOpsAt?: string | null;
+  rejectionReasonText?: string | null;
+  rejectionReasonCategory?: string | null;
+};
 
 // ═══════ SERVICIOS ═══════
 export const SERVICIOS_INNOVATIVE = [
@@ -13,6 +36,58 @@ export const SERVICIOS_INNOVATIVE = [
   { id: 'biodigestores', nombre: 'Biodigestores', descripcion: 'Digestión anaerobia de orgánicos' },
   { id: 'sustayn', nombre: 'Sustayn', descripcion: 'Plataforma de sustentabilidad' },
   { id: 'limpieza', nombre: 'Limpieza Especializada', descripcion: 'Servicios de limpieza industrial' },
+] as const;
+
+// ═══════ CATÁLOGO DE RESIDUOS ═══════
+export const WASTE_TYPES_CATALOG = [
+  // Reciclables
+  { id: 'carton', category: 'Reciclables', label: 'Cartón' },
+  { id: 'papel', category: 'Reciclables', label: 'Papel' },
+  { id: 'pet', category: 'Reciclables', label: 'PET' },
+  { id: 'hdpe', category: 'Reciclables', label: 'Plástico HDPE' },
+  { id: 'plastico_mixto', category: 'Reciclables', label: 'Plástico Mixto' },
+  { id: 'playo', category: 'Reciclables', label: 'Playo / Película Stretch' },
+  { id: 'aluminio', category: 'Reciclables', label: 'Aluminio' },
+  { id: 'fierro_metales', category: 'Reciclables', label: 'Fierro / Metales' },
+  { id: 'vidrio', category: 'Reciclables', label: 'Vidrio' },
+  { id: 'chatarra', category: 'Reciclables', label: 'Chatarra' },
+  // Madera
+  { id: 'tarima_madera_estandar', category: 'Madera', label: 'Tarima Madera Estándar' },
+  { id: 'tarima_madera_chica', category: 'Madera', label: 'Tarima Madera Chica' },
+  { id: 'tarima_plastico', category: 'Madera', label: 'Tarima de Plástico' },
+  { id: 'madera_suelta', category: 'Madera', label: 'Madera Suelta' },
+  // Orgánicos
+  { id: 'organicos_alimentos', category: 'Orgánicos', label: 'Orgánicos (Alimentos)' },
+  { id: 'organicos_poda', category: 'Orgánicos', label: 'Orgánicos (Poda / Jardinería)' },
+  { id: 'organicos_mixtos', category: 'Orgánicos', label: 'Orgánicos Mixtos' },
+  // Especiales
+  { id: 'lodos_ptar', category: 'Especiales', label: 'Lodos de PTAR' },
+  { id: 'textiles', category: 'Especiales', label: 'Textiles / Tela' },
+  { id: 'unicel', category: 'Especiales', label: 'Unicel / EPS' },
+  { id: 'aceite_usado', category: 'Especiales', label: 'Aceite Usado' },
+  { id: 'electronico', category: 'Especiales', label: 'Residuo Electrónico (RAEE)' },
+  { id: 'destruccion_fiscal', category: 'Especiales', label: 'Destrucción Fiscal' },
+  // Peligrosos
+  { id: 'rp_solventes', category: 'Peligrosos', label: 'RP — Solventes' },
+  { id: 'rp_aceites', category: 'Peligrosos', label: 'RP — Aceites y Grasas' },
+  { id: 'rp_baterias', category: 'Peligrosos', label: 'RP — Baterías' },
+  { id: 'rp_contenedores', category: 'Peligrosos', label: 'RP — Contenedores Contaminados' },
+  { id: 'rpbi', category: 'Peligrosos', label: 'RPBI — Biológico-Infecciosos' },
+  // Genérico
+  { id: 'rsu_general', category: 'General', label: 'RSU General' },
+  { id: 'otro', category: 'General', label: 'Otro' },
+] as const;
+
+// ═══════ EPP OPTIONS ═══════
+export const EPP_OPTIONS = [
+  { id: 'casco', label: 'Casco' },
+  { id: 'chaleco', label: 'Chaleco Reflejante' },
+  { id: 'botas', label: 'Botas de Seguridad' },
+  { id: 'lentes', label: 'Lentes de Seguridad' },
+  { id: 'guantes', label: 'Guantes' },
+  { id: 'cubrebocas', label: 'Cubrebocas' },
+  { id: 'tapones', label: 'Tapones Auditivos' },
+  { id: 'pantalon_largo', label: 'Pantalón Largo' },
 ] as const;
 
 export const SERVICE_COLORS: Record<string, { bg: string; border: string; text: string; label: string }> = {
@@ -35,54 +110,38 @@ export const INDUSTRIAS = [
 ];
 
 // ═══════ KANBAN STAGES ═══════
+// Labels reflect the BUSINESS flow, not the DB stage IDs.
+// See CLAUDE.md "Stage ID vs Business Label Mismatch" for details.
 export const KANBAN_STAGES = [
-  { id: 'contacto_inicial', label: 'Lead Nuevo', color: '#6b7280', prob: '5%' },
-  { id: 'presentacion', label: 'Reunión', color: '#0D47A1', prob: '20%' },
-  { id: 'levantamiento', label: 'Levantamiento', color: '#F57C00', prob: '35%' },
-  { id: 'propuesta', label: 'Propuesta', color: '#00a8a8', prob: '50%' },
-  { id: 'negociacion', label: 'Negociación', color: '#7C3AED', prob: '70%' },
-  { id: 'cierre_ganado', label: 'Socio Ambiental', color: '#2E7D32', prob: '100%' },
-] as const;
-
-export const HUB_KANBAN_STAGES = [
-  { id: 'contacto_inicial', label: 'Lead', color: '#6b7280' },
-  { id: 'presentacion', label: 'Prospecto', color: '#0D47A1' },
-  { id: 'levantamiento', label: 'Reunión', color: '#F57C00' },
-  { id: 'propuesta', label: 'Levantamiento', color: '#00a8a8' },
-  { id: 'negociacion', label: 'Propuesta', color: '#7C3AED' },
-  { id: 'cierre_ganado', label: 'Socio Ambiental', color: '#2E7D32' },
+  { id: STAGE.CONTACTO_INICIAL, label: 'Lead', color: '#6b7280', prob: '5%' },
+  { id: STAGE.PRESENTACION, label: 'Prospecto', color: '#0D47A1', prob: '20%' },
+  { id: STAGE.LEVANTAMIENTO, label: 'Reunión', color: '#F57C00', prob: '35%' },
+  { id: STAGE.PROPUESTA, label: 'Agendar levantamiento', color: '#00a8a8', prob: '50%' },
+  { id: STAGE.NEGOCIACION, label: 'Propuesta', color: '#7C3AED', prob: '70%' },
+  { id: STAGE.CIERRE_GANADO, label: 'Socio Ambiental', color: '#2E7D32', prob: '100%' },
 ] as const;
 
 export const STAGE_PROBABILITY: Record<string, number> = {
-  contacto_inicial: 0.05,
-  presentacion: 0.20,
-  levantamiento: 0.35,
-  propuesta: 0.50,
-  negociacion: 0.70,
-  cierre_ganado: 1.0,
-  cierre_perdido: 0,
+  [STAGE.CONTACTO_INICIAL]: 0.05,
+  [STAGE.PRESENTACION]: 0.20,
+  [STAGE.LEVANTAMIENTO]: 0.35,
+  [STAGE.PROPUESTA]: 0.50,
+  [STAGE.NEGOCIACION]: 0.70,
+  [STAGE.CIERRE_GANADO]: 1.0,
+  [STAGE.CIERRE_PERDIDO]: 0,
 };
 
 // ═══════ KPI METAS ═══════
 export const KPI_METAS: Record<string, { meta: number; frecuencia: string; label: string; peso: number }> = {
-  leadsNuevos: { meta: 5, frecuencia: 'semanal', label: 'Leads Nuevos', peso: 0.20 },
-  reunionesAgendadas: { meta: 2, frecuencia: 'semanal', label: 'Reuniones Agendadas', peso: 0.25 },
-  levantamientos: { meta: 2, frecuencia: 'mensual', label: 'Levantamientos', peso: 0.30 },
-  propuestasEnviadas: { meta: 0, frecuencia: 'semanal', label: 'Propuestas Enviadas', peso: 0.25 },
-  propuestasRechazadas: { meta: 0, frecuencia: 'semanal', label: 'Propuestas Rechazadas', peso: 0 },
+  leadsNuevos: { meta: 5, frecuencia: 'mensual', label: 'Leads Nuevos', peso: 0.15 },
+  reunionesAgendadas: { meta: 4, frecuencia: 'mensual', label: 'Reuniones Agendadas', peso: 0.15 },
+  levantamientos: { meta: 2, frecuencia: 'mensual', label: 'Levantamientos', peso: 0.20 },
+  propuestasEnviadas: { meta: 3, frecuencia: 'mensual', label: 'Propuestas Presentadas', peso: 0.20 },
+  propuestasRechazadas: { meta: 0, frecuencia: 'mensual', label: 'Propuestas Rechazadas', peso: 0.10 },
+  propuestasGanadas: { meta: 1, frecuencia: 'mensual', label: 'Propuestas Ganadas', peso: 0.20 },
 };
 
-// ═══════ MOTIVOS RECHAZO ═══════
-export const MOTIVOS_RECHAZO = [
-  { id: 1, motivo: 'Precios no competitivos', categoria: 'Comercial' },
-  { id: 2, motivo: 'Tardanza en entregar propuesta', categoria: 'Proceso' },
-  { id: 3, motivo: 'No tienen destinos finales suficientes', categoria: 'Operativo' },
-  { id: 4, motivo: 'No pueden hacer recolecciones diarias', categoria: 'Operativo' },
-  { id: 5, motivo: 'Cliente se queda con proveedor actual', categoria: 'Competencia' },
-  { id: 6, motivo: 'Falta de permisos/documentos', categoria: 'Legal' },
-  { id: 7, motivo: 'Muy poco material (< 10 ton)', categoria: 'Viabilidad' },
-  { id: 8, motivo: 'Otro (especificar)', categoria: 'Otro' },
-];
+// MOTIVOS_RECHAZO removed — rejection reasons now loaded from API: GET /api/comercial/rejection-reasons
 
 export const RECHAZO_CATEGORIES: Record<string, {
   id: string; label: string; color: string; bgColor: string; borderColor: string;
@@ -179,7 +238,7 @@ export const urgencyColor = (dateStr: string | null | undefined): string => {
   return '#EF4444';
 };
 
-export const estimarFechaProspecto = (p: any): string | null => {
+export const estimarFechaProspecto = (p: KanbanProspecto): string | null => {
   return p.fecha || null;
 };
 
@@ -197,7 +256,7 @@ export const getBarColor = (pct: number): string => {
   return '#EF4444';
 };
 
-export const calcularWeightedPipeline = (prospectos: any[]): number => {
+export const calcularWeightedPipeline = (prospectos: KanbanProspecto[]): number => {
   return prospectos.reduce((sum, p) => {
     const valor = p.propuesta?.ventaTotal || p.facturacionEstimada || 0;
     const prob = STAGE_PROBABILITY[p.status] || 0.05;
@@ -205,14 +264,14 @@ export const calcularWeightedPipeline = (prospectos: any[]): number => {
   }, 0);
 };
 
-export const calcularWinRate = (prospectos: any[]): number => {
+export const calcularWinRate = (prospectos: KanbanProspecto[]): number => {
   const ganadas = prospectos.filter(p => p.status === 'cierre_ganado').length;
   const perdidas = prospectos.filter(p => p.status === 'cierre_perdido').length;
   const total = ganadas + perdidas;
   return total > 0 ? ((ganadas / total) * 100) : 0;
 };
 
-export const calcularPipelineVelocity = (prospectos: any[]): number => {
+export const calcularPipelineVelocity = (prospectos: KanbanProspecto[]): number => {
   const oportunidadesActivas = prospectos.filter(p =>
     !['cierre_perdido', 'cierre_ganado'].includes(p.status)
   );
@@ -225,11 +284,11 @@ export const calcularPipelineVelocity = (prospectos: any[]): number => {
   return avgCycleDays > 0 ? (numOpps * avgDeal * winRate) / avgCycleDays : 0;
 };
 
-export const esProspectoCalificado = (lead: any): boolean => {
+export const esProspectoCalificado = (lead: KanbanProspecto): boolean => {
   return !!(lead.empresa && lead.industria && lead.contacto?.nombre && lead.contacto?.puesto && lead.contacto?.correo && lead.contacto?.telefono);
 };
 
-export const camposFaltantes = (lead: any): string[] => {
+export const camposFaltantes = (lead: KanbanProspecto): string[] => {
   const faltantes: string[] = [];
   if (!lead.empresa) faltantes.push('Empresa');
   if (!lead.industria) faltantes.push('Industria');
@@ -240,9 +299,9 @@ export const camposFaltantes = (lead: any): string[] => {
   return faltantes;
 };
 
-export const dbProspectToKanban = (prospect: any, usersMap: Record<number, any> = {}): any => {
-  const user = usersMap[prospect.assignedToId];
-  const ejecutivoCode = user?.codigo || (user?.name ? user.name.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase() : '');
+export const dbProspectToKanban = (prospect: ApiProspect, usersMap: Record<number, Pick<User, 'name' | 'codigo'>> = {}): KanbanProspecto => {
+  const user = prospect.assignedToId ? usersMap[prospect.assignedToId] : undefined;
+  const ejecutivoCode = user?.codigo || (user?.name ? user.name.split(' ').map((n) => n[0]).join('').substring(0, 2).toUpperCase() : '');
   return {
     id: prospect.id,
     empresa: prospect.name,
@@ -260,7 +319,8 @@ export const dbProspectToKanban = (prospect: any, usersMap: Record<number, any> 
     servicios: prospect.services || [],
     status: prospect.stage,
     semana: null,
-    fecha: prospect.createdAt ? new Date(prospect.createdAt).toISOString().split('T')[0] : null,
+    fecha: prospect.firstContactDate || (prospect.createdAt ? prospect.createdAt.split('T')[0] : null),
+    fechaRegistro: prospect.createdAt ? prospect.createdAt.split('T')[0] : null,
     propuesta: {
       status: null,
       ventaTotal: prospect.estimatedValue ? Number(prospect.estimatedValue) : null,
@@ -268,26 +328,31 @@ export const dbProspectToKanban = (prospect: any, usersMap: Record<number, any> 
       carton: null,
       playo: null,
     },
-    motivoRechazo: prospect.rejectionDetail || null,
+    motivoRechazo: prospect.rejectionReasonText || prospect.rejectionDetail || null,
+    motivoRechazoCategory: prospect.rejectionReasonCategory || null,
     comentarios: prospect.reason || prospect.nextStep || '',
     volumenEstimado: prospect.estimatedVolume || null,
     facturacionEstimada: prospect.estimatedValue ? Number(prospect.estimatedValue) : null,
     fuente: prospect.source || 'otro',
-    fechaSeguimiento: prospect.nextFollowUpAt ? new Date(prospect.nextFollowUpAt).toISOString().split('T')[0] : null,
+    fechaSeguimiento: prospect.nextFollowUpAt ? prospect.nextFollowUpAt.split('T')[0] : null,
     followUpAction: prospect.followUpAction || null,
     recoveryStatus: prospect.recoveryStatus || null,
-    fechaVencimientoContrato: prospect.fechaVencimientoContrato ? new Date(prospect.fechaVencimientoContrato).toISOString().split('T')[0] : null,
+    fechaVencimientoContrato: prospect.fechaVencimientoContrato ? prospect.fechaVencimientoContrato.split('T')[0] : null,
     levantamientoData: prospect.levantamientoData || null,
+    serviceVolumes: prospect.serviceVolumes || {},
     potential: prospect.potential || null,
     probability: prospect.probability ?? null,
     priority: prospect.priority || null,
     nextStep: prospect.nextStep || null,
     reason: prospect.reason || null,
     estimatedCloseTime: prospect.estimatedCloseTime || null,
+    meetingDate: prospect.meetingDate || null,
+    surveyDate: prospect.surveyDate || null,
+    updatedAt: prospect.updatedAt || null,
   };
 };
 
-export const calcularPipelineData = (prospectos: any[]) => {
+export const calcularPipelineData = (prospectos: KanbanProspecto[]) => {
   const stages = ['contacto_inicial', 'presentacion', 'levantamiento', 'propuesta', 'negociacion', 'cierre_ganado'];
   const labels: Record<string, string> = { contacto_inicial: 'Lead nuevo', presentacion: 'Reunión', levantamiento: 'Levantamiento', propuesta: 'Propuesta', negociacion: 'Negociación', cierre_ganado: 'Socio Ambiental' };
   const objetivos: Record<string, number> = { contacto_inicial: 50, presentacion: 30, levantamiento: 20, propuesta: 15, negociacion: 10, cierre_ganado: 5 };
@@ -302,7 +367,7 @@ export const calcularPipelineData = (prospectos: any[]) => {
   });
 };
 
-export const calcularCamposCompletos = (p: any) => {
+export const calcularCamposCompletos = (p: KanbanProspecto): CampoCompleto[] => {
   return [
     { label: 'Empresa', ok: !!p.empresa },
     { label: 'Industria', ok: !!p.industria },
@@ -311,19 +376,32 @@ export const calcularCamposCompletos = (p: any) => {
     { label: 'Correo', ok: !!p.contacto?.correo },
     { label: 'Servicios', ok: !!(p.servicios?.length > 0) },
     { label: 'Ciudad', ok: !!p.ciudad },
-    { label: 'Tipos de residuos', ok: !!p.tiposResiduos },
+    { label: 'Tipos de residuos', ok: !!p.levantamientoData },
     { label: 'Volumen estimado', ok: !!p.volumenEstimado },
   ];
 };
 
-export const getRecoveryState = (seg: any) => {
+export const getRecoveryState = (seg: SeguimientoData | null | undefined) => {
   if (!seg) return RECOVERY_STATES.sin_seguimiento;
   if (seg.recoveryStatus === 're_contactada') return RECOVERY_STATES.re_contactada;
   if (seg.fechaSeguimiento) return RECOVERY_STATES.en_seguimiento;
   return RECOVERY_STATES.sin_seguimiento;
 };
 
-export const classifyRechazo = (motivoRechazo: string | null | undefined) => {
+/**
+ * Clasifica un rechazo usando la categoría del catálogo (DB) como fuente primaria.
+ * Fallback a keyword matching sobre el texto del motivo si no hay categoría.
+ */
+export const classifyRechazo = (motivoRechazo: string | null | undefined, dbCategory?: string | null) => {
+  // Primary: use the category from rejection_reasons table
+  if (dbCategory) {
+    const lower = dbCategory.toLowerCase();
+    if (lower === 'comercial' || lower === 'competencia') return RECHAZO_CATEGORIES.pricing;
+    if (lower === 'proceso') return RECHAZO_CATEGORIES.proposal;
+    // Operativo, Legal, Viabilidad → operational
+    return RECHAZO_CATEGORIES.operational;
+  }
+  // Fallback: keyword matching on rejection text (legacy data without category)
   if (!motivoRechazo) return RECHAZO_CATEGORIES.operational;
   const lower = motivoRechazo.toLowerCase();
   if (lower.includes('precio') || lower.includes('competitivo') || lower.includes('costo') || lower.includes('elevado')) return RECHAZO_CATEGORIES.pricing;
@@ -332,7 +410,7 @@ export const classifyRechazo = (motivoRechazo: string | null | undefined) => {
   return RECHAZO_CATEGORIES.operational;
 };
 
-export const getSeguimientoUrgency = (seg: any) => {
+export const getSeguimientoUrgency = (seg: SeguimientoData | null | undefined): SeguimientoUrgency | null => {
   if (!seg?.fechaSeguimiento) return null;
   const today = new Date();
   const target = new Date(seg.fechaSeguimiento);
@@ -374,36 +452,28 @@ export function tabUnlockLabel(tabId: string): string {
 }
 
 // ═══════ STAGE GATES ═══════
-export const STAGE_GATES: Record<string, {
-  label: string;
-  validate: (p: any) => boolean;
-  message: (p: any) => string;
-  requirement: string;
-}> = {
-  presentacion: {
-    label: 'Lead Calificado',
-    validate: (p) => esProspectoCalificado(p),
-    message: () => 'Usa "Calificar" en el detalle del lead para completar datos',
-    requirement: 'Requiere: Calificar lead con datos de negocio',
-  },
+
+export const STAGE_GATES: Record<string, StageGate> = {
+  // No gate for presentacion (Lead→Prospecto): movimiento libre
   levantamiento: {
-    label: 'Volumen Verificado',
-    validate: (p) => !!(p.volumenEstimado || p.facturacionEstimada),
-    message: () => 'Falta volumen estimado o facturación estimada',
-    requirement: 'Requiere: Volumen estimado o Facturación estimada',
+    label: 'Fecha de Reunión',
+    validate: (p) => !!p.meetingDate,
+    message: () => 'Falta agendar fecha de reunión',
+    requirement: 'Requiere: Fecha de reunión agendada',
+    missingFields: (p) => [
+      ...(!p.meetingDate ? [{ key: 'meetingDate', label: 'Fecha de reunión', type: 'date' as const, placeholder: '' }] : []),
+    ],
   },
   propuesta: {
-    label: 'Levantamiento Completado',
-    validate: (p) => !!(p.volumenEstimado && (p.servicios?.length > 0)),
-    message: (p) => `Edita el prospecto para completar: ${[!p.volumenEstimado && 'volumen estimado', !p.servicios?.length && 'servicios seleccionados'].filter(Boolean).join(', ')}`,
-    requirement: 'Requiere: Volumen + Servicios (edita el prospecto para completar)',
+    label: 'Levantamiento Agendado',
+    validate: (p) => !!p.surveyDate,
+    message: () => 'Falta agendar fecha de levantamiento',
+    requirement: 'Requiere: Fecha de levantamiento agendada',
+    missingFields: (p) => [
+      ...(!p.surveyDate ? [{ key: 'surveyDate', label: 'Fecha de levantamiento', type: 'date' as const, placeholder: '' }] : []),
+    ],
   },
-  negociacion: {
-    label: 'Propuesta Acusada',
-    validate: (p) => !!(p.propuesta?.ventaTotal || p.facturacionEstimada),
-    message: () => 'Falta monto de propuesta o facturación estimada',
-    requirement: 'Requiere: Monto de propuesta definido',
-  },
+  // No gate for negociacion: movimiento libre, el valor se toma de la propuesta subida
 };
 
 // ═══════ SHARED COMPONENTS ═══════
@@ -444,7 +514,7 @@ export function ExecutiveAvatar({ codigo, name, size = 'md', className = '' }: {
 
 export function SectionHeader({ color, icon: Icon, label, linkLabel, onLinkClick }: {
   color: string;
-  icon: React.ComponentType<any>;
+  icon: LucideIcon;
   label: string;
   linkLabel?: string;
   onLinkClick?: () => void;

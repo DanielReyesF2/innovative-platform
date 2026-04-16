@@ -9,26 +9,34 @@ import {
   classifyRechazo,
 } from '@/lib/comercial-constants';
 import { useComercialData } from '../hooks/useComercialData';
+import { useToast } from '@/components/ui/use-toast';
 import { ProspectoDrawer } from './ProspectoDrawer';
+import type { KanbanProspecto, SeguimientoData } from '@shared/types/comercial';
 
 interface Props {
-  onSelectProspecto?: (p: any) => void;
+  onSelectProspecto?: (p: KanbanProspecto) => void;
 }
 
 export function RechazadasTab({ onSelectProspecto }: Props) {
   const { kanbanProspectos, updateProspectMutation } = useComercialData();
-  const [selectedProspecto, setSelectedProspecto] = useState<any>(null);
+  const { toast } = useToast();
+  const [selectedProspecto, setSelectedProspecto] = useState<KanbanProspecto | null>(null);
 
-  const handleSelect = (p: any) => {
+  const handleSelect = (p: KanbanProspecto) => {
     if (onSelectProspecto) onSelectProspecto(p);
     else setSelectedProspecto(p);
   };
 
-  const guardarSeguimiento = (prospectoId: number, data: any) => {
-    const updates: any = {};
+  const guardarSeguimiento = async (prospectoId: number, data: Partial<SeguimientoData>) => {
+    const updates: Record<string, string | null> = {};
     if (data.fechaSeguimiento !== undefined) updates.nextFollowUpAt = data.fechaSeguimiento || null;
     if (Object.keys(updates).length > 0) {
-      updateProspectMutation.mutate({ id: prospectoId, ...updates });
+      try {
+        await updateProspectMutation.mutateAsync({ id: prospectoId, ...updates });
+        toast({ title: 'Seguimiento guardado' });
+      } catch {
+        toast({ title: 'Error al guardar seguimiento', variant: 'destructive' });
+      }
     }
   };
 
@@ -46,8 +54,8 @@ export function RechazadasTab({ onSelectProspecto }: Props) {
 
   const totalValue = allRejected.reduce((s, p) => s + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0);
 
-  const byCat: Record<string, any[]> = { pricing: [], proposal: [], operational: [] };
-  allRejected.forEach(p => { const cat = classifyRechazo(p.motivoRechazo); if (byCat[cat.id]) byCat[cat.id].push(p); });
+  const byCat: Record<string, KanbanProspecto[]> = { pricing: [], proposal: [], operational: [] };
+  allRejected.forEach(p => { const cat = classifyRechazo(p.motivoRechazo, p.motivoRechazoCategory); if (byCat[cat.id]) byCat[cat.id].push(p); });
 
   const pieData = Object.entries(byCat)
     .filter(([, items]) => items.length > 0)

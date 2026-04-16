@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useLocation } from 'wouter';
 import { DollarSign, ClipboardList, RotateCcw, Users, Recycle, FileText, BarChart3 } from 'lucide-react';
+import type { TeamMember } from '@shared/types/comercial';
 import { fmtM } from '@/lib/utils';
 import {
   KANBAN_STAGES,
@@ -29,17 +30,31 @@ export default function ComercialPage() {
     currentUserName,
     userGreeting,
     isLoading,
+    isError,
     authUser,
   } = useComercialData();
 
-  const [comercialTab, setComercialTab] = useState<'pipeline' | 'presupuesto' | 'rechazadas' | 'reportes' | 'resumen'>('pipeline');
-  const [hubEjecutivo, setHubEjecutivo] = useState<any>(null);
+  const [comercialTab, setComercialTab] = useState<'pipeline' | 'presupuesto' | 'rechazadas' | 'reportes' | 'resumen'>('presupuesto');
+  const [hubEjecutivo, setHubEjecutivo] = useState<TeamMember | null>(null);
   const [showNuevoLead, setShowNuevoLead] = useState(false);
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#00a8a8]" />
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-3">
+        <div className="text-red-500 text-4xl">⚠</div>
+        <h2 className="text-lg font-semibold text-[#1c2c4a]">Error al cargar datos comerciales</h2>
+        <p className="text-sm text-[#6b7280]">Hubo un problema al conectar con el servidor. Intenta recargar la página.</p>
+        <button onClick={() => window.location.reload()} className="mt-2 px-4 py-2 text-sm font-medium text-white bg-[#00a8a8] rounded-lg hover:bg-[#008f8f]">
+          Recargar
+        </button>
       </div>
     );
   }
@@ -66,8 +81,9 @@ export default function ComercialPage() {
 
   // Derived KPIs
   const presupuestoMesEquipo = salesTeamData.reduce((s, m) => s + (m.presupuestoMensual || 0), 0);
-  const propuestasEnviadas = kanbanProspectos.filter(p => p.status === 'propuesta');
-  const montoPropuestas = propuestasEnviadas.reduce((s, p) => s + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0);
+  const ventasCerradasAnual = salesTeamData.reduce((s, m) => s + (m.ventasRealesAnual || 0), 0);
+  const presupuestoAnualTotal = salesTeamData.reduce((s, m) => s + (m.presupuestoAnual2026 || 0), 0);
+  const propuestasEnviadas = kanbanProspectos.filter(p => p.status === 'propuesta' || p.status === 'negociacion');
   const levantamientosActivos = kanbanProspectos.filter(p => p.status === 'levantamiento');
   const biodigestores = kanbanProspectos.filter(p => (p.servicios || []).includes('biodigestores'));
 
@@ -94,10 +110,10 @@ export default function ComercialPage() {
                 <div className="text-[13px] font-medium text-[#6b7280] mb-1">Presupuesto {new Date().toLocaleDateString('es-MX', { month: 'long' }).replace(/^\w/, c => c.toUpperCase())}</div>
                 <div className="text-2xl font-bold text-[#1c2c4a]">{fmtM(presupuestoMesEquipo)}</div>
                 <div className="text-xs text-[#6b7280] mt-1">
-                  Cierre: <span className="font-semibold text-[#00a8a8]">{fmtM(montoPropuestas)}</span>
-                  {presupuestoMesEquipo > 0 && (
-                    <span className={`ml-1.5 font-semibold ${(montoPropuestas / presupuestoMesEquipo) >= 1 ? 'text-[#2E7D32]' : 'text-[#F57C00]'}`}>
-                      ({Math.round((montoPropuestas / presupuestoMesEquipo) * 100)}%)
+                  Venta Cerrada: <span className="font-semibold text-[#00a8a8]">{fmtM(ventasCerradasAnual)}</span>
+                  {presupuestoAnualTotal > 0 && (
+                    <span className={`ml-1.5 font-semibold ${(ventasCerradasAnual / presupuestoAnualTotal) >= 1 ? 'text-[#2E7D32]' : 'text-[#F57C00]'}`}>
+                      ({Math.round((ventasCerradasAnual / presupuestoAnualTotal) * 100)}%)
                     </span>
                   )}
                 </div>
@@ -191,18 +207,18 @@ export default function ComercialPage() {
         {/* TAB BAR */}
         <div className="mt-5 flex items-center gap-1 bg-white rounded-xl border border-[#e5e7eb] p-1">
           {([
-            { id: 'pipeline' as const, label: 'Oportunidades', icon: ClipboardList },
             { id: 'presupuesto' as const, label: 'Presupuesto', icon: DollarSign },
-            { id: 'rechazadas' as const, label: 'Rechazadas', icon: RotateCcw, badge: kanbanProspectos.filter(p => p.status === 'cierre_perdido').length },
-            { id: 'reportes' as const, label: 'KPIs', icon: BarChart3 },
             { id: 'resumen' as const, label: 'Resumen Semanal', icon: FileText },
+            { id: 'pipeline' as const, label: 'Oportunidades', icon: ClipboardList },
+            { id: 'reportes' as const, label: 'KPIs', icon: BarChart3 },
+            { id: 'rechazadas' as const, label: 'Rechazadas', icon: RotateCcw, badge: kanbanProspectos.filter(p => p.status === 'cierre_perdido').length },
           ]).map(tab => (
             <button key={tab.id} onClick={() => setComercialTab(tab.id)}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all flex-1 justify-center ${comercialTab === tab.id ? 'bg-[#1c2c4a] text-white shadow-sm' : 'text-[#6b7280] hover:bg-[#f3f4f6]'}`}>
               <tab.icon size={15} />
               {tab.label}
-              {'badge' in tab && (tab as any).badge > 0 && (
-                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${comercialTab === tab.id ? 'bg-white/20 text-white' : 'bg-[#F59E0B]/10 text-[#F59E0B]'}`}>{(tab as any).badge}</span>
+              {'badge' in tab && (tab as { badge: number }).badge > 0 && (
+                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${comercialTab === tab.id ? 'bg-white/20 text-white' : 'bg-[#F59E0B]/10 text-[#F59E0B]'}`}>{(tab as { badge: number }).badge}</span>
               )}
             </button>
           ))}
@@ -221,7 +237,7 @@ export default function ComercialPage() {
         <LeadForm
           onClose={() => setShowNuevoLead(false)}
           salesTeam={salesTeamData}
-          defaultAssignee={hubEjecutivo?.dbUserId || authUser?.id}
+          defaultAssignee={authUser?.id}
         />
       )}
     </div>

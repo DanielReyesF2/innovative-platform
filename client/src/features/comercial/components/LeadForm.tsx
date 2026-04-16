@@ -4,6 +4,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useCreateProspect } from "../api";
 import { useToast } from "@/components/ui/use-toast";
+import { SERVICIOS_INNOVATIVE } from "@/lib/comercial-constants";
+import { STAGE } from "@shared/schema/comercial-stages";
+import type { TeamMember } from "@shared/types/comercial";
 
 const SOURCE_LABELS: Record<string, string> = {
   referido: "Referido",
@@ -16,7 +19,7 @@ const SOURCE_LABELS: Record<string, string> = {
 
 interface LeadFormProps {
   onClose: () => void;
-  salesTeam?: any[];
+  salesTeam?: TeamMember[];
   defaultAssignee?: number;
 }
 
@@ -24,18 +27,29 @@ export function LeadForm({ onClose, salesTeam, defaultAssignee }: LeadFormProps)
   const [form, setForm] = useState({
     companyName: "",
     contactName: "",
+    contactRole: "",
     contactPhone: "",
     contactEmail: "",
     source: "referido",
     notes: "",
     assignedToId: defaultAssignee ? String(defaultAssignee) : "",
     firstContactDate: new Date().toISOString().split("T")[0],
+    services: [] as string[],
   });
 
   const createProspect = useCreateProspect();
   const { toast } = useToast();
 
   const set = (key: string, val: string) => setForm({ ...form, [key]: val });
+
+  const toggleService = (svcId: string) => {
+    setForm(prev => ({
+      ...prev,
+      services: prev.services.includes(svcId)
+        ? prev.services.filter(s => s !== svcId)
+        : [...prev.services, svcId],
+    }));
+  };
 
   const handleSubmit = async () => {
     if (!form.companyName.trim() || !form.contactName.trim()) {
@@ -47,13 +61,15 @@ export function LeadForm({ onClose, salesTeam, defaultAssignee }: LeadFormProps)
       await createProspect.mutateAsync({
         name: form.companyName.trim(),
         contactName: form.contactName.trim(),
+        contactRole: form.contactRole.trim() || undefined,
         contactPhone: form.contactPhone.trim() || undefined,
         contactEmail: form.contactEmail.trim() || undefined,
         source: form.source,
-        stage: "contacto_inicial",
+        stage: STAGE.CONTACTO_INICIAL,
         probability: 10,
         priority: "media",
         reason: form.notes.trim() || undefined,
+        services: form.services.length > 0 ? form.services : undefined,
         assignedToId: form.assignedToId ? Number(form.assignedToId) : undefined,
         firstContactDate: form.firstContactDate || undefined,
       });
@@ -80,7 +96,7 @@ export function LeadForm({ onClose, salesTeam, defaultAssignee }: LeadFormProps)
           </p>
 
           {defaultAssignee && salesTeam && (() => {
-            const registrant = salesTeam.find((m: any) => m.dbUserId === defaultAssignee);
+            const registrant = salesTeam.find((m: TeamMember) => m.dbUserId === defaultAssignee);
             if (!registrant) return null;
             return (
               <div className="flex items-center gap-2 rounded-lg bg-muted/50 px-3 py-2">
@@ -106,6 +122,16 @@ export function LeadForm({ onClose, salesTeam, defaultAssignee }: LeadFormProps)
               value={form.contactName}
               onChange={(e) => set("contactName", e.target.value)}
               placeholder="Nombre completo"
+              className="mt-1"
+            />
+          </div>
+
+          <div>
+            <Label>Cargo / Puesto</Label>
+            <Input
+              value={form.contactRole}
+              onChange={(e) => set("contactRole", e.target.value)}
+              placeholder="Ej: Gerente de Planta"
               className="mt-1"
             />
           </div>
@@ -166,7 +192,7 @@ export function LeadForm({ onClose, salesTeam, defaultAssignee }: LeadFormProps)
                 className="mt-1 h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
               >
                 <option value="">Sin asignar</option>
-                {salesTeam.map((m: any) => (
+                {salesTeam.map((m: TeamMember) => (
                   <option key={m.dbUserId} value={m.dbUserId}>
                     {m.name}
                   </option>
@@ -174,6 +200,26 @@ export function LeadForm({ onClose, salesTeam, defaultAssignee }: LeadFormProps)
               </select>
             </div>
           )}
+
+          <div>
+            <Label>Servicios de interés</Label>
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {SERVICIOS_INNOVATIVE.map(svc => (
+                <button
+                  key={svc.id}
+                  type="button"
+                  onClick={() => toggleService(svc.id)}
+                  className={`rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
+                    form.services.includes(svc.id)
+                      ? "bg-[#00a8a8] text-white"
+                      : "bg-[#f3f4f6] text-[#6b7280] hover:bg-[#e5e7eb]"
+                  }`}
+                >
+                  {svc.nombre}
+                </button>
+              ))}
+            </div>
+          </div>
 
           <div>
             <Label>Notas</Label>

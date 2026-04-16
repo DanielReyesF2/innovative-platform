@@ -1,9 +1,11 @@
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { X, AlertCircle } from 'lucide-react';
-import { MOTIVOS_RECHAZO } from '@/lib/comercial-constants';
+import { fmtCurrency } from '@/lib/utils';
+import type { KanbanProspecto } from '@shared/types/comercial';
 
 interface Props {
-  prospecto: any;
+  prospecto: KanbanProspecto;
   onClose: () => void;
   onSave: (data: { motivoRechazo: number; motivoRechazoDetalle: string; fechaRechazo: string }) => void;
 }
@@ -11,6 +13,10 @@ interface Props {
 export function ModalMotivoRechazo({ prospecto, onClose, onSave }: Props) {
   const [motivoSeleccionado, setMotivoSeleccionado] = useState('');
   const [detalle, setDetalle] = useState('');
+
+  const { data: rejectionReasons = [] } = useQuery<{ id: number; reason: string; category: string }[]>({
+    queryKey: ['/api/comercial/rejection-reasons'],
+  });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,9 +53,9 @@ export function ModalMotivoRechazo({ prospecto, onClose, onSave }: Props) {
               required
             >
               <option value="">Seleccione un motivo...</option>
-              {MOTIVOS_RECHAZO.map(motivo => (
+              {rejectionReasons.map(motivo => (
                 <option key={motivo.id} value={String(motivo.id)}>
-                  {motivo.motivo} ({motivo.categoria})
+                  {motivo.reason} ({motivo.category})
                 </option>
               ))}
             </select>
@@ -73,7 +79,7 @@ export function ModalMotivoRechazo({ prospecto, onClose, onSave }: Props) {
                 <p className="font-semibold mb-1">Información importante</p>
                 <p>
                   El registro del motivo de rechazo es obligatorio y ayudará a mejorar nuestros procesos comerciales.
-                  Valor estimado de esta propuesta: ${(prospecto?.facturacionEstimada || prospecto?.propuesta?.ventaTotal || 0).toLocaleString('es-MX')}
+                  Valor estimado de esta propuesta: {fmtCurrency(prospecto?.facturacionEstimada || prospecto?.propuesta?.ventaTotal || 0)}
                 </p>
               </div>
             </div>

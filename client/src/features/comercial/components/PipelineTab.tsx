@@ -1,18 +1,17 @@
 import { useState } from 'react';
-import { ClipboardList, Filter, X } from 'lucide-react';
-import { fmtM } from '@/lib/utils';
+import { Filter, X } from 'lucide-react';
 import {
   KANBAN_STAGES,
   SERVICE_COLORS,
   SERVICIOS_INNOVATIVE,
   ExecutiveAvatar,
-  SectionHeader,
 } from '@/lib/comercial-constants';
 import { useComercialData } from '../hooks/useComercialData';
 import { ProspectoDrawer } from './ProspectoDrawer';
+import type { KanbanProspecto, TeamMember } from '@shared/types/comercial';
 
 interface Props {
-  onViewHub: (member: any) => void;
+  onViewHub: (member: TeamMember) => void;
 }
 
 export function PipelineTab({ onViewHub }: Props) {
@@ -27,69 +26,10 @@ export function PipelineTab({ onViewHub }: Props) {
   const [filterEtapa, setFilterEtapa] = useState('todos');
 
   // Prospect drawer
-  const [selectedProspecto, setSelectedProspecto] = useState<any>(null);
+  const [selectedProspecto, setSelectedProspecto] = useState<KanbanProspecto | null>(null);
 
   return (
     <>
-      {/* Presupuesto por Ejecutivo */}
-      <div className="mt-4 bg-white rounded-xl border border-[#e5e7eb] card-modern p-5">
-        <h3 className="text-sm font-semibold text-[#1c2c4a] mb-3">Oportunidades por Ejecutivo</h3>
-        <div className="space-y-4">
-          {salesTeamData.map(member => {
-            const memberProspectos = kanbanProspectos.filter(p => p.ejecutivo === member.codigo);
-            const memberPipeline = memberProspectos.filter(p => p.status !== 'cierre_perdido').reduce((s, p) => s + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0);
-            const leads = memberProspectos.filter(p => ['contacto_inicial', 'presentacion'].includes(p.status)).length;
-            const prospectos = memberProspectos.filter(p => !['contacto_inicial', 'presentacion', 'cierre_perdido'].includes(p.status)).length;
-            const porEtapa = KANBAN_STAGES.map(s => memberProspectos.filter(p => p.status === s.id).length);
-            if (memberProspectos.length === 0) return null;
-            return (
-              <div key={member.codigo} onClick={() => onViewHub(member)} className="flex items-center gap-3 cursor-pointer hover:bg-[#f3f4f6] rounded-lg p-2 -mx-2 transition-colors">
-                <ExecutiveAvatar codigo={member.codigo} name={member.name} size="md" />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm font-semibold text-[#1c2c4a]">{member.name.split(' ').slice(0, 2).join(' ')}</span>
-                    <span className="text-sm font-bold text-[#0D47A1]">{fmtM(memberPipeline)}</span>
-                  </div>
-                  <div className="flex items-center gap-3 mb-1.5">
-                    <span className="text-xs text-[#6b7280]"><span className="font-semibold">{leads}</span> leads</span>
-                    <span className="text-xs text-[#00a8a8]"><span className="font-semibold">{prospectos}</span> prospectos</span>
-                    <span className="text-[10px] text-[#6b7280]">({memberProspectos.length} total)</span>
-                  </div>
-                  <div className="w-full h-3 bg-[#e5e7eb] rounded-full overflow-hidden flex">
-                    {KANBAN_STAGES.map((stage, idx) => {
-                      const pct = memberProspectos.length > 0 ? (porEtapa[idx] / memberProspectos.length * 100) : 0;
-                      if (pct === 0) return null;
-                      return (
-                        <div key={stage.id} className="h-full first:rounded-l-full last:rounded-r-full transition-all duration-500"
-                          style={{ width: `${pct}%`, backgroundColor: stage.color }} title={`${stage.label}: ${porEtapa[idx]}`} />
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            );
-          }).filter(Boolean)}
-          {/* Totals */}
-          <div className="flex justify-between items-center text-xs pt-3 border-t border-[#e5e7eb]">
-            <div className="flex items-center gap-4">
-              <span className="text-[#6b7280]">Total: <span className="font-bold text-[#1c2c4a]">{kanbanProspectos.length}</span></span>
-              <span className="text-[#6b7280]">Leads: <span className="font-bold">{kanbanProspectos.filter(p => ['contacto_inicial', 'presentacion'].includes(p.status)).length}</span></span>
-              <span className="text-[#00a8a8]">Prospectos: <span className="font-bold">{kanbanProspectos.filter(p => !['contacto_inicial', 'presentacion', 'cierre_perdido'].includes(p.status)).length}</span></span>
-              <span className="text-[#0D47A1] font-bold">{fmtM(kanbanProspectos.filter(p => p.status !== 'cierre_perdido').reduce((s, p) => s + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0))}</span>
-            </div>
-            <div className="flex gap-2">
-              {KANBAN_STAGES.map(s => (
-                <div key={s.id} className="flex items-center gap-1 text-[9px]">
-                  <div className="w-2 h-2 rounded-sm" style={{ backgroundColor: s.color }} />
-                  {s.label}
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <SectionHeader color="#0D47A1" icon={ClipboardList} label="Oportunidades Detallado" />
 
       {/* Service Summary */}
       <div className="flex items-center justify-end gap-2 flex-wrap">
@@ -170,7 +110,7 @@ export function PipelineTab({ onViewHub }: Props) {
           .filter(p => filterEjecutivo === 'todos' || p.ejecutivo === filterEjecutivo)
           .filter(p => filterEtapa === 'todos' || p.status === filterEtapa)
           .sort((a, b) => {
-            const stageOrder = KANBAN_STAGES.map(s => s.id);
+            const stageOrder: string[] = KANBAN_STAGES.map(s => s.id);
             return stageOrder.indexOf(b.status) - stageOrder.indexOf(a.status);
           });
 
@@ -217,7 +157,12 @@ export function PipelineTab({ onViewHub }: Props) {
                               {stage?.label || p.status}
                             </span>
                           </td>
-                          <td className="px-3 py-2.5 text-xs text-[#6b7280]">{ejecutivo?.name?.split(' ').slice(0, 2).join(' ') || p.ejecutivo}</td>
+                          <td className="px-3 py-2.5">
+                            <div className="flex items-center gap-1.5">
+                              <ExecutiveAvatar codigo={p.ejecutivo} name={ejecutivo?.name || p.ejecutivo} size="xs" />
+                              <span className="text-xs text-[#6b7280]">{ejecutivo?.name?.split(' ').slice(0, 2).join(' ') || p.ejecutivo}</span>
+                            </div>
+                          </td>
                           <td className="px-4 py-2.5">
                             <div className="text-sm text-[#1c2c4a]">{p.contacto?.nombre || '—'}</div>
                             {p.contacto?.puesto && <div className="text-[11px] text-[#9ca3af] truncate">{p.contacto.puesto}</div>}

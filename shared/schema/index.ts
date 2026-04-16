@@ -3,6 +3,7 @@
 export * from "./common";
 export * from "./dashboard";
 export * from "./comercial";
+export * from "./comercial-stages";
 export * from "./operaciones";
 export * from "./subproductos";
 export * from "./nova";

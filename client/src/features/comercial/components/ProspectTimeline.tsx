@@ -31,6 +31,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useProspectActivities, useCreateActivity } from "../api";
+import type { ProspectActivity } from "@shared/schema/comercial";
 
 interface ProspectTimelineProps {
   prospectId: number;
@@ -198,7 +199,7 @@ export function ProspectTimeline({ prospectId }: ProspectTimelineProps) {
       ) : (
         <div className="relative space-y-4">
           <div className="absolute left-4 top-0 bottom-0 w-px bg-border" />
-          {activities.map((activity: any) => (
+          {activities.map((activity: ProspectActivity) => (
             <div key={activity.id} className="relative pl-10">
               <div
                 className={`absolute left-0 w-8 h-8 rounded-full flex items-center justify-center ${

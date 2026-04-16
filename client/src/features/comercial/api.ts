@@ -1,23 +1,37 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { apiRequest, invalidateByPrefix } from "@/lib/queryClient";
+import type { ApiProspect } from "@/lib/comercial-constants";
+import type {
+  Lead,
+  RejectionReason,
+  SalesMetrics,
+  PipelineSnapshot,
+  ProspectActivity,
+  ProspectNote,
+  ProspectMeeting,
+  ProspectDocument,
+  ProposalVersion,
+  FollowUpAlert,
+  ComercialWeeklyReport,
+} from "@shared/schema/comercial";
 
 // --- Prospects ---
 
 export function useProspects() {
-  return useQuery<any[]>({
+  return useQuery<ApiProspect[]>({
     queryKey: ["/api/comercial/prospects"],
   });
 }
 
 export function useProspect(id: number) {
-  return useQuery<any>({
+  return useQuery<ApiProspect>({
     queryKey: [`/api/comercial/prospects/${id}`],
     enabled: !!id,
   });
 }
 
 export function useProspectsByStage(stage: string) {
-  return useQuery<any[]>({
+  return useQuery<ApiProspect[]>({
     queryKey: [`/api/comercial/prospects/stage/${stage}`],
     enabled: !!stage,
   });
@@ -25,39 +39,39 @@ export function useProspectsByStage(stage: string) {
 
 export function useCreateProspect() {
   return useMutation({
-    mutationFn: async (data: any) => {
+    mutationFn: async (data: Record<string, unknown>) => {
       const res = await apiRequest("POST", "/api/comercial/prospects", data);
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/comercial/prospects"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/comercial/pipeline"] });
+      invalidateByPrefix("/api/comercial/prospects");
+      invalidateByPrefix("/api/comercial/pipeline");
     },
   });
 }
 
 export function useQualifyProspect() {
   return useMutation({
-    mutationFn: async ({ id, ...data }: { id: number; [key: string]: any }) => {
+    mutationFn: async ({ id, ...data }: { id: number; [key: string]: unknown }) => {
       const res = await apiRequest("POST", `/api/comercial/prospects/${id}/qualify`, data);
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/comercial/prospects"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/comercial/pipeline"] });
+      invalidateByPrefix("/api/comercial/prospects");
+      invalidateByPrefix("/api/comercial/pipeline");
     },
   });
 }
 
 export function useUpdateProspect() {
   return useMutation({
-    mutationFn: async ({ id, ...data }: any) => {
+    mutationFn: async ({ id, ...data }: { id: number; [key: string]: unknown }) => {
       const res = await apiRequest("PATCH", `/api/comercial/prospects/${id}`, data);
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/comercial/prospects"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/comercial/pipeline"] });
+      invalidateByPrefix("/api/comercial/prospects");
+      invalidateByPrefix("/api/comercial/pipeline");
     },
   });
 }
@@ -69,8 +83,8 @@ export function useDeleteProspect() {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/comercial/prospects"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/comercial/pipeline"] });
+      invalidateByPrefix("/api/comercial/prospects");
+      invalidateByPrefix("/api/comercial/pipeline");
     },
   });
 }
@@ -82,8 +96,8 @@ export function useRejectProspect() {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/comercial/prospects"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/comercial/pipeline"] });
+      invalidateByPrefix("/api/comercial/prospects");
+      invalidateByPrefix("/api/comercial/pipeline");
     },
   });
 }
@@ -91,19 +105,19 @@ export function useRejectProspect() {
 // --- Leads ---
 
 export function useLeads() {
-  return useQuery<any[]>({
+  return useQuery<Lead[]>({
     queryKey: ["/api/comercial/leads"],
   });
 }
 
 export function useCreateLead() {
   return useMutation({
-    mutationFn: async (data: any) => {
+    mutationFn: async (data: Record<string, unknown>) => {
       const res = await apiRequest("POST", "/api/comercial/leads", data);
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/comercial/leads"] });
+      invalidateByPrefix("/api/comercial/leads");
     },
   });
 }
@@ -115,7 +129,7 @@ export function useAssignLead() {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/comercial/leads"] });
+      invalidateByPrefix("/api/comercial/leads");
     },
   });
 }
@@ -141,17 +155,29 @@ export function useConvertLead() {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/comercial/leads"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/comercial/prospects"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/comercial/pipeline"] });
+      invalidateByPrefix("/api/comercial/leads");
+      invalidateByPrefix("/api/comercial/prospects");
+      invalidateByPrefix("/api/comercial/pipeline");
     },
   });
 }
 
 // --- Comercial Team ---
 
+interface ApiTeamMember {
+  id: number;
+  codigo: string | null;
+  name: string;
+  email: string;
+  role: string;
+  presupuestoMensual: number;
+  presupuestoAnual: number;
+  presupuestosMensuales: Record<string, number>;
+  ventasReales: number;
+}
+
 export function useComercialTeam() {
-  return useQuery<any[]>({
+  return useQuery<ApiTeamMember[]>({
     queryKey: ["/api/comercial/team"],
     staleTime: 5 * 60 * 1000,
   });
@@ -160,7 +186,7 @@ export function useComercialTeam() {
 // --- Pipeline ---
 
 export function usePipeline() {
-  return useQuery<any[]>({
+  return useQuery<PipelineSnapshot[]>({
     queryKey: ["/api/comercial/pipeline"],
   });
 }
@@ -168,7 +194,7 @@ export function usePipeline() {
 // --- Rejection Reasons ---
 
 export function useRejectionReasons() {
-  return useQuery<any[]>({
+  return useQuery<RejectionReason[]>({
     queryKey: ["/api/comercial/rejection-reasons"],
   });
 }
@@ -182,8 +208,8 @@ export function useSendToOperaciones() {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/comercial/prospects"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/comercial/pipeline"] });
+      invalidateByPrefix("/api/comercial/prospects");
+      invalidateByPrefix("/api/comercial/pipeline");
     },
   });
 }
@@ -191,13 +217,13 @@ export function useSendToOperaciones() {
 // --- Sales Metrics ---
 
 export function useSalesMetrics(period?: string) {
-  return useQuery<any[]>({
+  return useQuery<SalesMetrics[]>({
     queryKey: ["/api/comercial/sales-metrics", period].filter(Boolean),
   });
 }
 
 export function useUserSalesMetrics(userId: number) {
-  return useQuery<any[]>({
+  return useQuery<SalesMetrics[]>({
     queryKey: [`/api/comercial/sales-metrics/user/${userId}`],
     enabled: !!userId,
   });
@@ -208,7 +234,7 @@ export function useUserSalesMetrics(userId: number) {
 // --- Activities ---
 
 export function useProspectActivities(prospectId: number) {
-  return useQuery<any[]>({
+  return useQuery<ProspectActivity[]>({
     queryKey: [`/api/comercial/prospects/${prospectId}/activities`],
     enabled: !!prospectId,
   });
@@ -216,13 +242,12 @@ export function useProspectActivities(prospectId: number) {
 
 export function useCreateActivity() {
   return useMutation({
-    mutationFn: async ({ prospectId, ...data }: any) => {
+    mutationFn: async ({ prospectId, ...data }: { prospectId: number; [key: string]: unknown }) => {
       const res = await apiRequest("POST", `/api/comercial/prospects/${prospectId}/activities`, data);
       return res.json();
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: [`/api/comercial/prospects/${variables.prospectId}/activities`] });
-      queryClient.invalidateQueries({ queryKey: ["/api/comercial/prospects"] });
+    onSuccess: () => {
+      invalidateByPrefix("/api/comercial/prospects");
     },
   });
 }
@@ -230,7 +255,7 @@ export function useCreateActivity() {
 // --- Notes ---
 
 export function useProspectNotes(prospectId: number) {
-  return useQuery<any[]>({
+  return useQuery<ProspectNote[]>({
     queryKey: [`/api/comercial/prospects/${prospectId}/notes`],
     enabled: !!prospectId,
   });
@@ -242,9 +267,8 @@ export function useCreateNote() {
       const res = await apiRequest("POST", `/api/comercial/prospects/${prospectId}/notes`, { content });
       return res.json();
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: [`/api/comercial/prospects/${variables.prospectId}/notes`] });
-      queryClient.invalidateQueries({ queryKey: [`/api/comercial/prospects/${variables.prospectId}/activities`] });
+    onSuccess: () => {
+      invalidateByPrefix("/api/comercial/prospects");
     },
   });
 }
@@ -255,8 +279,8 @@ export function useUpdateNote() {
       const res = await apiRequest("PATCH", `/api/comercial/prospects/${prospectId}/notes/${noteId}`, { content });
       return res.json();
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: [`/api/comercial/prospects/${variables.prospectId}/notes`] });
+    onSuccess: () => {
+      invalidateByPrefix("/api/comercial/prospects");
     },
   });
 }
@@ -267,8 +291,8 @@ export function useDeleteNote() {
       const res = await apiRequest("DELETE", `/api/comercial/prospects/${prospectId}/notes/${noteId}`);
       return res.json();
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: [`/api/comercial/prospects/${variables.prospectId}/notes`] });
+    onSuccess: () => {
+      invalidateByPrefix("/api/comercial/prospects");
     },
   });
 }
@@ -279,8 +303,8 @@ export function useToggleNotePin() {
       const res = await apiRequest("POST", `/api/comercial/prospects/${prospectId}/notes/${noteId}/toggle-pin`);
       return res.json();
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: [`/api/comercial/prospects/${variables.prospectId}/notes`] });
+    onSuccess: () => {
+      invalidateByPrefix("/api/comercial/prospects");
     },
   });
 }
@@ -288,7 +312,7 @@ export function useToggleNotePin() {
 // --- Meetings ---
 
 export function useProspectMeetings(prospectId: number) {
-  return useQuery<any[]>({
+  return useQuery<ProspectMeeting[]>({
     queryKey: [`/api/comercial/prospects/${prospectId}/meetings`],
     enabled: !!prospectId,
   });
@@ -296,13 +320,12 @@ export function useProspectMeetings(prospectId: number) {
 
 export function useCreateMeeting() {
   return useMutation({
-    mutationFn: async ({ prospectId, ...data }: any) => {
+    mutationFn: async ({ prospectId, ...data }: { prospectId: number; title: string; scheduledAt: string; location?: string; [key: string]: unknown }) => {
       const res = await apiRequest("POST", `/api/comercial/prospects/${prospectId}/meetings`, data);
       return res.json();
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: [`/api/comercial/prospects/${variables.prospectId}/meetings`] });
-      queryClient.invalidateQueries({ queryKey: [`/api/comercial/prospects/${variables.prospectId}/activities`] });
+    onSuccess: () => {
+      invalidateByPrefix("/api/comercial/prospects");
     },
   });
 }
@@ -313,8 +336,8 @@ export function useCompleteMeeting() {
       const res = await apiRequest("POST", `/api/comercial/prospects/${prospectId}/meetings/${meetingId}/complete`, { outcome });
       return res.json();
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: [`/api/comercial/prospects/${variables.prospectId}/meetings`] });
+    onSuccess: () => {
+      invalidateByPrefix("/api/comercial/prospects");
     },
   });
 }
@@ -325,8 +348,8 @@ export function useCancelMeeting() {
       const res = await apiRequest("POST", `/api/comercial/prospects/${prospectId}/meetings/${meetingId}/cancel`);
       return res.json();
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: [`/api/comercial/prospects/${variables.prospectId}/meetings`] });
+    onSuccess: () => {
+      invalidateByPrefix("/api/comercial/prospects");
     },
   });
 }
@@ -334,7 +357,7 @@ export function useCancelMeeting() {
 // --- Documents ---
 
 export function useProspectDocuments(prospectId: number) {
-  return useQuery<any[]>({
+  return useQuery<ProspectDocument[]>({
     queryKey: [`/api/comercial/prospects/${prospectId}/documents`],
     enabled: !!prospectId,
   });
@@ -342,13 +365,12 @@ export function useProspectDocuments(prospectId: number) {
 
 export function useCreateDocument() {
   return useMutation({
-    mutationFn: async ({ prospectId, ...data }: any) => {
+    mutationFn: async ({ prospectId, ...data }: { prospectId: number; name: string; type: string; url?: string; [key: string]: unknown }) => {
       const res = await apiRequest("POST", `/api/comercial/prospects/${prospectId}/documents`, data);
       return res.json();
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: [`/api/comercial/prospects/${variables.prospectId}/documents`] });
-      queryClient.invalidateQueries({ queryKey: [`/api/comercial/prospects/${variables.prospectId}/activities`] });
+    onSuccess: () => {
+      invalidateByPrefix("/api/comercial/prospects");
     },
   });
 }
@@ -359,8 +381,8 @@ export function useDeleteDocument() {
       const res = await apiRequest("DELETE", `/api/comercial/prospects/${prospectId}/documents/${docId}`);
       return res.json();
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: [`/api/comercial/prospects/${variables.prospectId}/documents`] });
+    onSuccess: () => {
+      invalidateByPrefix("/api/comercial/prospects");
     },
   });
 }
@@ -368,7 +390,7 @@ export function useDeleteDocument() {
 // --- Proposals ---
 
 export function useProposalVersions(prospectId: number) {
-  return useQuery<any[]>({
+  return useQuery<ProposalVersion[]>({
     queryKey: [`/api/comercial/prospects/${prospectId}/proposals`],
     enabled: !!prospectId,
   });
@@ -376,13 +398,12 @@ export function useProposalVersions(prospectId: number) {
 
 export function useCreateProposal() {
   return useMutation({
-    mutationFn: async ({ prospectId, ...data }: any) => {
+    mutationFn: async ({ prospectId, ...data }: { prospectId: number; [key: string]: unknown }) => {
       const res = await apiRequest("POST", `/api/comercial/prospects/${prospectId}/proposals`, data);
       return res.json();
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: [`/api/comercial/prospects/${variables.prospectId}/proposals`] });
-      queryClient.invalidateQueries({ queryKey: [`/api/comercial/prospects/${variables.prospectId}/activities`] });
+    onSuccess: () => {
+      invalidateByPrefix("/api/comercial/prospects");
     },
   });
 }
@@ -393,8 +414,8 @@ export function useSendProposal() {
       const res = await apiRequest("POST", `/api/comercial/prospects/${prospectId}/proposals/${proposalId}/send`);
       return res.json();
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: [`/api/comercial/prospects/${variables.prospectId}/proposals`] });
+    onSuccess: () => {
+      invalidateByPrefix("/api/comercial/prospects");
     },
   });
 }
@@ -405,8 +426,8 @@ export function useChangeProposalStatus() {
       const res = await apiRequest("POST", `/api/comercial/prospects/${prospectId}/proposals/${proposalId}/status`, { status });
       return res.json();
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: [`/api/comercial/prospects/${variables.prospectId}/proposals`] });
+    onSuccess: () => {
+      invalidateByPrefix("/api/comercial/prospects");
     },
   });
 }
@@ -414,7 +435,7 @@ export function useChangeProposalStatus() {
 // --- Alerts ---
 
 export function useAlerts(status?: string) {
-  return useQuery<any[]>({
+  return useQuery<FollowUpAlert[]>({
     queryKey: ["/api/comercial/alerts", status].filter(Boolean),
   });
 }
@@ -432,7 +453,7 @@ export function useAcknowledgeAlert() {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/comercial/alerts"] });
+      invalidateByPrefix("/api/comercial/alerts");
     },
   });
 }
@@ -444,7 +465,7 @@ export function useDismissAlert() {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/comercial/alerts"] });
+      invalidateByPrefix("/api/comercial/alerts");
     },
   });
 }
@@ -456,51 +477,67 @@ export function useGenerateAlerts() {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/comercial/alerts"] });
+      invalidateByPrefix("/api/comercial/alerts");
     },
   });
 }
 
 // --- Reports ---
 
+interface LeadSourceReport {
+  source: string;
+  count: number;
+  value: number;
+}
+
+interface ForecastEntry {
+  month: string;
+  predicted: number;
+  actual: number;
+}
+
+interface WinLossAnalysis {
+  totalWon: number;
+  totalLost: number;
+  winRate: number;
+  avgDealSize: number;
+  topReasons: { reason: string; count: number }[];
+}
+
+interface CompetitorEntry {
+  name: string;
+  deals: number;
+  wins: number;
+}
+
 export function useLeadSourcesReport() {
-  return useQuery<any[]>({
+  return useQuery<LeadSourceReport[]>({
     queryKey: ["/api/comercial/reports/lead-sources"],
   });
 }
 
 export function useSalesForecast() {
-  return useQuery<any[]>({
+  return useQuery<ForecastEntry[]>({
     queryKey: ["/api/comercial/reports/forecast"],
   });
 }
 
 export function useWinLossAnalysis() {
-  return useQuery<any>({
+  return useQuery<WinLossAnalysis>({
     queryKey: ["/api/comercial/reports/win-loss"],
   });
 }
 
 export function useCompetitorAnalysis() {
-  return useQuery<any[]>({
+  return useQuery<CompetitorEntry[]>({
     queryKey: ["/api/comercial/reports/competitors"],
   });
 }
 
 // === RESUMEN SEMANAL ===
 
-export function useWeeklyReports() {
-  return useQuery<any[]>({
-    queryKey: ["/api/comercial/weekly-reports"],
-    queryFn: async () => {
-      const res = await apiRequest("GET", "/api/comercial/weekly-reports");
-      return res.json();
-    },
-  });
-}
-
 export function useWeeklyReport(weekStart: string) {
-  return useQuery<any>({
+  return useQuery<ComercialWeeklyReport>({
     queryKey: ["/api/comercial/weekly-report", weekStart],
     queryFn: async () => {
       const res = await apiRequest("GET", `/api/comercial/weekly-report?week=${weekStart}`);
@@ -512,13 +549,12 @@ export function useWeeklyReport(weekStart: string) {
 
 export function useSaveWeeklyReport() {
   return useMutation({
-    mutationFn: async (data: { weekStart: string; content: string }) => {
+    mutationFn: async (data: { weekStart: string; content: string; meetingNotes?: string }) => {
       const res = await apiRequest("PUT", "/api/comercial/weekly-report", data);
       return res.json();
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/comercial/weekly-report", variables.weekStart] });
-      queryClient.invalidateQueries({ queryKey: ["/api/comercial/weekly-reports"] });
+    onSuccess: () => {
+      invalidateByPrefix("/api/comercial/weekly-report");
     },
   });
 }
@@ -529,9 +565,107 @@ export function useSendWeeklyReport() {
       const res = await apiRequest("POST", "/api/comercial/weekly-report/send", data);
       return res.json();
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/comercial/weekly-report", variables.weekStart] });
-      queryClient.invalidateQueries({ queryKey: ["/api/comercial/weekly-reports"] });
+    onSuccess: () => {
+      invalidateByPrefix("/api/comercial/weekly-report");
     },
+  });
+}
+
+// === CALENDAR VIEW ===
+
+export function useWeeklyReportsRange(from: string, to: string) {
+  return useQuery<ComercialWeeklyReport[]>({
+    queryKey: ["/api/comercial/weekly-reports", from, to],
+    queryFn: async () => {
+      const res = await apiRequest("GET", `/api/comercial/weekly-reports?from=${from}&to=${to}`);
+      return res.json();
+    },
+    enabled: !!from && !!to,
+  });
+}
+
+// === COMPROMISOS ===
+
+interface WeeklyCommitment {
+  id: number;
+  weekStart: string;
+  description: string;
+  responsible: string;
+  responsibleUserId: number | null;
+  dueDate: string | null;
+  status: string;
+  createdById: number | null;
+  createdAt: string;
+}
+
+export function useCommitments(weekStart?: string) {
+  const url = weekStart
+    ? `/api/comercial/commitments?week=${weekStart}`
+    : "/api/comercial/commitments";
+  return useQuery<WeeklyCommitment[]>({
+    queryKey: ["/api/comercial/commitments", weekStart || "pending"],
+    queryFn: async () => {
+      const res = await apiRequest("GET", url);
+      return res.json();
+    },
+  });
+}
+
+export function useCreateCommitment() {
+  return useMutation({
+    mutationFn: async (data: { weekStart: string; description: string; responsible: string; responsibleUserId?: number; dueDate?: string | null }) => {
+      const res = await apiRequest("POST", "/api/comercial/commitments", data);
+      return res.json();
+    },
+    onSuccess: () => {
+      invalidateByPrefix("/api/comercial/commitments");
+    },
+  });
+}
+
+export function useUpdateCommitmentStatus() {
+  return useMutation({
+    mutationFn: async ({ id, status }: { id: number; status: "pendiente" | "cumplido" }) => {
+      const res = await apiRequest("PATCH", `/api/comercial/commitments/${id}/status`, { status });
+      return res.json();
+    },
+    onSuccess: () => {
+      invalidateByPrefix("/api/comercial/commitments");
+    },
+  });
+}
+
+export function useUpdateCommitment() {
+  return useMutation({
+    mutationFn: async ({ id, ...data }: { id: number; description?: string; responsible?: string; responsibleUserId?: number | null; dueDate?: string | null }) => {
+      const res = await apiRequest("PATCH", `/api/comercial/commitments/${id}`, data);
+      return res.json();
+    },
+    onSuccess: () => {
+      invalidateByPrefix("/api/comercial/commitments");
+    },
+  });
+}
+
+export function useDeleteCommitment() {
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const res = await apiRequest("DELETE", `/api/comercial/commitments/${id}`);
+      return res.json();
+    },
+    onSuccess: () => {
+      invalidateByPrefix("/api/comercial/commitments");
+    },
+  });
+}
+
+export function useCommitmentsRange(from: string, to: string) {
+  return useQuery<WeeklyCommitment[]>({
+    queryKey: ["/api/comercial/commitments/calendar", from, to],
+    queryFn: async () => {
+      const res = await apiRequest("GET", `/api/comercial/commitments/calendar?from=${from}&to=${to}`);
+      return res.json();
+    },
+    enabled: !!from && !!to,
   });
 }

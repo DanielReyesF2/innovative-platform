@@ -92,8 +92,10 @@ export const prospects = pgTable("prospects", {
   industry: text("industry"),
   location: text("location"),
   potential: text("potential"), // Bajo, Medio, Alto, Muy Alto
-  estimatedVolume: text("estimated_volume"), // e.g. "120 ton/mes"
+  estimatedVolume: text("estimated_volume"), // e.g. "120 ton/mes" (total/summary)
   services: text("services").array().default([]),  // selected services (e.g. ["rme", "biodigestores"])
+  serviceVolumes: jsonb("service_volumes").$type<Record<string, string>>().default({}), // e.g. { "rme": "80 ton/mes", "organicos": "40 ton/mes" }
+  // DEBT: if volume aggregation/reports needed, migrate to { volume, unit } structure
   estimatedValue: numeric("estimated_value", { precision: 12, scale: 2 }),
   probability: integer("probability").default(0), // 0-100
   stage: prospectStageEnum("stage").notNull().default("contacto_inicial"),
@@ -127,6 +129,9 @@ export const prospects = pgTable("prospects", {
   fechaVencimientoContrato: timestamp("fecha_vencimiento_contrato"),
   followUpAction: text("follow_up_action"),
   recoveryStatus: text("recovery_status"), // sin_seguimiento, en_seguimiento, re_contactada
+  firstContactDate: date("first_contact_date"), // business date: when initial contact happened
+  meetingDate: date("meeting_date"), // when the meeting is scheduled
+  surveyDate: date("survey_date"), // when the levantamiento is scheduled
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -282,6 +287,7 @@ export const insertProspectSchema = createInsertSchema(prospects, {
   potential: z.string().max(20).optional(),
   probability: z.number().min(0).max(100).optional(),
   services: z.array(z.string().max(50)).max(10).optional(),
+  serviceVolumes: z.record(z.string().max(50), z.string().max(100)).optional(),
 }).omit({ id: true, createdAt: true, updatedAt: true });
 
 export const qualifyProspectSchema = z.object({
@@ -415,6 +421,7 @@ export const comercialWeeklyReports = pgTable("comercial_weekly_reports", {
   id: serial("id").primaryKey(),
   weekStart: date("week_start").notNull(),
   content: text("content").notNull().default(""),
+  meetingNotes: text("meeting_notes").default(""),
   status: text("status").notNull().default("draft"), // 'draft' | 'sent'
   sentAt: timestamp("sent_at"),
   recipients: text("recipients"), // comma-separated emails
@@ -427,8 +434,30 @@ export const comercialWeeklyReports = pgTable("comercial_weekly_reports", {
 
 export const insertWeeklyReportSchema = createInsertSchema(comercialWeeklyReports, {
   content: z.string().max(50000),
+  meetingNotes: z.string().max(50000).optional(),
   recipients: z.string().max(1000).optional(),
 }).omit({ id: true, createdAt: true, updatedAt: true, sentAt: true });
+
+// === COMPROMISOS SEMANALES ===
+
+export const weeklyCommitments = pgTable("weekly_commitments", {
+  id: serial("id").primaryKey(),
+  weekStart: date("week_start").notNull(),
+  description: text("description").notNull(),
+  responsible: text("responsible").notNull(),
+  responsibleUserId: integer("responsible_user_id").references(() => users.id),
+  dueDate: date("due_date"),
+  status: text("status").notNull().default("pendiente"), // 'pendiente' | 'cumplido'
+  createdById: integer("created_by_id").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertWeeklyCommitmentSchema = createInsertSchema(weeklyCommitments, {
+  description: z.string().min(1).max(500),
+  responsible: z.string().min(1).max(100),
+  responsibleUserId: z.number().int().positive().optional(),
+  status: z.enum(["pendiente", "cumplido"]).default("pendiente"),
+}).omit({ id: true, createdAt: true });
 
 // Post-reunion types
 export type VentaReal = typeof ventasReales.$inferSelect;
@@ -439,3 +468,5 @@ export type InsertKpiMensual = z.infer<typeof insertKpiMensualSchema>;
 // Weekly report types
 export type ComercialWeeklyReport = typeof comercialWeeklyReports.$inferSelect;
 export type InsertWeeklyReport = z.infer<typeof insertWeeklyReportSchema>;
+export type WeeklyCommitment = typeof weeklyCommitments.$inferSelect;
+export type InsertWeeklyCommitment = z.infer<typeof insertWeeklyCommitmentSchema>;

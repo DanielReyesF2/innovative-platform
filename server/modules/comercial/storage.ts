@@ -25,6 +25,7 @@ import {
   type InsertVentaReal,
   type InsertKpiMensual,
   comercialWeeklyReports,
+  weeklyCommitments,
 } from "../../../shared/schema/comercial";
 import {
   surveys,
@@ -32,13 +33,43 @@ import {
   surveyCurrentServices,
 } from "../../../shared/schema/operaciones";
 import { users } from "../../../shared/schema/common";
+import {
+  STAGE,
+  ACTIVE_STAGE_IDS,
+  WON_STAGE_IDS,
+  LOST_STAGE_IDS,
+  HANDOFF_ALLOWED_STAGE_IDS,
+  isWonStage,
+  isLostStage,
+} from "../../../shared/schema/comercial-stages";
+
+// Drizzle pgEnum columns expect the exact union type, but runtime values are strings.
+// This helper casts safely to avoid `as any` while keeping TypeScript happy.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const enumCast = <T>(value: string): T => value as unknown as T;
+type ProspectStage = (typeof prospects.stage)["_"]["data"];
+type AlertStatus = (typeof followUpAlerts.status)["_"]["data"];
+type Priority = (typeof prospects.priority)["_"]["data"];
+type ProposalStatus = (typeof proposalVersions.status)["_"]["data"];
 
 // --- Prospects ---
 
 export async function getProspects() {
-  return db.query.prospects.findMany({
-    orderBy: [desc(prospects.updatedAt)],
-  });
+  const rows = await db
+    .select({
+      prospect: prospects,
+      rejectionReasonText: rejectionReasons.reason,
+      rejectionReasonCategory: rejectionReasons.category,
+    })
+    .from(prospects)
+    .leftJoin(rejectionReasons, eq(prospects.rejectionReasonId, rejectionReasons.id))
+    .orderBy(desc(prospects.updatedAt));
+
+  return rows.map((r) => ({
+    ...r.prospect,
+    rejectionReasonText: r.rejectionReasonText,
+    rejectionReasonCategory: r.rejectionReasonCategory,
+  }));
 }
 
 export async function getProspectById(id: number) {
@@ -49,7 +80,7 @@ export async function getProspectById(id: number) {
 
 export async function getProspectsByStage(stage: string) {
   return db.query.prospects.findMany({
-    where: eq(prospects.stage, stage as any),
+    where: eq(prospects.stage, enumCast<ProspectStage>(stage)),
     orderBy: [desc(prospects.probability)],
   });
 }
@@ -92,7 +123,7 @@ export async function rejectProspect(
   const [updated] = await db
     .update(prospects)
     .set({
-      stage: "cierre_perdido",
+      stage: STAGE.CIERRE_PERDIDO,
       probability: 0,
       rejectionReasonId,
       rejectionDetail,
@@ -123,7 +154,7 @@ export async function qualifyProspect(id: number, data: {
     where: eq(prospects.id, id),
   });
   if (!prospect) throw new Error("NOT_FOUND");
-  if (prospect.stage !== "lead") {
+  if (prospect.stage !== STAGE.LEAD) {
     throw new Error("CONFLICT:El prospecto no esta en etapa 'lead'");
   }
 
@@ -136,7 +167,7 @@ export async function qualifyProspect(id: number, data: {
       estimatedValue: data.estimatedValue ? String(data.estimatedValue) : null,
       estimatedVolume: data.estimatedVolume || null,
       probability: data.probability,
-      priority: data.priority as any,
+      priority: enumCast<Priority>(data.priority || "media"),
       contactRole: data.contactRole || null,
       contactEmail: data.contactEmail || null,
       reason: data.reason || null,
@@ -211,7 +242,7 @@ export async function convertLeadToProspect(
         levantamientoData: qualifyData.wasteInfo
           ? { qualificationWaste: qualifyData.wasteInfo }
           : null,
-        stage: "contacto_inicial",
+        stage: STAGE.CONTACTO_INICIAL,
         probability: 10,
         priority: "media",
       })
@@ -242,18 +273,18 @@ export async function getRejectionReasons() {
 
 export async function getPipelineSummary() {
   // New stages + legacy equivalents grouped together
-  const stageGroups = [
-    { key: "contacto_inicial", values: ["contacto_inicial", "lead"] },
-    { key: "presentacion", values: ["presentacion"] },
-    { key: "levantamiento", values: ["levantamiento"] },
-    { key: "propuesta", values: ["propuesta"] },
-    { key: "negociacion", values: ["negociacion"] },
-    { key: "cierre_ganado", values: ["cierre_ganado", "cierre"] },
+  const stageGroups: { key: string; values: string[] }[] = [
+    { key: STAGE.CONTACTO_INICIAL, values: [STAGE.CONTACTO_INICIAL, STAGE.LEAD] },
+    { key: STAGE.PRESENTACION, values: [STAGE.PRESENTACION] },
+    { key: STAGE.LEVANTAMIENTO, values: [STAGE.LEVANTAMIENTO] },
+    { key: STAGE.PROPUESTA, values: [STAGE.PROPUESTA] },
+    { key: STAGE.NEGOCIACION, values: [STAGE.NEGOCIACION] },
+    { key: STAGE.CIERRE_GANADO, values: [...WON_STAGE_IDS] },
   ];
   const results = [];
 
   for (const group of stageGroups) {
-    const conditions = group.values.map((v) => eq(prospects.stage, v as any));
+    const conditions = group.values.map((v) => eq(prospects.stage, enumCast<ProspectStage>(v)));
     const [row] = await db
       .select({
         count: sql<number>`count(*)::int`,
@@ -302,8 +333,7 @@ export async function sendProspectToOperaciones(prospectId: number, sentById: nu
   if (!prospect) throw new Error("NOT_FOUND");
 
   // State guard: only early stages can be sent
-  const allowedStages = ["lead", "contacto_inicial", "presentacion", "levantamiento"];
-  if (!allowedStages.includes(prospect.stage)) {
+  if (!(HANDOFF_ALLOWED_STAGE_IDS as readonly string[]).includes(prospect.stage)) {
     throw new Error("CONFLICT:El prospecto ya paso la etapa de levantamiento");
   }
 
@@ -318,7 +348,11 @@ export async function sendProspectToOperaciones(prospectId: number, sentById: nu
   }
 
   // Validate levantamiento data
-  const levData = prospect.levantamientoData as any;
+  // DEBT: levantamientoData is JSONB with dynamic structure from the levantamiento form.
+  // Proper fix: define a LevantamientoData interface matching the form schema.
+  // For now, typed as Record to avoid `as any` while keeping indexability.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const levData = prospect.levantamientoData as Record<string, any> | null;
   if (!levData?.generalInfo?.razonSocial) {
     throw new Error("VALIDATION:Se requiere al menos razon social en datos de levantamiento");
   }
@@ -387,7 +421,7 @@ export async function sendProspectToOperaciones(prospectId: number, sentById: nu
     const [updated] = await tx
       .update(prospects)
       .set({
-        stage: "levantamiento",
+        stage: STAGE.LEVANTAMIENTO,
         surveyId: survey.id,
         sentToOpsAt: new Date(),
         sentToOpsById: sentById,
@@ -591,7 +625,16 @@ export async function sendProposal(id: number, sentById: number) {
 export async function changeProposalStatus(id: number, status: string) {
   const [updated] = await db
     .update(proposalVersions)
-    .set({ status: status as any, updatedAt: new Date() })
+    .set({ status: enumCast<ProposalStatus>(status), updatedAt: new Date() })
+    .where(eq(proposalVersions.id, id))
+    .returning();
+  return updated;
+}
+
+export async function updateProposalAmount(id: number, amount: string) {
+  const [updated] = await db
+    .update(proposalVersions)
+    .set({ amount, updatedAt: new Date() })
     .where(eq(proposalVersions.id, id))
     .returning();
   return updated;
@@ -601,7 +644,7 @@ export async function changeProposalStatus(id: number, status: string) {
 
 export async function getAlerts(status?: string, assignedToId?: number) {
   const conditions = [];
-  if (status) conditions.push(eq(followUpAlerts.status, status as any));
+  if (status) conditions.push(eq(followUpAlerts.status, enumCast<AlertStatus>(status)));
   if (assignedToId) conditions.push(eq(followUpAlerts.assignedToId, assignedToId));
 
   return db.query.followUpAlerts.findMany({
@@ -647,11 +690,11 @@ export async function generateAlerts() {
   const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
   // Find prospects with overdue follow-ups
-  const activeStages = ["contacto_inicial", "presentacion", "lead", "levantamiento", "propuesta", "negociacion"];
+  const activeStages = ACTIVE_STAGE_IDS;
   const overdueProspects = await db.query.prospects.findMany({
     where: and(
       lte(prospects.nextFollowUpAt, now),
-      or(...activeStages.map((s) => eq(prospects.stage, s as any)))
+      or(...activeStages.map((s) => eq(prospects.stage, enumCast<ProspectStage>(s))))
     ),
   });
 
@@ -682,7 +725,7 @@ export async function generateAlerts() {
   const staleProspects = await db.query.prospects.findMany({
     where: and(
       or(isNull(prospects.lastContactAt), lte(prospects.lastContactAt, sevenDaysAgo)),
-      or(...activeStages.map((s) => eq(prospects.stage, s as any)))
+      or(...activeStages.map((s) => eq(prospects.stage, enumCast<ProspectStage>(s))))
     ),
   });
 
@@ -745,8 +788,8 @@ export async function getSalesForecast() {
     .where(
       and(
         or(
-          eq(prospects.stage, "propuesta"),
-          eq(prospects.stage, "negociacion")
+          eq(prospects.stage, STAGE.PROPUESTA),
+          eq(prospects.stage, STAGE.NEGOCIACION)
         )
       )
     )
@@ -763,7 +806,7 @@ export async function getWinLossAnalysis() {
       count: sql<number>`count(*)::int`,
     })
     .from(prospects)
-    .where(or(eq(prospects.stage, "cierre_ganado"), eq(prospects.stage, "cierre")))
+    .where(or(...WON_STAGE_IDS.map((s) => eq(prospects.stage, s))))
     .groupBy(prospects.opportunity);
 
   const losses = await db
@@ -773,7 +816,7 @@ export async function getWinLossAnalysis() {
     })
     .from(prospects)
     .leftJoin(rejectionReasons, eq(prospects.rejectionReasonId, rejectionReasons.id))
-    .where(or(eq(prospects.stage, "cierre_perdido"), eq(prospects.stage, "rechazada")))
+    .where(or(...LOST_STAGE_IDS.map((s) => eq(prospects.stage, s))))
     .groupBy(rejectionReasons.reason);
 
   const totalWins = wins.reduce((sum, w) => sum + w.count, 0);
@@ -802,8 +845,8 @@ export async function getCompetitorAnalysis() {
         competitorStats[comp] = { mentions: 0, wins: 0, losses: 0 };
       }
       competitorStats[comp].mentions++;
-      if (["cierre", "cierre_ganado"].includes(p.stage)) competitorStats[comp].wins++;
-      if (["rechazada", "cierre_perdido"].includes(p.stage)) competitorStats[comp].losses++;
+      if (isWonStage(p.stage)) competitorStats[comp].wins++;
+      if (isLostStage(p.stage)) competitorStats[comp].losses++;
     }
   }
 
@@ -934,7 +977,7 @@ export async function createOrUpdateKpiMensual(data: InsertKpiMensual) {
 export async function getRechazadasConVencimiento() {
   return db.query.prospects.findMany({
     where: and(
-      or(eq(prospects.stage, "rechazada"), eq(prospects.stage, "cierre_perdido")),
+      or(...LOST_STAGE_IDS.map((s) => eq(prospects.stage, s))),
       sql`${prospects.fechaVencimientoContrato} is not null`
     ),
     orderBy: [prospects.fechaVencimientoContrato],
@@ -947,7 +990,7 @@ export async function getRechazadasProximasAVencer(diasAnticipacion: number = 30
 
   return db.query.prospects.findMany({
     where: and(
-      or(eq(prospects.stage, "rechazada"), eq(prospects.stage, "cierre_perdido")),
+      or(...LOST_STAGE_IDS.map((s) => eq(prospects.stage, s))),
       sql`${prospects.fechaVencimientoContrato} is not null`,
       lte(prospects.fechaVencimientoContrato, fechaLimite)
     ),
@@ -992,14 +1035,64 @@ export async function getComercialTeam() {
     }
   }
 
-  // Get current month ventas reales
+  // Calculate closed deal values from cierre_ganado prospects
+  // Priority: proposal amount > estimatedValue > 0
+  const closedProspects = await db.query.prospects.findMany({
+    where: eq(prospects.stage, STAGE.CIERRE_GANADO),
+    columns: { id: true, assignedToId: true, estimatedValue: true },
+  });
+
+  const closedValueMap = new Map<number, number>(); // userId → total closed value
+  if (closedProspects.length > 0) {
+    const allProposals = await db.query.proposalVersions.findMany({
+      columns: { prospectId: true, amount: true },
+    });
+    for (const cp of closedProspects) {
+      if (!cp.assignedToId) continue;
+      // Try proposal amount first
+      const prospectProposals = allProposals.filter(p => p.prospectId === cp.id && p.amount);
+      let dealValue = 0;
+      if (prospectProposals.length > 0) {
+        dealValue = Math.max(...prospectProposals.map(p => Number(p.amount) || 0));
+      } else if (cp.estimatedValue) {
+        // Fallback to estimatedValue from prospect
+        dealValue = Number(cp.estimatedValue) || 0;
+      }
+      if (dealValue > 0) {
+        closedValueMap.set(cp.assignedToId, (closedValueMap.get(cp.assignedToId) || 0) + dealValue);
+      }
+    }
+  }
+
+  // Fallback: also get manual ventas reales (for backwards compatibility)
   const ventasRows = await db.query.ventasReales.findMany({
     where: and(
       eq(ventasReales.mes, currentMonth),
       eq(ventasReales.año, currentYear),
     ),
   });
-  const ventasMap = new Map(ventasRows.map(v => [v.userId, Number(v.monto)]));
+  const ventasManualMap = new Map(ventasRows.map(v => [v.userId, Number(v.monto)]));
+
+  // Use closed deal value if available, otherwise fall back to manual entry
+  const ventasMap = new Map<number, number>();
+  for (const u of comercialUsers) {
+    const fromProposals = closedValueMap.get(u.id) || 0;
+    const fromManual = ventasManualMap.get(u.id) || 0;
+    ventasMap.set(u.id, Math.max(fromProposals, fromManual));
+  }
+
+  // Get ALL months of current year for annual ventas sum
+  const ventasAnualRows = await db.query.ventasReales.findMany({
+    where: eq(ventasReales.año, currentYear),
+  });
+  const ventasAnualMap = new Map<number, number>();
+  for (const v of ventasAnualRows) {
+    ventasAnualMap.set(v.userId, (ventasAnualMap.get(v.userId) || 0) + Number(v.monto));
+  }
+  // Add closed deal values to annual totals
+  for (const [userId, amount] of closedValueMap) {
+    ventasAnualMap.set(userId, Math.max(ventasAnualMap.get(userId) || 0, amount));
+  }
 
   return comercialUsers.map(u => {
     const metrics = metricsMap.get(u.id);
@@ -1016,8 +1109,30 @@ export async function getComercialTeam() {
       presupuestoAnual: annualBudget,
       presupuestosMensuales: monthlyBudgetsMap.get(u.id) || {},
       ventasReales: ventaReal,
+      ventasRealesAnual: ventasAnualMap.get(u.id) || 0,
     };
   });
+}
+
+// --- Editable Budgets ---
+
+export async function upsertSalesMetric(userId: number, period: string, monthlyBudget: number) {
+  const existing = await db.query.salesMetrics.findFirst({
+    where: and(eq(salesMetrics.userId, userId), eq(salesMetrics.period, period)),
+  });
+  if (existing) {
+    const [updated] = await db
+      .update(salesMetrics)
+      .set({ monthlyBudget: String(monthlyBudget) })
+      .where(and(eq(salesMetrics.userId, userId), eq(salesMetrics.period, period)))
+      .returning();
+    return updated;
+  }
+  const [inserted] = await db
+    .insert(salesMetrics)
+    .values({ userId, period, monthlyBudget: String(monthlyBudget) })
+    .returning();
+  return inserted;
 }
 
 // === RESUMEN SEMANAL (Weekly Management Report) ===
@@ -1044,13 +1159,16 @@ export async function upsertWeeklyReport(
   weekStart: string,
   content: string,
   status: string = "draft",
+  meetingNotes?: string,
 ) {
   const existing = await getWeeklyReport(userId, weekStart);
 
   if (existing) {
+    const updates: Record<string, unknown> = { content, status, updatedAt: new Date() };
+    if (meetingNotes !== undefined) updates.meetingNotes = meetingNotes;
     const [updated] = await db
       .update(comercialWeeklyReports)
-      .set({ content, status, updatedAt: new Date() })
+      .set(updates)
       .where(eq(comercialWeeklyReports.id, existing.id))
       .returning();
     return updated;
@@ -1058,7 +1176,7 @@ export async function upsertWeeklyReport(
 
   const [created] = await db
     .insert(comercialWeeklyReports)
-    .values({ weekStart, content, status, createdById: userId })
+    .values({ weekStart, content, meetingNotes: meetingNotes || "", status, createdById: userId })
     .returning();
   return created;
 }
@@ -1070,4 +1188,90 @@ export async function markWeeklyReportAsSent(reportId: number, recipients: strin
     .where(eq(comercialWeeklyReports.id, reportId))
     .returning();
   return updated;
+}
+
+// --- Weekly Reports Range (for calendar view) ---
+
+export async function getWeeklyReportsInRange(userId: number, from: string, to: string) {
+  return db.query.comercialWeeklyReports.findMany({
+    where: and(
+      eq(comercialWeeklyReports.createdById, userId),
+      gte(comercialWeeklyReports.weekStart, from),
+      lte(comercialWeeklyReports.weekStart, to),
+    ),
+    orderBy: [desc(comercialWeeklyReports.weekStart)],
+  });
+}
+
+// --- Weekly Commitments ---
+
+export async function getCommitmentsByWeek(userId: number, weekStart: string) {
+  return db.query.weeklyCommitments.findMany({
+    where: and(
+      eq(weeklyCommitments.createdById, userId),
+      eq(weeklyCommitments.weekStart, weekStart),
+    ),
+    orderBy: [desc(weeklyCommitments.createdAt)],
+  });
+}
+
+export async function getPendingCommitments(userId: number) {
+  return db.query.weeklyCommitments.findMany({
+    where: and(
+      eq(weeklyCommitments.createdById, userId),
+      eq(weeklyCommitments.status, "pendiente"),
+    ),
+    orderBy: [desc(weeklyCommitments.createdAt)],
+  });
+}
+
+export async function createCommitment(data: {
+  weekStart: string;
+  description: string;
+  responsible: string;
+  responsibleUserId?: number | null;
+  dueDate?: string | null;
+  createdById: number;
+}) {
+  const [created] = await db
+    .insert(weeklyCommitments)
+    .values(data)
+    .returning();
+  return created;
+}
+
+export async function getCommitmentsInRange(from: string, to: string) {
+  return db.query.weeklyCommitments.findMany({
+    where: or(
+      and(gte(weeklyCommitments.dueDate, from), lte(weeklyCommitments.dueDate, to)),
+      and(gte(weeklyCommitments.weekStart, from), lte(weeklyCommitments.weekStart, to)),
+    ),
+    orderBy: [desc(weeklyCommitments.createdAt)],
+  });
+}
+
+export async function updateCommitmentStatus(id: number, status: "pendiente" | "cumplido") {
+  const [updated] = await db
+    .update(weeklyCommitments)
+    .set({ status })
+    .where(eq(weeklyCommitments.id, id))
+    .returning();
+  return updated;
+}
+
+export async function updateCommitment(id: number, data: { description?: string; responsible?: string; responsibleUserId?: number | null; dueDate?: string | null }) {
+  const [updated] = await db
+    .update(weeklyCommitments)
+    .set(data)
+    .where(eq(weeklyCommitments.id, id))
+    .returning();
+  return updated;
+}
+
+export async function deleteCommitment(id: number) {
+  const [deleted] = await db
+    .delete(weeklyCommitments)
+    .where(eq(weeklyCommitments.id, id))
+    .returning();
+  return deleted;
 }

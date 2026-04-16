@@ -81,10 +81,23 @@ export default function SubproductosPage() {
 }
 
 function TrazabilidadView() {
-  const { data: clients = [] } = useServiceClients();
+  const { data: clients = [], isError: clientsError } = useServiceClients();
   const { data: summary } = useSubproductosSummary();
-  const { data: pendingReports = [] } = usePendingReports();
+  const { data: pendingReports = [], isError: reportsError } = usePendingReports();
   const [selectedClient, setSelectedClient] = useState<any>(null);
+
+  if (clientsError || reportsError) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[40vh] gap-3">
+        <div className="text-red-500 text-4xl">⚠</div>
+        <h2 className="text-lg font-semibold text-[#1c2c4a]">Error al cargar subproductos</h2>
+        <p className="text-sm text-[#6b7280]">Hubo un problema al conectar con el servidor. Intenta recargar la página.</p>
+        <button onClick={() => window.location.reload()} className="mt-2 px-4 py-2 text-sm font-medium text-white bg-[#00a8a8] rounded-lg hover:bg-[#008f8f]">
+          Recargar
+        </button>
+      </div>
+    );
+  }
 
   return (
     <>

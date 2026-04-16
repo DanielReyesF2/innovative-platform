@@ -10,6 +10,8 @@ export default defineConfig({
       "@": path.resolve(import.meta.dirname, "client", "src"),
       "@shared": path.resolve(import.meta.dirname, "shared"),
     },
+    // Only resolve .ts/.tsx — prevents .jsx from ever overriding .tsx
+    extensions: [".ts", ".tsx", ".js", ".json"],
     dedupe: ["react", "react-dom"],
   },
   optimizeDeps: {

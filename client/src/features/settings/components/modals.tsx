@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useToast } from "@/components/ui/use-toast";
 import {
   useCreateUser,
   useUpdateUser,
@@ -63,11 +64,15 @@ export function CreateUserModal({ onClose, roles }: { onClose: () => void; roles
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("viewer");
   const createUser = useCreateUser();
+  const { toast } = useToast();
 
   const handleSubmit = () => {
     createUser.mutate(
       { name, email, password, role },
-      { onSuccess: () => onClose() }
+      {
+        onSuccess: () => { toast({ title: "Usuario creado" }); onClose(); },
+        onError: () => toast({ title: "Error al crear usuario", variant: "destructive" }),
+      }
     );
   };
 
@@ -98,11 +103,15 @@ export function EditUserModal({ user, onClose, roles, currentUserId }: { user: a
   const [email, setEmail] = useState(user.email);
   const [role, setRole] = useState(user.role);
   const updateUser = useUpdateUser();
+  const { toast } = useToast();
 
   const handleSubmit = () => {
     updateUser.mutate(
       { id: user.id, name, email, role },
-      { onSuccess: () => onClose() }
+      {
+        onSuccess: () => { toast({ title: "Usuario actualizado" }); onClose(); },
+        onError: () => toast({ title: "Error al actualizar usuario", variant: "destructive" }),
+      }
     );
   };
 
@@ -135,11 +144,15 @@ export function EditUserModal({ user, onClose, roles, currentUserId }: { user: a
 export function ResetPasswordModal({ user, onClose }: { user: any; onClose: () => void }) {
   const [newPassword, setNewPassword] = useState("");
   const resetPassword = useResetPassword();
+  const { toast } = useToast();
 
   const handleSubmit = () => {
     resetPassword.mutate(
       { id: user.id, newPassword },
-      { onSuccess: () => onClose() }
+      {
+        onSuccess: () => { toast({ title: "Contraseña actualizada" }); onClose(); },
+        onError: () => toast({ title: "Error al cambiar contraseña", variant: "destructive" }),
+      }
     );
   };
 
@@ -164,11 +177,15 @@ export function CreateRoleModal({ onClose }: { onClose: () => void }) {
   const [displayName, setDisplayName] = useState("");
   const [description, setDescription] = useState("");
   const createRole = useCreateRole();
+  const { toast } = useToast();
 
   const handleSubmit = () => {
     createRole.mutate(
       { name, displayName, description, permissions: [] },
-      { onSuccess: () => onClose() }
+      {
+        onSuccess: () => { toast({ title: "Rol creado" }); onClose(); },
+        onError: () => toast({ title: "Error al crear rol", variant: "destructive" }),
+      }
     );
   };
 
@@ -190,11 +207,15 @@ export function EditRoleModal({ role, onClose }: { role: any; onClose: () => voi
   const [displayName, setDisplayName] = useState(role.displayName);
   const [description, setDescription] = useState(role.description || "");
   const updateRole = useUpdateRole();
+  const { toast } = useToast();
 
   const handleSubmit = () => {
     updateRole.mutate(
       { id: role.id, displayName, description },
-      { onSuccess: () => onClose() }
+      {
+        onSuccess: () => { toast({ title: "Rol actualizado" }); onClose(); },
+        onError: () => toast({ title: "Error al actualizar rol", variant: "destructive" }),
+      }
     );
   };
 
@@ -218,9 +239,13 @@ export function EditRoleModal({ role, onClose }: { role: any; onClose: () => voi
 export function CreateAreaModal({ onClose }: { onClose: () => void }) {
   const [name, setName] = useState("");
   const createArea = useCreateArea();
+  const { toast } = useToast();
 
   const handleSubmit = () => {
-    createArea.mutate({ name }, { onSuccess: () => onClose() });
+    createArea.mutate({ name }, {
+      onSuccess: () => { toast({ title: "Área creada" }); onClose(); },
+      onError: () => toast({ title: "Error al crear área", variant: "destructive" }),
+    });
   };
 
   return (
@@ -238,9 +263,13 @@ export function CreateAreaModal({ onClose }: { onClose: () => void }) {
 export function EditAreaModal({ area, onClose }: { area: any; onClose: () => void }) {
   const [name, setName] = useState(area.name);
   const updateArea = useUpdateArea();
+  const { toast } = useToast();
 
   const handleSubmit = () => {
-    updateArea.mutate({ id: area.id, name }, { onSuccess: () => onClose() });
+    updateArea.mutate({ id: area.id, name }, {
+      onSuccess: () => { toast({ title: "Área actualizada" }); onClose(); },
+      onError: () => toast({ title: "Error al actualizar área", variant: "destructive" }),
+    });
   };
 
   return (

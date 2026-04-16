@@ -1,6 +1,6 @@
 import { db } from "../../db";
 import { users, type User, type InsertUser } from "../../../shared/schema/common";
-import { eq, ilike } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 
 export async function getUserById(id: number): Promise<User | undefined> {
   return db.query.users.findFirst({
@@ -10,23 +10,8 @@ export async function getUserById(id: number): Promise<User | undefined> {
 
 export async function getUserByEmail(email: string): Promise<User | undefined> {
   return db.query.users.findFirst({
-    where: eq(users.email, email.toLowerCase()),
+    where: eq(users.email, email.toLowerCase().trim()),
   });
-}
-
-export async function getUserByUsername(username: string): Promise<User | undefined> {
-  // Try exact email first, then prefix match
-  let user = await db.query.users.findFirst({
-    where: eq(users.email, username.toLowerCase()),
-  });
-
-  if (!user) {
-    user = await db.query.users.findFirst({
-      where: ilike(users.email, `${username}%`),
-    });
-  }
-
-  return user;
 }
 
 export async function createUser(data: InsertUser): Promise<User> {
