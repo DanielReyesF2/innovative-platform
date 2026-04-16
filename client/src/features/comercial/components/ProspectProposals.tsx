@@ -10,8 +10,7 @@ import {
   CheckCircle, XCircle, Eye, Upload, Trash2,
 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import { getAuthToken } from "@/lib/queryClient";
-import { queryClient } from "@/lib/queryClient";
+import { getAuthToken, invalidateByPrefix } from "@/lib/queryClient";
 import { fmtCurrency } from "@/lib/utils";
 import {
   useProposalVersions,
@@ -52,7 +51,7 @@ function ProposalAmountInput({ prospectId: pid, proposal }: { prospectId: number
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/comercial/prospects/${pid}/proposals`] });
+      invalidateByPrefix(`/api/comercial/prospects/${pid}`);
       setEditing(false);
       toast({ title: "Monto actualizado" });
     },
@@ -122,7 +121,7 @@ export function ProspectProposals({ prospectId }: ProspectProposalsProps) {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/comercial/prospects/${prospectId}/proposals`] });
+      invalidateByPrefix(`/api/comercial/prospects/${prospectId}`);
       toast({ title: "Propuesta subida correctamente" });
     },
     onError: (error: Error) => {

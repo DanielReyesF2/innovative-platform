@@ -5,7 +5,7 @@ import { fmtM, fmtCurrency } from '@/lib/utils';
 import { ExecutiveAvatar, KANBAN_STAGES } from '@/lib/comercial-constants';
 import { useComercialData } from '../hooks/useComercialData';
 import { useToast } from '@/components/ui/use-toast';
-import { apiRequest, queryClient } from '@/lib/queryClient';
+import { apiRequest, invalidateByPrefix } from '@/lib/queryClient';
 
 export function PresupuestoTab() {
   const {
@@ -196,8 +196,8 @@ export function PresupuestoTab() {
                               setEditingBudget(null);
                               apiRequest('PATCH', '/api/comercial/sales-metrics', { userId: member.dbUserId, period: selectedPeriod, monthlyBudget: monto })
                                 .then(() => {
-                                  queryClient.invalidateQueries({ queryKey: ['/api/comercial/team'] });
-                                  queryClient.invalidateQueries({ queryKey: ['/api/comercial/sales-metrics'] });
+                                  invalidateByPrefix('/api/comercial/team');
+                                  invalidateByPrefix('/api/comercial/sales-metrics');
                                   toast({ title: `Presupuesto actualizado: $${monto.toLocaleString()}` });
                                 })
                                 .catch(() => toast({ title: 'Error al guardar presupuesto', variant: 'destructive' }));
@@ -211,8 +211,8 @@ export function PresupuestoTab() {
                             if (monto !== memberBudgetMes) {
                               apiRequest('PATCH', '/api/comercial/sales-metrics', { userId: member.dbUserId, period: selectedPeriod, monthlyBudget: monto })
                                 .then(() => {
-                                  queryClient.invalidateQueries({ queryKey: ['/api/comercial/team'] });
-                                  queryClient.invalidateQueries({ queryKey: ['/api/comercial/sales-metrics'] });
+                                  invalidateByPrefix('/api/comercial/team');
+                                  invalidateByPrefix('/api/comercial/sales-metrics');
                                   toast({ title: `Presupuesto actualizado: $${monto.toLocaleString()}` });
                                 })
                                 .catch(() => toast({ title: 'Error al guardar presupuesto', variant: 'destructive' }));
@@ -250,8 +250,8 @@ export function PresupuestoTab() {
                               setEditingVentaReal(null);
                               apiRequest('POST', '/api/comercial/ventas-reales', { userId: member.dbUserId, mes: ventaRealMes, año: ventaRealAño, monto })
                                 .then(() => {
-                                  queryClient.invalidateQueries({ queryKey: ['/api/comercial/ventas-reales'] });
-                                  queryClient.invalidateQueries({ queryKey: ['/api/comercial/team'] });
+                                  invalidateByPrefix('/api/comercial/ventas-reales');
+                                  invalidateByPrefix('/api/comercial/team');
                                   toast({ title: `Venta cerrada guardada: $${monto.toLocaleString()}` });
                                 })
                                 .catch(() => {
@@ -269,8 +269,8 @@ export function PresupuestoTab() {
                             if (monto > 0) {
                               apiRequest('POST', '/api/comercial/ventas-reales', { userId: member.dbUserId, mes: ventaRealMes, año: ventaRealAño, monto })
                                 .then(() => {
-                                  queryClient.invalidateQueries({ queryKey: ['/api/comercial/ventas-reales'] });
-                                  queryClient.invalidateQueries({ queryKey: ['/api/comercial/team'] });
+                                  invalidateByPrefix('/api/comercial/ventas-reales');
+                                  invalidateByPrefix('/api/comercial/team');
                                   toast({ title: `Venta cerrada guardada: $${monto.toLocaleString()}` });
                                 })
                                 .catch(() => {
@@ -506,8 +506,8 @@ function BudgetEditModal({ salesTeamData, year, onClose }: {
         });
       }
       await Promise.all(promises);
-      queryClient.invalidateQueries({ queryKey: ['/api/comercial/team'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/comercial/sales-metrics'] });
+      invalidateByPrefix('/api/comercial/team');
+      invalidateByPrefix('/api/comercial/sales-metrics');
       toast({ title: `Objetivos guardados — se divide entre ${memberCount} ejecutivos` });
       onClose();
     } catch {

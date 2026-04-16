@@ -17,7 +17,7 @@ import { HubKanbanCard } from './HubKanbanCard';
 import { StageGateModal } from './StageGateModal';
 import { ProspectoDrawer } from './ProspectoDrawer';
 import { InsightsBanner } from './InsightsBanner';
-import { apiRequest, queryClient } from '@/lib/queryClient';
+import { apiRequest, invalidateByPrefix } from '@/lib/queryClient';
 import type { KanbanProspecto, TeamMember, PendingMove } from '@shared/types/comercial';
 
 function HubDroppableColumn({ stageId, children }: { stageId: string; children: React.ReactNode }) {
@@ -368,8 +368,8 @@ export function EjecutivoHub({ member, onBack, onShowNuevoLead }: Props) {
                       });
                       const editKey = `${member.id}-${ventaRealMes}-${ventaRealAño}`;
                       setVentasRealesEditadas((prev) => ({ ...prev, [editKey]: Number(ventaRealMonto) }));
-                      await queryClient.invalidateQueries({ queryKey: ['/api/comercial/ventas-reales'] });
-                      await queryClient.invalidateQueries({ queryKey: ['/api/comercial/team'] });
+                      await invalidateByPrefix('/api/comercial/ventas-reales');
+                      await invalidateByPrefix('/api/comercial/team');
                       setShowVentasRealesModal(false);
                       setVentaRealMonto('');
                       toast({ title: `Venta cerrada guardada: $${Number(ventaRealMonto).toLocaleString()}` });

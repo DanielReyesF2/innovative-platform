@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { apiRequest, queryClient } from '@/lib/queryClient';
+import { apiRequest, invalidateByPrefix } from '@/lib/queryClient';
 import { useAuth } from '@/lib/auth';
 import {
   dbProspectToKanban,
@@ -145,8 +145,8 @@ export function useComercialData() {
       return res.json();
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/comercial/prospects'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/comercial/pipeline'] });
+      invalidateByPrefix('/api/comercial/prospects');
+      invalidateByPrefix('/api/comercial/pipeline');
     },
   });
 
@@ -156,8 +156,8 @@ export function useComercialData() {
       return res.json();
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/comercial/prospects'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/comercial/pipeline'] });
+      invalidateByPrefix('/api/comercial/prospects');
+      invalidateByPrefix('/api/comercial/pipeline');
     },
   });
 
@@ -167,8 +167,8 @@ export function useComercialData() {
       return res.json();
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/comercial/prospects'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/comercial/pipeline'] });
+      invalidateByPrefix('/api/comercial/prospects');
+      invalidateByPrefix('/api/comercial/pipeline');
     },
   });
 
@@ -178,8 +178,8 @@ export function useComercialData() {
       return res.json();
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/comercial/prospects'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/comercial/pipeline'] });
+      invalidateByPrefix('/api/comercial/prospects');
+      invalidateByPrefix('/api/comercial/pipeline');
     },
   });
 
@@ -189,7 +189,7 @@ export function useComercialData() {
       return res.json();
     },
     onSettled: (_data, _error, variables) => {
-      queryClient.invalidateQueries({ queryKey: [`/api/comercial/prospects/${variables.prospectId}/notes`] });
+      invalidateByPrefix('/api/comercial/prospects');
     },
   });
 
@@ -199,7 +199,7 @@ export function useComercialData() {
       return res.json();
     },
     onSettled: (_data, _error, variables) => {
-      queryClient.invalidateQueries({ queryKey: [`/api/comercial/prospects/${variables.prospectId}/notes`] });
+      invalidateByPrefix('/api/comercial/prospects');
     },
   });
 
@@ -209,7 +209,7 @@ export function useComercialData() {
       return res.json();
     },
     onSettled: (_data, _error, variables) => {
-      queryClient.invalidateQueries({ queryKey: [`/api/comercial/prospects/${variables.prospectId}/documents`] });
+      invalidateByPrefix('/api/comercial/prospects');
     },
   });
 
@@ -219,7 +219,7 @@ export function useComercialData() {
       return res.json();
     },
     onSettled: (_data, _error, variables) => {
-      queryClient.invalidateQueries({ queryKey: [`/api/comercial/prospects/${variables.prospectId}/documents`] });
+      invalidateByPrefix('/api/comercial/prospects');
     },
   });
 
