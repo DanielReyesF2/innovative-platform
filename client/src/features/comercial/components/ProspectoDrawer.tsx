@@ -70,7 +70,6 @@ export function ProspectoDrawer({ prospecto, onClose, onEdit }: Props) {
   });
 
   const stageInfo = KANBAN_STAGES.find(s => s.id === p.status);
-  const dias = p.fecha ? Math.floor((new Date().getTime() - new Date(p.fecha).getTime()) / (1000 * 60 * 60 * 24)) : null;
   const valor = p.propuesta?.ventaTotal || p.facturacionEstimada || 0;
   const sc = p.servicios?.map((s) => {
     const svc = SERVICIOS_INNOVATIVE.find(si => si.id === s);
@@ -447,16 +446,10 @@ export function ProspectoDrawer({ prospecto, onClose, onEdit }: Props) {
               })()}
 
               <div className="p-5 space-y-5">
-                {/* Value + date row */}
-                <div className="flex items-center gap-3">
-                  <div className="flex-1 bg-[#EFF6FF] rounded-xl p-3 text-center">
-                    <div className="text-xs text-[#6b7280] mb-0.5">Valor estimado</div>
-                    <div className="text-xl font-bold text-[#0D47A1]">{valor > 0 ? fmtCurrency(valor) : '—'}</div>
-                  </div>
-                  <div className="flex-1 bg-[#f3f4f6] rounded-xl p-3 text-center">
-                    <div className="text-xs text-[#6b7280] mb-0.5">Días en seguimiento</div>
-                    <div className="text-xl font-bold text-[#1c2c4a]">{dias !== null ? dias : '—'}</div>
-                  </div>
+                {/* Value */}
+                <div className="bg-[#EFF6FF] rounded-xl p-3 text-center">
+                  <div className="text-xs text-[#6b7280] mb-0.5">Valor cotización</div>
+                  <div className="text-xl font-bold text-[#0D47A1]">{valor > 0 ? fmtCurrency(valor) : '—'}</div>
                 </div>
 
                 {/* Fechas clave */}

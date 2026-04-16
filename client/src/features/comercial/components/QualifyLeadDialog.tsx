@@ -246,7 +246,7 @@ export function QualifyLeadDialog({ prospect, isLead, onClose, onQualified }: Qu
                   </select>
                 </div>
                 <div>
-                  <Label>Valor estimado ($)</Label>
+                  <Label>Valor cotización ($)</Label>
                   <Input
                     type="number"
                     value={business.estimatedValue}
