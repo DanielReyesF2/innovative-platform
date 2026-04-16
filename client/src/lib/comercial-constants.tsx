@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { ChevronRight, type LucideIcon } from 'lucide-react';
 import type { Prospect } from '@shared/schema/comercial';
 import type { User } from '@shared/schema/common';
+import { STAGE } from '@shared/schema/comercial-stages';
 import type { KanbanProspecto, SeguimientoData, SeguimientoUrgency, CampoCompleto, StageGate } from '@shared/types/comercial';
 export type { GateMissingField } from '@shared/types/comercial';
 
@@ -112,22 +113,22 @@ export const INDUSTRIAS = [
 // Labels reflect the BUSINESS flow, not the DB stage IDs.
 // See CLAUDE.md "Stage ID vs Business Label Mismatch" for details.
 export const KANBAN_STAGES = [
-  { id: 'contacto_inicial', label: 'Lead', color: '#6b7280', prob: '5%' },
-  { id: 'presentacion', label: 'Prospecto', color: '#0D47A1', prob: '20%' },
-  { id: 'levantamiento', label: 'Reunión', color: '#F57C00', prob: '35%' },
-  { id: 'propuesta', label: 'Agendar levantamiento', color: '#00a8a8', prob: '50%' },
-  { id: 'negociacion', label: 'Propuesta', color: '#7C3AED', prob: '70%' },
-  { id: 'cierre_ganado', label: 'Socio Ambiental', color: '#2E7D32', prob: '100%' },
+  { id: STAGE.CONTACTO_INICIAL, label: 'Lead', color: '#6b7280', prob: '5%' },
+  { id: STAGE.PRESENTACION, label: 'Prospecto', color: '#0D47A1', prob: '20%' },
+  { id: STAGE.LEVANTAMIENTO, label: 'Reunión', color: '#F57C00', prob: '35%' },
+  { id: STAGE.PROPUESTA, label: 'Agendar levantamiento', color: '#00a8a8', prob: '50%' },
+  { id: STAGE.NEGOCIACION, label: 'Propuesta', color: '#7C3AED', prob: '70%' },
+  { id: STAGE.CIERRE_GANADO, label: 'Socio Ambiental', color: '#2E7D32', prob: '100%' },
 ] as const;
 
 export const STAGE_PROBABILITY: Record<string, number> = {
-  contacto_inicial: 0.05,
-  presentacion: 0.20,
-  levantamiento: 0.35,
-  propuesta: 0.50,
-  negociacion: 0.70,
-  cierre_ganado: 1.0,
-  cierre_perdido: 0,
+  [STAGE.CONTACTO_INICIAL]: 0.05,
+  [STAGE.PRESENTACION]: 0.20,
+  [STAGE.LEVANTAMIENTO]: 0.35,
+  [STAGE.PROPUESTA]: 0.50,
+  [STAGE.NEGOCIACION]: 0.70,
+  [STAGE.CIERRE_GANADO]: 1.0,
+  [STAGE.CIERRE_PERDIDO]: 0,
 };
 
 // ═══════ KPI METAS ═══════

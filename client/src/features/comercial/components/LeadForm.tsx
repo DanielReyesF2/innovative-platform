@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { useCreateProspect } from "../api";
 import { useToast } from "@/components/ui/use-toast";
 import { SERVICIOS_INNOVATIVE } from "@/lib/comercial-constants";
+import { STAGE } from "@shared/schema/comercial-stages";
 import type { TeamMember } from "@shared/types/comercial";
 
 const SOURCE_LABELS: Record<string, string> = {
@@ -64,7 +65,7 @@ export function LeadForm({ onClose, salesTeam, defaultAssignee }: LeadFormProps)
         contactPhone: form.contactPhone.trim() || undefined,
         contactEmail: form.contactEmail.trim() || undefined,
         source: form.source,
-        stage: "contacto_inicial",
+        stage: STAGE.CONTACTO_INICIAL,
         probability: 10,
         priority: "media",
         reason: form.notes.trim() || undefined,

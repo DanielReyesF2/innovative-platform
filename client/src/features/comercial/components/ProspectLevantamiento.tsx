@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useProspect, useUpdateProspect, useSendToOperaciones } from "../api";
 import { useToast } from "@/components/ui/use-toast";
 import { EPP_OPTIONS, WASTE_TYPES_CATALOG } from "@/lib/comercial-constants";
+import { canHandoffStage } from "@shared/schema/comercial-stages";
 import type { User } from "@shared/schema/common";
 import {
   CalendarCheck, HardHat, Save, Recycle,
@@ -203,7 +204,7 @@ export function ProspectLevantamiento({ prospectId }: ProspectLevantamientoProps
 
   const canSendToOps =
     prospect &&
-    ["contacto_inicial", "presentacion", "levantamiento"].includes(prospect.stage) &&
+    canHandoffStage(prospect.stage) &&
     !prospect.surveyId;
 
   const sentToOps = prospect?.sentToOpsAt;

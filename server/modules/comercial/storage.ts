@@ -33,6 +33,15 @@ import {
   surveyCurrentServices,
 } from "../../../shared/schema/operaciones";
 import { users } from "../../../shared/schema/common";
+import {
+  STAGE,
+  ACTIVE_STAGE_IDS,
+  WON_STAGE_IDS,
+  LOST_STAGE_IDS,
+  HANDOFF_ALLOWED_STAGE_IDS,
+  isWonStage,
+  isLostStage,
+} from "../../../shared/schema/comercial-stages";
 
 // Drizzle pgEnum columns expect the exact union type, but runtime values are strings.
 // This helper casts safely to avoid `as any` while keeping TypeScript happy.
@@ -114,7 +123,7 @@ export async function rejectProspect(
   const [updated] = await db
     .update(prospects)
     .set({
-      stage: "cierre_perdido",
+      stage: STAGE.CIERRE_PERDIDO,
       probability: 0,
       rejectionReasonId,
       rejectionDetail,
@@ -145,7 +154,7 @@ export async function qualifyProspect(id: number, data: {
     where: eq(prospects.id, id),
   });
   if (!prospect) throw new Error("NOT_FOUND");
-  if (prospect.stage !== "lead") {
+  if (prospect.stage !== STAGE.LEAD) {
     throw new Error("CONFLICT:El prospecto no esta en etapa 'lead'");
   }
 
@@ -233,7 +242,7 @@ export async function convertLeadToProspect(
         levantamientoData: qualifyData.wasteInfo
           ? { qualificationWaste: qualifyData.wasteInfo }
           : null,
-        stage: "contacto_inicial",
+        stage: STAGE.CONTACTO_INICIAL,
         probability: 10,
         priority: "media",
       })
@@ -264,13 +273,13 @@ export async function getRejectionReasons() {
 
 export async function getPipelineSummary() {
   // New stages + legacy equivalents grouped together
-  const stageGroups = [
-    { key: "contacto_inicial", values: ["contacto_inicial", "lead"] },
-    { key: "presentacion", values: ["presentacion"] },
-    { key: "levantamiento", values: ["levantamiento"] },
-    { key: "propuesta", values: ["propuesta"] },
-    { key: "negociacion", values: ["negociacion"] },
-    { key: "cierre_ganado", values: ["cierre_ganado", "cierre"] },
+  const stageGroups: { key: string; values: string[] }[] = [
+    { key: STAGE.CONTACTO_INICIAL, values: [STAGE.CONTACTO_INICIAL, STAGE.LEAD] },
+    { key: STAGE.PRESENTACION, values: [STAGE.PRESENTACION] },
+    { key: STAGE.LEVANTAMIENTO, values: [STAGE.LEVANTAMIENTO] },
+    { key: STAGE.PROPUESTA, values: [STAGE.PROPUESTA] },
+    { key: STAGE.NEGOCIACION, values: [STAGE.NEGOCIACION] },
+    { key: STAGE.CIERRE_GANADO, values: [...WON_STAGE_IDS] },
   ];
   const results = [];
 
@@ -324,8 +333,7 @@ export async function sendProspectToOperaciones(prospectId: number, sentById: nu
   if (!prospect) throw new Error("NOT_FOUND");
 
   // State guard: only early stages can be sent
-  const allowedStages = ["lead", "contacto_inicial", "presentacion", "levantamiento"];
-  if (!allowedStages.includes(prospect.stage)) {
+  if (!(HANDOFF_ALLOWED_STAGE_IDS as readonly string[]).includes(prospect.stage)) {
     throw new Error("CONFLICT:El prospecto ya paso la etapa de levantamiento");
   }
 
@@ -413,7 +421,7 @@ export async function sendProspectToOperaciones(prospectId: number, sentById: nu
     const [updated] = await tx
       .update(prospects)
       .set({
-        stage: "levantamiento",
+        stage: STAGE.LEVANTAMIENTO,
         surveyId: survey.id,
         sentToOpsAt: new Date(),
         sentToOpsById: sentById,
@@ -682,7 +690,7 @@ export async function generateAlerts() {
   const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
   // Find prospects with overdue follow-ups
-  const activeStages = ["contacto_inicial", "presentacion", "lead", "levantamiento", "propuesta", "negociacion"];
+  const activeStages = ACTIVE_STAGE_IDS;
   const overdueProspects = await db.query.prospects.findMany({
     where: and(
       lte(prospects.nextFollowUpAt, now),
@@ -780,8 +788,8 @@ export async function getSalesForecast() {
     .where(
       and(
         or(
-          eq(prospects.stage, "propuesta"),
-          eq(prospects.stage, "negociacion")
+          eq(prospects.stage, STAGE.PROPUESTA),
+          eq(prospects.stage, STAGE.NEGOCIACION)
         )
       )
     )
@@ -798,7 +806,7 @@ export async function getWinLossAnalysis() {
       count: sql<number>`count(*)::int`,
     })
     .from(prospects)
-    .where(or(eq(prospects.stage, "cierre_ganado"), eq(prospects.stage, "cierre")))
+    .where(or(...WON_STAGE_IDS.map((s) => eq(prospects.stage, s))))
     .groupBy(prospects.opportunity);
 
   const losses = await db
@@ -808,7 +816,7 @@ export async function getWinLossAnalysis() {
     })
     .from(prospects)
     .leftJoin(rejectionReasons, eq(prospects.rejectionReasonId, rejectionReasons.id))
-    .where(or(eq(prospects.stage, "cierre_perdido"), eq(prospects.stage, "rechazada")))
+    .where(or(...LOST_STAGE_IDS.map((s) => eq(prospects.stage, s))))
     .groupBy(rejectionReasons.reason);
 
   const totalWins = wins.reduce((sum, w) => sum + w.count, 0);
@@ -837,8 +845,8 @@ export async function getCompetitorAnalysis() {
         competitorStats[comp] = { mentions: 0, wins: 0, losses: 0 };
       }
       competitorStats[comp].mentions++;
-      if (["cierre", "cierre_ganado"].includes(p.stage)) competitorStats[comp].wins++;
-      if (["rechazada", "cierre_perdido"].includes(p.stage)) competitorStats[comp].losses++;
+      if (isWonStage(p.stage)) competitorStats[comp].wins++;
+      if (isLostStage(p.stage)) competitorStats[comp].losses++;
     }
   }
 
@@ -969,7 +977,7 @@ export async function createOrUpdateKpiMensual(data: InsertKpiMensual) {
 export async function getRechazadasConVencimiento() {
   return db.query.prospects.findMany({
     where: and(
-      or(eq(prospects.stage, "rechazada"), eq(prospects.stage, "cierre_perdido")),
+      or(...LOST_STAGE_IDS.map((s) => eq(prospects.stage, s))),
       sql`${prospects.fechaVencimientoContrato} is not null`
     ),
     orderBy: [prospects.fechaVencimientoContrato],
@@ -982,7 +990,7 @@ export async function getRechazadasProximasAVencer(diasAnticipacion: number = 30
 
   return db.query.prospects.findMany({
     where: and(
-      or(eq(prospects.stage, "rechazada"), eq(prospects.stage, "cierre_perdido")),
+      or(...LOST_STAGE_IDS.map((s) => eq(prospects.stage, s))),
       sql`${prospects.fechaVencimientoContrato} is not null`,
       lte(prospects.fechaVencimientoContrato, fechaLimite)
     ),
@@ -1030,7 +1038,7 @@ export async function getComercialTeam() {
   // Calculate closed deal values from cierre_ganado prospects
   // Priority: proposal amount > estimatedValue > 0
   const closedProspects = await db.query.prospects.findMany({
-    where: eq(prospects.stage, "cierre_ganado"),
+    where: eq(prospects.stage, STAGE.CIERRE_GANADO),
     columns: { id: true, assignedToId: true, estimatedValue: true },
   });
 

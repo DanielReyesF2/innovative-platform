@@ -4,6 +4,7 @@ import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
 import { requireAuth, requireRole } from "../../middleware/auth";
+import { STAGE } from "../../../shared/schema/comercial-stages";
 import {
   getProspects,
   getProspectById,
@@ -1039,7 +1040,7 @@ router.post("/prospects/:id/documents/upload", upload.single("file"), async (req
 
     // If it's an OC and user wants to mark as closed
     if (tipo === "orden_compra" && markAsClosed) {
-      await updateProspect(prospectId, { stage: "cierre_ganado" });
+      await updateProspect(prospectId, { stage: STAGE.CIERRE_GANADO });
     }
 
     res.status(201).json(document);

@@ -6,6 +6,7 @@ import { useUpdateProspect, useConvertLead } from "../api";
 import { useToast } from "@/components/ui/use-toast";
 import { ArrowRight, UserCheck, ChevronLeft, ChevronRight } from "lucide-react";
 import { KANBAN_STAGES } from "@/lib/comercial-constants";
+import { STAGE } from "@shared/schema/comercial-stages";
 const INDUSTRIES = [
   "Manufactura",
   "Alimentos",
@@ -122,7 +123,7 @@ export function QualifyLeadDialog({ prospect, isLead, onClose, onQualified }: Qu
           estimatedValue: business.estimatedValue || undefined,
           estimatedVolume: waste.estimatedVolume.trim() || undefined,
           levantamientoData: wasteInfo ? { qualificationWaste: wasteInfo } : undefined,
-          stage: "presentacion",
+          stage: STAGE.PRESENTACION,
           probability: 20,
         });
       }
@@ -134,7 +135,7 @@ export function QualifyLeadDialog({ prospect, isLead, onClose, onQualified }: Qu
   };
 
   const fromLabel = KANBAN_STAGES.find(s => s.id === prospect.status)?.label || "Lead Nuevo";
-  const toLabel = KANBAN_STAGES.find(s => s.id === "presentacion")?.label || "Reunión";
+  const toLabel = KANBAN_STAGES.find(s => s.id === STAGE.PRESENTACION)?.label || "Reunión";
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4">
