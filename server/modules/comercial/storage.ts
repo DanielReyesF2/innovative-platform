@@ -353,9 +353,9 @@ export async function sendProspectToOperaciones(prospectId: number, sentById: nu
   // For now, typed as Record to avoid `as any` while keeping indexability.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const levData = prospect.levantamientoData as Record<string, any> | null;
-  if (!levData?.generalInfo?.razonSocial) {
-    throw new Error("VALIDATION:Se requiere al menos razon social en datos de levantamiento");
-  }
+  // razón social defaults to prospect.name — the Comercial form doesn't ask for it
+  // explicitly; Operaciones can refine later in their review step.
+  const razonSocial = levData?.generalInfo?.razonSocial || prospect.name;
   if (!levData?.wasteTypes?.length || !levData.wasteTypes[0]?.wasteType) {
     throw new Error("VALIDATION:Se requiere al menos un tipo de residuo");
   }
@@ -371,10 +371,11 @@ export async function sendProspectToOperaciones(prospectId: number, sentById: nu
         type: "Levantamiento",
         estimatedVolume: prospect.estimatedVolume,
         estimatedValue: prospect.estimatedValue,
-        address: levData.generalInfo?.direccion || null,
+        address: levData?.generalInfo?.direccion || null,
         generalInfo: {
-          ...levData.generalInfo,
-          proposedScheduling: levData.scheduling || null,
+          ...(levData?.generalInfo || {}),
+          razonSocial,
+          proposedScheduling: levData?.scheduling || null,
         },
         prospectId: prospect.id,
         sentById,
