@@ -14,6 +14,7 @@ import {
   followUpAlerts,
   ventasReales,
   kpisMensuales,
+  stageTransitions,
   type InsertProspect,
   type InsertLead,
   type InsertActivity,
@@ -99,6 +100,7 @@ export async function deleteProspect(id: number) {
     await tx.delete(prospectDocuments).where(eq(prospectDocuments.prospectId, id));
     await tx.delete(proposalVersions).where(eq(proposalVersions.prospectId, id));
     await tx.delete(followUpAlerts).where(eq(followUpAlerts.prospectId, id));
+    await tx.delete(stageTransitions).where(eq(stageTransitions.prospectId, id));
     // Clear FK from leads that were converted to this prospect
     await tx.update(leads).set({ convertedToProspectId: null }).where(eq(leads.convertedToProspectId, id));
     const [deleted] = await tx.delete(prospects).where(eq(prospects.id, id)).returning();
@@ -106,20 +108,91 @@ export async function deleteProspect(id: number) {
   });
 }
 
-export async function updateProspect(id: number, data: Partial<InsertProspect>) {
+// Records a stage change in stage_transitions for later time-in-stage analytics.
+// Non-blocking: failures are logged but don't break the caller.
+async function recordStageTransition(
+  prospectId: number,
+  fromStage: string | null,
+  toStage: string,
+  changedById?: number | null,
+  notes?: string | null,
+) {
+  try {
+    const last = await db.query.stageTransitions.findFirst({
+      where: eq(stageTransitions.prospectId, prospectId),
+      orderBy: [desc(stageTransitions.changedAt)],
+    });
+
+    let durationMs: number | null = null;
+    const now = Date.now();
+    if (last?.changedAt) {
+      durationMs = now - new Date(last.changedAt).getTime();
+    } else {
+      const p = await db.query.prospects.findFirst({
+        where: eq(prospects.id, prospectId),
+        columns: { createdAt: true },
+      });
+      if (p?.createdAt) durationMs = now - new Date(p.createdAt).getTime();
+    }
+
+    await db.insert(stageTransitions).values({
+      prospectId,
+      fromStage,
+      toStage,
+      changedById: changedById ?? null,
+      durationInPrevStageMs: durationMs,
+      notes: notes ?? null,
+    });
+  } catch (err) {
+    console.error("[comercial] Failed to record stage transition:", err);
+  }
+}
+
+export async function updateProspect(
+  id: number,
+  data: Partial<InsertProspect>,
+  actorId?: number,
+) {
+  // If stage is about to change, snapshot the old one so we can log the transition.
+  let oldStage: string | null = null;
+  if (typeof data.stage === "string") {
+    const current = await db.query.prospects.findFirst({
+      where: eq(prospects.id, id),
+      columns: { stage: true },
+    });
+    oldStage = current?.stage ?? null;
+  }
+
   const [updated] = await db
     .update(prospects)
     .set({ ...data, updatedAt: new Date() })
     .where(eq(prospects.id, id))
     .returning();
+
+  if (
+    updated &&
+    typeof data.stage === "string" &&
+    oldStage !== null &&
+    oldStage !== data.stage
+  ) {
+    await recordStageTransition(id, oldStage, data.stage, actorId);
+  }
+
   return updated;
 }
 
 export async function rejectProspect(
   id: number,
   rejectionReasonId: number,
-  rejectionDetail: string
+  rejectionDetail: string,
+  actorId?: number,
 ) {
+  const current = await db.query.prospects.findFirst({
+    where: eq(prospects.id, id),
+    columns: { stage: true },
+  });
+  const oldStage = current?.stage ?? null;
+
   const [updated] = await db
     .update(prospects)
     .set({
@@ -132,23 +205,32 @@ export async function rejectProspect(
     })
     .where(eq(prospects.id, id))
     .returning();
+
+  if (updated && oldStage && oldStage !== STAGE.CIERRE_PERDIDO) {
+    await recordStageTransition(id, oldStage, STAGE.CIERRE_PERDIDO, actorId, rejectionDetail || null);
+  }
+
   return updated;
 }
 
 // --- Qualify Lead → Prospecto ---
 
-export async function qualifyProspect(id: number, data: {
-  industry: string;
-  potential: string;
-  estimatedValue?: string | number;
-  estimatedVolume?: string;
-  probability: number;
-  priority: string;
-  contactRole?: string;
-  contactEmail?: string;
-  reason?: string;
-  nextStep?: string;
-}) {
+export async function qualifyProspect(
+  id: number,
+  data: {
+    industry: string;
+    potential: string;
+    estimatedValue?: string | number;
+    estimatedVolume?: string;
+    probability: number;
+    priority: string;
+    contactRole?: string;
+    contactEmail?: string;
+    reason?: string;
+    nextStep?: string;
+  },
+  actorId?: number,
+) {
   // Verify prospect exists and is in 'lead' stage
   const prospect = await db.query.prospects.findFirst({
     where: eq(prospects.id, id),
@@ -176,6 +258,10 @@ export async function qualifyProspect(id: number, data: {
     })
     .where(eq(prospects.id, id))
     .returning();
+
+  if (updated) {
+    await recordStageTransition(id, STAGE.LEAD, "prospecto", actorId);
+  }
 
   return updated;
 }
@@ -645,6 +731,30 @@ export async function updateProposalAmount(id: number, amount: string) {
       .where(eq(prospects.id, updated.prospectId));
   }
   return updated;
+}
+
+// --- Stage Transitions (audit log) ---
+
+export async function getStageTransitions(prospectId: number) {
+  return db.query.stageTransitions.findMany({
+    where: eq(stageTransitions.prospectId, prospectId),
+    orderBy: [desc(stageTransitions.changedAt)],
+  });
+}
+
+// Average duration (in ms) a prospect spent in each "from" stage, aggregated across
+// all prospects that have at least one transition out of that stage.
+export async function getAverageDurationByStage() {
+  const rows = await db
+    .select({
+      stage: stageTransitions.fromStage,
+      avgMs: sql<number>`coalesce(avg(${stageTransitions.durationInPrevStageMs}), 0)::bigint`,
+      samples: sql<number>`count(*)::int`,
+    })
+    .from(stageTransitions)
+    .where(sql`${stageTransitions.fromStage} is not null and ${stageTransitions.durationInPrevStageMs} is not null`)
+    .groupBy(stageTransitions.fromStage);
+  return rows;
 }
 
 // --- Alerts ---

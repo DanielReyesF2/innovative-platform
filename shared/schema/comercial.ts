@@ -1,4 +1,4 @@
-import { pgTable, serial, text, integer, timestamp, boolean, numeric, jsonb, pgEnum, uniqueIndex, date } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, integer, timestamp, boolean, numeric, jsonb, pgEnum, uniqueIndex, date, bigint, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { users } from "./common";
@@ -263,6 +263,22 @@ export const proposalVersions = pgTable("proposal_versions", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Stage Transitions (audit log of prospect stage changes — for lapso metrics)
+// Populated on every change of prospects.stage. Purely additive; no field
+// drives UI state today, but dashboards query this to show time-in-stage.
+export const stageTransitions = pgTable("stage_transitions", {
+  id: serial("id").primaryKey(),
+  prospectId: integer("prospect_id").references(() => prospects.id).notNull(),
+  fromStage: text("from_stage"), // null only for prospects migrated without prior state
+  toStage: text("to_stage").notNull(),
+  changedById: integer("changed_by_id").references(() => users.id), // null for system-driven transitions
+  changedAt: timestamp("changed_at").defaultNow().notNull(),
+  durationInPrevStageMs: bigint("duration_in_prev_stage_ms", { mode: "number" }), // null on first transition (no prior stage)
+  notes: text("notes"),
+}, (table) => ({
+  byProspect: index("stage_transitions_prospect_idx").on(table.prospectId, table.changedAt),
+}));
+
 // Follow-up Alerts
 export const followUpAlerts = pgTable("follow_up_alerts", {
   id: serial("id").primaryKey(),
@@ -414,6 +430,7 @@ export type ProposalVersion = typeof proposalVersions.$inferSelect;
 export type InsertProposal = z.infer<typeof insertProposalSchema>;
 export type FollowUpAlert = typeof followUpAlerts.$inferSelect;
 export type InsertAlert = z.infer<typeof insertAlertSchema>;
+export type StageTransition = typeof stageTransitions.$inferSelect;
 
 // === RESUMEN SEMANAL (Weekly Management Report) ===
 
