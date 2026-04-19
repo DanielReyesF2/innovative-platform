@@ -43,6 +43,8 @@ import {
   sendProposal,
   changeProposalStatus,
   updateProposalAmount,
+  getStageTransitions,
+  getAverageDurationByStage,
   getAlerts,
   getPendingAlertsCount,
   acknowledgeAlert,
@@ -245,7 +247,7 @@ router.patch("/prospects/:id", async (req, res) => {
     if (!allowed.success) {
       return res.status(400).json({ message: "Datos invalidos", errors: allowed.error.errors });
     }
-    const updated = await updateProspect(Number(req.params.id), allowed.data);
+    const updated = await updateProspect(Number(req.params.id), allowed.data, req.user?.id);
     if (!updated) return res.status(404).json({ message: "Prospecto no encontrado" });
     res.json(updated);
   } catch (error) {
@@ -280,7 +282,8 @@ router.post("/prospects/:id/reject", async (req, res) => {
     const updated = await rejectProspect(
       Number(req.params.id),
       parsed.data.rejectionReasonId,
-      parsed.data.rejectionDetail || ""
+      parsed.data.rejectionDetail || "",
+      req.user?.id,
     );
     if (!updated) return res.status(404).json({ message: "Prospecto no encontrado" });
     res.json(updated);
@@ -298,7 +301,7 @@ router.post("/prospects/:id/qualify", async (req, res) => {
     if (!parsed.success) {
       return res.status(400).json({ message: "Datos invalidos", errors: parsed.error.errors });
     }
-    const updated = await qualifyProspect(Number(req.params.id), parsed.data);
+    const updated = await qualifyProspect(Number(req.params.id), parsed.data, req.user?.id);
     res.json(updated);
   } catch (error) {
     console.error("[comercial] Qualify prospect error:", error);
@@ -847,6 +850,28 @@ router.post("/alerts/generate", requireRole("admin"), async (_req, res) => {
   }
 });
 
+// --- Stage Transitions (time-in-stage metrics) ---
+
+router.get("/prospects/:id/stage-transitions", async (req, res) => {
+  try {
+    const rows = await getStageTransitions(Number(req.params.id));
+    res.json(rows);
+  } catch (error) {
+    console.error("[comercial] Stage transitions error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+router.get("/reports/stage-durations", async (_req, res) => {
+  try {
+    const rows = await getAverageDurationByStage();
+    res.json(rows);
+  } catch (error) {
+    console.error("[comercial] Stage durations report error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
 // --- Reports ---
 
 router.get("/reports/lead-sources", async (_req, res) => {
@@ -1040,7 +1065,7 @@ router.post("/prospects/:id/documents/upload", upload.single("file"), async (req
 
     // If it's an OC and user wants to mark as closed
     if (tipo === "orden_compra" && markAsClosed) {
-      await updateProspect(prospectId, { stage: STAGE.CIERRE_GANADO });
+      await updateProspect(prospectId, { stage: STAGE.CIERRE_GANADO }, req.user?.id);
     }
 
     res.status(201).json(document);

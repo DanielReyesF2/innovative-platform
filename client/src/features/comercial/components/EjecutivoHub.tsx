@@ -49,8 +49,11 @@ export function EjecutivoHub({ member, onBack, onShowNuevoLead }: Props) {
   const memberProspectos = kanbanProspectos.filter(p => p.ejecutivo === member.codigo);
   const memberRechazados = memberProspectos.filter(p => p.status === 'cierre_perdido');
 
-  // State
-  const [selectedProspecto, setSelectedProspecto] = useState<KanbanProspecto | null>(null);
+  // State — store id only so the drawer re-reads live data after mutations.
+  const [selectedProspectoId, setSelectedProspectoId] = useState<number | null>(null);
+  const selectedProspecto = selectedProspectoId
+    ? kanbanProspectos.find((p) => p.id === selectedProspectoId) ?? null
+    : null;
   const [hubActiveKanbanId, setHubActiveKanbanId] = useState<number | null>(null);
   const [showRechazadasModal, setShowRechazadasModal] = useState(false);
   const [showVentasRealesModal, setShowVentasRealesModal] = useState(false);
@@ -88,7 +91,9 @@ export function EjecutivoHub({ member, onBack, onShowNuevoLead }: Props) {
     updateProspectMutation.mutate(
       { id: prospecto.id, stage: targetStage },
       {
-        onSuccess: () => setSelectedProspecto((prev) => prev && prev.id === prospecto.id ? { ...prev, status: targetStage } : prev),
+        // selectedProspecto is derived from kanbanProspectos, so the React Query
+        // invalidation inside updateProspectMutation refreshes the drawer
+        // automatically. No manual state patching needed here.
         onError: () => toast({ title: 'Error al cambiar etapa', variant: 'destructive' }),
       }
     );
@@ -197,7 +202,7 @@ export function EjecutivoHub({ member, onBack, onShowNuevoLead }: Props) {
                           return (
                             <div className="space-y-0">
                               {visibleItems.map(prospecto => (
-                                <HubKanbanCard key={prospecto.id} prospecto={prospecto} onSelect={setSelectedProspecto} />
+                                <HubKanbanCard key={prospecto.id} prospecto={prospecto} onSelect={(p) => setSelectedProspectoId(p.id)} />
                               ))}
                               {hiddenCount > 0 && (
                                 <button onClick={(e) => { e.stopPropagation(); setExpandedColumns(prev => ({ ...prev, [stage.id]: !isExpanded })); }}
@@ -266,7 +271,7 @@ export function EjecutivoHub({ member, onBack, onShowNuevoLead }: Props) {
                       <div key={p.id}
                         className="rounded-xl p-3 cursor-pointer hover:shadow-lg transition-all border"
                         style={{ backgroundColor: cat?.bgColor || '#f3f4f6', borderColor: `${cat?.color}30` || '#e5e7eb', borderLeft: `4px solid ${cat?.color || '#6b7280'}` }}
-                        onClick={() => { setShowRechazadasModal(false); setSelectedProspecto(p); }}>
+                        onClick={() => { setShowRechazadasModal(false); setSelectedProspectoId(p.id); }}>
                         <div className="flex items-center justify-between gap-2 mb-1">
                           <h4 className="text-sm font-semibold text-[#1c2c4a] truncate flex-1">{p.empresa}</h4>
                           <span className="text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap" style={{ backgroundColor: `${cat?.color}18`, color: cat?.color }}>{cat?.label}</span>
@@ -408,7 +413,7 @@ export function EjecutivoHub({ member, onBack, onShowNuevoLead }: Props) {
 
         {/* Prospect Drawer */}
         {selectedProspecto && (
-          <ProspectoDrawer prospecto={selectedProspecto} onClose={() => setSelectedProspecto(null)} />
+          <ProspectoDrawer prospecto={selectedProspecto} onClose={() => setSelectedProspectoId(null)} />
         )}
 
       </div>
