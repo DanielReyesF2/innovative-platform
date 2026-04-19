@@ -45,13 +45,28 @@ function CollapsibleSection({ title, icon, children, defaultOpen = false }: {
   );
 }
 
+// Parse a legacy `quantity` string like "18 ton/mes" or "50 kg" into value + unit.
+// Defaults unit to "ton" when ambiguous (matches previous implicit behavior).
+function parseLegacyQuantity(raw: unknown): { value: string; unit: "kg" | "ton" } {
+  if (typeof raw !== "string" || !raw.trim()) return { value: "", unit: "ton" };
+  const match = raw.match(/^\s*([\d.,]+)\s*(kg|ton|tonelada|toneladas|kilogramo|kilogramos|kilos?)/i);
+  if (!match) return { value: raw, unit: "ton" };
+  const unit = match[2].toLowerCase().startsWith("k") ? "kg" : "ton";
+  return { value: match[1].replace(",", "."), unit };
+}
+
 // ─── Section: Tipos de Residuo ───
 function WasteTypesSection({ data, onChange }: { data: Record<string, unknown>[]; onChange: (d: Record<string, unknown>[]) => void }) {
-  const addRow = () => onChange([...data, { wasteType: "", quantity: "", currentDestination: "" }]);
+  const addRow = () => onChange([...data, { wasteType: "", quantityValue: "", quantityUnit: "ton", quantity: "", currentDestination: "" }]);
   const removeRow = (i: number) => onChange(data.filter((_, idx) => idx !== i));
   const updateRow = (i: number, key: string, val: string) => {
     const updated = [...data];
     updated[i] = { ...updated[i], [key]: val } as Record<string, unknown>;
+    onChange(updated);
+  };
+  const updateRowFields = (i: number, fields: Record<string, unknown>) => {
+    const updated = [...data];
+    updated[i] = { ...updated[i], ...fields };
     onChange(updated);
   };
   const categories = [...new Set(WASTE_TYPES_CATALOG.map(w => w.category))];
@@ -62,6 +77,16 @@ function WasteTypesSection({ data, onChange }: { data: Record<string, unknown>[]
       {data.map((row: Record<string, unknown>, i: number) => {
         const currentType = row.wasteType as string;
         const isLegacyValue = currentType && !WASTE_TYPES_CATALOG.some(w => w.id === currentType || w.label === currentType);
+        const legacy = parseLegacyQuantity(row.quantity);
+        const quantityValue = ((row.quantityValue as string) ?? legacy.value) || "";
+        const quantityUnit = ((row.quantityUnit as "kg" | "ton") ?? legacy.unit) || "ton";
+        const setQuantity = (value: string, unit: "kg" | "ton") => {
+          updateRowFields(i, {
+            quantityValue: value,
+            quantityUnit: unit,
+            quantity: value ? `${value} ${unit}/mes` : "",
+          });
+        };
         return (
           <div key={i} className="mb-3 rounded-lg border p-3">
             <div className="mb-2 flex items-center justify-between">
@@ -87,7 +112,47 @@ function WasteTypesSection({ data, onChange }: { data: Record<string, unknown>[]
                   </select>
                 )}
               </div>
-              <Field label="Cantidad" value={row.quantity} onChange={(v) => updateRow(i, "quantity", v)} placeholder="Ej: 18 ton/mes" />
+              <div>
+                <Label className="text-xs">Cantidad mensual</Label>
+                <div className="mt-1 flex items-stretch gap-1.5">
+                  <Input
+                    type="number"
+                    inputMode="decimal"
+                    min="0"
+                    step="any"
+                    value={quantityValue}
+                    onChange={(e) => setQuantity(e.target.value, quantityUnit)}
+                    placeholder="Ej: 18"
+                    className="flex-1"
+                  />
+                  <div className="inline-flex shrink-0 overflow-hidden rounded-md border border-input">
+                    <button
+                      type="button"
+                      onClick={() => setQuantity(quantityValue, "kg")}
+                      className={`px-2.5 text-xs font-medium transition-colors ${
+                        quantityUnit === "kg"
+                          ? "bg-[#00a8a8] text-white"
+                          : "bg-background text-[#6b7280] hover:bg-[#f3f4f6]"
+                      }`}
+                      aria-pressed={quantityUnit === "kg"}
+                    >
+                      kg
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setQuantity(quantityValue, "ton")}
+                      className={`px-2.5 text-xs font-medium transition-colors ${
+                        quantityUnit === "ton"
+                          ? "bg-[#00a8a8] text-white"
+                          : "bg-background text-[#6b7280] hover:bg-[#f3f4f6]"
+                      }`}
+                      aria-pressed={quantityUnit === "ton"}
+                    >
+                      ton
+                    </button>
+                  </div>
+                </div>
+              </div>
               <Field label="Destino Actual" value={row.currentDestination} onChange={(v) => updateRow(i, "currentDestination", v)} />
             </div>
           </div>
