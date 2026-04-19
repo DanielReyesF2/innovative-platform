@@ -70,8 +70,8 @@ export function Sidebar() {
         )}
       >
         {/* Logo / brand */}
-        <div className="flex h-20 items-center justify-center border-b border-sidebar-border px-3">
-          <img src="/IGMexico-Blanco.png" alt="Innovative Group" className="h-14 w-auto" />
+        <div className="flex h-24 items-center justify-center border-b border-sidebar-border px-3">
+          <img src="/IGMexico-Blanco.png" alt="Innovative Group" className="h-20 w-auto" />
         </div>
 
         {/* Navigation — all items come from GET /api/modules */}

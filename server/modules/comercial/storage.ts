@@ -637,6 +637,12 @@ export async function updateProposalAmount(id: number, amount: string) {
     .set({ amount, updatedAt: new Date() })
     .where(eq(proposalVersions.id, id))
     .returning();
+  if (updated?.prospectId) {
+    await db
+      .update(prospects)
+      .set({ estimatedValue: amount, updatedAt: new Date() })
+      .where(eq(prospects.id, updated.prospectId));
+  }
   return updated;
 }
 
