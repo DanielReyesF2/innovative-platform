@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import {
   X, ChevronRight, Trash2, Users, Package, ClipboardList, Clock,
   MessageSquare, FileText, Send, Phone, Mail, Copy, Check, XCircle,
-  AlertCircle, Bell, CheckCircle, RotateCcw, PhoneCall, CalendarClock,
+  RotateCcw, PhoneCall, CalendarClock,
   Upload, Paperclip, Image, BarChart3, Lock, Sparkles, Leaf, Target,
   Building2,
 } from 'lucide-react';
@@ -18,11 +18,11 @@ import { ProspectLevantamiento } from './ProspectLevantamiento';
 import { ModalMotivoRechazo } from './ModalMotivoRechazo';
 import { StageGateModal } from './StageGateModal';
 import { InlineText, InlineNumber, InlineSelect, InlineMonth, InlineChips } from './InlineEdit';
-import { fmtK, fmtCurrency } from '@/lib/utils';
+import { fmtCurrency } from '@/lib/utils';
 import { useToast } from '@/components/ui/use-toast';
 import {
-  KANBAN_STAGES, SERVICIOS_INNOVATIVE, SERVICE_COLORS, STAGE_GATES, INDUSTRIAS,
-  classifyRechazo, getSeguimientoUrgency, getRecoveryState, RECHAZO_CATEGORIES,
+  KANBAN_STAGES, SERVICIOS_INNOVATIVE, STAGE_GATES, INDUSTRIAS,
+  classifyRechazo, getSeguimientoUrgency, getRecoveryState,
   timeAgo, isTabLocked, tabUnlockLabel,
 } from '@/lib/comercial-constants';
 import { useRejectProspect } from '../api';
@@ -81,11 +81,6 @@ export function ProspectoDrawer({ prospecto, onClose }: Props) {
 
   const stageInfo = KANBAN_STAGES.find(s => s.id === p.status);
   const valor = p.propuesta?.ventaTotal || p.facturacionEstimada || 0;
-  const sc = p.servicios?.map((s) => {
-    const svc = SERVICIOS_INNOVATIVE.find(si => si.id === s);
-    const col = SERVICE_COLORS[s] || { bg: '#f3f4f6', text: '#6b7280', label: s, border: '#6b7280' };
-    return { ...col, nombre: svc?.nombre || s, id: s };
-  }) || [];
 
   const copyToClipboard = (text: string, fieldName: string) => {
     navigator.clipboard.writeText(text);
