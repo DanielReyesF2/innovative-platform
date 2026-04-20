@@ -236,7 +236,11 @@ router.post("/prospects", async (req, res) => {
     res.status(201).json(prospect);
   } catch (error) {
     console.error("[comercial] Create prospect error:", error);
-    res.status(500).json({ message: "Internal server error" });
+    // Surface the real DB error message so the client (and Vero/Cristina
+    // cuando debuggen) vea POR QUÉ falla, no un genérico 500. Un FK violation
+    // típico se ve como 'foreign key constraint' + nombre de la columna.
+    const msg = getErrorMessage(error);
+    res.status(500).json({ message: "No se pudo crear el prospecto", detail: msg });
   }
 });
 
