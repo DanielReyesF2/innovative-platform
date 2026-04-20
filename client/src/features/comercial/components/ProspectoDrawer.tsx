@@ -16,7 +16,7 @@ import { ProspectProposals } from './ProspectProposals';
 import { ProspectLevantamiento } from './ProspectLevantamiento';
 import { ModalMotivoRechazo } from './ModalMotivoRechazo';
 import { StageGateModal } from './StageGateModal';
-import { InlineText, InlineNumber, InlineSelect, InlineMonth, InlineChips } from './InlineEdit';
+import { InlineText, InlineNumber, InlineSelect, InlineMonth, InlineDate, InlineChips } from './InlineEdit';
 import { fmtCurrency } from '@/lib/utils';
 import { useToast } from '@/components/ui/use-toast';
 import {
@@ -529,6 +529,75 @@ export function ProspectoDrawer({ prospecto, onClose }: Props) {
                   </div>
                 )}
 
+                {/* Socio Ambiental — sección de cierre, visible SOLO cuando
+                    el prospecto ya está en esa etapa. Captura los campos del
+                    spec de Vero para guardar el acuerdo comercial; los datos
+                    de contrato se sincronizarán con el futuro módulo Socios
+                    Ambientales cuando exista. */}
+                {p.status === 'cierre_ganado' && (
+                  <section>
+                    <SectionTitle>Cierre</SectionTitle>
+                    <div className="space-y-0.5">
+                      <InfoRow label="Fecha de cierre">
+                        <InlineDate
+                          value={p.closeDate ? String(p.closeDate).split('T')[0] : null}
+                          onSave={(v) => saveProspectField({ closeDate: v ? new Date(v + 'T12:00:00').toISOString() : null })}
+                          emptyLabel="Sin fecha"
+                        />
+                      </InfoRow>
+                      <InfoRow label="Inicio de operaciones">
+                        <InlineDate
+                          value={p.operationsStartDate}
+                          onSave={(v) => saveProspectField({ operationsStartDate: v })}
+                          emptyLabel="Sin fecha"
+                        />
+                      </InfoRow>
+                      <InfoRow label="¿Hay contrato?">
+                        <InlineSelect
+                          value={p.hasContract === true ? 'si' : p.hasContract === false ? 'no' : undefined}
+                          options={[
+                            { value: 'no', label: 'No' },
+                            { value: 'si', label: 'Sí' },
+                          ]}
+                          onSave={(v) => saveProspectField({ hasContract: v === 'si' })}
+                          emptyLabel="Por definir"
+                        />
+                      </InfoRow>
+                      {p.hasContract && (
+                        <>
+                          <InfoRow label="Tiempo de contrato">
+                            <InlineNumber
+                              value={p.contractDurationMonths}
+                              onSave={(v) => saveProspectField({ contractDurationMonths: v })}
+                              min={0}
+                              suffix="meses"
+                              emptyLabel="Sin definir"
+                            />
+                          </InfoRow>
+                          <InfoRow label="Crédito servicios">
+                            <InlineNumber
+                              value={p.paymentTermsServices}
+                              onSave={(v) => saveProspectField({ paymentTermsServices: v })}
+                              min={0}
+                              suffix="días"
+                              emptyLabel="Sin definir"
+                            />
+                          </InfoRow>
+                          <InfoRow label="Crédito valorizables">
+                            <InlineNumber
+                              value={p.paymentTermsValuables}
+                              onSave={(v) => saveProspectField({ paymentTermsValuables: v })}
+                              min={0}
+                              suffix="días"
+                              emptyLabel="Sin definir"
+                            />
+                          </InfoRow>
+                        </>
+                      )}
+                    </div>
+                  </section>
+                )}
+
                 {/* Datos generales (Empresa, Ubicación, Industria) ahora viven
                     en el header del drawer como campos inline editables, así que
                     ya no los repetimos aquí. */}
@@ -696,6 +765,13 @@ export function ProspectoDrawer({ prospecto, onClose }: Props) {
                       <InlineMonth
                         value={p.estimatedCloseTime}
                         onSave={(v) => saveProspectField({ estimatedCloseTime: v })}
+                        emptyLabel="Sin definir"
+                      />
+                    </InfoRow>
+                    <InfoRow label="Fecha est. de inicio">
+                      <InlineDate
+                        value={p.estimatedStartDate}
+                        onSave={(v) => saveProspectField({ estimatedStartDate: v })}
                         emptyLabel="Sin definir"
                       />
                     </InfoRow>

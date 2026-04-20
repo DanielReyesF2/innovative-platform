@@ -467,6 +467,29 @@ export function useChangeProposalStatus() {
   });
 }
 
+interface UpdateProposalPayload {
+  prospectId: number;
+  proposalId: number;
+  amount?: string | number;
+  utilidad?: string | number | null;
+  recipientName?: string | null;
+  recipientRole?: string | null;
+  notes?: string | null;
+  validUntil?: string | null;
+}
+
+export function useUpdateProposal() {
+  return useMutation({
+    mutationFn: async ({ prospectId, proposalId, ...data }: UpdateProposalPayload) => {
+      const res = await apiRequest("PATCH", `/api/comercial/prospects/${prospectId}/proposals/${proposalId}`, data);
+      return res.json();
+    },
+    onSuccess: () => {
+      invalidateByPrefix("/api/comercial/prospects");
+    },
+  });
+}
+
 // --- Alerts ---
 
 export function useAlerts(status?: string) {

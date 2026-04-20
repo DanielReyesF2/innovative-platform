@@ -16,7 +16,9 @@ import {
   useProposalVersions,
   useSendProposal,
   useChangeProposalStatus,
+  useUpdateProposal,
 } from "../api";
+import { InlineText, InlineNumber } from "./InlineEdit";
 import type { ProposalVersion } from "@shared/schema/comercial";
 
 interface ProspectProposalsProps {
@@ -38,6 +40,52 @@ const statusLabels: Record<string, string> = {
   aceptada: "Aceptada",
   rechazada: "Rechazada",
 };
+
+// Detalles editables adicionales de una propuesta (spec Vero): margen de
+// utilidad + contacto receptor. Cada campo se guarda inline.
+function ProposalDetails({ prospectId, proposal }: { prospectId: number; proposal: ProposalVersion }) {
+  const updateProposal = useUpdateProposal();
+
+  const saveField = async (patch: Record<string, unknown>) => {
+    await updateProposal.mutateAsync({ prospectId, proposalId: proposal.id, ...patch });
+  };
+
+  const utilidad = proposal.utilidad != null ? Number(proposal.utilidad) : null;
+
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-3 pt-3 border-t border-[#f3f4f6]">
+      <div>
+        <div className="text-[10px] font-semibold uppercase tracking-widest text-[#9ca3af] mb-0.5">Margen de utilidad</div>
+        <InlineNumber
+          value={utilidad}
+          onSave={(v) => saveField({ utilidad: v })}
+          min={0}
+          max={100}
+          suffix="%"
+          emptyLabel="Sin definir"
+        />
+      </div>
+      <div>
+        <div className="text-[10px] font-semibold uppercase tracking-widest text-[#9ca3af] mb-0.5">Recibe (nombre)</div>
+        <InlineText
+          value={proposal.recipientName || ""}
+          onSave={(v) => saveField({ recipientName: v || null })}
+          emptyLabel="Contacto receptor"
+          placeholder="Nombre"
+        />
+      </div>
+      <div>
+        <div className="text-[10px] font-semibold uppercase tracking-widest text-[#9ca3af] mb-0.5">Recibe (cargo)</div>
+        <InlineText
+          value={proposal.recipientRole || ""}
+          onSave={(v) => saveField({ recipientRole: v || null })}
+          emptyLabel="Cargo"
+          placeholder="Ej: Gerente de Operaciones"
+        />
+      </div>
+    </div>
+  );
+}
 
 // Inline editable amount
 function ProposalAmountInput({ prospectId: pid, proposal }: { prospectId: number; proposal: ProposalVersion }) {
@@ -270,6 +318,10 @@ export function ProspectProposals({ prospectId }: ProspectProposalsProps) {
                         Enviada: {format(new Date(proposal.sentAt), "PPp", { locale: es })}
                       </p>
                     )}
+
+                    {/* Campos de Propuesta (spec Vero): utilidad + contacto
+                        receptor, editables inline. */}
+                    <ProposalDetails prospectId={prospectId} proposal={proposal} />
                   </div>
 
                   <a

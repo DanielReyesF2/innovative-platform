@@ -148,6 +148,21 @@ export const prospects = pgTable("prospects", {
   // auto-advances to "Propuesta" (DB stage=negociacion). End of business day
   // at surveyDate + 3 business days. Cleared once proposalDate is recorded.
   proposalDeadline: timestamp("proposal_deadline"),
+  // Fecha estimada de inicio de operaciones — se captura al mandar la
+  // propuesta (spec Vero). Distinta de operationsStartDate que es la fecha
+  // real ya cerrada.
+  estimatedStartDate: date("estimated_start_date"),
+  // Socio Ambiental (Fase 2 bloque 4 — spec Vero).
+  // Se captura una vez que el prospecto se cierra ganado. Los campos de
+  // contrato / tiempo / días de crédito viven aquí por ahora; más adelante
+  // se van a sincronizar con el futuro módulo "Socios Ambientales" cuando
+  // exista.
+  closeDate: timestamp("close_date"),
+  operationsStartDate: date("operations_start_date"),
+  hasContract: boolean("has_contract").default(false),
+  contractDurationMonths: integer("contract_duration_months"),
+  paymentTermsServices: integer("payment_terms_services"), // días
+  paymentTermsValuables: integer("payment_terms_valuables"), // días
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -276,6 +291,11 @@ export const proposalVersions = pgTable("proposal_versions", {
   name: text("name").notNull(),
   url: text("url").notNull(),
   amount: numeric("amount", { precision: 14, scale: 2 }),
+  // Margen de utilidad (%) — campo obligatorio del spec de Vero en Propuesta.
+  utilidad: numeric("utilidad", { precision: 5, scale: 2 }),
+  // Contacto receptor de la propuesta (nombre + cargo) — también del spec.
+  recipientName: text("recipient_name"),
+  recipientRole: text("recipient_role"),
   validUntil: timestamp("valid_until"),
   status: proposalStatusEnum("status").default("borrador"),
   notes: text("notes"),
