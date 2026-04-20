@@ -845,6 +845,28 @@ export async function changeProposalStatus(id: number, status: string) {
   return updated;
 }
 
+// Generic partial update for a proposal — usado por la UI inline para
+// campos como utilidad, recipientName, recipientRole, notes, validUntil.
+export async function updateProposal(
+  id: number,
+  data: Partial<Pick<InsertProposal, "amount" | "utilidad" | "recipientName" | "recipientRole" | "notes" | "validUntil">>,
+) {
+  const [updated] = await db
+    .update(proposalVersions)
+    .set({ ...data, updatedAt: new Date() })
+    .where(eq(proposalVersions.id, id))
+    .returning();
+  // Si cambió el amount, sincronizar con prospect.estimatedValue — mismo
+  // comportamiento que updateProposalAmount.
+  if (updated && data.amount !== undefined && updated.prospectId) {
+    await db
+      .update(prospects)
+      .set({ estimatedValue: String(data.amount), updatedAt: new Date() })
+      .where(eq(prospects.id, updated.prospectId));
+  }
+  return updated;
+}
+
 export async function updateProposalAmount(id: number, amount: string) {
   const [updated] = await db
     .update(proposalVersions)

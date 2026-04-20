@@ -12,7 +12,7 @@ export type { GateMissingField } from '@shared/types/comercial';
  * - Timestamps arrive as ISO strings (not Date objects)
  * - Includes joined rejection reason fields
  */
-export type ApiProspect = Omit<Prospect, 'createdAt' | 'updatedAt' | 'rejectionDate' | 'proposalDate' | 'lastContactAt' | 'nextFollowUpAt' | 'fechaVencimientoContrato' | 'sentToOpsAt' | 'proposalDeadline'> & {
+export type ApiProspect = Omit<Prospect, 'createdAt' | 'updatedAt' | 'rejectionDate' | 'proposalDate' | 'lastContactAt' | 'nextFollowUpAt' | 'fechaVencimientoContrato' | 'sentToOpsAt' | 'proposalDeadline' | 'closeDate'> & {
   createdAt: string | null;
   updatedAt: string | null;
   rejectionDate?: string | null;
@@ -22,6 +22,7 @@ export type ApiProspect = Omit<Prospect, 'createdAt' | 'updatedAt' | 'rejectionD
   fechaVencimientoContrato?: string | null;
   sentToOpsAt?: string | null;
   proposalDeadline?: string | null;
+  closeDate?: string | null;
   rejectionReasonText?: string | null;
   rejectionReasonCategory?: string | null;
 };
@@ -366,6 +367,13 @@ export const dbProspectToKanban = (prospect: ApiProspect, usersMap: Record<numbe
     surveyDate: prospect.surveyDate || null,
     proposalDeadline: prospect.proposalDeadline || null,
     proposalDate: prospect.proposalDate || null,
+    estimatedStartDate: prospect.estimatedStartDate || null,
+    closeDate: prospect.closeDate || null,
+    operationsStartDate: prospect.operationsStartDate || null,
+    hasContract: prospect.hasContract ?? null,
+    contractDurationMonths: prospect.contractDurationMonths ?? null,
+    paymentTermsServices: prospect.paymentTermsServices ?? null,
+    paymentTermsValuables: prospect.paymentTermsValuables ?? null,
     updatedAt: prospect.updatedAt || null,
   };
 };

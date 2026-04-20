@@ -45,6 +45,7 @@ import {
   sendProposal,
   changeProposalStatus,
   updateProposalAmount,
+  updateProposal,
   getStageTransitions,
   getAverageDurationByStage,
   getAlerts,
@@ -767,6 +768,39 @@ router.patch("/prospects/:prospectId/proposals/:proposalId/amount", async (req, 
     res.json(updated);
   } catch (error) {
     console.error("[comercial] Update proposal amount error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+// Generic PATCH for any proposal field — utilidad, recipient, notes,
+// validUntil. Frontend (ProspectProposals inline edit) lo usa para guardar
+// campo por campo.
+const updateProposalFieldsSchema = z.object({
+  amount: z.union([z.string(), z.number()]).optional(),
+  utilidad: z.union([z.string(), z.number()]).optional(),
+  recipientName: z.string().max(200).nullable().optional(),
+  recipientRole: z.string().max(200).nullable().optional(),
+  notes: z.string().max(2000).nullable().optional(),
+  validUntil: z.string().nullable().optional(),
+});
+
+router.patch("/prospects/:prospectId/proposals/:proposalId", async (req, res) => {
+  try {
+    const parsed = updateProposalFieldsSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ message: "Datos inválidos", errors: parsed.error.errors });
+    }
+    const payload = parsed.data as Parameters<typeof updateProposal>[1];
+    // Normalizar numbers a string para campos numeric
+    const data: Record<string, unknown> = { ...payload };
+    if (data.amount !== undefined && data.amount !== null) data.amount = String(data.amount);
+    if (data.utilidad !== undefined && data.utilidad !== null) data.utilidad = String(data.utilidad);
+    if (data.validUntil && typeof data.validUntil === "string") data.validUntil = new Date(data.validUntil);
+    const updated = await updateProposal(Number(req.params.proposalId), data as Parameters<typeof updateProposal>[1]);
+    if (!updated) return res.status(404).json({ message: "Propuesta no encontrada" });
+    res.json(updated);
+  } catch (error) {
+    console.error("[comercial] Update proposal error:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 });

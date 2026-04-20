@@ -245,6 +245,48 @@ export function InlineSelect<T extends string>({ value, options, onSave, emptyLa
   );
 }
 
+// ─── InlineDate ──────────────────────────────────────────────────────
+// value format: "YYYY-MM-DD"
+interface InlineDateProps {
+  value: string | null | undefined;
+  onSave: SaveFn<string | null>;
+  emptyLabel?: string;
+  displayClassName?: string;
+}
+
+export function InlineDate({ value, onSave, emptyLabel, displayClassName = "" }: InlineDateProps) {
+  const { editing, value: v, setValue, saving, start, cancel, save } = useInlineEdit<string>(value || "", async (next) => {
+    await onSave(next || null);
+  });
+
+  if (editing) {
+    return (
+      <input
+        type="date"
+        autoFocus
+        value={v}
+        onChange={(e) => setValue(e.target.value)}
+        onBlur={() => save()}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") { e.preventDefault(); save(); }
+          if (e.key === "Escape") cancel();
+        }}
+        className="rounded-md border border-[#00a8a8] bg-white px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-[#00a8a8]/30"
+      />
+    );
+  }
+
+  const formatted = value
+    ? new Date(value + "T12:00:00").toLocaleDateString("es-MX", { day: "numeric", month: "short", year: "numeric" })
+    : null;
+
+  return (
+    <DisplayButton onClick={start} saving={saving} className={displayClassName}>
+      {formatted ? <span>{formatted}</span> : <span className="italic text-[#9ca3af]">{emptyLabel || "—"}</span>}
+    </DisplayButton>
+  );
+}
+
 // ─── InlineMonth ──────────────────────────────────────────────────────
 // value format: "YYYY-MM"
 interface InlineMonthProps {
