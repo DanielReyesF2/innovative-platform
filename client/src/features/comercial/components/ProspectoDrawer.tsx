@@ -3,10 +3,10 @@ import type { KanbanProspecto, PendingMove, SeguimientoData } from '@shared/type
 import type { ProspectNote, ProspectDocument } from '@shared/schema/comercial';
 import { useQuery } from '@tanstack/react-query';
 import {
-  X, ChevronRight, Trash2, Users, Package, ClipboardList, Clock,
+  X, ChevronRight, Trash2, Users, ClipboardList, Clock,
   MessageSquare, FileText, Send, Phone, Mail, Copy, Check, XCircle,
   RotateCcw, PhoneCall, CalendarClock,
-  Upload, Paperclip, Image, BarChart3, Lock, Sparkles, Leaf, Target,
+  Upload, Paperclip, Image, BarChart3, Lock, Sparkles, Target,
 } from 'lucide-react';
 import { ProspectTimeline } from './ProspectTimeline';
 import { ProspectNotes } from './ProspectNotes';
@@ -24,6 +24,35 @@ import {
   classifyRechazo, getSeguimientoUrgency, getRecoveryState,
   timeAgo, isTabLocked, tabUnlockLabel, proposalDeadlineChip,
 } from '@/lib/comercial-constants';
+
+// ─── Notion/Apple-style helpers for the Info tab ─────────────────────────
+// Kept inline because they are only used by the drawer and don't deserve
+// their own file.
+
+function SectionTitle({ children }: { children: React.ReactNode }) {
+  return (
+    <h3 className="text-[11px] font-semibold text-[#9ca3af] uppercase tracking-widest mb-3">
+      {children}
+    </h3>
+  );
+}
+
+function InfoRow({
+  label,
+  children,
+  multiline = false,
+}: {
+  label: string;
+  children: React.ReactNode;
+  multiline?: boolean;
+}) {
+  return (
+    <div className={`grid grid-cols-[140px_1fr] gap-4 py-1.5 text-sm ${multiline ? 'items-start' : 'items-center'}`}>
+      <div className="text-[#9ca3af]">{label}</div>
+      <div className="text-[#1c2c4a] min-w-0">{children}</div>
+    </div>
+  );
+}
 import { useRejectProspect } from '../api';
 import { QualifyLeadDialog } from './QualifyLeadDialog';
 import { useComercialData } from '../hooks/useComercialData';
@@ -475,36 +504,26 @@ export function ProspectoDrawer({ prospecto, onClose }: Props) {
                 );
               })()}
 
-              <div className="p-5 space-y-5">
-                {/* Value */}
-                <div className="bg-[#EFF6FF] rounded-xl p-3 text-center">
-                  <div className="text-xs text-[#6b7280] mb-0.5">Valor cotización</div>
-                  <div className="text-xl font-bold text-[#0D47A1]">{valor > 0 ? fmtCurrency(valor) : '—'}</div>
-                </div>
-
-                {/* Fechas clave */}
-                {(p.meetingDate || p.surveyDate) && (
-                  <div className="flex items-center gap-3">
+              <div className="p-6 space-y-8">
+                {/* Stats row — compact, hidden if nothing to show */}
+                {(valor > 0 || p.meetingDate || p.surveyDate) && (
+                  <div className="flex flex-wrap gap-x-10 gap-y-4">
+                    {valor > 0 && (
+                      <div>
+                        <div className="text-[10px] font-semibold text-[#9ca3af] uppercase tracking-widest mb-0.5">Valor cotización</div>
+                        <div className="text-lg font-semibold text-[#0D47A1]">{fmtCurrency(valor)}</div>
+                      </div>
+                    )}
                     {p.meetingDate && (
-                      <div className="flex-1 bg-white rounded-xl border border-[#e5e7eb] p-3 flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-orange-50 flex items-center justify-center flex-shrink-0">
-                          <CalendarClock size={16} className="text-orange-600" />
-                        </div>
-                        <div>
-                          <div className="text-[11px] text-[#6b7280]">Fecha de reunión</div>
-                          <div className="text-sm font-semibold text-[#1c2c4a]">{new Date(p.meetingDate + 'T12:00:00').toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
-                        </div>
+                      <div>
+                        <div className="text-[10px] font-semibold text-[#9ca3af] uppercase tracking-widest mb-0.5">Fecha reunión</div>
+                        <div className="text-sm font-medium text-[#1c2c4a]">{new Date(p.meetingDate + 'T12:00:00').toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
                       </div>
                     )}
                     {p.surveyDate && (
-                      <div className="flex-1 bg-white rounded-xl border border-[#e5e7eb] p-3 flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-teal-50 flex items-center justify-center flex-shrink-0">
-                          <Target size={16} className="text-teal-600" />
-                        </div>
-                        <div>
-                          <div className="text-[11px] text-[#6b7280]">Fecha de levantamiento</div>
-                          <div className="text-sm font-semibold text-[#1c2c4a]">{new Date(p.surveyDate + 'T12:00:00').toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
-                        </div>
+                      <div>
+                        <div className="text-[10px] font-semibold text-[#9ca3af] uppercase tracking-widest mb-0.5">Fecha levantamiento</div>
+                        <div className="text-sm font-medium text-[#1c2c4a]">{new Date(p.surveyDate + 'T12:00:00').toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
                       </div>
                     )}
                   </div>
@@ -514,104 +533,86 @@ export function ProspectoDrawer({ prospecto, onClose }: Props) {
                     en el header del drawer como campos inline editables, así que
                     ya no los repetimos aquí. */}
 
-                {/* Contact (inline editable) */}
-                <div className="bg-white rounded-xl border border-[#e5e7eb] overflow-hidden">
-                  <div className="px-4 py-3 bg-[#f9fafb] border-b border-[#e5e7eb]">
-                    <h3 className="text-sm font-semibold text-[#1c2c4a] flex items-center gap-2"><Users size={14} /> Contacto</h3>
-                  </div>
-                  <div className="p-4 space-y-2.5">
-                    <div className="flex items-center justify-between text-sm gap-3">
-                      <span className="text-[#6b7280] shrink-0">Nombre</span>
+                {/* Contacto — flat Notion-style section */}
+                <section>
+                  <SectionTitle>Contacto</SectionTitle>
+                  <div className="space-y-0.5">
+                    <InfoRow label="Nombre">
                       <InlineText
                         value={p.contacto?.nombre || ''}
                         onSave={(v) => saveProspectField({ contactName: v || null })}
                         emptyLabel="Agregar contacto"
                         displayClassName="font-medium text-[#1c2c4a]"
-                        className="w-56"
                       />
-                    </div>
-                    <div className="flex items-center justify-between text-sm gap-3">
-                      <span className="text-[#6b7280] shrink-0">Puesto</span>
+                    </InfoRow>
+                    <InfoRow label="Puesto">
                       <InlineText
                         value={p.contacto?.puesto || ''}
                         onSave={(v) => saveProspectField({ contactRole: v || null })}
                         emptyLabel="Agregar puesto"
-                        displayClassName="text-[#1c2c4a]"
-                        className="w-56"
                       />
-                    </div>
-                    <div className="flex items-center justify-between text-sm gap-3">
-                      <span className="text-[#6b7280] shrink-0">Teléfono</span>
+                    </InfoRow>
+                    <InfoRow label="Teléfono">
                       <InlineText
                         value={p.contacto?.telefono || ''}
                         onSave={(v) => saveProspectField({ contactPhone: v || null })}
                         emptyLabel="Agregar teléfono"
-                        displayClassName="text-[#1c2c4a]"
                         type="tel"
-                        className="w-48"
                       />
-                    </div>
-                    <div className="flex items-center justify-between text-sm gap-3">
-                      <span className="text-[#6b7280] shrink-0">Correo</span>
+                    </InfoRow>
+                    <InfoRow label="Correo">
                       <InlineText
                         value={p.contacto?.correo || ''}
                         onSave={(v) => saveProspectField({ contactEmail: v || null })}
                         emptyLabel="Agregar correo"
-                        displayClassName="text-[#1c2c4a]"
                         type="email"
-                        className="w-64"
                       />
+                    </InfoRow>
+                  </div>
+                  {(p.contacto?.telefono || p.contacto?.correo) && (
+                    <div className="flex flex-wrap gap-2 mt-3">
+                      {p.contacto?.telefono && (
+                        <a href={`tel:${p.contacto.telefono}`} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-50 text-green-700 text-xs font-medium hover:bg-green-100 transition-colors">
+                          <Phone size={12} /> Llamar
+                        </a>
+                      )}
+                      {p.contacto?.telefono && (
+                        <a href={`https://wa.me/52${p.contacto.telefono.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-white text-xs font-semibold hover:opacity-90 transition-colors" style={{ backgroundColor: '#25D366' }}>
+                          <MessageSquare size={12} /> WhatsApp
+                        </a>
+                      )}
+                      {p.contacto?.correo && (
+                        <a href={`mailto:${p.contacto.correo}`} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 text-xs font-medium hover:bg-blue-100 transition-colors">
+                          <Mail size={12} /> Email
+                        </a>
+                      )}
+                      {p.contacto?.telefono && (
+                        <button onClick={() => copyToClipboard(p.contacto.telefono, 'telefono')} className="inline-flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-[#6b7280] text-xs font-medium hover:bg-[#f3f4f6] transition-colors" title="Copiar teléfono">
+                          {copiedField === 'telefono' ? <Check size={13} className="text-green-500" /> : <Copy size={13} />}
+                        </button>
+                      )}
+                      {p.contacto?.correo && (
+                        <button onClick={() => copyToClipboard(p.contacto.correo, 'correo')} className="inline-flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-[#6b7280] text-xs font-medium hover:bg-[#f3f4f6] transition-colors" title="Copiar correo">
+                          {copiedField === 'correo' ? <Check size={13} className="text-green-500" /> : <Copy size={13} />}
+                        </button>
+                      )}
                     </div>
-                    {/* Quick-contact action buttons */}
-                    {(p.contacto?.telefono || p.contacto?.correo) && (
-                      <div className="flex flex-wrap gap-2 pt-2 border-t border-[#f3f4f6]">
-                        {p.contacto?.telefono && (
-                          <a href={`tel:${p.contacto.telefono}`} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-50 text-green-700 text-xs font-medium hover:bg-green-100 transition-colors">
-                            <Phone size={12} /> Llamar
-                          </a>
-                        )}
-                        {p.contacto?.telefono && (
-                          <a href={`https://wa.me/52${p.contacto.telefono.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-white text-xs font-semibold hover:opacity-90 transition-colors shadow-sm" style={{ backgroundColor: '#25D366' }}>
-                            <MessageSquare size={14} /> WhatsApp
-                          </a>
-                        )}
-                        {p.contacto?.correo && (
-                          <a href={`mailto:${p.contacto.correo}`} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 text-xs font-medium hover:bg-blue-100 transition-colors">
-                            <Mail size={12} /> Email
-                          </a>
-                        )}
-                        {p.contacto?.telefono && (
-                          <button onClick={() => copyToClipboard(p.contacto.telefono, 'telefono')} className="inline-flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-[#6b7280] text-xs font-medium hover:bg-[#f3f4f6] transition-colors" title="Copiar teléfono">
-                            {copiedField === 'telefono' ? <Check size={13} className="text-green-500" /> : <Copy size={13} />}
-                          </button>
-                        )}
-                        {p.contacto?.correo && (
-                          <button onClick={() => copyToClipboard(p.contacto.correo, 'correo')} className="inline-flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-[#6b7280] text-xs font-medium hover:bg-[#f3f4f6] transition-colors" title="Copiar correo">
-                            {copiedField === 'correo' ? <Check size={13} className="text-green-500" /> : <Copy size={13} />}
-                          </button>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
+                  )}
+                </section>
 
-                {/* Services (inline editable chips) */}
-                <div className="bg-white rounded-xl border border-[#e5e7eb] overflow-hidden">
-                  <div className="px-4 py-3 bg-[#f9fafb] border-b border-[#e5e7eb]">
-                    <h3 className="text-sm font-semibold text-[#1c2c4a] flex items-center gap-2"><Package size={14} /> Servicios</h3>
-                  </div>
-                  <div className="p-4">
-                    <InlineChips
-                      value={(p.servicios || []) as string[]}
-                      options={SERVICIOS_INNOVATIVE.map((svc) => ({ value: svc.id, label: svc.nombre }))}
-                      onSave={(v) => saveProspectField({ services: v })}
-                      emptyLabel="Sin servicios seleccionados — haz clic para elegir"
-                    />
-                  </div>
-                </div>
+                {/* Servicios — flat */}
+                <section>
+                  <SectionTitle>Servicios</SectionTitle>
+                  <InlineChips
+                    value={(p.servicios || []) as string[]}
+                    options={SERVICIOS_INNOVATIVE.map((svc) => ({ value: svc.id, label: svc.nombre }))}
+                    onSave={(v) => saveProspectField({ services: v })}
+                    emptyLabel="Sin servicios seleccionados — haz clic para elegir"
+                  />
+                </section>
 
-                {/* Qualification Waste Data */}
+                {/* Residuos (Calificación) — flat, read-only */}
                 {!!(p.levantamientoData as Record<string, unknown>)?.qualificationWaste && (() => {
                   const qw = (p.levantamientoData as Record<string, unknown>).qualificationWaste as {
                     wasteTypes?: string[];
@@ -621,51 +622,41 @@ export function ProspectoDrawer({ prospecto, onClose }: Props) {
                     reasonForChange?: string;
                   };
                   return (
-                    <div className="bg-white rounded-xl border border-[#e5e7eb] overflow-hidden">
-                      <div className="px-4 py-3 bg-[#f0fdf4] border-b border-[#e5e7eb]">
-                        <h3 className="text-sm font-semibold text-[#1c2c4a] flex items-center gap-2"><Leaf size={14} className="text-[#22C55E]" /> Residuos (Calificacion)</h3>
-                      </div>
-                      <div className="p-4 space-y-3">
+                    <section>
+                      <SectionTitle>Residuos (Calificación)</SectionTitle>
+                      <div className="space-y-0.5">
                         {qw.wasteTypes && qw.wasteTypes.length > 0 && (
-                          <div className="flex flex-wrap gap-1.5">
-                            {qw.wasteTypes.map((wt: string) => (
-                              <span key={wt} className="px-2.5 py-1 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-200">
-                                {wt}
-                              </span>
-                            ))}
+                          <div className="py-1.5">
+                            <div className="flex flex-wrap gap-1.5">
+                              {qw.wasteTypes.map((wt: string) => (
+                                <span key={wt} className="px-2.5 py-1 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-200">
+                                  {wt}
+                                </span>
+                              ))}
+                            </div>
                           </div>
                         )}
                         {qw.estimatedVolume && (
-                          <div className="flex items-center justify-between text-sm">
-                            <span className="text-[#6b7280]">Volumen estimado</span>
-                            <span className="font-medium text-[#1c2c4a]">{qw.estimatedVolume}</span>
-                          </div>
+                          <InfoRow label="Volumen estimado">{qw.estimatedVolume}</InfoRow>
                         )}
                         {qw.hasCurrentProvider && qw.currentProviderName && (
-                          <div className="flex items-center justify-between text-sm">
-                            <span className="text-[#6b7280]">Proveedor actual</span>
-                            <span className="font-medium text-[#1c2c4a]">{qw.currentProviderName}</span>
-                          </div>
+                          <InfoRow label="Proveedor actual">{qw.currentProviderName}</InfoRow>
                         )}
                         {qw.reasonForChange && (
-                          <div className="text-sm">
-                            <span className="text-[#6b7280]">Razon de cambio: </span>
-                            <span className="text-[#1c2c4a]">{qw.reasonForChange}</span>
-                          </div>
+                          <InfoRow label="Razón de cambio" multiline>
+                            <span className="whitespace-pre-wrap">{qw.reasonForChange}</span>
+                          </InfoRow>
                         )}
                       </div>
-                    </div>
+                    </section>
                   );
                 })()}
 
-                {/* Details (inline editable) */}
-                <div className="bg-white rounded-xl border border-[#e5e7eb] overflow-hidden">
-                  <div className="px-4 py-3 bg-[#f9fafb] border-b border-[#e5e7eb]">
-                    <h3 className="text-sm font-semibold text-[#1c2c4a] flex items-center gap-2"><ClipboardList size={14} /> Detalles</h3>
-                  </div>
-                  <div className="p-4 space-y-2.5">
-                    <div className="flex items-center justify-between text-sm gap-3">
-                      <span className="text-[#6b7280] shrink-0">Potencial</span>
+                {/* Detalles — flat Notion-style, inline edit */}
+                <section>
+                  <SectionTitle>Detalles</SectionTitle>
+                  <div className="space-y-0.5">
+                    <InfoRow label="Potencial">
                       <InlineSelect
                         value={p.potential || undefined}
                         options={[
@@ -677,9 +668,8 @@ export function ProspectoDrawer({ prospecto, onClose }: Props) {
                         onSave={(v) => saveProspectField({ potential: v || null })}
                         emptyLabel="Sin definir"
                       />
-                    </div>
-                    <div className="flex items-center justify-between text-sm gap-3">
-                      <span className="text-[#6b7280] shrink-0">Probabilidad</span>
+                    </InfoRow>
+                    <InfoRow label="Probabilidad">
                       <InlineNumber
                         value={p.probability ?? null}
                         onSave={(v) => saveProspectField({ probability: v })}
@@ -688,9 +678,8 @@ export function ProspectoDrawer({ prospecto, onClose }: Props) {
                         suffix="%"
                         emptyLabel="Sin definir"
                       />
-                    </div>
-                    <div className="flex items-center justify-between text-sm gap-3">
-                      <span className="text-[#6b7280] shrink-0">Prioridad</span>
+                    </InfoRow>
+                    <InfoRow label="Prioridad">
                       <InlineSelect
                         value={p.priority || undefined}
                         options={[
@@ -702,112 +691,87 @@ export function ProspectoDrawer({ prospecto, onClose }: Props) {
                         onSave={(v) => saveProspectField({ priority: v || null })}
                         emptyLabel="Sin definir"
                       />
-                    </div>
-                    <div className="flex items-center justify-between text-sm gap-3">
-                      <span className="text-[#6b7280] shrink-0">Mes de cierre estimado</span>
+                    </InfoRow>
+                    <InfoRow label="Mes de cierre">
                       <InlineMonth
                         value={p.estimatedCloseTime}
                         onSave={(v) => saveProspectField({ estimatedCloseTime: v })}
                         emptyLabel="Sin definir"
                       />
-                    </div>
-                    <div className="flex items-start justify-between text-sm gap-3">
-                      <span className="text-[#6b7280] shrink-0 pt-1">Siguiente paso</span>
+                    </InfoRow>
+                    <InfoRow label="Siguiente paso" multiline>
                       <InlineText
                         value={p.nextStep || ''}
                         onSave={(v) => saveProspectField({ nextStep: v || null })}
                         emptyLabel="Agregar siguiente paso"
                         placeholder="Ej: Agendar reunión con gerente..."
                         multiline
-                        displayClassName="text-[#1c2c4a] text-right max-w-[280px]"
-                        className="max-w-[320px]"
+                        className="w-full"
                       />
-                    </div>
-                    <div className="flex items-start justify-between text-sm gap-3">
-                      <span className="text-[#6b7280] shrink-0 pt-1">Razón de interés</span>
+                    </InfoRow>
+                    <InfoRow label="Razón de interés" multiline>
                       <InlineText
                         value={p.reason || ''}
                         onSave={(v) => saveProspectField({ reason: v || null })}
                         emptyLabel="Agregar razón"
                         placeholder="Ej: Busca certificación TRUE..."
                         multiline
-                        displayClassName="text-[#1c2c4a] text-right max-w-[280px]"
-                        className="max-w-[320px]"
+                        className="w-full"
                       />
-                    </div>
+                    </InfoRow>
 
-                    {/* Read-only informational fields below */}
+                    {/* Read-only informational fields — solo aparecen si tienen valor.
+                        La venta total ya no se muestra aquí: vive en el stats row
+                        superior como "Valor cotización" (evita duplicar). */}
                     {p.volumenEstimado && (
-                      <div className="flex items-center justify-between text-sm pt-2 border-t border-[#f3f4f6]">
-                        <span className="text-[#6b7280]">
-                          {p.serviceVolumes && Object.keys(p.serviceVolumes).length > 0
-                            ? 'Volumen total'
-                            : 'Volumen estimado (general)'}
-                        </span>
-                        <span className="font-medium text-[#1c2c4a]">{p.volumenEstimado}</span>
-                      </div>
+                      <InfoRow label={p.serviceVolumes && Object.keys(p.serviceVolumes).length > 0 ? 'Volumen total' : 'Volumen estimado'}>
+                        {p.volumenEstimado}
+                      </InfoRow>
                     )}
-                    {p.serviceVolumes && Object.keys(p.serviceVolumes).length > 0 && (
-                      <div className="text-sm space-y-1 pl-2 border-l-2 border-[#e5e7eb]">
-                        {Object.entries(p.serviceVolumes as Record<string, string>).map(([svcId, vol]) => {
-                          const svc = SERVICIOS_INNOVATIVE.find(s => s.id === svcId);
-                          return vol ? (
-                            <div key={svcId} className="flex items-center justify-between">
-                              <span className="text-[#6b7280] text-xs">{svc?.nombre || svcId}</span>
-                              <span className="text-xs font-medium text-[#1c2c4a]">{vol}</span>
-                            </div>
-                          ) : null;
-                        })}
-                      </div>
-                    )}
-                    {p.propuesta?.ventaTotal && (
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-[#6b7280]">Venta total (contrato)</span>
-                        <span className="font-bold text-[#0D47A1]">{fmtCurrency(p.propuesta.ventaTotal)}</span>
-                      </div>
-                    )}
+                    {p.serviceVolumes && Object.keys(p.serviceVolumes).length > 0 &&
+                      Object.entries(p.serviceVolumes as Record<string, string>).map(([svcId, vol]) => {
+                        const svc = SERVICIOS_INNOVATIVE.find(s => s.id === svcId);
+                        return vol ? (
+                          <InfoRow key={svcId} label={svc?.nombre || svcId}>
+                            <span className="text-[#6b7280]">{vol}</span>
+                          </InfoRow>
+                        ) : null;
+                      })
+                    }
                     {p.motivoRechazo && (() => {
                       const cat = classifyRechazo(p.motivoRechazo, p.motivoRechazoCategory);
                       return (
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-[#6b7280]">Motivo rechazo</span>
-                          <div className="flex items-center gap-1.5">
+                        <InfoRow label="Motivo rechazo" multiline>
+                          <div className="flex items-center gap-1.5 flex-wrap">
                             <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full" style={{ backgroundColor: `${cat?.color}15`, color: cat?.color }}>{cat?.label}</span>
-                            <span className="font-medium text-sm truncate max-w-[200px]" style={{ color: cat?.color }}>{p.motivoRechazo}</span>
+                            <span className="text-sm" style={{ color: cat?.color }}>{p.motivoRechazo}</span>
                           </div>
-                        </div>
+                        </InfoRow>
                       );
                     })()}
                     {p.fecha && (
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-[#6b7280]">Primer contacto</span>
-                        <span className="font-medium text-[#1c2c4a]">{p.fecha}</span>
-                      </div>
+                      <InfoRow label="Primer contacto">{p.fecha}</InfoRow>
                     )}
                     {p.fechaRegistro && p.fechaRegistro !== p.fecha && (
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-[#6b7280]">Registrado</span>
-                        <span className="font-medium text-[#9ca3af]">{p.fechaRegistro}</span>
-                      </div>
+                      <InfoRow label="Registrado">
+                        <span className="text-[#9ca3af]">{p.fechaRegistro}</span>
+                      </InfoRow>
                     )}
                   </div>
-                </div>
+                </section>
 
-                {/* Notes inline */}
-                <div className="bg-white rounded-xl border border-[#e5e7eb] overflow-hidden">
-                  <div className="px-4 py-3 bg-[#f9fafb] border-b border-[#e5e7eb]">
-                    <h3 className="text-sm font-semibold text-[#1c2c4a] flex items-center gap-2">
-                      <MessageSquare size={14} /> Notas
-                      {apiNotas.length > 0 && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#e5e7eb] text-[#6b7280]">{apiNotas.length}</span>}
-                    </h3>
-                  </div>
-                  <div className="p-4 space-y-3">
+                {/* Notas — flat */}
+                <section>
+                  <SectionTitle>
+                    Notas {apiNotas.length > 0 && <span className="ml-1 text-[#6b7280]">· {apiNotas.length}</span>}
+                  </SectionTitle>
+                  <div className="space-y-3">
                     <div className="flex gap-2">
                       <textarea
                         value={prospectoNuevaNota}
                         onChange={(e) => setProspectoNuevaNota(e.target.value)}
                         onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); agregarNota(); } }}
-                        placeholder="Escribe una nota... (Enter para guardar)"
+                        placeholder="Escribe una nota... (Enter guarda)"
                         className="flex-1 border border-[#e5e7eb] rounded-lg px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#00a8a8]/30 focus:border-[#00a8a8]"
                         rows={1}
                       />
@@ -816,53 +780,48 @@ export function ProspectoDrawer({ prospecto, onClose }: Props) {
                         <Send size={14} />
                       </button>
                     </div>
-                    {apiNotas.length > 0 ? (
-                      <div className="space-y-2 max-h-48 overflow-y-auto">
+                    {apiNotas.length > 0 && (
+                      <div className="space-y-2 max-h-56 overflow-y-auto">
                         {[...apiNotas].reverse().map((nota) => (
-                          <div key={nota.id} className="bg-[#f9fafb] rounded-lg p-3 group">
+                          <div key={nota.id} className="group px-1 py-2 border-b border-[#f3f4f6] last:border-b-0">
                             <div className="flex items-start justify-between gap-2">
                               <p className="text-sm text-[#1c2c4a] flex-1 whitespace-pre-wrap">{nota.content}</p>
                               <button onClick={async () => {
                                 try { await deleteNoteMutation.mutateAsync({ prospectId: realProspectId, noteId: nota.id }); }
                                 catch { toast({ title: 'Error al eliminar nota', variant: 'destructive' }); }
                               }}
-                                className="opacity-0 group-hover:opacity-100 text-[#6b7280] hover:text-red-500 transition-all flex-shrink-0 mt-0.5">
+                                className="opacity-0 group-hover:opacity-100 text-[#9ca3af] hover:text-red-500 transition-all flex-shrink-0 mt-0.5">
                                 <Trash2 size={12} />
                               </button>
                             </div>
-                            <div className="flex items-center gap-1 mt-1.5 text-[10px] text-[#9ca3af]">
+                            <div className="flex items-center gap-1 mt-1 text-[10px] text-[#9ca3af]">
                               <Clock size={9} /> {timeAgo(nota.createdAt ? String(nota.createdAt) : null) || 'ahora'}
                             </div>
                           </div>
                         ))}
                       </div>
-                    ) : (
-                      <p className="text-xs text-[#9ca3af] text-center py-2">Agrega una nota...</p>
                     )}
                   </div>
-                </div>
+                </section>
 
-                {/* Files inline */}
-                <div className="bg-white rounded-xl border border-[#e5e7eb] overflow-hidden">
-                  <div className="px-4 py-3 bg-[#f9fafb] border-b border-[#e5e7eb]">
-                    <h3 className="text-sm font-semibold text-[#1c2c4a] flex items-center gap-2">
-                      <Paperclip size={14} /> Archivos
-                      {apiDocumentos.length > 0 && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#e5e7eb] text-[#6b7280]">{apiDocumentos.length}</span>}
-                    </h3>
-                  </div>
-                  <div className="p-4 space-y-3">
-                    <div className="border border-dashed border-[#d1d5db] hover:border-[#00a8a8] rounded-lg p-3 text-center transition-colors cursor-pointer"
+                {/* Archivos — flat */}
+                <section>
+                  <SectionTitle>
+                    Archivos {apiDocumentos.length > 0 && <span className="ml-1 text-[#6b7280]">· {apiDocumentos.length}</span>}
+                  </SectionTitle>
+                  <div className="space-y-2">
+                    <div className="border border-dashed border-[#e5e7eb] hover:border-[#00a8a8] rounded-lg p-3 text-center transition-colors cursor-pointer"
                       onClick={() => drawerFileRef.current?.click()}>
                       <input type="file" ref={drawerFileRef} className="hidden" multiple
                         accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,.xlsx,.xls,.csv,.doc,.docx"
                         onChange={handleFileUpload} />
-                      <Upload size={16} className="text-[#d1d5db] mx-auto mb-1" />
-                      <p className="text-xs text-[#6b7280]">Click para subir archivos</p>
+                      <Upload size={14} className="text-[#9ca3af] mx-auto mb-0.5" />
+                      <p className="text-[11px] text-[#9ca3af]">Click o arrastra para subir archivos</p>
                     </div>
-                    {apiDocumentos.length > 0 ? (
-                      <div className="space-y-1.5 max-h-40 overflow-y-auto">
+                    {apiDocumentos.length > 0 && (
+                      <div className="space-y-0.5 max-h-40 overflow-y-auto">
                         {[...apiDocumentos].reverse().map((archivo) => (
-                          <div key={archivo.id} className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-[#f9fafb] group transition-colors">
+                          <div key={archivo.id} className="flex items-center gap-2.5 px-1 py-2 rounded hover:bg-[#f9fafb] group transition-colors">
                             <div className="w-7 h-7 rounded-md bg-[#f3f4f6] flex items-center justify-center flex-shrink-0">
                               {getFileIcon(archivo.mimeType ?? undefined)}
                             </div>
@@ -874,17 +833,15 @@ export function ProspectoDrawer({ prospecto, onClose }: Props) {
                               try { await deleteDocumentMutation.mutateAsync({ prospectId: realProspectId, docId: archivo.id }); }
                               catch { toast({ title: 'Error al eliminar documento', variant: 'destructive' }); }
                             }}
-                              className="opacity-0 group-hover:opacity-100 text-[#6b7280] hover:text-red-500 transition-all">
+                              className="opacity-0 group-hover:opacity-100 text-[#9ca3af] hover:text-red-500 transition-all">
                               <Trash2 size={12} />
                             </button>
                           </div>
                         ))}
                       </div>
-                    ) : (
-                      <p className="text-xs text-[#9ca3af] text-center py-2">Sube un archivo...</p>
                     )}
                   </div>
-                </div>
+                </section>
               </div>
             </>
           )}
