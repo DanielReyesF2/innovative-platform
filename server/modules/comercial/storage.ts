@@ -448,6 +448,14 @@ export async function sendProspectToOperaciones(prospectId: number, sentById: nu
 
   // All writes in a single transaction
   const result = await db.transaction(async (tx) => {
+    // Prefer the explicit scheduling.siteAddress (captured by Comercial on the
+    // 'Agendar Levantamiento' form) and fall back to the legacy generalInfo.direccion
+    // that older records used.
+    const siteAddress =
+      levData?.scheduling?.siteAddress ||
+      levData?.generalInfo?.direccion ||
+      null;
+
     // Create survey (scheduledDate = null until operaciones accepts)
     const [survey] = await tx
       .insert(surveys)
@@ -457,10 +465,14 @@ export async function sendProspectToOperaciones(prospectId: number, sentById: nu
         type: "Levantamiento",
         estimatedVolume: prospect.estimatedVolume,
         estimatedValue: prospect.estimatedValue,
-        address: levData?.generalInfo?.direccion || null,
+        address: siteAddress,
         generalInfo: {
           ...(levData?.generalInfo || {}),
           razonSocial,
+          direccion: siteAddress,
+          // proposedScheduling carries every scheduling field captured by
+          // Comercial (contactRole, participantsByArea, accessRequirements,
+          // vehiclePlates, etc.) so Operaciones has the full context.
           proposedScheduling: levData?.scheduling || null,
         },
         prospectId: prospect.id,

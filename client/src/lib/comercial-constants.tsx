@@ -90,6 +90,20 @@ export const EPP_OPTIONS = [
   { id: 'pantalon_largo', label: 'Pantalón Largo' },
 ] as const;
 
+// ═══════ REQUISITOS DE ACCESO A SITIO ═══════
+// Lo que el personal debe llevar / presentar para entrar al sitio del cliente
+// durante el levantamiento. Catálogo base — la UI permite agregar "Otro" libre.
+export const ACCESS_REQUIREMENTS_OPTIONS = [
+  { id: 'ine', label: 'INE' },
+  { id: 'credencial_empresa', label: 'Credencial empresa' },
+  { id: 'pase_qr', label: 'Pase QR' },
+  { id: 'registro_previo', label: 'Registro previo' },
+  { id: 'documentos_vehiculo', label: 'Docs vehículo' },
+  { id: 'seguro_vehiculo', label: 'Seguro vigente' },
+  { id: 'examen_medico', label: 'Examen médico' },
+  { id: 'induccion_seguridad', label: 'Inducción seguridad' },
+] as const;
+
 export const SERVICE_COLORS: Record<string, { bg: string; border: string; text: string; label: string }> = {
   rme:            { bg: '#EFF6FF', border: '#3B82F6', text: '#2563EB', label: 'RME' },
   rsu:            { bg: '#F0FDF4', border: '#22C55E', text: '#16A34A', label: 'RSU' },
