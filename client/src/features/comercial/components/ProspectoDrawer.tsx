@@ -23,7 +23,7 @@ import { useToast } from '@/components/ui/use-toast';
 import {
   KANBAN_STAGES, SERVICIOS_INNOVATIVE, STAGE_GATES, INDUSTRIAS,
   classifyRechazo, getSeguimientoUrgency, getRecoveryState,
-  timeAgo, isTabLocked, tabUnlockLabel,
+  timeAgo, isTabLocked, tabUnlockLabel, proposalDeadlineChip,
 } from '@/lib/comercial-constants';
 import { useRejectProspect } from '../api';
 import { QualifyLeadDialog } from './QualifyLeadDialog';
@@ -191,6 +191,21 @@ export function ProspectoDrawer({ prospecto, onClose }: Props) {
                   stageInfo?.color === '#0D47A1' ? 'bg-blue-100 text-blue-700' :
                   'bg-gray-100 text-gray-600'
                 }`}>{stageInfo?.label || p.status}</span>
+                {/* Propuesta SLA deadline chip (Fase 2 bloque 3) */}
+                {(() => {
+                  const chip = proposalDeadlineChip(p);
+                  if (!chip) return null;
+                  return (
+                    <span
+                      className="ml-1 px-2 py-0.5 rounded-full text-[11px] font-semibold inline-flex items-center gap-1"
+                      style={{ backgroundColor: chip.bg, color: chip.color, border: `1px solid ${chip.color}30` }}
+                      title="Fecha límite para subir la propuesta (3 días hábiles desde que se agendó el levantamiento)"
+                    >
+                      <CalendarClock size={11} />
+                      {chip.label}
+                    </span>
+                  );
+                })()}
               </div>
             </div>
             <div className="flex items-center gap-1.5">

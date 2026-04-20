@@ -43,6 +43,7 @@ import {
   isWonStage,
   isLostStage,
 } from "../../../shared/schema/comercial-stages";
+import { addBusinessDays } from "../../../shared/utils/business-days";
 
 // Drizzle pgEnum columns expect the exact union type, but runtime values are strings.
 // This helper casts safely to avoid `as any` while keeping TypeScript happy.
@@ -50,6 +51,7 @@ import {
 const enumCast = <T>(value: string): T => value as unknown as T;
 type ProspectStage = (typeof prospects.stage)["_"]["data"];
 type AlertStatus = (typeof followUpAlerts.status)["_"]["data"];
+type AlertType = (typeof followUpAlerts.alertType)["_"]["data"];
 type Priority = (typeof prospects.priority)["_"]["data"];
 type ProposalStatus = (typeof proposalVersions.status)["_"]["data"];
 
@@ -148,34 +150,116 @@ async function recordStageTransition(
   }
 }
 
+// True when the "Agendar levantamiento" form has every field Operaciones needs
+// to actually prepare the visit. Used to trigger the auto-advance to Propuesta.
+// Keep in sync with the ProspectLevantamiento form's required fields.
+//
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function isSchedulingComplete(levData: any): boolean {
+  if (!levData) return false;
+  const sched = levData.scheduling;
+  if (!sched) return false;
+  if (!sched.proposedDate || !sched.proposedTime) return false;
+  if (!sched.siteAddress || typeof sched.siteAddress !== "string" || !sched.siteAddress.trim()) return false;
+  if (!sched.contactName || !sched.contactPhone || !sched.contactEmail) return false;
+  // At least one participant across any area (or in legacy responsibleIds)
+  const pba = sched.participantsByArea || {};
+  const totalParticipants =
+    (pba.comercial?.length || 0) +
+    (pba.operaciones?.length || 0) +
+    (pba.subproductos?.length || 0);
+  const legacyResponsibles = Array.isArray(sched.responsibleIds) ? sched.responsibleIds.length : 0;
+  if (totalParticipants === 0 && legacyResponsibles === 0) return false;
+  // At least one waste type with a non-empty wasteType id
+  const wasteTypes = Array.isArray(levData.wasteTypes) ? levData.wasteTypes : [];
+  if (!wasteTypes.some((wt: { wasteType?: string }) => wt?.wasteType && String(wt.wasteType).trim())) {
+    return false;
+  }
+  return true;
+}
+
 export async function updateProspect(
   id: number,
   data: Partial<InsertProspect>,
   actorId?: number,
 ) {
-  // If stage is about to change, snapshot the old one so we can log the transition.
-  let oldStage: string | null = null;
-  if (typeof data.stage === "string") {
-    const current = await db.query.prospects.findFirst({
-      where: eq(prospects.id, id),
-      columns: { stage: true },
-    });
-    oldStage = current?.stage ?? null;
+  // If stage is about to change (either from caller or from our auto-advance
+  // below), snapshot the old one so we can log the transition.
+  const current = await db.query.prospects.findFirst({
+    where: eq(prospects.id, id),
+    columns: { stage: true, surveyDate: true, proposalDeadline: true, assignedToId: true, name: true },
+  });
+  const oldStage = current?.stage ?? null;
+
+  // Auto-advance rule (Fase 2 bloque 3 — Vero spec):
+  //   When the user is in stage 'propuesta' (business "Agendar levantamiento")
+  //   and a single updateProspect call makes the levantamientoData scheduling
+  //   fully complete, move the prospect to 'negociacion' (business "Propuesta")
+  //   and set a 3-business-day deadline for uploading the propuesta file.
+  const patch: Record<string, unknown> = { ...data, updatedAt: new Date() };
+  let triggeredAutoAdvance = false;
+  let newDeadline: Date | null = null;
+  const incomingLevData = (data as { levantamientoData?: unknown }).levantamientoData;
+  const willStayInPropuesta = typeof data.stage !== "string" || data.stage === STAGE.PROPUESTA;
+  if (
+    incomingLevData &&
+    oldStage === STAGE.PROPUESTA &&
+    willStayInPropuesta &&
+    isSchedulingComplete(incomingLevData)
+  ) {
+    // Parse surveyDate from the form if present (same field the form writes),
+    // falling back to whatever is currently stored on the prospect.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const schedDateStr = (incomingLevData as any)?.scheduling?.proposedDate || current?.surveyDate;
+    if (schedDateStr) {
+      const base = new Date(schedDateStr);
+      if (!Number.isNaN(base.getTime())) {
+        newDeadline = addBusinessDays(base, 3);
+        patch.stage = STAGE.NEGOCIACION;
+        patch.proposalDeadline = newDeadline;
+        patch.surveyDate = schedDateStr;
+        triggeredAutoAdvance = true;
+      }
+    }
   }
 
   const [updated] = await db
     .update(prospects)
-    .set({ ...data, updatedAt: new Date() })
+    .set(patch)
     .where(eq(prospects.id, id))
     .returning();
 
   if (
     updated &&
-    typeof data.stage === "string" &&
+    typeof patch.stage === "string" &&
     oldStage !== null &&
-    oldStage !== data.stage
+    oldStage !== patch.stage
   ) {
-    await recordStageTransition(id, oldStage, data.stage, actorId);
+    await recordStageTransition(
+      id,
+      oldStage,
+      patch.stage,
+      actorId,
+      triggeredAutoAdvance ? "Auto-advance: agendamiento de levantamiento completo" : null,
+    );
+  }
+
+  // Create a follow-up alert so Dirección sees the pending propuesta deadline.
+  if (triggeredAutoAdvance && updated && newDeadline) {
+    try {
+      await db.insert(followUpAlerts).values({
+        prospectId: id,
+        alertType: enumCast<AlertType>("proposal_deadline_pending"),
+        status: enumCast<AlertStatus>("pending"),
+        title: `Propuesta pendiente: ${updated.name}`,
+        message: `Se agendó el levantamiento. Fecha límite para subir la propuesta: ${newDeadline.toLocaleDateString("es-MX", { day: "numeric", month: "short", year: "numeric" })}.`,
+        priority: enumCast<Priority>("alta"),
+        dueDate: newDeadline,
+        assignedToId: updated.assignedToId ?? null,
+      });
+    } catch (err) {
+      console.error("[comercial] Failed to create proposal-deadline alert:", err);
+    }
   }
 
   return updated;
@@ -718,6 +802,31 @@ export async function sendProposal(id: number, sentById: number) {
     .set({ status: "enviada", sentAt: new Date(), sentById, updatedAt: new Date() })
     .where(eq(proposalVersions.id, id))
     .returning();
+
+  // Mark the propuesta as delivered on the prospect and stop the SLA clock
+  // (Fase 2 bloque 3). Also auto-resolve the pending/overdue deadline alerts
+  // so Dirección's tray doesn't keep nagging.
+  if (updated?.prospectId) {
+    const now = new Date();
+    await db
+      .update(prospects)
+      .set({ proposalDate: now, proposalDeadline: null, updatedAt: now })
+      .where(eq(prospects.id, updated.prospectId));
+    await db
+      .update(followUpAlerts)
+      .set({ status: enumCast<AlertStatus>("auto_resolved"), acknowledgedAt: now })
+      .where(
+        and(
+          eq(followUpAlerts.prospectId, updated.prospectId),
+          eq(followUpAlerts.status, enumCast<AlertStatus>("pending")),
+          or(
+            eq(followUpAlerts.alertType, enumCast<AlertType>("proposal_deadline_pending")),
+            eq(followUpAlerts.alertType, enumCast<AlertType>("proposal_deadline_overdue")),
+          ),
+        ),
+      );
+  }
+
   return updated;
 }
 

@@ -74,6 +74,9 @@ export const alertTypeEnum = pgEnum("alert_type", [
   "stale_prospect",
   "high_value_at_risk",
   "scheduled_reminder",
+  // SLA de 3 días hábiles para subir propuesta después de agendar el levantamiento.
+  "proposal_deadline_pending",
+  "proposal_deadline_overdue",
 ]);
 
 // Rejection reasons catalog
@@ -132,6 +135,10 @@ export const prospects = pgTable("prospects", {
   firstContactDate: date("first_contact_date"), // business date: when initial contact happened
   meetingDate: date("meeting_date"), // when the meeting is scheduled
   surveyDate: date("survey_date"), // when the levantamiento is scheduled
+  // SLA: set when agendamiento de levantamiento is complete and prospect
+  // auto-advances to "Propuesta" (DB stage=negociacion). End of business day
+  // at surveyDate + 3 business days. Cleared once proposalDate is recorded.
+  proposalDeadline: timestamp("proposal_deadline"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
