@@ -121,6 +121,23 @@ export function useComercialData() {
       const key = `${vr.año}-${vr.mes}`;
       realPorMes[key] = (realPorMes[key] || 0) + Number(vr.monto);
     });
+
+    // Cotización por mes = suma del estimatedValue de prospectos activos cuyo
+    // estimatedCloseTime cae en ese mes (excluye cierre_perdido). El
+    // estimatedValue ya está sincronizado con la propuesta aceptada / más
+    // reciente (ver updateProposalAmount en backend + backfill).
+    const cotizacionPorMes: Record<string, number> = {};
+    kanbanProspectos.forEach((p) => {
+      if (p.status === 'cierre_perdido') return;
+      const ect = p.estimatedCloseTime; // "YYYY-MM"
+      if (!ect) return;
+      const amount = Number(p.propuesta?.ventaTotal || p.facturacionEstimada || 0);
+      if (amount <= 0) return;
+      const [year, month] = ect.split('-');
+      const key = `${year}-${Number(month)}`;
+      cotizacionPorMes[key] = (cotizacionPorMes[key] || 0) + amount;
+    });
+
     const currentYear = new Date().getFullYear();
     return MONTH_LABELS.map(row => {
       const period = `${currentYear}-${String(row.mesNum).padStart(2, '0')}`;
@@ -128,13 +145,15 @@ export function useComercialData() {
         const budgets = m.presupuestosMensuales || {};
         return sum + (budgets[period] || 0);
       }, 0);
+      const key = `${currentYear}-${row.mesNum}`;
       return {
         mes: row.mes,
         presupuesto: monthBudget,
-        real: realPorMes[`${currentYear}-${row.mesNum}`] || 0,
+        real: realPorMes[key] || 0,
+        cotizacion: cotizacionPorMes[key] || 0,
       };
     });
-  }, [dbVentasReales, dbTeamRaw]);
+  }, [dbVentasReales, dbTeamRaw, kanbanProspectos]);
 
   const pipelineData = useMemo(() => calcularPipelineData(kanbanProspectos), [kanbanProspectos]);
 
