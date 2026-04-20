@@ -158,10 +158,10 @@ export function PresupuestoTab() {
             <div className="rounded-lg border border-[#e5e7eb] px-3 py-2.5 bg-white">
               <div className="flex items-center gap-1.5 mb-1">
                 <span className="w-2 h-2 rounded-full" style={{ backgroundColor: avanceColor }} />
-                <div className="text-[10px] text-[#6b7280]">% Avance</div>
+                <div className="text-[10px] text-[#6b7280]">% Avance anual</div>
               </div>
               <div className="text-base font-bold" style={{ color: avanceColor }}>{pctAvance}%</div>
-              <div className="text-[10px] text-[#9ca3af] mt-0.5">venta vs presupuesto</div>
+              <div className="text-[10px] text-[#9ca3af] mt-0.5">venta cerrada / presupuesto</div>
             </div>
           </div>
 

@@ -27,6 +27,7 @@ export default function ComercialPage() {
   const {
     kanbanProspectos,
     salesTeamData,
+    presupuestoEvolution,
     currentUserName,
     userGreeting,
     isLoading,
@@ -81,8 +82,14 @@ export default function ComercialPage() {
 
   // Derived KPIs
   const presupuestoMesEquipo = salesTeamData.reduce((s, m) => s + (m.presupuestoMensual || 0), 0);
-  const ventasCerradasAnual = salesTeamData.reduce((s, m) => s + (m.ventasRealesAnual || 0), 0);
-  const presupuestoAnualTotal = salesTeamData.reduce((s, m) => s + (m.presupuestoAnual2026 || 0), 0);
+  // Venta del mes actual — derivada del mismo presupuestoEvolution que alimenta
+  // la gráfica, para que el card y las barras siempre cuadren.
+  const currentMonthIdx = new Date().getMonth();
+  const ventaMesActual = presupuestoEvolution[currentMonthIdx]?.real ?? 0;
+  const pctMesActual = presupuestoMesEquipo > 0
+    ? Math.round((ventaMesActual / presupuestoMesEquipo) * 100)
+    : 0;
+  const pctColor = pctMesActual >= 80 ? '#2E7D32' : pctMesActual >= 50 ? '#F57C00' : '#DC2626';
   const propuestasEnviadas = kanbanProspectos.filter(p => p.status === 'propuesta' || p.status === 'negociacion');
   const levantamientosActivos = kanbanProspectos.filter(p => p.status === 'levantamiento');
   const biodigestores = kanbanProspectos.filter(p => (p.servicios || []).includes('biodigestores'));
@@ -103,17 +110,17 @@ export default function ComercialPage() {
 
         {/* KPI CARDS */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
-          {/* Card 1: Presupuesto Mes */}
+          {/* Card 1: Presupuesto Mes — todo referido al mes actual para que % sea coherente */}
           <div className="rounded-xl border border-[#00a8a8]/10 card-modern p-5" style={{ backgroundColor: 'rgba(0,168,168,0.04)' }}>
             <div className="flex items-center justify-between">
               <div>
                 <div className="text-[13px] font-medium text-[#6b7280] mb-1">Presupuesto {new Date().toLocaleDateString('es-MX', { month: 'long' }).replace(/^\w/, c => c.toUpperCase())}</div>
                 <div className="text-2xl font-bold text-[#1c2c4a]">{fmtM(presupuestoMesEquipo)}</div>
                 <div className="text-xs text-[#6b7280] mt-1">
-                  Venta Cerrada: <span className="font-semibold text-[#00a8a8]">{fmtM(ventasCerradasAnual)}</span>
-                  {presupuestoAnualTotal > 0 && (
-                    <span className={`ml-1.5 font-semibold ${(ventasCerradasAnual / presupuestoAnualTotal) >= 1 ? 'text-[#2E7D32]' : 'text-[#F57C00]'}`}>
-                      ({Math.round((ventasCerradasAnual / presupuestoAnualTotal) * 100)}%)
+                  Venta Cerrada: <span className="font-semibold text-[#00a8a8]">{fmtM(ventaMesActual)}</span>
+                  {presupuestoMesEquipo > 0 && (
+                    <span className="ml-1.5 font-semibold" style={{ color: pctColor }}>
+                      ({pctMesActual}%)
                     </span>
                   )}
                 </div>
@@ -189,7 +196,7 @@ export default function ComercialPage() {
                 <div className="text-lg font-bold text-[#1c2c4a]">{fmtM(member.presupuestoMensual)}<span className="text-xs font-normal text-[#6b7280] ml-0.5">/mes</span></div>
                 <div className="flex items-center justify-between mt-1 mb-2">
                   <span className="text-[10px] text-[#6b7280]">Anual: {fmtM(member.presupuestoAnual2026)}</span>
-                  <span className="text-[10px] font-semibold" style={{ color: barColor }}>{pct}%</span>
+                  <span className="text-[10px] font-semibold" style={{ color: barColor }} title="Avance del mes: venta cerrada / presupuesto del mes">{pct}% mes</span>
                 </div>
                 <div className="w-full h-1.5 bg-[#f3f4f6] rounded-full overflow-hidden">
                   <div className="h-full rounded-full transition-all" style={{ width: `${Math.min(pct, 100)}%`, backgroundColor: barColor }} />
@@ -197,7 +204,7 @@ export default function ComercialPage() {
                 <div className="flex items-center gap-2 mt-2.5 pt-2 border-t border-[#f3f4f6]">
                   <span className="text-[10px] text-[#6b7280]">{memberProspectos.length} opps</span>
                   <span className="text-[10px] text-[#6b7280]">·</span>
-                  <span className="text-[10px] text-[#6b7280]">{fmtM(memberProspectos.filter(p => p.status !== 'cierre_perdido').reduce((s, p) => s + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0))} presupuesto</span>
+                  <span className="text-[10px] text-[#6b7280]">{fmtM(memberProspectos.filter(p => p.status !== 'cierre_perdido').reduce((s, p) => s + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0))} en pipeline</span>
                 </div>
               </div>
             );
