@@ -3,7 +3,7 @@ import rateLimit from "express-rate-limit";
 import bcrypt from "bcrypt";
 import { z } from "zod";
 import { db } from "../../db";
-import { users } from "../../../shared/schema/common";
+import { users, areas } from "../../../shared/schema/common";
 import { generateToken, requireAuth, requireAdmin } from "../../middleware/auth";
 import { loginUser } from "./service";
 import { eq } from "drizzle-orm";
@@ -126,10 +126,23 @@ router.get("/user", requireAuth, async (req, res) => {
 // GET /api/auth/team — List team members (any authenticated user, minimal fields)
 router.get("/team", requireAuth, async (_req, res) => {
   try {
-    const allUsers = await db.query.users.findMany({
-      columns: { id: true, name: true, email: true, role: true, codigo: true, areaId: true, isActive: true },
-    });
-    res.json(allUsers.filter(u => u.isActive));
+    // Join users → areas so the UI can filter by module (comercial,
+    // operaciones, subproductos, etc.) without an extra round-trip.
+    const rows = await db
+      .select({
+        id: users.id,
+        name: users.name,
+        email: users.email,
+        role: users.role,
+        codigo: users.codigo,
+        areaId: users.areaId,
+        isActive: users.isActive,
+        areaSlug: areas.moduleSlug,
+        areaName: areas.name,
+      })
+      .from(users)
+      .leftJoin(areas, eq(users.areaId, areas.id));
+    res.json(rows.filter((u) => u.isActive));
   } catch (error) {
     console.error("[auth] List team error:", error);
     res.status(500).json({ message: "Internal server error" });

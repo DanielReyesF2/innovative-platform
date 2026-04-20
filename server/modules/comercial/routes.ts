@@ -35,6 +35,8 @@ import {
   createMeeting,
   completeMeeting,
   cancelMeeting,
+  updateMeeting,
+  deleteMeeting,
   getProspectDocuments,
   createDocument,
   deleteDocument,
@@ -619,6 +621,36 @@ router.post("/prospects/:prospectId/meetings/:meetingId/cancel", async (req, res
     res.json(updated);
   } catch (error) {
     console.error("[comercial] Cancel meeting error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+// Partial update of a meeting row — used by the inline-edit UI. Validates
+// only the keys the caller sends (safeParse of a partial schema), so the
+// client can save one field at a time.
+router.patch("/prospects/:prospectId/meetings/:meetingId", async (req, res) => {
+  try {
+    const parsed = insertMeetingSchema.partial().safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ message: "Datos invalidos", errors: parsed.error.errors });
+    }
+    const data = parsed.data as Parameters<typeof updateMeeting>[1];
+    const updated = await updateMeeting(Number(req.params.meetingId), data);
+    if (!updated) return res.status(404).json({ message: "Reunion no encontrada" });
+    res.json(updated);
+  } catch (error) {
+    console.error("[comercial] Update meeting error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+router.delete("/prospects/:prospectId/meetings/:meetingId", async (req, res) => {
+  try {
+    const deleted = await deleteMeeting(Number(req.params.meetingId));
+    if (!deleted) return res.status(404).json({ message: "Reunion no encontrada" });
+    res.json({ success: true });
+  } catch (error) {
+    console.error("[comercial] Delete meeting error:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 });

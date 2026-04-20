@@ -737,6 +737,28 @@ export async function cancelMeeting(id: number) {
   return updated;
 }
 
+// Generic partial update for a meeting row — used by the inline-edit UI so
+// title/fecha/duración/ubicación/link pueden modificarse sin abrir modal.
+export async function updateMeeting(
+  id: number,
+  data: Partial<Pick<InsertMeeting, "title" | "description" | "scheduledAt" | "duration" | "location" | "meetingUrl">>,
+) {
+  const [updated] = await db
+    .update(prospectMeetings)
+    .set({ ...data, updatedAt: new Date() })
+    .where(eq(prospectMeetings.id, id))
+    .returning();
+  return updated;
+}
+
+export async function deleteMeeting(id: number) {
+  const [deleted] = await db
+    .delete(prospectMeetings)
+    .where(eq(prospectMeetings.id, id))
+    .returning();
+  return deleted;
+}
+
 // --- Documents ---
 
 export async function getProspectDocuments(prospectId: number) {

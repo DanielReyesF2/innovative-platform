@@ -1,22 +1,9 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { StickyNote, Plus, Pin, MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { StickyNote, Pin, Trash2, Check, Loader2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import {
   useProspectNotes,
@@ -33,73 +20,29 @@ interface ProspectNotesProps {
 
 export function ProspectNotes({ prospectId }: ProspectNotesProps) {
   const { toast } = useToast();
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingNote, setEditingNote] = useState<{ id: number; content: string } | null>(null);
   const [newContent, setNewContent] = useState("");
 
   const { data: notes = [], isLoading } = useProspectNotes(prospectId);
   const createNote = useCreateNote();
-  const updateNote = useUpdateNote();
   const deleteNote = useDeleteNote();
   const togglePin = useToggleNotePin();
 
   const handleCreateNote = async () => {
-    if (!newContent.trim()) {
-      toast({
-        title: "Error",
-        description: "El contenido es requerido",
-        variant: "destructive",
-      });
-      return;
-    }
-
+    const content = newContent.trim();
+    if (!content) return;
     try {
-      await createNote.mutateAsync({
-        prospectId,
-        content: newContent,
-      });
-      toast({ title: "Nota creada" });
-      setIsDialogOpen(false);
+      await createNote.mutateAsync({ prospectId, content });
       setNewContent("");
     } catch {
-      toast({
-        title: "Error",
-        description: "No se pudo crear la nota",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleUpdateNote = async () => {
-    if (!editingNote || !editingNote.content.trim()) return;
-
-    try {
-      await updateNote.mutateAsync({
-        prospectId,
-        noteId: editingNote.id,
-        content: editingNote.content,
-      });
-      toast({ title: "Nota actualizada" });
-      setEditingNote(null);
-    } catch {
-      toast({
-        title: "Error",
-        description: "No se pudo actualizar la nota",
-        variant: "destructive",
-      });
+      toast({ title: "No se pudo crear la nota", variant: "destructive" });
     }
   };
 
   const handleDeleteNote = async (noteId: number) => {
     try {
       await deleteNote.mutateAsync({ prospectId, noteId });
-      toast({ title: "Nota eliminada" });
     } catch {
-      toast({
-        title: "Error",
-        description: "No se pudo eliminar la nota",
-        variant: "destructive",
-      });
+      toast({ title: "No se pudo eliminar la nota", variant: "destructive" });
     }
   };
 
@@ -107,15 +50,11 @@ export function ProspectNotes({ prospectId }: ProspectNotesProps) {
     try {
       await togglePin.mutateAsync({ prospectId, noteId });
     } catch {
-      toast({
-        title: "Error",
-        description: "No se pudo cambiar el estado",
-        variant: "destructive",
-      });
+      toast({ title: "No se pudo cambiar el estado", variant: "destructive" });
     }
   };
 
-  // Sort notes: pinned first, then by date
+  // Sort notes: pinned first, then by date desc
   const sortedNotes = [...notes].sort((a: ProspectNote, b: ProspectNote) => {
     if (a.isPinned && !b.isPinned) return -1;
     if (!a.isPinned && b.isPinned) return 1;
@@ -124,37 +63,35 @@ export function ProspectNotes({ prospectId }: ProspectNotesProps) {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between mb-4">
+      <div className="mb-4">
         <h4 className="font-medium">Notas</h4>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button size="sm">
-              <Plus className="h-4 w-4 mr-1" />
-              Nueva Nota
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Nueva Nota</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 mt-4">
-              <Textarea
-                placeholder="Escribe tu nota aqui..."
-                value={newContent}
-                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setNewContent(e.target.value)}
-                rows={5}
-              />
-              <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-                  Cancelar
-                </Button>
-                <Button onClick={handleCreateNote} disabled={createNote.isPending}>
-                  {createNote.isPending ? "Guardando..." : "Guardar"}
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
+        <p className="text-xs text-muted-foreground mt-0.5">
+          Clic en una nota para editarla. Enter para guardar, Esc para cancelar.
+        </p>
+      </div>
+
+      {/* Create note — inline, no modal */}
+      <div className="mb-4 bg-white rounded-lg border border-[#e5e7eb] p-3">
+        <Textarea
+          placeholder="Escribe una nueva nota..."
+          value={newContent}
+          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setNewContent(e.target.value)}
+          onKeyDown={(e) => {
+            // Cmd/Ctrl + Enter para guardar; Enter solo hace salto de línea
+            if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+              e.preventDefault();
+              handleCreateNote();
+            }
+          }}
+          rows={2}
+          className="resize-none border-0 focus-visible:ring-0 p-0 shadow-none"
+        />
+        <div className="flex items-center justify-between mt-2">
+          <span className="text-[10px] text-muted-foreground">⌘/Ctrl + Enter para guardar</span>
+          <Button size="sm" onClick={handleCreateNote} disabled={!newContent.trim() || createNote.isPending}>
+            {createNote.isPending ? "Guardando..." : "Agregar nota"}
+          </Button>
+        </div>
       </div>
 
       {isLoading ? (
@@ -164,87 +101,155 @@ export function ProspectNotes({ prospectId }: ProspectNotesProps) {
       ) : notes.length === 0 ? (
         <div className="text-center py-8 text-muted-foreground">
           <StickyNote className="h-10 w-10 mx-auto mb-3 opacity-50" />
-          <p>No hay notas</p>
+          <p>Sin notas — agrega la primera arriba</p>
         </div>
       ) : (
         <div className="space-y-3">
           {sortedNotes.map((note: ProspectNote) => (
-            <div
+            <InlineNoteItem
               key={note.id}
-              className={`bg-card border rounded-lg p-4 ${
-                note.isPinned ? "border-yellow-400 bg-yellow-50/50" : ""
-              }`}
-            >
-              {editingNote && editingNote.id === note.id ? (
-                <div className="space-y-3">
-                  <Textarea
-                    value={editingNote.content}
-                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-                      setEditingNote({ id: editingNote.id, content: e.target.value })
-                    }
-                    rows={4}
-                  />
-                  <div className="flex justify-end gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => setEditingNote(null)}
-                    >
-                      Cancelar
-                    </Button>
-                    <Button
-                      size="sm"
-                      onClick={handleUpdateNote}
-                      disabled={updateNote.isPending}
-                    >
-                      Guardar
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <>
-                  <div className="flex items-start justify-between">
-                    <p className="text-sm whitespace-pre-wrap flex-1">{note.content}</p>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 ml-2">
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => handleTogglePin(note.id)}>
-                          <Pin className="h-4 w-4 mr-2" />
-                          {note.isPinned ? "Desfijar" : "Fijar"}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() =>
-                            setEditingNote({ id: note.id, content: note.content })
-                          }
-                        >
-                          <Pencil className="h-4 w-4 mr-2" />
-                          Editar
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => handleDeleteNote(note.id)}
-                          className="text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Eliminar
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    {note.createdAt
-                      ? format(new Date(note.createdAt), "PPp", { locale: es })
-                      : ""}
-                  </p>
-                </>
-              )}
-            </div>
+              note={note}
+              prospectId={prospectId}
+              onDelete={() => handleDeleteNote(note.id)}
+              onTogglePin={() => handleTogglePin(note.id)}
+            />
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+// ─── Single note row with click-to-edit content ───────────────────────────
+function InlineNoteItem({
+  note,
+  prospectId,
+  onDelete,
+  onTogglePin,
+}: {
+  note: ProspectNote;
+  prospectId: number;
+  onDelete: () => void;
+  onTogglePin: () => void;
+}) {
+  const { toast } = useToast();
+  const updateNote = useUpdateNote();
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(note.content);
+  const [saving, setSaving] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+
+  // When the note's content changes from the server (e.g., another tab), sync
+  // the local draft — but only when we're not currently editing to avoid
+  // clobbering what the user is typing.
+  useEffect(() => {
+    if (!editing) setDraft(note.content);
+  }, [note.content, editing]);
+
+  const startEdit = () => {
+    setDraft(note.content);
+    setEditing(true);
+    // Focus + place cursor at end after the textarea mounts
+    setTimeout(() => {
+      textareaRef.current?.focus();
+      textareaRef.current?.setSelectionRange(note.content.length, note.content.length);
+    }, 0);
+  };
+
+  const cancelEdit = () => {
+    setDraft(note.content);
+    setEditing(false);
+  };
+
+  const save = async () => {
+    const next = draft.trim();
+    if (!next || next === note.content) {
+      setEditing(false);
+      return;
+    }
+    setSaving(true);
+    try {
+      await updateNote.mutateAsync({ prospectId, noteId: note.id, content: next });
+    } catch {
+      toast({ title: "No se pudo actualizar la nota", variant: "destructive" });
+      setDraft(note.content);
+    } finally {
+      setSaving(false);
+      setEditing(false);
+    }
+  };
+
+  return (
+    <div
+      className={`group bg-card border rounded-lg p-4 transition-colors ${
+        note.isPinned ? "border-yellow-400 bg-yellow-50/50" : ""
+      }`}
+    >
+      <div className="flex items-start justify-between gap-2">
+        {editing ? (
+          <Textarea
+            ref={textareaRef}
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onBlur={save}
+            onKeyDown={(e) => {
+              if (e.key === "Escape") { e.preventDefault(); cancelEdit(); }
+              if ((e.metaKey || e.ctrlKey) && e.key === "Enter") { e.preventDefault(); save(); }
+            }}
+            rows={Math.min(10, Math.max(3, draft.split("\n").length))}
+            className="flex-1 resize-none border-[#00a8a8] focus-visible:ring-[#00a8a8]/30"
+          />
+        ) : (
+          <button
+            type="button"
+            onClick={startEdit}
+            className="flex-1 text-left cursor-text -m-1 p-1 rounded hover:bg-[#f9fafb] transition-colors"
+            title="Clic para editar"
+          >
+            <p className="text-sm whitespace-pre-wrap">{note.content}</p>
+          </button>
+        )}
+
+        <div className="flex items-center gap-1 flex-shrink-0">
+          {saving && <Loader2 className="h-3.5 w-3.5 animate-spin text-[#9ca3af]" />}
+          {editing && !saving && (
+            <button
+              type="button"
+              onMouseDown={(e) => { e.preventDefault(); save(); }}
+              className="text-[#00a8a8] hover:bg-[#00a8a8]/10 p-1.5 rounded-md transition-colors"
+              title="Guardar (⌘/Ctrl + Enter)"
+            >
+              <Check className="h-4 w-4" />
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={onTogglePin}
+            className={`p-1.5 rounded-md transition-colors ${
+              note.isPinned
+                ? "text-yellow-600 hover:bg-yellow-100"
+                : "text-[#9ca3af] hover:text-[#1c2c4a] hover:bg-[#f3f4f6] opacity-0 group-hover:opacity-100"
+            }`}
+            title={note.isPinned ? "Desfijar" : "Fijar"}
+          >
+            <Pin className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            onClick={onDelete}
+            className="text-[#9ca3af] hover:text-red-500 hover:bg-red-50 p-1.5 rounded-md transition-colors opacity-0 group-hover:opacity-100"
+            title="Eliminar"
+          >
+            <Trash2 className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+      <p className="text-xs text-muted-foreground mt-2">
+        {note.createdAt ? format(new Date(note.createdAt), "PPp", { locale: es }) : ""}
+        {note.updatedAt && note.updatedAt !== note.createdAt && (
+          <span className="ml-2 text-[10px] text-[#9ca3af]">· editada</span>
+        )}
+      </p>
     </div>
   );
 }
