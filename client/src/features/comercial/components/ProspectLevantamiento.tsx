@@ -6,13 +6,14 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { useProspect, useUpdateProspect, useSendToOperaciones } from "../api";
 import { useToast } from "@/components/ui/use-toast";
-import { EPP_OPTIONS, WASTE_TYPES_CATALOG } from "@/lib/comercial-constants";
+import { EPP_OPTIONS, WASTE_TYPES_CATALOG, ACCESS_REQUIREMENTS_OPTIONS } from "@/lib/comercial-constants";
 import { canHandoffStage } from "@shared/schema/comercial-stages";
 import type { User } from "@shared/schema/common";
 import {
   CalendarCheck, HardHat, Save, Recycle,
-  Send, CheckCircle, Users, Phone, Mail,
+  Send, CheckCircle, Users, Phone,
   ChevronDown, ChevronRight, Trash2, Plus,
+  MapPin, ShieldCheck, Car,
 } from "lucide-react";
 
 // ─── Field helper ───
@@ -163,6 +164,48 @@ function WasteTypesSection({ data, onChange }: { data: Record<string, unknown>[]
   );
 }
 
+// ─── Area participant selector (shared by comercial / operaciones / subproductos) ───
+function AreaParticipants({
+  label,
+  color,
+  selectedIds,
+  teamMembers,
+  onToggle,
+}: {
+  label: string;
+  color: string;
+  selectedIds: number[];
+  teamMembers: Pick<User, "id" | "name" | "codigo" | "email">[];
+  onToggle: (id: number) => void;
+}) {
+  return (
+    <div>
+      <Label className="text-xs font-semibold" style={{ color }}>{label}</Label>
+      <div className="mt-1 flex flex-wrap gap-1.5">
+        {teamMembers.map((m) => {
+          const active = selectedIds.includes(m.id);
+          return (
+            <button
+              key={m.id}
+              type="button"
+              onClick={() => onToggle(m.id)}
+              className="rounded-full px-2.5 py-1 text-xs font-medium transition-colors flex items-center gap-1.5"
+              style={active
+                ? { backgroundColor: color, color: "white" }
+                : { backgroundColor: "#f3f4f6", color: "#6b7280" }}
+            >
+              <span className="w-4 h-4 rounded-full bg-white/25 flex items-center justify-center text-[9px] font-bold">
+                {m.codigo || m.name.split(" ").map(n => n[0]).join("").substring(0, 2)}
+              </span>
+              {m.name.split(" ").slice(0, 2).join(" ")}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 // ─── Main Component ───
 
 interface ProspectLevantamientoProps {
@@ -175,7 +218,7 @@ export function ProspectLevantamiento({ prospectId }: ProspectLevantamientoProps
   const sendToOps = useSendToOperaciones();
   const { toast } = useToast();
 
-  // Team members for responsable dropdown
+  // Team members for participants dropdowns
   const { data: teamMembers = [] } = useQuery<Pick<User, "id" | "name" | "codigo" | "email">[]>({
     queryKey: ["/api/auth/team"],
     staleTime: 5 * 60 * 1000,
@@ -184,12 +227,25 @@ export function ProspectLevantamiento({ prospectId }: ProspectLevantamientoProps
   // Scheduling state
   const [schedDate, setSchedDate] = useState("");
   const [schedTime, setSchedTime] = useState("");
-  const [schedResponsibles, setSchedResponsibles] = useState<number[]>([]);
   const [schedEpp, setSchedEpp] = useState<string[]>([]);
+  const [schedNotes, setSchedNotes] = useState("");
+
+  // Site + contact fields
+  const [schedSiteAddress, setSchedSiteAddress] = useState("");
   const [schedContactName, setSchedContactName] = useState("");
+  const [schedContactRole, setSchedContactRole] = useState("");
   const [schedContactPhone, setSchedContactPhone] = useState("");
   const [schedContactEmail, setSchedContactEmail] = useState("");
-  const [schedNotes, setSchedNotes] = useState("");
+
+  // Participants split by area
+  const [partComercial, setPartComercial] = useState<number[]>([]);
+  const [partOperaciones, setPartOperaciones] = useState<number[]>([]);
+  const [partSubproductos, setPartSubproductos] = useState<number[]>([]);
+
+  // Access requirements + vehicle plates
+  const [schedAccessReqs, setSchedAccessReqs] = useState<string[]>([]);
+  const [schedAccessReqsOther, setSchedAccessReqsOther] = useState("");
+  const [schedVehiclePlates, setSchedVehiclePlates] = useState("");
 
   const [wasteTypes, setWasteTypes] = useState<Record<string, unknown>[]>([]);
   const [initialized, setInitialized] = useState(false);
@@ -202,12 +258,27 @@ export function ProspectLevantamiento({ prospectId }: ProspectLevantamientoProps
     if (sched) {
       setSchedDate((sched.proposedDate as string) || "");
       setSchedTime((sched.proposedTime as string) || "");
-      setSchedResponsibles((sched.responsibleIds as number[]) || []);
       setSchedEpp((sched.epp as string[]) || []);
+      setSchedNotes((sched.notes as string) || "");
+      setSchedSiteAddress((sched.siteAddress as string) || "");
       setSchedContactName((sched.contactName as string) || "");
+      setSchedContactRole((sched.contactRole as string) || "");
       setSchedContactPhone((sched.contactPhone as string) || "");
       setSchedContactEmail((sched.contactEmail as string) || "");
-      setSchedNotes((sched.notes as string) || "");
+      setSchedAccessReqs((sched.accessRequirements as string[]) || []);
+      setSchedAccessReqsOther((sched.accessRequirementsOther as string) || "");
+      setSchedVehiclePlates((sched.vehiclePlates as string) || "");
+
+      // Participants: new structure first, legacy fallback so old data
+      // shows up as comercial until the user re-assigns.
+      const pba = sched.participantsByArea as Record<string, number[]> | undefined;
+      if (pba) {
+        setPartComercial(Array.isArray(pba.comercial) ? pba.comercial : []);
+        setPartOperaciones(Array.isArray(pba.operaciones) ? pba.operaciones : []);
+        setPartSubproductos(Array.isArray(pba.subproductos) ? pba.subproductos : []);
+      } else if (Array.isArray(sched.responsibleIds) && (sched.responsibleIds as number[]).length) {
+        setPartComercial(sched.responsibleIds as number[]);
+      }
     }
     setInitialized(true);
   }
@@ -220,7 +291,14 @@ export function ProspectLevantamiento({ prospectId }: ProspectLevantamientoProps
     );
   }
 
-  // Preserve any existing levantamientoData (generalInfo, wasteTypes, etc.) and update scheduling
+  const allParticipants = Array.from(new Set([...partComercial, ...partOperaciones, ...partSubproductos]));
+  const participantsInfo = allParticipants
+    .map((id) => teamMembers.find((m) => m.id === id))
+    .filter((m): m is Pick<User, "id" | "name" | "codigo" | "email"> => Boolean(m));
+
+  // Preserve any existing levantamientoData (generalInfo, wasteTypes, etc.) and update scheduling.
+  // Keeps flat responsibleIds alongside participantsByArea for backward compat with
+  // handoff flows / downstream consumers that haven't been updated yet.
   const existingData = (prospect?.levantamientoData || {}) as Record<string, unknown>;
   const buildFullData = () => ({
     ...existingData,
@@ -228,13 +306,24 @@ export function ProspectLevantamiento({ prospectId }: ProspectLevantamientoProps
     scheduling: {
       proposedDate: schedDate,
       proposedTime: schedTime,
-      responsibleIds: schedResponsibles,
-      responsibleNames: schedResponsibles.map(id => teamMembers.find(m => m.id === id)?.name || "").filter(Boolean),
-      responsibleEmails: schedResponsibles.map(id => teamMembers.find(m => m.id === id)?.email || "").filter(Boolean),
-      epp: schedEpp,
+      siteAddress: schedSiteAddress.trim() || null,
       contactName: schedContactName.trim(),
+      contactRole: schedContactRole.trim() || null,
       contactPhone: schedContactPhone.trim(),
       contactEmail: schedContactEmail.trim(),
+      participantsByArea: {
+        comercial: partComercial,
+        operaciones: partOperaciones,
+        subproductos: partSubproductos,
+      },
+      // Flat fields for backward compat (handoff validations, reports, etc.)
+      responsibleIds: allParticipants,
+      responsibleNames: participantsInfo.map((m) => m.name),
+      responsibleEmails: participantsInfo.map((m) => m.email),
+      epp: schedEpp,
+      accessRequirements: schedAccessReqs,
+      accessRequirementsOther: schedAccessReqsOther.trim() || null,
+      vehiclePlates: schedVehiclePlates.trim() || null,
       notes: schedNotes.trim() || null,
     },
   });
@@ -253,8 +342,12 @@ export function ProspectLevantamiento({ prospectId }: ProspectLevantamientoProps
       toast({ title: "Fecha y hora son requeridos", variant: "destructive" });
       return;
     }
-    if (schedResponsibles.length === 0) {
-      toast({ title: "Selecciona al menos un responsable", variant: "destructive" });
+    if (!schedSiteAddress.trim()) {
+      toast({ title: "La dirección del sitio es requerida", variant: "destructive" });
+      return;
+    }
+    if (allParticipants.length === 0) {
+      toast({ title: "Selecciona al menos un participante por área", variant: "destructive" });
       return;
     }
     try {
@@ -274,12 +367,16 @@ export function ProspectLevantamiento({ prospectId }: ProspectLevantamientoProps
 
   const sentToOps = prospect?.sentToOpsAt;
 
-  const toggleResponsible = (id: number) => {
-    setSchedResponsibles(prev => prev.includes(id) ? prev.filter(r => r !== id) : [...prev, id]);
+  const toggleId = (setter: React.Dispatch<React.SetStateAction<number[]>>) => (id: number) => {
+    setter((prev) => prev.includes(id) ? prev.filter((r) => r !== id) : [...prev, id]);
+  };
+
+  const toggleAccessReq = (id: string) => {
+    setSchedAccessReqs((prev) => prev.includes(id) ? prev.filter((r) => r !== id) : [...prev, id]);
   };
 
   const toggleEpp = (id: string) => {
-    setSchedEpp(prev => prev.includes(id) ? prev.filter(e => e !== id) : [...prev, id]);
+    setSchedEpp((prev) => prev.includes(id) ? prev.filter((e) => e !== id) : [...prev, id]);
   };
 
   return (
@@ -307,9 +404,12 @@ export function ProspectLevantamiento({ prospectId }: ProspectLevantamientoProps
             <CalendarCheck className="h-4 w-4" />
             Agendar Levantamiento
           </div>
+          <p className="text-[11px] text-muted-foreground mt-0.5">
+            Toda esta información se enviará a Operaciones para preparar la visita.
+          </p>
         </div>
-        <CardContent className="pt-0 space-y-4">
-          {/* Date & Time */}
+        <CardContent className="pt-0 space-y-5">
+          {/* 1. Fecha y hora */}
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
               <Label className="text-xs">Fecha Propuesta *</Label>
@@ -321,57 +421,74 @@ export function ProspectLevantamiento({ prospectId }: ProspectLevantamientoProps
             </div>
           </div>
 
-          {/* Responsables (multi-select from team) */}
+          {/* 2. Dirección del sitio */}
           <div>
             <Label className="text-xs flex items-center gap-1">
-              <Users className="h-3 w-3" /> Responsables del Levantamiento *
+              <MapPin className="h-3 w-3" /> Dirección del sitio *
             </Label>
-            <p className="text-[10px] text-muted-foreground mb-2">Selecciona quién(es) irán al levantamiento</p>
-            <div className="flex flex-wrap gap-1.5">
-              {teamMembers.map(member => (
-                <button
-                  key={member.id}
-                  type="button"
-                  onClick={() => toggleResponsible(member.id)}
-                  className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors flex items-center gap-1.5 ${
-                    schedResponsibles.includes(member.id)
-                      ? "bg-[#00a8a8] text-white"
-                      : "bg-[#f3f4f6] text-[#6b7280] hover:bg-[#e5e7eb]"
-                  }`}
-                >
-                  <span className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-[9px] font-bold">
-                    {member.codigo || member.name.split(" ").map(n => n[0]).join("").substring(0, 2)}
-                  </span>
-                  {member.name.split(" ").slice(0, 2).join(" ")}
-                </button>
-              ))}
-            </div>
-            {schedResponsibles.length > 0 && (
-              <div className="mt-2 text-[10px] text-[#6b7280]">
-                {schedResponsibles.map(id => {
-                  const m = teamMembers.find(t => t.id === id);
-                  return m ? `${m.name} (${m.email})` : "";
-                }).filter(Boolean).join(" · ")}
-              </div>
-            )}
+            <Input
+              value={schedSiteAddress}
+              onChange={(e) => setSchedSiteAddress(e.target.value)}
+              placeholder="Calle, número, colonia, ciudad, estado, CP"
+              className="mt-1"
+            />
+            <p className="text-[10px] text-muted-foreground mt-0.5">
+              Dirección completa de planta / sede donde se hará el levantamiento (no la ciudad general del prospecto).
+            </p>
           </div>
 
-          {/* Contacto en sitio */}
+          {/* 3. Contacto en sitio */}
           <div>
             <Label className="text-xs flex items-center gap-1 mb-2">
               <Phone className="h-3 w-3" /> Contacto que recibe en sitio
             </Label>
-            <div className="grid gap-3 sm:grid-cols-3">
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               <Field label="Nombre" value={schedContactName} onChange={setSchedContactName} placeholder="Quien recibe" />
-              <Field label="Teléfono" value={schedContactPhone} onChange={setSchedContactPhone} placeholder="55 1234 5678" />
-              <div>
-                <Label className="text-xs">Correo</Label>
-                <Input type="email" value={schedContactEmail} onChange={(e) => setSchedContactEmail(e.target.value)} placeholder="contacto@empresa.com" className="mt-1" />
-              </div>
+              <Field label="Puesto" value={schedContactRole} onChange={setSchedContactRole} placeholder="Ej: Gerente de Planta" />
+              <Field label="Teléfono" value={schedContactPhone} onChange={setSchedContactPhone} type="tel" placeholder="55 1234 5678" />
+              <Field label="Correo" value={schedContactEmail} onChange={setSchedContactEmail} type="email" placeholder="contacto@empresa.com" />
             </div>
           </div>
 
-          {/* EPP (multi-select chips) */}
+          {/* 4. Participantes por área */}
+          <div>
+            <Label className="text-xs flex items-center gap-1">
+              <Users className="h-3 w-3" /> Participantes por área *
+            </Label>
+            <p className="text-[10px] text-muted-foreground mb-2">
+              Selecciona quién de cada área asistirá al levantamiento.
+            </p>
+            <div className="space-y-3">
+              <AreaParticipants
+                label="Comercial"
+                color="#00a8a8"
+                selectedIds={partComercial}
+                teamMembers={teamMembers}
+                onToggle={toggleId(setPartComercial)}
+              />
+              <AreaParticipants
+                label="Operaciones"
+                color="#0D47A1"
+                selectedIds={partOperaciones}
+                teamMembers={teamMembers}
+                onToggle={toggleId(setPartOperaciones)}
+              />
+              <AreaParticipants
+                label="Subproductos"
+                color="#F57C00"
+                selectedIds={partSubproductos}
+                teamMembers={teamMembers}
+                onToggle={toggleId(setPartSubproductos)}
+              />
+            </div>
+            {allParticipants.length > 0 && (
+              <p className="text-[10px] text-[#6b7280] mt-2">
+                {allParticipants.length} participante{allParticipants.length === 1 ? "" : "s"} asignado{allParticipants.length === 1 ? "" : "s"} en total
+              </p>
+            )}
+          </div>
+
+          {/* 5. EPP Necesario */}
           <div>
             <Label className="text-xs flex items-center gap-1">
               <HardHat className="h-3 w-3" /> EPP Necesario
@@ -394,7 +511,55 @@ export function ProspectLevantamiento({ prospectId }: ProspectLevantamientoProps
             </div>
           </div>
 
-          {/* Notes */}
+          {/* 6. Requisitos de acceso */}
+          <div>
+            <Label className="text-xs flex items-center gap-1">
+              <ShieldCheck className="h-3 w-3" /> Requisitos de acceso
+            </Label>
+            <p className="text-[10px] text-muted-foreground mb-2">
+              Qué hay que presentar o traer para entrar al sitio.
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {ACCESS_REQUIREMENTS_OPTIONS.map(req => (
+                <button
+                  key={req.id}
+                  type="button"
+                  onClick={() => toggleAccessReq(req.id)}
+                  className={`rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
+                    schedAccessReqs.includes(req.id)
+                      ? "bg-[#7C3AED] text-white"
+                      : "bg-[#f3f4f6] text-[#6b7280] hover:bg-[#e5e7eb]"
+                  }`}
+                >
+                  {req.label}
+                </button>
+              ))}
+            </div>
+            <Input
+              value={schedAccessReqsOther}
+              onChange={(e) => setSchedAccessReqsOther(e.target.value)}
+              placeholder="Otros requisitos (texto libre)"
+              className="mt-2"
+            />
+          </div>
+
+          {/* 7. Placas de vehículos */}
+          <div>
+            <Label className="text-xs flex items-center gap-1">
+              <Car className="h-3 w-3" /> Placas de vehículos
+            </Label>
+            <Input
+              value={schedVehiclePlates}
+              onChange={(e) => setSchedVehiclePlates(e.target.value)}
+              placeholder="Ej: ABC-123-A, XYZ-987-B"
+              className="mt-1"
+            />
+            <p className="text-[10px] text-muted-foreground mt-0.5">
+              Separa con coma si son varios. Útil para el registro de vehículos al ingresar al sitio.
+            </p>
+          </div>
+
+          {/* 8. Notas */}
           <div>
             <Label className="text-xs">Notas (opcional)</Label>
             <textarea
