@@ -136,12 +136,14 @@ export function EjecutivoHub({ member, onBack, onShowNuevoLead }: Props) {
               })()}
               {member.presupuestoAnual2026 > 0 && (
                 <button onClick={() => setShowVentasRealesModal(true)}
-                  className="flex items-center gap-2 rounded-lg border border-[#e5e7eb] bg-[#f9fafb] px-2.5 py-1.5 hover:shadow-sm hover:border-[#0067B0]/30 transition-all">
+                  className="flex items-center gap-2 rounded-lg border border-[#e5e7eb] bg-[#f9fafb] px-2.5 py-1.5 hover:shadow-sm hover:border-[#0067B0]/30 transition-all"
+                  title={`Avance del mes: ${fmtM(member.ventasReales)} vendido / ${fmtM(member.presupuestoMensual)} meta`}>
                   <span className="text-sm font-bold" style={{ color: member.cumplimientoPresupuesto >= 70 ? '#2E7D32' : member.cumplimientoPresupuesto >= 40 ? '#F57C00' : '#DC2626' }}>
                     {member.cumplimientoPresupuesto}%
                   </span>
                   <div className="text-left">
-                    <div className="text-[11px] font-semibold text-[#1c2c4a]">Presupuesto</div>
+                    <div className="text-[11px] font-semibold text-[#1c2c4a]">Presupuesto mes</div>
+                    <div className="text-[9px] text-[#6b7280]">{fmtM(member.ventasReales)} de {fmtM(member.presupuestoMensual)}</div>
                     <div className="w-16 h-1.5 bg-[#e5e7eb] rounded-full overflow-hidden mt-0.5">
                       <div className="h-full rounded-full" style={{
                         width: `${Math.min(member.cumplimientoPresupuesto, 100)}%`,
