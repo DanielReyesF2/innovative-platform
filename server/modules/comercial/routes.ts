@@ -102,19 +102,15 @@ const rejectProspectSchema = z.object({
   rejectionDetail: z.string().max(2000).optional().default(""),
 });
 
+// Per Vero's flow (Prospecto stage): solo pedimos datos de contacto que
+// faltan del Lead + ubicación + frecuencia opcional. Potencial / cotización
+// / residuos entran en etapas posteriores, NO aquí.
 const convertLeadSchema = z.object({
-  industry: z.string().max(100).optional(),
+  contactRole: z.string().max(200).optional(),
+  contactPhone: z.string().max(50).optional(),
+  contactEmail: z.string().email().max(200).optional(),
   location: z.string().max(200).optional(),
-  potential: z.string().max(20).optional(),
-  estimatedValue: z.string().max(50).optional(),
-  estimatedVolume: z.string().max(100).optional(),
-  wasteInfo: z.object({
-    wasteTypes: z.array(z.string()),
-    estimatedVolume: z.string(),
-    hasCurrentProvider: z.boolean(),
-    currentProviderName: z.string().optional(),
-    reasonForChange: z.string().optional(),
-  }).optional(),
+  serviceFrequency: z.string().max(100).optional(),
 });
 
 const assignLeadSchema = z.object({

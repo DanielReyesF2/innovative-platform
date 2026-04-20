@@ -302,20 +302,16 @@ export async function rejectProspect(
 export async function qualifyProspect(
   id: number,
   data: {
-    industry: string;
-    potential: string;
-    estimatedValue?: string | number;
-    estimatedVolume?: string;
-    probability: number;
-    priority: string;
-    contactRole?: string;
-    contactEmail?: string;
-    reason?: string;
-    nextStep?: string;
+    // Per Vero's flow (Prospecto stage): solo datos de contacto + ubicación.
+    // Industria viene de Lead; potencial / cotización / residuos llegan después.
+    contactRole: string;
+    contactPhone: string;
+    contactEmail: string;
+    location: string;
+    serviceFrequency?: string;
   },
   actorId?: number,
 ) {
-  // Verify prospect exists and is in 'lead' stage
   const prospect = await db.query.prospects.findFirst({
     where: eq(prospects.id, id),
   });
@@ -328,16 +324,11 @@ export async function qualifyProspect(
     .update(prospects)
     .set({
       stage: "prospecto",
-      industry: data.industry,
-      potential: data.potential,
-      estimatedValue: data.estimatedValue ? String(data.estimatedValue) : null,
-      estimatedVolume: data.estimatedVolume || null,
-      probability: data.probability,
-      priority: enumCast<Priority>(data.priority || "media"),
-      contactRole: data.contactRole || null,
-      contactEmail: data.contactEmail || null,
-      reason: data.reason || null,
-      nextStep: data.nextStep || null,
+      contactRole: data.contactRole,
+      contactPhone: data.contactPhone,
+      contactEmail: data.contactEmail,
+      location: data.location,
+      serviceFrequency: data.serviceFrequency || null,
       updatedAt: new Date(),
     })
     .where(eq(prospects.id, id))
@@ -376,18 +367,14 @@ export async function assignLead(id: number, assignedToId: number) {
 export async function convertLeadToProspect(
   leadId: number,
   qualifyData: {
-    industry?: string;
+    // Per Vero's flow (Prospecto stage): solo datos de contacto + ubicación
+    // + frecuencia opcional. La industria viene del Lead; potencial /
+    // cotización / residuos llegan en etapas posteriores.
+    contactRole?: string;
+    contactPhone?: string;
+    contactEmail?: string;
     location?: string;
-    potential?: string;
-    estimatedValue?: string;
-    estimatedVolume?: string;
-    wasteInfo?: {
-      wasteTypes: string[];
-      estimatedVolume: string;
-      hasCurrentProvider: boolean;
-      currentProviderName?: string;
-      reasonForChange?: string;
-    };
+    serviceFrequency?: string;
   }
 ) {
   const lead = await db.query.leads.findFirst({ where: eq(leads.id, leadId) });
@@ -395,25 +382,21 @@ export async function convertLeadToProspect(
   if (!lead.isActive) throw new Error("CONFLICT:Este lead ya fue convertido");
 
   const result = await db.transaction(async (tx) => {
-    // Create prospect from lead data
+    // Create prospect from lead data (industria viene del Lead, location +
+    // contact info se enriquecen desde el formulario de calificación).
     const [prospect] = await tx
       .insert(prospects)
       .values({
         name: lead.companyName,
         contactName: lead.contactName,
-        contactRole: lead.contactRole || null,
-        contactPhone: lead.contactPhone || null,
-        contactEmail: lead.contactEmail || null,
-        industry: qualifyData.industry || null,
-        location: qualifyData.location || null,
-        potential: qualifyData.potential || null,
-        estimatedValue: qualifyData.estimatedValue || null,
-        estimatedVolume: qualifyData.estimatedVolume || null,
-        levantamientoData: qualifyData.wasteInfo
-          ? { qualificationWaste: qualifyData.wasteInfo }
-          : null,
-        stage: STAGE.CONTACTO_INICIAL,
-        probability: 10,
+        contactRole: qualifyData.contactRole || lead.contactRole || null,
+        contactPhone: qualifyData.contactPhone || lead.contactPhone || null,
+        contactEmail: qualifyData.contactEmail || lead.contactEmail || null,
+        industry: lead.industry || null,
+        location: qualifyData.location || lead.location || null,
+        serviceFrequency: qualifyData.serviceFrequency || null,
+        stage: STAGE.PRESENTACION,
+        probability: 20,
         priority: "media",
       })
       .returning();
