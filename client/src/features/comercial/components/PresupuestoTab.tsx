@@ -1,11 +1,35 @@
 import { useState, useEffect } from 'react';
 import { DollarSign, Edit3, Pencil, X, Save } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList } from 'recharts';
 import { fmtM, fmtCurrency } from '@/lib/utils';
 import { ExecutiveAvatar, KANBAN_STAGES } from '@/lib/comercial-constants';
 import { useComercialData } from '../hooks/useComercialData';
 import { useToast } from '@/components/ui/use-toast';
 import { apiRequest, invalidateByPrefix } from '@/lib/queryClient';
+
+// Recharts label renderer: hide label when value is 0 so bars without data
+// stay clean. Formats the rest as "$11.0M" (compact) matching tooltip.
+// Recharts passes SVG props where x/y can be string | number, so we coerce.
+function BarValueLabel(props: { x?: string | number; y?: string | number; width?: string | number; value?: string | number; fill?: string }) {
+  const { x = 0, y = 0, width = 0, value = 0, fill = '#1c2c4a' } = props;
+  const numValue = Number(value) || 0;
+  if (numValue <= 0) return null;
+  const numX = Number(x) || 0;
+  const numY = Number(y) || 0;
+  const numW = Number(width) || 0;
+  return (
+    <text
+      x={numX + numW / 2}
+      y={numY - 4}
+      textAnchor="middle"
+      fill={fill}
+      fontSize={9}
+      fontWeight={600}
+    >
+      {fmtM(numValue, 1)}
+    </text>
+  );
+}
 
 export function PresupuestoTab() {
   const {
@@ -38,6 +62,19 @@ export function PresupuestoTab() {
   const ventasCerradasAnual = salesTeamData.reduce((s, m) => s + (m.ventasRealesAnual || 0), 0);
   const presupuestoMesEquipo = salesTeamData.reduce((s, m) => s + (m.presupuestoMensual || 0), 0);
 
+  // Cotización totals — derived from the same presupuestoEvolution array the
+  // chart reads, keeping cards and bars perfectly in sync.
+  const cotizacionAnual = presupuestoEvolution.reduce((s, r) => s + (r.cotizacion || 0), 0);
+  const currentMonthIdx = new Date().getMonth();
+  const currentMonthRow = presupuestoEvolution[currentMonthIdx] ?? { cotizacion: 0, real: 0, presupuesto: 0 };
+  const cotizacionMesActual = currentMonthRow.cotizacion;
+  const ventaMesActual = currentMonthRow.real;
+  const mesActualLabel = new Date().toLocaleDateString('es-MX', { month: 'long' }).replace(/^\w/, c => c.toUpperCase());
+
+  const pctAvance = presupuestoTotal > 0 ? Math.round((ventasCerradasAnual / presupuestoTotal) * 100) : 0;
+  const pctCotizacion = presupuestoTotal > 0 ? Math.round((cotizacionAnual / presupuestoTotal) * 100) : 0;
+  const avanceColor = pctAvance >= 80 ? '#2E7D32' : pctAvance >= 50 ? '#F57C00' : '#DC2626';
+
   // Material tracking
   const materialData = kanbanProspectos
     .filter(p => p.propuesta?.carton || p.propuesta?.playo)
@@ -52,12 +89,13 @@ export function PresupuestoTab() {
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-sm font-semibold text-[#1c2c4a] flex items-center gap-2">
             <DollarSign size={16} className="text-[#00a8a8]" />
-            Presupuesto Mensual 2026 vs Real
+            Presupuesto Mensual 2026 · Cotización · Venta Real
           </h3>
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-3 text-[10px] text-[#6b7280]">
               <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded bg-[#1B5E20] inline-block" /> Presupuesto</span>
-              <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded bg-[#00a8a8] inline-block" /> Real</span>
+              <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded bg-[#0D47A1] inline-block" /> Cotización</span>
+              <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded bg-[#00a8a8] inline-block" /> Venta Real</span>
             </div>
             {canEditBudget && (
               <button
@@ -69,46 +107,112 @@ export function PresupuestoTab() {
             )}
           </div>
         </div>
-        <ResponsiveContainer width="100%" height={220}>
-          <BarChart data={presupuestoEvolution} barGap={2}>
+        <ResponsiveContainer width="100%" height={260}>
+          <BarChart data={presupuestoEvolution} barGap={2} margin={{ top: 20, right: 8, left: 0, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" vertical={false} />
             <XAxis dataKey="mes" tick={{ fontSize: 10, fill: '#6b7280' }} axisLine={false} tickLine={false} />
             <YAxis tick={{ fontSize: 9, fill: '#6b7280' }} axisLine={false} tickLine={false} tickFormatter={(v: number) => fmtM(v, 0)} />
             <Tooltip
               contentStyle={{ fontSize: 11, borderRadius: 8, border: '1px solid #e5e7eb' }}
-              formatter={(value: number) => [fmtM(value), '']}
+              formatter={(value: number, name: string) => [fmtM(value), name]}
               labelStyle={{ fontWeight: 600, color: '#1c2c4a' }}
             />
-            <Bar dataKey="presupuesto" name="Presupuesto" fill="#1B5E20" radius={[3, 3, 0, 0]} />
-            <Bar dataKey="real" name="Real" fill="#00a8a8" radius={[3, 3, 0, 0]} />
+            <Bar dataKey="presupuesto" name="Presupuesto" fill="#1B5E20" radius={[3, 3, 0, 0]}>
+              <LabelList dataKey="presupuesto" content={(p) => <BarValueLabel {...p} fill="#1B5E20" />} />
+            </Bar>
+            <Bar dataKey="cotizacion" name="Cotización" fill="#0D47A1" radius={[3, 3, 0, 0]}>
+              <LabelList dataKey="cotizacion" content={(p) => <BarValueLabel {...p} fill="#0D47A1" />} />
+            </Bar>
+            <Bar dataKey="real" name="Venta Real" fill="#00a8a8" radius={[3, 3, 0, 0]}>
+              <LabelList dataKey="real" content={(p) => <BarValueLabel {...p} fill="#00a8a8" />} />
+            </Bar>
           </BarChart>
         </ResponsiveContainer>
-        <div className="mt-3 pt-3 border-t border-[#e5e7eb] grid grid-cols-3 md:grid-cols-6 gap-3">
-          <div className="text-center">
-            <div className="text-[10px] text-[#6b7280]">Presupuesto Anual</div>
-            <div className="text-sm font-bold text-[#1c2c4a]">{fmtM(presupuestoTotal, 0)}</div>
-          </div>
-          <div className="text-center">
-            <div className="text-[10px] text-[#6b7280]">Venta Cerrada Anual</div>
-            <div className="text-sm font-bold text-[#00a8a8]">{fmtM(ventasCerradasAnual)}</div>
-          </div>
-          <div className="text-center">
-            <div className="text-[10px] text-[#6b7280]">% Avance</div>
-            <div className={`text-sm font-bold ${presupuestoTotal > 0 && (ventasCerradasAnual / presupuestoTotal) >= 0.5 ? 'text-[#2E7D32]' : 'text-[#F57C00]'}`}>
-              {presupuestoTotal > 0 ? Math.round(ventasCerradasAnual / presupuestoTotal * 100) : 0}%
+
+        {/* KPI cards — row 1: Anual */}
+        <div className="mt-4 pt-4 border-t border-[#e5e7eb]">
+          <div className="text-[10px] font-semibold text-[#9ca3af] uppercase tracking-wider mb-2">Anual</div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="rounded-lg border border-[#e5e7eb] px-3 py-2.5 bg-white">
+              <div className="flex items-center gap-1.5 mb-1">
+                <span className="w-2 h-2 rounded-full bg-[#1B5E20]" />
+                <div className="text-[10px] text-[#6b7280]">Presupuesto</div>
+              </div>
+              <div className="text-base font-bold text-[#1B5E20]">{fmtM(presupuestoTotal, 0)}</div>
+            </div>
+            <div className="rounded-lg border border-[#e5e7eb] px-3 py-2.5 bg-white">
+              <div className="flex items-center gap-1.5 mb-1">
+                <span className="w-2 h-2 rounded-full bg-[#0D47A1]" />
+                <div className="text-[10px] text-[#6b7280]">Cotización</div>
+              </div>
+              <div className="text-base font-bold text-[#0D47A1]">{fmtM(cotizacionAnual, 1)}</div>
+              <div className="text-[10px] text-[#9ca3af] mt-0.5">{pctCotizacion}% del presupuesto</div>
+            </div>
+            <div className="rounded-lg border border-[#e5e7eb] px-3 py-2.5 bg-white">
+              <div className="flex items-center gap-1.5 mb-1">
+                <span className="w-2 h-2 rounded-full bg-[#00a8a8]" />
+                <div className="text-[10px] text-[#6b7280]">Venta Cerrada</div>
+              </div>
+              <div className="text-base font-bold text-[#00a8a8]">{fmtM(ventasCerradasAnual, 1)}</div>
+            </div>
+            <div className="rounded-lg border border-[#e5e7eb] px-3 py-2.5 bg-white">
+              <div className="flex items-center gap-1.5 mb-1">
+                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: avanceColor }} />
+                <div className="text-[10px] text-[#6b7280]">% Avance</div>
+              </div>
+              <div className="text-base font-bold" style={{ color: avanceColor }}>{pctAvance}%</div>
+              <div className="text-[10px] text-[#9ca3af] mt-0.5">venta vs presupuesto</div>
             </div>
           </div>
-          <div className="text-center">
-            <div className="text-[10px] text-[#6b7280]">Presupuesto {new Date().toLocaleDateString('es-MX', { month: 'long' }).replace(/^\w/, c => c.toUpperCase())}</div>
-            <div className="text-sm font-bold text-[#1c2c4a]">{fmtM(presupuestoMesEquipo)}</div>
-          </div>
-          <div className="text-center">
-            <div className="text-[10px] text-[#6b7280]">Cartón</div>
-            <div className="text-sm font-bold text-[#F59E0B]">{totalCarton >= 1000 ? `${(totalCarton / 1000).toFixed(0)}k` : totalCarton.toLocaleString()} <span className="text-[10px] font-normal text-[#6b7280]">kg</span></div>
-          </div>
-          <div className="text-center">
-            <div className="text-[10px] text-[#6b7280]">Playo</div>
-            <div className="text-sm font-bold text-[#3B82F6]">{totalPlayo >= 1000 ? `${(totalPlayo / 1000).toFixed(0)}k` : totalPlayo.toLocaleString()} <span className="text-[10px] font-normal text-[#6b7280]">kg</span></div>
+
+          {/* KPI cards — row 2: Mes actual */}
+          <div className="text-[10px] font-semibold text-[#9ca3af] uppercase tracking-wider mb-2 mt-4">{mesActualLabel}</div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="rounded-lg border border-[#e5e7eb] px-3 py-2.5 bg-white">
+              <div className="flex items-center gap-1.5 mb-1">
+                <span className="w-2 h-2 rounded-full bg-[#1B5E20]" />
+                <div className="text-[10px] text-[#6b7280]">Presupuesto</div>
+              </div>
+              <div className="text-base font-bold text-[#1B5E20]">{fmtM(presupuestoMesEquipo, 1)}</div>
+            </div>
+            <div className="rounded-lg border border-[#e5e7eb] px-3 py-2.5 bg-white">
+              <div className="flex items-center gap-1.5 mb-1">
+                <span className="w-2 h-2 rounded-full bg-[#0D47A1]" />
+                <div className="text-[10px] text-[#6b7280]">Cotización</div>
+              </div>
+              <div className="text-base font-bold text-[#0D47A1]">{fmtM(cotizacionMesActual, 1)}</div>
+            </div>
+            <div className="rounded-lg border border-[#e5e7eb] px-3 py-2.5 bg-white">
+              <div className="flex items-center gap-1.5 mb-1">
+                <span className="w-2 h-2 rounded-full bg-[#00a8a8]" />
+                <div className="text-[10px] text-[#6b7280]">Venta Cerrada</div>
+              </div>
+              <div className="text-base font-bold text-[#00a8a8]">{fmtM(ventaMesActual, 1)}</div>
+            </div>
+            <div className="rounded-lg border border-[#e5e7eb] px-3 py-2.5 bg-white">
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <div className="flex items-center gap-1 mb-0.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#F59E0B]" />
+                    <div className="text-[9px] text-[#6b7280]">Cartón</div>
+                  </div>
+                  <div className="text-xs font-bold text-[#F59E0B]">
+                    {totalCarton >= 1000 ? `${(totalCarton / 1000).toFixed(0)}k` : totalCarton.toLocaleString()}
+                    <span className="text-[9px] font-normal text-[#6b7280] ml-0.5">kg</span>
+                  </div>
+                </div>
+                <div>
+                  <div className="flex items-center gap-1 mb-0.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#3B82F6]" />
+                    <div className="text-[9px] text-[#6b7280]">Playo</div>
+                  </div>
+                  <div className="text-xs font-bold text-[#3B82F6]">
+                    {totalPlayo >= 1000 ? `${(totalPlayo / 1000).toFixed(0)}k` : totalPlayo.toLocaleString()}
+                    <span className="text-[9px] font-normal text-[#6b7280] ml-0.5">kg</span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
