@@ -3,6 +3,7 @@ import { ChevronRight, type LucideIcon } from 'lucide-react';
 import type { Prospect } from '@shared/schema/comercial';
 import type { User } from '@shared/schema/common';
 import { STAGE } from '@shared/schema/comercial-stages';
+import { businessDaysBetween } from '@shared/utils/business-days';
 import type { KanbanProspecto, SeguimientoData, SeguimientoUrgency, CampoCompleto, StageGate } from '@shared/types/comercial';
 export type { GateMissingField } from '@shared/types/comercial';
 
@@ -11,7 +12,7 @@ export type { GateMissingField } from '@shared/types/comercial';
  * - Timestamps arrive as ISO strings (not Date objects)
  * - Includes joined rejection reason fields
  */
-export type ApiProspect = Omit<Prospect, 'createdAt' | 'updatedAt' | 'rejectionDate' | 'proposalDate' | 'lastContactAt' | 'nextFollowUpAt' | 'fechaVencimientoContrato' | 'sentToOpsAt'> & {
+export type ApiProspect = Omit<Prospect, 'createdAt' | 'updatedAt' | 'rejectionDate' | 'proposalDate' | 'lastContactAt' | 'nextFollowUpAt' | 'fechaVencimientoContrato' | 'sentToOpsAt' | 'proposalDeadline'> & {
   createdAt: string | null;
   updatedAt: string | null;
   rejectionDate?: string | null;
@@ -20,6 +21,7 @@ export type ApiProspect = Omit<Prospect, 'createdAt' | 'updatedAt' | 'rejectionD
   nextFollowUpAt?: string | null;
   fechaVencimientoContrato?: string | null;
   sentToOpsAt?: string | null;
+  proposalDeadline?: string | null;
   rejectionReasonText?: string | null;
   rejectionReasonCategory?: string | null;
 };
@@ -362,9 +364,40 @@ export const dbProspectToKanban = (prospect: ApiProspect, usersMap: Record<numbe
     estimatedCloseTime: prospect.estimatedCloseTime || null,
     meetingDate: prospect.meetingDate || null,
     surveyDate: prospect.surveyDate || null,
+    proposalDeadline: prospect.proposalDeadline || null,
+    proposalDate: prospect.proposalDate || null,
     updatedAt: prospect.updatedAt || null,
   };
 };
+
+/**
+ * Build a chip descriptor for the propuesta SLA deadline. Returns null when
+ * the deadline isn't applicable — either no deadline recorded or a propuesta
+ * was already uploaded (so the SLA clock is stopped).
+ */
+export function proposalDeadlineChip(p: KanbanProspecto): {
+  label: string;
+  color: string;
+  bg: string;
+  overdue: boolean;
+} | null {
+  if (!p.proposalDeadline) return null;
+  // Propuesta already uploaded → SLA stopped, don't show chip.
+  if (p.proposalDate) return null;
+  const deadline = new Date(p.proposalDeadline);
+  if (Number.isNaN(deadline.getTime())) return null;
+  const now = new Date();
+  const diffBusiness = businessDaysBetween(now, deadline);
+  const overdue = deadline.getTime() < now.getTime();
+  if (overdue) {
+    const daysLate = Math.max(1, Math.abs(diffBusiness));
+    return { label: `Vencido ${daysLate}d`, color: '#DC2626', bg: '#FEF2F2', overdue: true };
+  }
+  if (diffBusiness <= 1) {
+    return { label: `Vence hoy`, color: '#F57C00', bg: '#FFF7ED', overdue: false };
+  }
+  return { label: `Vence en ${diffBusiness}d hábiles`, color: '#00a8a8', bg: '#ECFEFE', overdue: false };
+}
 
 export const calcularPipelineData = (prospectos: KanbanProspecto[]) => {
   const stages = ['contacto_inicial', 'presentacion', 'levantamiento', 'propuesta', 'negociacion', 'cierre_ganado'];
