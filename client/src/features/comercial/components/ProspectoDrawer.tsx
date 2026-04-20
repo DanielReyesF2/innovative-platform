@@ -16,6 +16,7 @@ import { ProspectProposals } from './ProspectProposals';
 import { ProspectLevantamiento } from './ProspectLevantamiento';
 import { ModalMotivoRechazo } from './ModalMotivoRechazo';
 import { StageGateModal } from './StageGateModal';
+import { AgendarReunionModal } from './AgendarReunionModal';
 import { InlineText, InlineNumber, InlineSelect, InlineMonth, InlineDate, InlineChips } from './InlineEdit';
 import { fmtCurrency } from '@/lib/utils';
 import { useToast } from '@/components/ui/use-toast';
@@ -932,8 +933,17 @@ export function ProspectoDrawer({ prospecto, onClose }: Props) {
           />
         )}
 
-        {/* Stage Gate Modal */}
-        {pendingStageGate && (
+        {/* Stage Gate Modal — para la transición a Reunión usamos el
+            AgendarReunionModal completo (fecha + hora + tipo + asistentes +
+            objetivo). Para el resto seguimos con el gate genérico. */}
+        {pendingStageGate && pendingStageGate.toStage === 'levantamiento' && (
+          <AgendarReunionModal
+            prospecto={pendingStageGate.prospecto}
+            onClose={() => setPendingStageGate(null)}
+            onAdvanced={() => setPendingStageGate(null)}
+          />
+        )}
+        {pendingStageGate && pendingStageGate.toStage !== 'levantamiento' && (
           <StageGateModal
             pendingMove={pendingStageGate}
             onForce={() => {
