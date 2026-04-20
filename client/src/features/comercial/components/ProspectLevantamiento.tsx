@@ -260,6 +260,10 @@ export function ProspectLevantamiento({ prospectId }: ProspectLevantamientoProps
   const [schedAccessReqsOther, setSchedAccessReqsOther] = useState("");
   const [schedVehiclePlates, setSchedVehiclePlates] = useState("");
 
+  // Fecha de entrega del levantamiento por parte de Operaciones — campo que
+  // Comercial captura cuando Ops le confirma cuándo entregará el documento.
+  const [schedDeliveryDate, setSchedDeliveryDate] = useState("");
+
   const [wasteTypes, setWasteTypes] = useState<Record<string, unknown>[]>([]);
   const [initialized, setInitialized] = useState(false);
 
@@ -281,6 +285,7 @@ export function ProspectLevantamiento({ prospectId }: ProspectLevantamientoProps
       setSchedAccessReqs((sched.accessRequirements as string[]) || []);
       setSchedAccessReqsOther((sched.accessRequirementsOther as string) || "");
       setSchedVehiclePlates((sched.vehiclePlates as string) || "");
+      setSchedDeliveryDate((sched.deliveryDate as string) || "");
 
       // Participants: new structure first, legacy fallback so old data
       // shows up as comercial until the user re-assigns.
@@ -337,6 +342,7 @@ export function ProspectLevantamiento({ prospectId }: ProspectLevantamientoProps
       accessRequirements: schedAccessReqs,
       accessRequirementsOther: schedAccessReqsOther.trim() || null,
       vehiclePlates: schedVehiclePlates.trim() || null,
+      deliveryDate: schedDeliveryDate || null,
       notes: schedNotes.trim() || null,
     },
   });
@@ -431,6 +437,34 @@ export function ProspectLevantamiento({ prospectId }: ProspectLevantamientoProps
             <div>
               <Label className="text-xs">Hora Propuesta *</Label>
               <Input type="time" value={schedTime} onChange={(e) => setSchedTime(e.target.value)} className="mt-1" />
+            </div>
+          </div>
+
+          {/* 1b. Ejecutivo responsable + fecha de entrega por operaciones */}
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div>
+              <Label className="text-xs">Ejecutivo responsable</Label>
+              <div className="mt-1 h-10 flex items-center rounded-md border border-input bg-[#f9fafb] px-3 text-sm text-[#1c2c4a]">
+                {(() => {
+                  const owner = teamMembers.find((m) => m.id === prospect?.assignedToId);
+                  return owner ? owner.name : <span className="text-[#9ca3af]">Sin asignar</span>;
+                })()}
+              </div>
+              <p className="text-[10px] text-muted-foreground mt-0.5">
+                Toma el ejecutivo asignado al prospecto. Se edita desde el Kanban.
+              </p>
+            </div>
+            <div>
+              <Label className="text-xs">Fecha entrega de Operaciones</Label>
+              <Input
+                type="date"
+                value={schedDeliveryDate}
+                onChange={(e) => setSchedDeliveryDate(e.target.value)}
+                className="mt-1"
+              />
+              <p className="text-[10px] text-muted-foreground mt-0.5">
+                Cuando Operaciones entregará el documento de levantamiento.
+              </p>
             </div>
           </div>
 
