@@ -58,30 +58,6 @@ export function PresupuestoTab() {
   const MESES_NOMBRE = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
   const mesNombre = MESES_NOMBRE[ventaRealMes - 1];
 
-  const presupuestoTotal = salesTeamData.reduce((s, m) => s + (m.presupuestoAnual2026 || 0), 0);
-  const ventasCerradasAnual = salesTeamData.reduce((s, m) => s + (m.ventasRealesAnual || 0), 0);
-  const presupuestoMesEquipo = salesTeamData.reduce((s, m) => s + (m.presupuestoMensual || 0), 0);
-
-  // Cotización totals — derived from the same presupuestoEvolution array the
-  // chart reads, keeping cards and bars perfectly in sync.
-  const cotizacionAnual = presupuestoEvolution.reduce((s, r) => s + (r.cotizacion || 0), 0);
-  const currentMonthIdx = new Date().getMonth();
-  const currentMonthRow = presupuestoEvolution[currentMonthIdx] ?? { cotizacion: 0, real: 0, presupuesto: 0 };
-  const cotizacionMesActual = currentMonthRow.cotizacion;
-  const ventaMesActual = currentMonthRow.real;
-  const mesActualLabel = new Date().toLocaleDateString('es-MX', { month: 'long' }).replace(/^\w/, c => c.toUpperCase());
-
-  const pctAvance = presupuestoTotal > 0 ? Math.round((ventasCerradasAnual / presupuestoTotal) * 100) : 0;
-  const pctCotizacion = presupuestoTotal > 0 ? Math.round((cotizacionAnual / presupuestoTotal) * 100) : 0;
-  const avanceColor = pctAvance >= 80 ? '#2E7D32' : pctAvance >= 50 ? '#F57C00' : '#DC2626';
-
-  // Material tracking
-  const materialData = kanbanProspectos
-    .filter(p => p.propuesta?.carton || p.propuesta?.playo)
-    .map(p => ({ carton: p.propuesta?.carton || 0, playo: p.propuesta?.playo || 0 }));
-  const totalCarton = materialData.reduce((s, m) => s + m.carton, 0);
-  const totalPlayo = materialData.reduce((s, m) => s + m.playo, 0);
-
   return (
     <>
       {/* Presupuesto Chart */}
@@ -128,93 +104,6 @@ export function PresupuestoTab() {
             </Bar>
           </BarChart>
         </ResponsiveContainer>
-
-        {/* KPI cards — row 1: Anual */}
-        <div className="mt-4 pt-4 border-t border-[#e5e7eb]">
-          <div className="text-[10px] font-semibold text-[#9ca3af] uppercase tracking-wider mb-2">Anual</div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <div className="rounded-lg border border-[#e5e7eb] px-3 py-2.5 bg-white">
-              <div className="flex items-center gap-1.5 mb-1">
-                <span className="w-2 h-2 rounded-full bg-[#1B5E20]" />
-                <div className="text-[10px] text-[#6b7280]">Presupuesto</div>
-              </div>
-              <div className="text-base font-bold text-[#1B5E20]">{fmtM(presupuestoTotal, 0)}</div>
-            </div>
-            <div className="rounded-lg border border-[#e5e7eb] px-3 py-2.5 bg-white">
-              <div className="flex items-center gap-1.5 mb-1">
-                <span className="w-2 h-2 rounded-full bg-[#0D47A1]" />
-                <div className="text-[10px] text-[#6b7280]">Cotización</div>
-              </div>
-              <div className="text-base font-bold text-[#0D47A1]">{fmtM(cotizacionAnual, 1)}</div>
-              <div className="text-[10px] text-[#9ca3af] mt-0.5">{pctCotizacion}% del presupuesto</div>
-            </div>
-            <div className="rounded-lg border border-[#e5e7eb] px-3 py-2.5 bg-white">
-              <div className="flex items-center gap-1.5 mb-1">
-                <span className="w-2 h-2 rounded-full bg-[#00a8a8]" />
-                <div className="text-[10px] text-[#6b7280]">Venta Cerrada</div>
-              </div>
-              <div className="text-base font-bold text-[#00a8a8]">{fmtM(ventasCerradasAnual, 1)}</div>
-            </div>
-            <div className="rounded-lg border border-[#e5e7eb] px-3 py-2.5 bg-white">
-              <div className="flex items-center gap-1.5 mb-1">
-                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: avanceColor }} />
-                <div className="text-[10px] text-[#6b7280]">% Avance anual</div>
-              </div>
-              <div className="text-base font-bold" style={{ color: avanceColor }}>{pctAvance}%</div>
-              <div className="text-[10px] text-[#9ca3af] mt-0.5">venta cerrada / presupuesto</div>
-            </div>
-          </div>
-
-          {/* KPI cards — row 2: Mes actual */}
-          <div className="text-[10px] font-semibold text-[#9ca3af] uppercase tracking-wider mb-2 mt-4">{mesActualLabel}</div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <div className="rounded-lg border border-[#e5e7eb] px-3 py-2.5 bg-white">
-              <div className="flex items-center gap-1.5 mb-1">
-                <span className="w-2 h-2 rounded-full bg-[#1B5E20]" />
-                <div className="text-[10px] text-[#6b7280]">Presupuesto</div>
-              </div>
-              <div className="text-base font-bold text-[#1B5E20]">{fmtM(presupuestoMesEquipo, 1)}</div>
-            </div>
-            <div className="rounded-lg border border-[#e5e7eb] px-3 py-2.5 bg-white">
-              <div className="flex items-center gap-1.5 mb-1">
-                <span className="w-2 h-2 rounded-full bg-[#0D47A1]" />
-                <div className="text-[10px] text-[#6b7280]">Cotización</div>
-              </div>
-              <div className="text-base font-bold text-[#0D47A1]">{fmtM(cotizacionMesActual, 1)}</div>
-            </div>
-            <div className="rounded-lg border border-[#e5e7eb] px-3 py-2.5 bg-white">
-              <div className="flex items-center gap-1.5 mb-1">
-                <span className="w-2 h-2 rounded-full bg-[#00a8a8]" />
-                <div className="text-[10px] text-[#6b7280]">Venta Cerrada</div>
-              </div>
-              <div className="text-base font-bold text-[#00a8a8]">{fmtM(ventaMesActual, 1)}</div>
-            </div>
-            <div className="rounded-lg border border-[#e5e7eb] px-3 py-2.5 bg-white">
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <div className="flex items-center gap-1 mb-0.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#F59E0B]" />
-                    <div className="text-[9px] text-[#6b7280]">Cartón</div>
-                  </div>
-                  <div className="text-xs font-bold text-[#F59E0B]">
-                    {totalCarton >= 1000 ? `${(totalCarton / 1000).toFixed(0)}k` : totalCarton.toLocaleString()}
-                    <span className="text-[9px] font-normal text-[#6b7280] ml-0.5">kg</span>
-                  </div>
-                </div>
-                <div>
-                  <div className="flex items-center gap-1 mb-0.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#3B82F6]" />
-                    <div className="text-[9px] text-[#6b7280]">Playo</div>
-                  </div>
-                  <div className="text-xs font-bold text-[#3B82F6]">
-                    {totalPlayo >= 1000 ? `${(totalPlayo / 1000).toFixed(0)}k` : totalPlayo.toLocaleString()}
-                    <span className="text-[9px] font-normal text-[#6b7280] ml-0.5">kg</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* Combined: Presupuesto y Cuentas */}
