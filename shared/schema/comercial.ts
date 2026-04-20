@@ -106,6 +106,9 @@ export const prospects = pgTable("prospects", {
   contactRole: text("contact_role"),
   contactPhone: text("contact_phone"),
   contactEmail: text("contact_email"),
+  // Frecuencia con la que el cliente requeriría el servicio (opcional, se
+  // captura al calificar Lead → Prospecto).
+  serviceFrequency: text("service_frequency"),
   source: leadSourceEnum("source").default("otro"),
   lastActivity: text("last_activity"),
   priority: priorityEnum("priority").default("media"),
@@ -313,17 +316,16 @@ export const insertProspectSchema = createInsertSchema(prospects, {
   serviceVolumes: z.record(z.string().max(50), z.string().max(100)).optional(),
 }).omit({ id: true, createdAt: true, updatedAt: true });
 
+// Per Vero's flow (Prospecto stage): only contact data is required at this
+// step. Industria is captured in Lead; potencial / valor cotización /
+// residuos / volumen aparecen en etapas posteriores. serviceFrequency es
+// opcional.
 export const qualifyProspectSchema = z.object({
-  industry: z.string().min(1).max(100),
-  potential: z.string().min(1).max(20),
-  estimatedValue: z.union([z.string(), z.number()]).optional(),
-  estimatedVolume: z.string().max(100).optional(),
-  probability: z.number().min(0).max(100),
-  priority: z.enum(["muy_alta", "alta", "media", "baja"]),
-  contactRole: z.string().max(200).optional(),
-  contactEmail: z.string().email().max(200).optional(),
-  reason: z.string().max(500).optional(),
-  nextStep: z.string().max(500).optional(),
+  contactRole: z.string().min(1, "Cargo requerido").max(200),
+  contactPhone: z.string().min(1, "Teléfono requerido").max(50),
+  contactEmail: z.string().email("Correo inválido").max(200),
+  location: z.string().min(1, "Ubicación requerida").max(200),
+  serviceFrequency: z.string().max(100).optional(),
 });
 
 export const insertLeadSchema = createInsertSchema(leads, {
