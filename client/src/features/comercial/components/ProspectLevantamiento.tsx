@@ -164,6 +164,13 @@ function WasteTypesSection({ data, onChange }: { data: Record<string, unknown>[]
   );
 }
 
+// Team member shape consumed by the scheduling form. Adds areaSlug coming from
+// the joined areas table so we can split participants by business area.
+type TeamMemberRow = Pick<User, "id" | "name" | "codigo" | "email"> & {
+  areaSlug: string | null;
+  areaName: string | null;
+};
+
 // ─── Area participant selector (shared by comercial / operaciones / subproductos) ───
 function AreaParticipants({
   label,
@@ -171,37 +178,43 @@ function AreaParticipants({
   selectedIds,
   teamMembers,
   onToggle,
+  emptyLabel,
 }: {
   label: string;
   color: string;
   selectedIds: number[];
-  teamMembers: Pick<User, "id" | "name" | "codigo" | "email">[];
+  teamMembers: TeamMemberRow[];
   onToggle: (id: number) => void;
+  emptyLabel: string;
 }) {
   return (
     <div>
       <Label className="text-xs font-semibold" style={{ color }}>{label}</Label>
-      <div className="mt-1 flex flex-wrap gap-1.5">
-        {teamMembers.map((m) => {
-          const active = selectedIds.includes(m.id);
-          return (
-            <button
-              key={m.id}
-              type="button"
-              onClick={() => onToggle(m.id)}
-              className="rounded-full px-2.5 py-1 text-xs font-medium transition-colors flex items-center gap-1.5"
-              style={active
-                ? { backgroundColor: color, color: "white" }
-                : { backgroundColor: "#f3f4f6", color: "#6b7280" }}
-            >
-              <span className="w-4 h-4 rounded-full bg-white/25 flex items-center justify-center text-[9px] font-bold">
-                {m.codigo || m.name.split(" ").map(n => n[0]).join("").substring(0, 2)}
-              </span>
-              {m.name.split(" ").slice(0, 2).join(" ")}
-            </button>
-          );
-        })}
-      </div>
+      {teamMembers.length === 0 ? (
+        <p className="mt-1 text-[11px] italic text-[#9ca3af]">{emptyLabel}</p>
+      ) : (
+        <div className="mt-1 flex flex-wrap gap-1.5">
+          {teamMembers.map((m) => {
+            const active = selectedIds.includes(m.id);
+            return (
+              <button
+                key={m.id}
+                type="button"
+                onClick={() => onToggle(m.id)}
+                className="rounded-full px-2.5 py-1 text-xs font-medium transition-colors flex items-center gap-1.5"
+                style={active
+                  ? { backgroundColor: color, color: "white" }
+                  : { backgroundColor: "#f3f4f6", color: "#6b7280" }}
+              >
+                <span className="w-4 h-4 rounded-full bg-white/25 flex items-center justify-center text-[9px] font-bold">
+                  {m.codigo || m.name.split(" ").map(n => n[0]).join("").substring(0, 2)}
+                </span>
+                {m.name.split(" ").slice(0, 2).join(" ")}
+              </button>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
@@ -218,8 +231,8 @@ export function ProspectLevantamiento({ prospectId }: ProspectLevantamientoProps
   const sendToOps = useSendToOperaciones();
   const { toast } = useToast();
 
-  // Team members for participants dropdowns
-  const { data: teamMembers = [] } = useQuery<Pick<User, "id" | "name" | "codigo" | "email">[]>({
+  // Team members for participants dropdowns (include area slug from joined areas table)
+  const { data: teamMembers = [] } = useQuery<TeamMemberRow[]>({
     queryKey: ["/api/auth/team"],
     staleTime: 5 * 60 * 1000,
   });
@@ -294,7 +307,7 @@ export function ProspectLevantamiento({ prospectId }: ProspectLevantamientoProps
   const allParticipants = Array.from(new Set([...partComercial, ...partOperaciones, ...partSubproductos]));
   const participantsInfo = allParticipants
     .map((id) => teamMembers.find((m) => m.id === id))
-    .filter((m): m is Pick<User, "id" | "name" | "codigo" | "email"> => Boolean(m));
+    .filter((m): m is TeamMemberRow => Boolean(m));
 
   // Preserve any existing levantamientoData (generalInfo, wasteTypes, etc.) and update scheduling.
   // Keeps flat responsibleIds alongside participantsByArea for backward compat with
@@ -463,22 +476,27 @@ export function ProspectLevantamiento({ prospectId }: ProspectLevantamientoProps
                 label="Comercial"
                 color="#00a8a8"
                 selectedIds={partComercial}
-                teamMembers={teamMembers}
+                // Users con area 'comercial' + los que aún no tienen área asignada
+                // (legacy) caen aquí por default para no perderlos de la lista.
+                teamMembers={teamMembers.filter((m) => !m.areaSlug || m.areaSlug === "comercial")}
                 onToggle={toggleId(setPartComercial)}
+                emptyLabel="Sin usuarios en Comercial — asígnalos desde Settings"
               />
               <AreaParticipants
                 label="Operaciones"
                 color="#0D47A1"
                 selectedIds={partOperaciones}
-                teamMembers={teamMembers}
+                teamMembers={teamMembers.filter((m) => m.areaSlug === "operaciones")}
                 onToggle={toggleId(setPartOperaciones)}
+                emptyLabel="Sin usuarios en Operaciones — asígnalos desde Settings"
               />
               <AreaParticipants
                 label="Subproductos"
                 color="#F57C00"
                 selectedIds={partSubproductos}
-                teamMembers={teamMembers}
+                teamMembers={teamMembers.filter((m) => m.areaSlug === "subproductos")}
                 onToggle={toggleId(setPartSubproductos)}
+                emptyLabel="Sin usuarios en Subproductos — asígnalos desde Settings"
               />
             </div>
             {allParticipants.length > 0 && (

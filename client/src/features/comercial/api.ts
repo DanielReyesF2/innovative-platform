@@ -350,6 +350,41 @@ export function useCancelMeeting() {
   });
 }
 
+interface UpdateMeetingPayload {
+  prospectId: number;
+  meetingId: number;
+  title?: string;
+  description?: string | null;
+  scheduledAt?: string;
+  duration?: number;
+  location?: string | null;
+  meetingUrl?: string | null;
+}
+
+export function useUpdateMeeting() {
+  return useMutation({
+    mutationFn: async ({ prospectId, meetingId, ...data }: UpdateMeetingPayload) => {
+      const res = await apiRequest("PATCH", `/api/comercial/prospects/${prospectId}/meetings/${meetingId}`, data);
+      return res.json();
+    },
+    onSuccess: () => {
+      invalidateByPrefix("/api/comercial/prospects");
+    },
+  });
+}
+
+export function useDeleteMeeting() {
+  return useMutation({
+    mutationFn: async ({ prospectId, meetingId }: { prospectId: number; meetingId: number }) => {
+      const res = await apiRequest("DELETE", `/api/comercial/prospects/${prospectId}/meetings/${meetingId}`);
+      return res.json();
+    },
+    onSuccess: () => {
+      invalidateByPrefix("/api/comercial/prospects");
+    },
+  });
+}
+
 // --- Documents ---
 
 export function useProspectDocuments(prospectId: number) {
