@@ -501,7 +501,11 @@ export function tabUnlockLabel(tabId: string): string {
 // ═══════ STAGE GATES ═══════
 
 export const STAGE_GATES: Record<string, StageGate> = {
-  // No gate for presentacion (Lead→Prospecto): movimiento libre
+  // Lead (contacto_inicial) → Prospecto (presentacion): se califica desde el
+  // QualifyLeadDialog, no por este gate.
+
+  // Prospecto (presentacion) → Reunión (DB levantamiento): requiere que haya
+  // fecha de reunión agendada.
   levantamiento: {
     label: 'Fecha de Reunión',
     validate: (p) => !!p.meetingDate,
@@ -511,16 +515,26 @@ export const STAGE_GATES: Record<string, StageGate> = {
       ...(!p.meetingDate ? [{ key: 'meetingDate', label: 'Fecha de reunión', type: 'date' as const, placeholder: '' }] : []),
     ],
   },
+  // Reunión (DB levantamiento) → Agendar Levantamiento (DB propuesta):
+  // per Vero, el prospecto debe tener próximo paso definido (campo obligatorio
+  // de Reunión) además de la fecha de levantamiento agendada.
   propuesta: {
-    label: 'Levantamiento Agendado',
-    validate: (p) => !!p.surveyDate,
-    message: () => 'Falta agendar fecha de levantamiento',
-    requirement: 'Requiere: Fecha de levantamiento agendada',
+    label: 'Agendamiento + Próximo paso',
+    validate: (p) => !!p.surveyDate && !!(p.nextStep && p.nextStep.trim()),
+    message: (p) => {
+      const missing = [];
+      if (!p.surveyDate) missing.push('fecha de levantamiento');
+      if (!p.nextStep || !p.nextStep.trim()) missing.push('próximo paso');
+      return `Falta: ${missing.join(' y ')}`;
+    },
+    requirement: 'Requiere: Fecha de levantamiento agendada + Próximo paso definido',
     missingFields: (p) => [
       ...(!p.surveyDate ? [{ key: 'surveyDate', label: 'Fecha de levantamiento', type: 'date' as const, placeholder: '' }] : []),
+      ...((!p.nextStep || !p.nextStep.trim()) ? [{ key: 'nextStep', label: 'Próximo paso', type: 'text' as const, placeholder: 'Ej: confirmar volumen con gerente' }] : []),
     ],
   },
-  // No gate for negociacion: movimiento libre, el valor se toma de la propuesta subida
+  // No gate for negociacion: auto-advance cuando se completa el agendamiento
+  // (ver server/storage.ts isSchedulingComplete + updateProspect hook).
 };
 
 // ═══════ SHARED COMPONENTS ═══════

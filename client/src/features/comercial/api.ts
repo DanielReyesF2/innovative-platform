@@ -359,6 +359,10 @@ interface UpdateMeetingPayload {
   duration?: number;
   location?: string | null;
   meetingUrl?: string | null;
+  // Fase 2 bloque 1 — campos de Reunión del spec de Vero.
+  meetingType?: "virtual" | "presencial" | null;
+  objective?: string | null;
+  attendees?: unknown;
 }
 
 export function useUpdateMeeting() {
