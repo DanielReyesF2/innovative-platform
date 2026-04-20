@@ -17,6 +17,7 @@ import { ProspectLevantamiento } from './ProspectLevantamiento';
 import { ModalMotivoRechazo } from './ModalMotivoRechazo';
 import { StageGateModal } from './StageGateModal';
 import { AgendarReunionModal } from './AgendarReunionModal';
+import { AgendarLevantamientoModal } from './AgendarLevantamientoModal';
 import { InlineText, InlineNumber, InlineSelect, InlineMonth, InlineDate, InlineChips } from './InlineEdit';
 import { fmtCurrency } from '@/lib/utils';
 import { useToast } from '@/components/ui/use-toast';
@@ -933,9 +934,13 @@ export function ProspectoDrawer({ prospecto, onClose }: Props) {
           />
         )}
 
-        {/* Stage Gate Modal — para la transición a Reunión usamos el
-            AgendarReunionModal completo (fecha + hora + tipo + asistentes +
-            objetivo). Para el resto seguimos con el gate genérico. */}
+        {/* Stage Gate Modal — para transiciones con formulario completo
+            usamos modales dedicados. Para el resto seguimos con el gate
+            genérico (inline missingFields).
+              - Prospecto → Reunión (DB levantamiento): AgendarReunionModal
+              - Reunión → Agendar Levantamiento (DB propuesta): AgendarLevantamientoModal
+                con soporte para guardar borrador cuando aún no se tiene toda
+                la info (fecha, hora, dirección, EPP, placas, residuos, etc.). */}
         {pendingStageGate && pendingStageGate.toStage === 'levantamiento' && (
           <AgendarReunionModal
             prospecto={pendingStageGate.prospecto}
@@ -943,7 +948,16 @@ export function ProspectoDrawer({ prospecto, onClose }: Props) {
             onAdvanced={() => setPendingStageGate(null)}
           />
         )}
-        {pendingStageGate && pendingStageGate.toStage !== 'levantamiento' && (
+        {pendingStageGate && pendingStageGate.toStage === 'propuesta' && (
+          <AgendarLevantamientoModal
+            prospecto={pendingStageGate.prospecto}
+            onClose={() => setPendingStageGate(null)}
+            onAdvanced={() => setPendingStageGate(null)}
+          />
+        )}
+        {pendingStageGate
+          && pendingStageGate.toStage !== 'levantamiento'
+          && pendingStageGate.toStage !== 'propuesta' && (
           <StageGateModal
             pendingMove={pendingStageGate}
             onForce={() => {
