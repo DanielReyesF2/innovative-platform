@@ -54,6 +54,12 @@ export const meetingStatusEnum = pgEnum("meeting_status", [
   "reprogramada",
 ]);
 
+// Modalidad de una reunión — requerido por el spec de Vero en etapa Reunión.
+export const meetingTypeEnum = pgEnum("meeting_type", [
+  "virtual",
+  "presencial",
+]);
+
 export const proposalStatusEnum = pgEnum("proposal_status", [
   "borrador",
   "enviada",
@@ -233,6 +239,13 @@ export const prospectMeetings = pgTable("prospect_meetings", {
   location: text("location"),
   meetingUrl: text("meeting_url"),
   status: meetingStatusEnum("status").default("programada"),
+  // Modalidad de la reunión — requerido en etapa Reunión por el flujo de Vero.
+  meetingType: meetingTypeEnum("meeting_type"),
+  // Objetivo de la reunión — dimensionar oportunidad, validar levantamiento, etc.
+  objective: text("objective"),
+  // attendees: JSONB con forma [{ side: 'prospect'|'innovative', name, role }]
+  // para que la UI pueda separar asistentes del cliente vs de Innovative con su
+  // cargo. Se sigue aceptando formato legacy (array de strings).
   attendees: jsonb("attendees"),
   outcome: text("outcome"),
   completedAt: timestamp("completed_at"),

@@ -721,10 +721,11 @@ export async function cancelMeeting(id: number) {
 }
 
 // Generic partial update for a meeting row — used by the inline-edit UI so
-// title/fecha/duración/ubicación/link pueden modificarse sin abrir modal.
+// cualquier campo editable puede modificarse sin abrir modal. Cubre el spec
+// de Vero para la etapa Reunión (tipo, objetivo, asistentes, etc.).
 export async function updateMeeting(
   id: number,
-  data: Partial<Pick<InsertMeeting, "title" | "description" | "scheduledAt" | "duration" | "location" | "meetingUrl">>,
+  data: Partial<Pick<InsertMeeting, "title" | "description" | "scheduledAt" | "duration" | "location" | "meetingUrl" | "meetingType" | "objective" | "attendees">>,
 ) {
   const [updated] = await db
     .update(prospectMeetings)

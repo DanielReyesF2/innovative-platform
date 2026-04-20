@@ -53,6 +53,136 @@ const DURATION_OPTIONS = [
   { value: "120", label: "2 horas" },
 ];
 
+const MEETING_TYPE_OPTIONS = [
+  { value: "virtual", label: "Virtual" },
+  { value: "presencial", label: "Presencial" },
+];
+
+// Asistentes estructurados por el spec de Vero: prospecto + Innovative, cada
+// uno con nombre y cargo. Se serializa como JSONB sobre el campo `attendees`.
+interface AttendeeEntry {
+  side: "prospect" | "innovative";
+  name: string;
+  role: string;
+}
+
+// Los datos existentes pueden llegar como:
+//   - AttendeeEntry[] (nuevo formato)
+//   - string[] (legacy: nombres libres sin cargo ni lado)
+//   - null / undefined
+// Esta función normaliza a AttendeeEntry[] tratando los legacy como lado
+// 'innovative' (el que más probablemente usó el ejecutivo).
+function normalizeAttendees(raw: unknown): AttendeeEntry[] {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map((item) => {
+      if (typeof item === "string") {
+        return { side: "innovative" as const, name: item, role: "" };
+      }
+      if (item && typeof item === "object" && "name" in item) {
+        const obj = item as Record<string, unknown>;
+        const side = obj.side === "prospect" ? "prospect" : "innovative";
+        return {
+          side: side as "prospect" | "innovative",
+          name: String(obj.name ?? ""),
+          role: String(obj.role ?? ""),
+        };
+      }
+      return null;
+    })
+    .filter((x): x is AttendeeEntry => x !== null);
+}
+
+function AttendeesEditor({
+  attendees,
+  onSave,
+}: {
+  attendees: unknown;
+  onSave: (next: AttendeeEntry[]) => Promise<void>;
+}) {
+  const list = normalizeAttendees(attendees);
+
+  const commit = async (next: AttendeeEntry[]) => {
+    try {
+      await onSave(next);
+    } catch {
+      // El toast ya lo maneja saveField
+    }
+  };
+
+  const addEntry = (side: "prospect" | "innovative") => {
+    commit([...list, { side, name: "", role: "" }]);
+  };
+
+  const updateEntry = (index: number, patch: Partial<AttendeeEntry>) => {
+    const next = list.map((e, i) => (i === index ? { ...e, ...patch } : e));
+    commit(next);
+  };
+
+  const removeEntry = (index: number) => {
+    commit(list.filter((_, i) => i !== index));
+  };
+
+  const renderSide = (side: "prospect" | "innovative", label: string, color: string) => {
+    const entries = list
+      .map((e, i) => ({ entry: e, index: i }))
+      .filter(({ entry }) => entry.side === side);
+
+    return (
+      <div>
+        <div className="flex items-center justify-between mb-1">
+          <span className="text-[11px] font-semibold uppercase tracking-wider" style={{ color }}>{label}</span>
+          <button
+            type="button"
+            onClick={() => addEntry(side)}
+            className="text-[10px] font-medium px-1.5 py-0.5 rounded hover:bg-[#f3f4f6]"
+            style={{ color }}
+          >
+            + agregar
+          </button>
+        </div>
+        {entries.length === 0 ? (
+          <p className="text-[11px] italic text-[#9ca3af]">Sin asistentes</p>
+        ) : (
+          <div className="space-y-1">
+            {entries.map(({ entry, index }) => (
+              <div key={index} className="group grid grid-cols-[1fr_1fr_24px] gap-1.5 items-center">
+                <Input
+                  value={entry.name}
+                  onChange={(e) => updateEntry(index, { name: e.target.value })}
+                  placeholder="Nombre"
+                  className="h-8 text-xs"
+                />
+                <Input
+                  value={entry.role}
+                  onChange={(e) => updateEntry(index, { role: e.target.value })}
+                  placeholder="Cargo"
+                  className="h-8 text-xs"
+                />
+                <button
+                  type="button"
+                  onClick={() => removeEntry(index)}
+                  className="opacity-0 group-hover:opacity-100 text-[#9ca3af] hover:text-red-500 transition-all"
+                  title="Quitar"
+                >
+                  <Trash2 className="h-3 w-3" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      {renderSide("prospect", "Del prospecto", "#0D47A1")}
+      {renderSide("innovative", "De Innovative", "#00a8a8")}
+    </div>
+  );
+}
+
 // Convert ISO timestamp to the <input type="datetime-local"> format (local time, no tz).
 function toDatetimeLocalValue(iso: string | Date | null | undefined): string {
   if (!iso) return "";
@@ -249,6 +379,16 @@ export function ProspectMeetings({ prospectId }: ProspectMeetingsProps) {
                             />
                           </div>
                           <div className="flex items-center gap-2">
+                            <Video className="h-4 w-4 text-[#9ca3af]" />
+                            <span className="text-[#6b7280]">Tipo</span>
+                            <InlineSelect
+                              value={(m.meetingType as string | undefined) ?? undefined}
+                              options={MEETING_TYPE_OPTIONS}
+                              onSave={(v) => saveField(m.id, { meetingType: v })}
+                              emptyLabel="Virtual / presencial"
+                            />
+                          </div>
+                          <div className="flex items-center gap-2">
                             <MapPin className="h-4 w-4 text-[#9ca3af]" />
                             <span className="text-[#6b7280]">Ubicación</span>
                             <InlineText
@@ -282,11 +422,37 @@ export function ProspectMeetings({ prospectId }: ProspectMeetingsProps) {
                           </div>
                         </div>
 
-                        <div className="mt-2">
+                        {/* Objetivo de la reunión (spec Vero) */}
+                        <div className="mt-3">
+                          <div className="text-[11px] font-semibold uppercase tracking-widest text-[#9ca3af] mb-1">Objetivo</div>
+                          <InlineText
+                            value={((m as unknown as { objective?: string }).objective) || ""}
+                            onSave={(v) => saveField(m.id, { objective: v || null })}
+                            emptyLabel="Dimensionar oportunidad, validar levantamiento..."
+                            placeholder="Objetivo de esta reunión"
+                            multiline
+                            className="w-full"
+                          />
+                        </div>
+
+                        {/* Asistentes (prospecto + Innovative, nombre + cargo) */}
+                        <div className="mt-3">
+                          <div className="text-[11px] font-semibold uppercase tracking-widest text-[#9ca3af] mb-2 flex items-center gap-1">
+                            <Users className="h-3 w-3" /> Asistentes
+                          </div>
+                          <AttendeesEditor
+                            attendees={m.attendees}
+                            onSave={(next) => saveField(m.id, { attendees: next })}
+                          />
+                        </div>
+
+                        {/* Descripción / agenda (opcional, texto libre) */}
+                        <div className="mt-3">
+                          <div className="text-[11px] font-semibold uppercase tracking-widest text-[#9ca3af] mb-1">Notas / agenda</div>
                           <InlineText
                             value={m.description || ""}
                             onSave={(v) => saveField(m.id, { description: v || null })}
-                            emptyLabel="Agregar descripción / agenda"
+                            emptyLabel="Agregar agenda o detalles previos"
                             placeholder="Agenda o detalles..."
                             multiline
                             displayClassName="text-[13px] text-[#6b7280]"
