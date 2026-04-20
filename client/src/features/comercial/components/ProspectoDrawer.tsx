@@ -7,7 +7,6 @@ import {
   MessageSquare, FileText, Send, Phone, Mail, Copy, Check, XCircle,
   RotateCcw, PhoneCall, CalendarClock,
   Upload, Paperclip, Image, BarChart3, Lock, Sparkles, Leaf, Target,
-  Building2,
 } from 'lucide-react';
 import { ProspectTimeline } from './ProspectTimeline';
 import { ProspectNotes } from './ProspectNotes';
@@ -175,15 +174,34 @@ export function ProspectoDrawer({ prospecto, onClose }: Props) {
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4 backdrop-blur-sm" onClick={onClose}>
       <div className="bg-white rounded-2xl max-w-3xl w-full max-h-[85vh] overflow-hidden shadow-2xl flex flex-col" onClick={e => e.stopPropagation()}>
         {/* Header */}
-        <div className="px-6 pt-5 pb-4 border-b border-[#f0f0f0]">
-          <div className="flex items-start justify-between">
-            <div className="flex-1">
-              <h2 className="text-xl font-semibold text-[#1a1a1a] tracking-tight">{p.empresa}</h2>
-              <div className="flex items-center gap-2 mt-1.5">
-                <span className="text-sm text-[#666]">{p.ciudad}</span>
-                {p.industria && <span className="text-sm text-[#999]">·</span>}
-                {p.industria && <span className="text-sm text-[#666]">{p.industria}</span>}
-                <span className={`ml-2 px-2 py-0.5 rounded-full text-xs font-medium ${
+        <div className="px-6 pt-5 pb-3 border-b border-[#f0f0f0]">
+          {/* Row 1: Company title (inline editable) + close */}
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex-1 min-w-0">
+              <InlineText
+                value={p.empresa || ''}
+                onSave={(v) => saveProspectField({ name: v || null })}
+                emptyLabel="Nombre de empresa"
+                displayClassName="text-xl font-semibold text-[#1a1a1a] tracking-tight"
+                className="text-xl font-semibold w-full max-w-md"
+              />
+              {/* Row 2: meta (ubicación · industria · stage · deadline) — all inline edit */}
+              <div className="flex items-center flex-wrap gap-x-2 gap-y-1 mt-1.5 text-sm text-[#666]">
+                <InlineText
+                  value={p.ciudad || ''}
+                  onSave={(v) => saveProspectField({ location: v || null })}
+                  emptyLabel="Ubicación"
+                  displayClassName="text-[#666]"
+                />
+                <span className="text-[#ddd]">·</span>
+                <InlineSelect
+                  value={p.industria || undefined}
+                  options={INDUSTRIAS.map((ind) => ({ value: ind, label: ind }))}
+                  onSave={(v) => saveProspectField({ industry: v || null })}
+                  emptyLabel="Industria"
+                  displayClassName="text-[#666]"
+                />
+                <span className={`ml-1 px-2 py-0.5 rounded-full text-xs font-medium ${
                   stageInfo?.color === '#2E7D32' ? 'bg-green-100 text-green-700' :
                   stageInfo?.color === '#7C3AED' ? 'bg-purple-100 text-purple-700' :
                   stageInfo?.color === '#00a8a8' ? 'bg-teal-100 text-teal-700' :
@@ -191,13 +209,12 @@ export function ProspectoDrawer({ prospecto, onClose }: Props) {
                   stageInfo?.color === '#0D47A1' ? 'bg-blue-100 text-blue-700' :
                   'bg-gray-100 text-gray-600'
                 }`}>{stageInfo?.label || p.status}</span>
-                {/* Propuesta SLA deadline chip (Fase 2 bloque 3) */}
                 {(() => {
                   const chip = proposalDeadlineChip(p);
                   if (!chip) return null;
                   return (
                     <span
-                      className="ml-1 px-2 py-0.5 rounded-full text-[11px] font-semibold inline-flex items-center gap-1"
+                      className="px-2 py-0.5 rounded-full text-[11px] font-semibold inline-flex items-center gap-1"
                       style={{ backgroundColor: chip.bg, color: chip.color, border: `1px solid ${chip.color}30` }}
                       title="Fecha límite para subir la propuesta (3 días hábiles desde que se agendó el levantamiento)"
                     >
@@ -208,90 +225,90 @@ export function ProspectoDrawer({ prospecto, onClose }: Props) {
                 })()}
               </div>
             </div>
-            <div className="flex items-center gap-1.5">
-              {/* Avanzar Etapa */}
-              {(() => {
-                const stageIds: string[] = KANBAN_STAGES.map(s => s.id);
-                const currentIdx = stageIds.indexOf(p.status);
-                const nextStage = currentIdx >= 0 && currentIdx < stageIds.length - 1 ? KANBAN_STAGES[currentIdx + 1] : null;
-                if (!nextStage) return null;
-                return (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      // From contacto_inicial → open qualify dialog instead of advancing directly
-                      if (p.status === 'contacto_inicial') {
-                        setShowQualifyDialog(true);
-                        return;
-                      }
-                      const gate = STAGE_GATES[nextStage.id];
-                      if (gate && !gate.validate(p)) {
-                        setPendingStageGate({ prospecto: p, fromStage: p.status, toStage: nextStage.id });
-                        return;
-                      }
-                      changeProspectoStage(p.id, nextStage.id);
-                    }}
-                    className="flex items-center gap-1 px-2.5 py-1.5 bg-[#00a8a8] hover:bg-[#008b8b] text-white rounded-lg text-xs font-medium transition-all"
-                  >
-                    <ChevronRight size={14} /> {p.status === 'contacto_inicial' ? 'Calificar' : `Avanzar a ${nextStage.label}`}
-                  </button>
-                );
-              })()}
-              {/* Rechazar */}
-              {p.status !== 'cierre_perdido' && p.status !== 'cierre_ganado' && (
-                <button
-                  onClick={(e) => { e.stopPropagation(); setShowRechazoModal(true); }}
-                  className="flex items-center gap-1 px-2 py-1.5 bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 rounded-lg text-xs font-medium transition-all"
-                >
-                  <XCircle size={14} /> Rechazar
-                </button>
-              )}
-              {(authUser?.role === 'admin' || authUser?.role === 'comercial' || authUser?.role === 'director') && (
-                <button
-                  onClick={async (e) => {
-                    e.stopPropagation();
-                    if (window.confirm(`¿Eliminar prospecto "${p.empresa}"? Esta acción no se puede deshacer.`)) {
-                      try {
-                        await deleteProspectMutation.mutateAsync(p.id);
-                        onClose();
-                      } catch {
-                        toast({ title: 'Error al eliminar prospecto', variant: 'destructive' });
-                      }
-                    }
-                  }}
-                  className="p-1.5 text-[#999] hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
-                  title="Eliminar prospecto"
-                >
-                  <Trash2 size={16} />
-                </button>
-              )}
-              <button onClick={onClose} className="text-[#999] hover:text-[#333] p-1 transition-colors">
-                <X size={20} />
-              </button>
-            </div>
+            <button onClick={onClose} className="text-[#999] hover:text-[#333] p-1 transition-colors flex-shrink-0" title="Cerrar">
+              <X size={20} />
+            </button>
           </div>
 
-          {/* Progress Bar */}
-          <div className="flex items-center gap-0.5 mt-4 -mx-6 px-6">
+          {/* Row 3: Slim progress bar — dots connected, labels only on hover */}
+          <div className="flex items-center gap-0.5 mt-4">
             {KANBAN_STAGES.map((stage, idx) => {
               const currentIdx = KANBAN_STAGES.findIndex(s => s.id === p.status);
               const isPast = idx < currentIdx;
               const isCurrent = idx === currentIdx;
               return (
-                <div key={stage.id} className="flex-1 flex flex-col items-center gap-1">
-                  <div
-                    className="w-full h-1.5 rounded-full transition-all"
-                    style={{
-                      backgroundColor: isPast || isCurrent ? stage.color : '#e5e7eb',
-                      opacity: isPast ? 0.5 : 1,
-                    }}
-                  />
-                  <span className={`text-[9px] font-medium truncate max-w-full ${isCurrent ? 'text-[#1a1a1a]' : 'text-[#bbb]'}`}>
-                    {stage.label}
-                  </span>
-                </div>
+                <div
+                  key={stage.id}
+                  className="flex-1 h-1.5 rounded-full transition-all"
+                  style={{
+                    backgroundColor: isPast || isCurrent ? stage.color : '#e5e7eb',
+                    opacity: isPast ? 0.5 : 1,
+                  }}
+                  title={stage.label}
+                />
               );
             })}
+          </div>
+          <div className="mt-1 text-[10px] text-[#9ca3af] text-center">
+            Etapa actual: <span className="font-medium text-[#1c2c4a]">{stageInfo?.label || p.status}</span>
+          </div>
+
+          {/* Row 4: Actions — compact, own row so header no longer feels crammed */}
+          <div className="flex items-center gap-2 mt-3">
+            {(() => {
+              const stageIds: string[] = KANBAN_STAGES.map(s => s.id);
+              const currentIdx = stageIds.indexOf(p.status);
+              const nextStage = currentIdx >= 0 && currentIdx < stageIds.length - 1 ? KANBAN_STAGES[currentIdx + 1] : null;
+              if (!nextStage) return null;
+              return (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (p.status === 'contacto_inicial') {
+                      setShowQualifyDialog(true);
+                      return;
+                    }
+                    const gate = STAGE_GATES[nextStage.id];
+                    if (gate && !gate.validate(p)) {
+                      setPendingStageGate({ prospecto: p, fromStage: p.status, toStage: nextStage.id });
+                      return;
+                    }
+                    changeProspectoStage(p.id, nextStage.id);
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-[#00a8a8] hover:bg-[#008b8b] text-white rounded-lg text-xs font-semibold transition-all shadow-sm"
+                >
+                  <ChevronRight size={14} />
+                  {p.status === 'contacto_inicial' ? 'Calificar prospecto' : `Avanzar a ${nextStage.label}`}
+                </button>
+              );
+            })()}
+            {p.status !== 'cierre_perdido' && p.status !== 'cierre_ganado' && (
+              <button
+                onClick={(e) => { e.stopPropagation(); setShowRechazoModal(true); }}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-white text-red-600 border border-red-200 hover:bg-red-50 rounded-lg text-xs font-medium transition-all"
+              >
+                <XCircle size={14} /> Rechazar
+              </button>
+            )}
+            {(authUser?.role === 'admin' || authUser?.role === 'comercial' || authUser?.role === 'director') && (
+              <button
+                onClick={async (e) => {
+                  e.stopPropagation();
+                  if (window.confirm(`¿Eliminar prospecto "${p.empresa}"? Esta acción no se puede deshacer.`)) {
+                    try {
+                      await deleteProspectMutation.mutateAsync(p.id);
+                      onClose();
+                    } catch {
+                      toast({ title: 'Error al eliminar prospecto', variant: 'destructive' });
+                    }
+                  }
+                }}
+                className="ml-auto flex items-center gap-1 p-1.5 text-[#9ca3af] hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                title="Eliminar prospecto"
+              >
+                <Trash2 size={14} />
+              </button>
+            )}
           </div>
 
           {/* Tabs */}
@@ -493,45 +510,9 @@ export function ProspectoDrawer({ prospecto, onClose }: Props) {
                   </div>
                 )}
 
-                {/* Datos generales (inline editable) */}
-                <div className="bg-white rounded-xl border border-[#e5e7eb] overflow-hidden">
-                  <div className="px-4 py-3 bg-[#f9fafb] border-b border-[#e5e7eb]">
-                    <h3 className="text-sm font-semibold text-[#1c2c4a] flex items-center gap-2"><Building2 size={14} /> Datos generales</h3>
-                  </div>
-                  <div className="p-4 space-y-2.5">
-                    <div className="flex items-center justify-between text-sm gap-3">
-                      <span className="text-[#6b7280] shrink-0">Empresa</span>
-                      <InlineText
-                        value={p.empresa || ''}
-                        onSave={(v) => saveProspectField({ name: v || null })}
-                        emptyLabel="Agregar empresa"
-                        displayClassName="font-medium text-[#1c2c4a]"
-                        className="w-64"
-                      />
-                    </div>
-                    <div className="flex items-center justify-between text-sm gap-3">
-                      <span className="text-[#6b7280] shrink-0">Ubicación</span>
-                      <InlineText
-                        value={p.ciudad || ''}
-                        onSave={(v) => saveProspectField({ location: v || null })}
-                        emptyLabel="Agregar ubicación"
-                        placeholder="Ej: CDMX"
-                        displayClassName="text-[#1c2c4a]"
-                        className="w-48"
-                      />
-                    </div>
-                    <div className="flex items-center justify-between text-sm gap-3">
-                      <span className="text-[#6b7280] shrink-0">Industria</span>
-                      <InlineSelect
-                        value={p.industria || undefined}
-                        options={INDUSTRIAS.map((ind) => ({ value: ind, label: ind }))}
-                        onSave={(v) => saveProspectField({ industry: v || null })}
-                        emptyLabel="Seleccionar industria"
-                        displayClassName="text-[#1c2c4a]"
-                      />
-                    </div>
-                  </div>
-                </div>
+                {/* Datos generales (Empresa, Ubicación, Industria) ahora viven
+                    en el header del drawer como campos inline editables, así que
+                    ya no los repetimos aquí. */}
 
                 {/* Contact (inline editable) */}
                 <div className="bg-white rounded-xl border border-[#e5e7eb] overflow-hidden">
