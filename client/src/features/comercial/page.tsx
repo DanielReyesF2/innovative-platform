@@ -22,6 +22,41 @@ import { LeadForm } from './components/LeadForm';
 import { ComercialReports } from './components/ComercialReports';
 import { ResumenSemanal } from './components/ResumenSemanal';
 
+// ─── Budget mini-stat row ──────────────────────────────────────────────────
+// Used inside the 'Presupuesto Anual' and 'Presupuesto Mes' cards so the two
+// share the same visual grammar (color dot matching its bar on the chart,
+// value on the right, optional % pill under the value).
+function BudgetStatRow({
+  colorDot,
+  label,
+  value,
+  pct,
+  pctColor,
+}: {
+  colorDot: string;
+  label: string;
+  value: string;
+  pct?: number;
+  pctColor?: string;
+}) {
+  return (
+    <div className="flex items-center justify-between py-1.5 text-sm">
+      <div className="flex items-center gap-2 min-w-0">
+        <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: colorDot }} />
+        <span className="text-[12px] text-[#6b7280] truncate">{label}</span>
+      </div>
+      <div className="text-right shrink-0">
+        <span className="font-semibold text-[#1c2c4a]">{value}</span>
+        {pct !== undefined && (
+          <span className="ml-1.5 text-[11px] font-semibold" style={{ color: pctColor || '#6b7280' }}>
+            {pct}%
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function ComercialPage() {
   const [, navigate] = useLocation();
   const {
@@ -80,18 +115,26 @@ export default function ComercialPage() {
     );
   }
 
-  // Derived KPIs
-  const presupuestoMesEquipo = salesTeamData.reduce((s, m) => s + (m.presupuestoMensual || 0), 0);
-  // Venta del mes actual — derivada del mismo presupuestoEvolution que alimenta
-  // la gráfica, para que el card y las barras siempre cuadren.
+  // Derived KPIs — all three series come from presupuestoEvolution so the
+  // cards and the chart below always tell the same story.
   const currentMonthIdx = new Date().getMonth();
+  const currentMonthLabel = new Date().toLocaleDateString('es-MX', { month: 'long' }).replace(/^\w/, c => c.toUpperCase());
+
+  // Anual: sum every month of the year so the card reads as a YTD snapshot.
+  const presupuestoAnualTotal = salesTeamData.reduce((s, m) => s + (m.presupuestoAnual2026 || 0), 0);
+  const cotizacionAnual = presupuestoEvolution.reduce((s, r) => s + (r.cotizacion || 0), 0);
+  const ventasCerradasAnual = salesTeamData.reduce((s, m) => s + (m.ventasRealesAnual || 0), 0);
+
+  // Mes actual.
+  const presupuestoMesEquipo = salesTeamData.reduce((s, m) => s + (m.presupuestoMensual || 0), 0);
+  const cotizacionMesActual = presupuestoEvolution[currentMonthIdx]?.cotizacion ?? 0;
   const ventaMesActual = presupuestoEvolution[currentMonthIdx]?.real ?? 0;
-  const pctMesActual = presupuestoMesEquipo > 0
-    ? Math.round((ventaMesActual / presupuestoMesEquipo) * 100)
-    : 0;
-  const pctColor = pctMesActual >= 80 ? '#2E7D32' : pctMesActual >= 50 ? '#F57C00' : '#DC2626';
+
+  // Helpers for the mini-stats — percent vs the budget target of the period.
+  const pct = (value: number, target: number) => target > 0 ? Math.round((value / target) * 100) : 0;
+  const pctTone = (value: number) => value >= 80 ? '#2E7D32' : value >= 50 ? '#F57C00' : '#DC2626';
+
   const propuestasEnviadas = kanbanProspectos.filter(p => p.status === 'propuesta' || p.status === 'negociacion');
-  const levantamientosActivos = kanbanProspectos.filter(p => p.status === 'levantamiento');
   const biodigestores = kanbanProspectos.filter(p => (p.servicios || []).includes('biodigestores'));
 
   return (
@@ -110,61 +153,90 @@ export default function ComercialPage() {
 
         {/* KPI CARDS */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
-          {/* Card 1: Presupuesto Mes — todo referido al mes actual para que % sea coherente */}
-          <div className="rounded-xl border border-[#00a8a8]/10 card-modern p-5" style={{ backgroundColor: 'rgba(0,168,168,0.04)' }}>
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-[13px] font-medium text-[#6b7280] mb-1">Presupuesto {new Date().toLocaleDateString('es-MX', { month: 'long' }).replace(/^\w/, c => c.toUpperCase())}</div>
-                <div className="text-2xl font-bold text-[#1c2c4a]">{fmtM(presupuestoMesEquipo)}</div>
-                <div className="text-xs text-[#6b7280] mt-1">
-                  Venta Cerrada: <span className="font-semibold text-[#00a8a8]">{fmtM(ventaMesActual)}</span>
-                  {presupuestoMesEquipo > 0 && (
-                    <span className="ml-1.5 font-semibold" style={{ color: pctColor }}>
-                      ({pctMesActual}%)
-                    </span>
-                  )}
-                </div>
-              </div>
-              <div className="w-10 h-10 rounded-xl bg-[#00a8a8]/10 flex items-center justify-center">
-                <DollarSign className="text-[#00a8a8]" size={20} />
+          {/* Card 1: Presupuesto Anual — target + cotizado + vendido YTD */}
+          <div className="rounded-xl border border-[#e5e7eb] card-modern p-5 bg-white flex flex-col">
+            <div className="flex items-center justify-between mb-3">
+              <div className="text-[13px] font-semibold text-[#1c2c4a]">Presupuesto Anual</div>
+              <div className="w-9 h-9 rounded-xl bg-[#1B5E20]/10 flex items-center justify-center">
+                <DollarSign className="text-[#1B5E20]" size={18} />
               </div>
             </div>
+            <BudgetStatRow
+              colorDot="#1B5E20"
+              label="Presupuesto"
+              value={fmtM(presupuestoAnualTotal, 1)}
+            />
+            <BudgetStatRow
+              colorDot="#0D47A1"
+              label="Cotizaciones al día"
+              value={fmtM(cotizacionAnual, 1)}
+              pct={pct(cotizacionAnual, presupuestoAnualTotal)}
+              pctColor={pctTone(pct(cotizacionAnual, presupuestoAnualTotal))}
+            />
+            <BudgetStatRow
+              colorDot="#00a8a8"
+              label="Ventas reales al día"
+              value={fmtM(ventasCerradasAnual, 1)}
+              pct={pct(ventasCerradasAnual, presupuestoAnualTotal)}
+              pctColor={pctTone(pct(ventasCerradasAnual, presupuestoAnualTotal))}
+            />
           </div>
-          {/* Card 2: Levantamientos */}
-          <div className="bg-white rounded-xl border border-[#e5e7eb] card-modern p-5">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-[13px] font-medium text-[#6b7280] mb-1">Levantamientos Activos</div>
-                <div className="text-2xl font-bold text-[#1c2c4a]">{levantamientosActivos.length}</div>
-              </div>
-              <div className="w-10 h-10 rounded-xl bg-[#0D47A1]/10 flex items-center justify-center">
-                <ClipboardList className="text-[#0D47A1]" size={20} />
+
+          {/* Card 2: Presupuesto Mes — same three rows, scoped to current month */}
+          <div className="rounded-xl border border-[#00a8a8]/20 card-modern p-5 flex flex-col" style={{ backgroundColor: 'rgba(0,168,168,0.04)' }}>
+            <div className="flex items-center justify-between mb-3">
+              <div className="text-[13px] font-semibold text-[#1c2c4a]">Presupuesto {currentMonthLabel}</div>
+              <div className="w-9 h-9 rounded-xl bg-[#00a8a8]/15 flex items-center justify-center">
+                <DollarSign className="text-[#00a8a8]" size={18} />
               </div>
             </div>
+            <BudgetStatRow
+              colorDot="#1B5E20"
+              label="Presupuesto"
+              value={fmtM(presupuestoMesEquipo, 1)}
+            />
+            <BudgetStatRow
+              colorDot="#0D47A1"
+              label="Cotizaciones al día"
+              value={fmtM(cotizacionMesActual, 1)}
+              pct={pct(cotizacionMesActual, presupuestoMesEquipo)}
+              pctColor={pctTone(pct(cotizacionMesActual, presupuestoMesEquipo))}
+            />
+            <BudgetStatRow
+              colorDot="#00a8a8"
+              label="Ventas reales al día"
+              value={fmtM(ventaMesActual, 1)}
+              pct={pct(ventaMesActual, presupuestoMesEquipo)}
+              pctColor={pctTone(pct(ventaMesActual, presupuestoMesEquipo))}
+            />
           </div>
+
           {/* Card 3: Propuestas */}
-          <div className="rounded-xl border border-[#2E7D32]/10 card-modern p-5" style={{ backgroundColor: 'rgba(46,125,50,0.04)' }}>
+          <div className="rounded-xl border border-[#2E7D32]/10 card-modern p-5 flex flex-col justify-between" style={{ backgroundColor: 'rgba(46,125,50,0.04)' }}>
             <div className="flex items-center justify-between">
               <div>
                 <div className="text-[13px] font-medium text-[#6b7280] mb-1">Propuestas Enviadas</div>
-                <div className="text-2xl font-bold text-[#1c2c4a]">{propuestasEnviadas.length}</div>
+                <div className="text-3xl font-bold text-[#1c2c4a]">{propuestasEnviadas.length}</div>
               </div>
               <div className="w-10 h-10 rounded-xl bg-[#2E7D32]/10 flex items-center justify-center">
                 <FileText className="text-[#2E7D32]" size={20} />
               </div>
             </div>
+            <div className="text-[11px] text-[#9ca3af] mt-3">En etapas Propuesta o Socio Ambiental</div>
           </div>
+
           {/* Card 4: Biodigestores */}
-          <div className="bg-white rounded-xl border border-[#e5e7eb] card-modern p-5">
+          <div className="bg-white rounded-xl border border-[#e5e7eb] card-modern p-5 flex flex-col justify-between">
             <div className="flex items-center justify-between">
               <div>
                 <div className="text-[13px] font-medium text-[#6b7280] mb-1">Cierre Biodigestores</div>
-                <div className="text-2xl font-bold text-[#1c2c4a]">{biodigestores.length}</div>
+                <div className="text-3xl font-bold text-[#1c2c4a]">{biodigestores.length}</div>
               </div>
               <div className="w-10 h-10 rounded-xl bg-[#F57C00]/10 flex items-center justify-center">
                 <Recycle className="text-[#F57C00]" size={20} />
               </div>
             </div>
+            <div className="text-[11px] text-[#9ca3af] mt-3">Prospectos con biodigestores en los servicios</div>
           </div>
         </div>
 
