@@ -158,15 +158,24 @@ export function useComercialData() {
   const pipelineData = useMemo(() => calcularPipelineData(kanbanProspectos), [kanbanProspectos]);
 
   // ═══════ MUTATIONS ═══════
+  // Prospect stage/data changes ripple into team-level aggregates (closed-deal
+  // totals, budget cumplimiento, dashboard cards) because the backend's
+  // getComercialTeam sums prospectos in cierre_ganado per executive. Always
+  // invalidate the team + ventas-reales queries too so the greeting, KPI
+  // cards and team list refresh in lock-step with the kanban.
+  const invalidateProspectAggregates = () => {
+    invalidateByPrefix('/api/comercial/prospects');
+    invalidateByPrefix('/api/comercial/pipeline');
+    invalidateByPrefix('/api/comercial/team');
+    invalidateByPrefix('/api/comercial/ventas-reales');
+  };
+
   const updateProspectMutation = useMutation({
     mutationFn: async ({ id, ...data }: UpdateProspectPayload) => {
       const res = await apiRequest("PATCH", `/api/comercial/prospects/${id}`, data);
       return res.json();
     },
-    onSettled: () => {
-      invalidateByPrefix('/api/comercial/prospects');
-      invalidateByPrefix('/api/comercial/pipeline');
-    },
+    onSettled: invalidateProspectAggregates,
   });
 
   const createProspectMutation = useMutation({
@@ -174,10 +183,7 @@ export function useComercialData() {
       const res = await apiRequest("POST", "/api/comercial/prospects", data);
       return res.json();
     },
-    onSettled: () => {
-      invalidateByPrefix('/api/comercial/prospects');
-      invalidateByPrefix('/api/comercial/pipeline');
-    },
+    onSettled: invalidateProspectAggregates,
   });
 
   const deleteProspectMutation = useMutation({
@@ -185,10 +191,7 @@ export function useComercialData() {
       const res = await apiRequest("DELETE", `/api/comercial/prospects/${id}`);
       return res.json();
     },
-    onSettled: () => {
-      invalidateByPrefix('/api/comercial/prospects');
-      invalidateByPrefix('/api/comercial/pipeline');
-    },
+    onSettled: invalidateProspectAggregates,
   });
 
   const rejectProspectMutation = useMutation({
@@ -196,10 +199,7 @@ export function useComercialData() {
       const res = await apiRequest("POST", `/api/comercial/prospects/${id}/reject`, data);
       return res.json();
     },
-    onSettled: () => {
-      invalidateByPrefix('/api/comercial/prospects');
-      invalidateByPrefix('/api/comercial/pipeline');
-    },
+    onSettled: invalidateProspectAggregates,
   });
 
   const createNoteMutation = useMutation({

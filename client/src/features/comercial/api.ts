@@ -37,16 +37,24 @@ export function useProspectsByStage(stage: string) {
   });
 }
 
+// Any prospect mutation can change team-level aggregates (closed-deal totals,
+// cumplimiento %, greeting, KPI cards) because getComercialTeam derives them
+// from the prospect list. Always invalidate the same family of queries so the
+// UI refreshes in lock-step.
+function invalidateProspectAggregates() {
+  invalidateByPrefix("/api/comercial/prospects");
+  invalidateByPrefix("/api/comercial/pipeline");
+  invalidateByPrefix("/api/comercial/team");
+  invalidateByPrefix("/api/comercial/ventas-reales");
+}
+
 export function useCreateProspect() {
   return useMutation({
     mutationFn: async (data: Record<string, unknown>) => {
       const res = await apiRequest("POST", "/api/comercial/prospects", data);
       return res.json();
     },
-    onSuccess: () => {
-      invalidateByPrefix("/api/comercial/prospects");
-      invalidateByPrefix("/api/comercial/pipeline");
-    },
+    onSuccess: invalidateProspectAggregates,
   });
 }
 
@@ -56,10 +64,7 @@ export function useQualifyProspect() {
       const res = await apiRequest("POST", `/api/comercial/prospects/${id}/qualify`, data);
       return res.json();
     },
-    onSuccess: () => {
-      invalidateByPrefix("/api/comercial/prospects");
-      invalidateByPrefix("/api/comercial/pipeline");
-    },
+    onSuccess: invalidateProspectAggregates,
   });
 }
 
@@ -69,10 +74,7 @@ export function useUpdateProspect() {
       const res = await apiRequest("PATCH", `/api/comercial/prospects/${id}`, data);
       return res.json();
     },
-    onSuccess: () => {
-      invalidateByPrefix("/api/comercial/prospects");
-      invalidateByPrefix("/api/comercial/pipeline");
-    },
+    onSuccess: invalidateProspectAggregates,
   });
 }
 
@@ -82,10 +84,7 @@ export function useDeleteProspect() {
       const res = await apiRequest("DELETE", `/api/comercial/prospects/${id}`);
       return res.json();
     },
-    onSuccess: () => {
-      invalidateByPrefix("/api/comercial/prospects");
-      invalidateByPrefix("/api/comercial/pipeline");
-    },
+    onSuccess: invalidateProspectAggregates,
   });
 }
 
@@ -95,10 +94,7 @@ export function useRejectProspect() {
       const res = await apiRequest("POST", `/api/comercial/prospects/${id}/reject`, data);
       return res.json();
     },
-    onSuccess: () => {
-      invalidateByPrefix("/api/comercial/prospects");
-      invalidateByPrefix("/api/comercial/pipeline");
-    },
+    onSuccess: invalidateProspectAggregates,
   });
 }
 
