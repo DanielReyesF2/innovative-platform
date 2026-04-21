@@ -65,12 +65,12 @@ export function PresupuestoTab() {
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-sm font-semibold text-[#1c2c4a] flex items-center gap-2">
             <DollarSign size={16} className="text-[#00a8a8]" />
-            Presupuesto Mensual 2026 · Cotización · Venta Real
+            Presupuesto Mensual 2026 · Valor Cotización · Venta Real
           </h3>
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-3 text-[10px] text-[#6b7280]">
               <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded bg-[#1B5E20] inline-block" /> Presupuesto</span>
-              <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded bg-[#0D47A1] inline-block" /> Cotización</span>
+              <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded bg-[#0D47A1] inline-block" /> Valor Cotización</span>
               <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded bg-[#00a8a8] inline-block" /> Venta Real</span>
             </div>
             {canEditBudget && (
@@ -96,7 +96,7 @@ export function PresupuestoTab() {
             <Bar dataKey="presupuesto" name="Presupuesto" fill="#1B5E20" radius={[3, 3, 0, 0]}>
               <LabelList dataKey="presupuesto" content={(p) => <BarValueLabel {...p} fill="#1B5E20" />} />
             </Bar>
-            <Bar dataKey="cotizacion" name="Cotización" fill="#0D47A1" radius={[3, 3, 0, 0]}>
+            <Bar dataKey="cotizacion" name="Valor Cotización" fill="#0D47A1" radius={[3, 3, 0, 0]}>
               <LabelList dataKey="cotizacion" content={(p) => <BarValueLabel {...p} fill="#0D47A1" />} />
             </Bar>
             <Bar dataKey="real" name="Venta Real" fill="#00a8a8" radius={[3, 3, 0, 0]}>

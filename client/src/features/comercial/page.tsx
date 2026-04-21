@@ -168,7 +168,7 @@ export default function ComercialPage() {
             />
             <BudgetStatRow
               colorDot="#0D47A1"
-              label="Cotizaciones al día"
+              label="Valor cotización al día"
               value={fmtM(cotizacionAnual, 1)}
               pct={pct(cotizacionAnual, presupuestoAnualTotal)}
               pctColor={pctTone(pct(cotizacionAnual, presupuestoAnualTotal))}
@@ -197,7 +197,7 @@ export default function ComercialPage() {
             />
             <BudgetStatRow
               colorDot="#0D47A1"
-              label="Cotizaciones al día"
+              label="Valor cotización al día"
               value={fmtM(cotizacionMesActual, 1)}
               pct={pct(cotizacionMesActual, presupuestoMesEquipo)}
               pctColor={pctTone(pct(cotizacionMesActual, presupuestoMesEquipo))}
