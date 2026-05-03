@@ -1,4 +1,4 @@
-import { pgTable, serial, text, integer, timestamp, boolean, numeric, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, integer, timestamp, boolean, numeric, pgEnum, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { users, areas } from "./common";
@@ -78,7 +78,11 @@ export const kpis = pgTable("kpis", {
   createdById: integer("created_by_id").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => ({
+  categoryIdIdx: index("kpis_category_id_idx").on(table.categoryId),
+  ownerIdIdx: index("kpis_owner_id_idx").on(table.ownerId),
+  areaIdIdx: index("kpis_area_id_idx").on(table.areaId),
+}));
 
 export const kpiEntries = pgTable("kpi_entries", {
   id: serial("id").primaryKey(),
@@ -93,7 +97,9 @@ export const kpiEntries = pgTable("kpi_entries", {
   recordedById: integer("recorded_by_id").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => ({
+  kpiIdIdx: index("kpi_entries_kpi_id_idx").on(table.kpiId),
+}));
 
 export const kpiActionPlans = pgTable("kpi_action_plans", {
   id: serial("id").primaryKey(),
@@ -109,7 +115,10 @@ export const kpiActionPlans = pgTable("kpi_action_plans", {
   createdById: integer("created_by_id").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => ({
+  kpiIdIdx: index("kpi_action_plans_kpi_id_idx").on(table.kpiId),
+  responsibleIdIdx: index("kpi_action_plans_responsible_id_idx").on(table.responsibleId),
+}));
 
 // --- Validators ---
 

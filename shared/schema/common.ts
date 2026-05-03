@@ -1,4 +1,4 @@
-import { pgTable, serial, text, integer, timestamp, boolean } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, integer, timestamp, boolean, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -16,7 +16,9 @@ export const areas = pgTable("areas", {
   companyId: integer("company_id").references(() => companies.id),
   moduleSlug: text("module_slug"),
   createdAt: timestamp("created_at").defaultNow(),
-});
+}, (table) => ({
+  companyIdIdx: index("areas_company_id_idx").on(table.companyId),
+}));
 
 // Users table
 export const users = pgTable("users", {
@@ -31,7 +33,11 @@ export const users = pgTable("users", {
   isActive: boolean("is_active").default(true),
   lastLogin: timestamp("last_login"),
   createdAt: timestamp("created_at").defaultNow(),
-});
+}, (table) => ({
+  companyIdIdx: index("users_company_id_idx").on(table.companyId),
+  areaIdIdx: index("users_area_id_idx").on(table.areaId),
+  roleIdx: index("users_role_idx").on(table.role),
+}));
 
 // Validators
 export const insertUserSchema = createInsertSchema(users, {

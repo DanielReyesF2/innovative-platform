@@ -1,4 +1,4 @@
-import { pgTable, serial, text, integer, timestamp, boolean, numeric, jsonb, pgEnum, uniqueIndex, date } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, integer, timestamp, boolean, numeric, jsonb, pgEnum, uniqueIndex, index, date } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { users } from "./common";
@@ -134,7 +134,11 @@ export const prospects = pgTable("prospects", {
   surveyDate: date("survey_date"), // when the levantamiento is scheduled
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => ({
+  assignedToIdx: index("prospects_assigned_to_id_idx").on(table.assignedToId),
+  stageIdx: index("prospects_stage_idx").on(table.stage),
+  rejectionReasonIdx: index("prospects_rejection_reason_id_idx").on(table.rejectionReasonId),
+}));
 
 // Leads (incoming opportunities not yet qualified)
 export const leads = pgTable("leads", {
@@ -153,7 +157,9 @@ export const leads = pgTable("leads", {
   convertedToProspectId: integer("converted_to_prospect_id").references(() => prospects.id),
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
-});
+}, (table) => ({
+  assignedToIdx: index("leads_assigned_to_id_idx").on(table.assignedToId),
+}));
 
 // Sales team members (extends users with commercial metrics)
 export const salesMetrics = pgTable("sales_metrics", {
@@ -174,7 +180,10 @@ export const salesMetrics = pgTable("sales_metrics", {
   weeklyActivities: integer("weekly_activities").default(0),
   globalEfficiency: numeric("global_efficiency", { precision: 5, scale: 2 }),
   createdAt: timestamp("created_at").defaultNow(),
-});
+}, (table) => ({
+  userIdIdx: index("sales_metrics_user_id_idx").on(table.userId),
+  userPeriodUnique: uniqueIndex("sales_metrics_user_period_idx").on(table.userId, table.period),
+}));
 
 // === CRM ENHANCEMENT TABLES ===
 
@@ -189,7 +198,9 @@ export const prospectActivities = pgTable("prospect_activities", {
   metadata: jsonb("metadata"),
   createdById: integer("created_by_id").references(() => users.id).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
-});
+}, (table) => ({
+  prospectIdIdx: index("prospect_activities_prospect_id_idx").on(table.prospectId),
+}));
 
 // Prospect Notes
 export const prospectNotes = pgTable("prospect_notes", {
@@ -200,7 +211,9 @@ export const prospectNotes = pgTable("prospect_notes", {
   createdById: integer("created_by_id").references(() => users.id).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => ({
+  prospectIdIdx: index("prospect_notes_prospect_id_idx").on(table.prospectId),
+}));
 
 // Prospect Meetings
 export const prospectMeetings = pgTable("prospect_meetings", {
@@ -219,7 +232,9 @@ export const prospectMeetings = pgTable("prospect_meetings", {
   createdById: integer("created_by_id").references(() => users.id).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => ({
+  prospectIdIdx: index("prospect_meetings_prospect_id_idx").on(table.prospectId),
+}));
 
 // Prospect Documents
 export const prospectDocuments = pgTable("prospect_documents", {
@@ -233,7 +248,9 @@ export const prospectDocuments = pgTable("prospect_documents", {
   description: text("description"),
   uploadedById: integer("uploaded_by_id").references(() => users.id).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
-});
+}, (table) => ({
+  prospectIdIdx: index("prospect_documents_prospect_id_idx").on(table.prospectId),
+}));
 
 // Proposal Versions
 export const proposalVersions = pgTable("proposal_versions", {
@@ -251,7 +268,9 @@ export const proposalVersions = pgTable("proposal_versions", {
   createdById: integer("created_by_id").references(() => users.id).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => ({
+  prospectIdIdx: index("proposal_versions_prospect_id_idx").on(table.prospectId),
+}));
 
 // Follow-up Alerts
 export const followUpAlerts = pgTable("follow_up_alerts", {
@@ -267,7 +286,10 @@ export const followUpAlerts = pgTable("follow_up_alerts", {
   acknowledgedById: integer("acknowledged_by_id").references(() => users.id),
   assignedToId: integer("assigned_to_id").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow(),
-});
+}, (table) => ({
+  prospectIdIdx: index("follow_up_alerts_prospect_id_idx").on(table.prospectId),
+  statusIdx: index("follow_up_alerts_status_idx").on(table.status),
+}));
 
 // Validators
 export const insertProspectSchema = createInsertSchema(prospects, {
@@ -367,7 +389,9 @@ export const kpisMensuales = pgTable("kpis_mensuales", {
   propuestas: integer("propuestas").default(0),
   cierres: integer("cierres").default(0),
   createdAt: timestamp("created_at").defaultNow(),
-});
+}, (table) => ({
+  userIdIdx: index("kpis_mensuales_user_id_idx").on(table.userId),
+}));
 
 // Validators for new tables
 export const insertVentaRealSchema = createInsertSchema(ventasReales, {
@@ -439,7 +463,9 @@ export const weeklyCommitments = pgTable("weekly_commitments", {
   status: text("status").notNull().default("pendiente"), // 'pendiente' | 'cumplido'
   createdById: integer("created_by_id").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow(),
-});
+}, (table) => ({
+  responsibleUserIdx: index("weekly_commitments_responsible_user_id_idx").on(table.responsibleUserId),
+}));
 
 export const insertWeeklyCommitmentSchema = createInsertSchema(weeklyCommitments, {
   description: z.string().min(1).max(500),

@@ -1,4 +1,4 @@
-import { pgTable, serial, text, integer, timestamp, boolean, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, integer, timestamp, boolean, jsonb, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { users, companies } from "./common";
@@ -30,7 +30,9 @@ export const companySettings = pgTable("company_settings", {
   timezone: text("timezone").default("America/Mexico_City"),
   locale: text("locale").default("es-MX"),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => ({
+  companyIdIdx: index("company_settings_company_id_idx").on(table.companyId),
+}));
 
 // --- Audit Log ---
 
@@ -43,7 +45,10 @@ export const auditLog = pgTable("audit_log", {
   details: jsonb("details").$type<Record<string, unknown>>(),
   ipAddress: text("ip_address"),
   createdAt: timestamp("created_at").defaultNow(),
-});
+}, (table) => ({
+  performedByIdx: index("audit_log_performed_by_id_idx").on(table.performedById),
+  entityTypeIdx: index("audit_log_entity_type_idx").on(table.entityType),
+}));
 
 // --- Module Config ---
 

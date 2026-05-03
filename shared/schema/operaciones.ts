@@ -1,4 +1,4 @@
-import { pgTable, serial, text, integer, timestamp, boolean, numeric, jsonb, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, integer, timestamp, boolean, numeric, jsonb, pgEnum, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { users } from "./common";
@@ -154,7 +154,12 @@ export const surveys = pgTable("surveys", {
   generalInfo: jsonb("general_info"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => ({
+  prospectIdIdx: index("surveys_prospect_id_idx").on(table.prospectId),
+  statusIdx: index("surveys_status_idx").on(table.status),
+  assignedCommercialIdx: index("surveys_assigned_commercial_id_idx").on(table.assignedCommercialId),
+  assignedOperationsIdx: index("surveys_assigned_operations_id_idx").on(table.assignedOperationsId),
+}));
 
 // ─── Legacy table (kept temporarily) ────────────────────
 
@@ -166,7 +171,9 @@ export const surveyWasteTypes = pgTable("survey_waste_types", {
   percentage: integer("percentage"),
   currentDestination: text("current_destination"),
   monthlyCost: numeric("monthly_cost", { precision: 10, scale: 2 }),
-});
+}, (table) => ({
+  surveyIdIdx: index("survey_waste_types_survey_id_idx").on(table.surveyId),
+}));
 
 // ─── Kept table: competitor info ────────────────────────
 
@@ -185,7 +192,9 @@ export const surveyCurrentServices = pgTable("survey_current_services", {
   includesReporting: boolean("includes_reporting").default(false),
   satisfactionLevel: integer("satisfaction_level"),
   reasonForChange: text("reason_for_change"),
-});
+}, (table) => ({
+  surveyIdIdx: index("survey_current_services_survey_id_idx").on(table.surveyId),
+}));
 
 // ─── Section 8: Photos ──────────────────────────────────
 
@@ -198,7 +207,9 @@ export const surveyPhotos = pgTable("survey_photos", {
   sortOrder: integer("sort_order").default(0),
   uploadedById: integer("uploaded_by_id").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow(),
-});
+}, (table) => ({
+  surveyIdIdx: index("survey_photos_survey_id_idx").on(table.surveyId),
+}));
 
 // ─── Section 9: Proposal Personnel ──────────────────────
 
@@ -209,7 +220,9 @@ export const surveyProposalPersonnel = pgTable("survey_proposal_personnel", {
   quantity: integer("quantity").default(1),
   schedule: text("schedule"),
   observations: text("observations"),
-});
+}, (table) => ({
+  surveyIdIdx: index("survey_proposal_personnel_survey_id_idx").on(table.surveyId),
+}));
 
 // ─── Section 10: Proposal Equipment ─────────────────────
 
@@ -219,7 +232,9 @@ export const surveyProposalEquipment = pgTable("survey_proposal_equipment", {
   item: text("item").notNull(),
   quantity: integer("quantity").default(1),
   observations: text("observations"),
-});
+}, (table) => ({
+  surveyIdIdx: index("survey_proposal_equipment_survey_id_idx").on(table.surveyId),
+}));
 
 // ─── Section 11: Proposal Supplies ──────────────────────
 
@@ -229,7 +244,9 @@ export const surveyProposalSupplies = pgTable("survey_proposal_supplies", {
   item: text("item").notNull(),
   quantity: integer("quantity").default(1),
   observations: text("observations"),
-});
+}, (table) => ({
+  surveyIdIdx: index("survey_proposal_supplies_survey_id_idx").on(table.surveyId),
+}));
 
 // ─── Section 12: Proposal Rentals ───────────────────────
 
@@ -239,7 +256,9 @@ export const surveyProposalRentals = pgTable("survey_proposal_rentals", {
   item: text("item").notNull(),
   quantity: integer("quantity").default(1),
   observations: text("observations"),
-});
+}, (table) => ({
+  surveyIdIdx: index("survey_proposal_rentals_survey_id_idx").on(table.surveyId),
+}));
 
 // ─── Section 13: Subproducts Catalog ────────────────────
 
@@ -255,7 +274,9 @@ export const surveySubproducts = pgTable("survey_subproducts", {
   collectionFrequency: text("collection_frequency"),
   transportRequired: text("transport_required"),
   storage: text("storage"),
-});
+}, (table) => ({
+  surveyIdIdx: index("survey_subproducts_survey_id_idx").on(table.surveyId),
+}));
 
 // ─── Section 14: Services Catalog ───────────────────────
 
@@ -271,7 +292,9 @@ export const surveyServices = pgTable("survey_services", {
   collectionFrequency: text("collection_frequency"),
   equipmentRequired: text("equipment_required"),
   suggestedTreatment: text("suggested_treatment"),
-});
+}, (table) => ({
+  surveyIdIdx: index("survey_services_survey_id_idx").on(table.surveyId),
+}));
 
 // ─── Gate Configuration (admin-configurable required fields) ─
 

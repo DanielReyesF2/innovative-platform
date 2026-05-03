@@ -1,4 +1,4 @@
-import { pgTable, serial, text, integer, timestamp, boolean, numeric, jsonb, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, integer, timestamp, boolean, numeric, jsonb, pgEnum, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -61,7 +61,9 @@ export const traceabilityRecords = pgTable("traceability_records", {
   // Revenue
   monthlyRevenue: numeric("monthly_revenue", { precision: 12, scale: 2 }),
   createdAt: timestamp("created_at").defaultNow(),
-});
+}, (table) => ({
+  clientIdIdx: index("traceability_records_client_id_idx").on(table.clientId),
+}));
 
 // Client reports (monthly reports sent to clients)
 export const clientReports = pgTable("client_reports", {
@@ -75,7 +77,9 @@ export const clientReports = pgTable("client_reports", {
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => ({
+  clientIdIdx: index("client_reports_client_id_idx").on(table.clientId),
+}));
 
 // Economic models / proposals
 export const economicModels = pgTable("economic_models", {
@@ -95,7 +99,9 @@ export const economicModels = pgTable("economic_models", {
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => ({
+  clientIdIdx: index("economic_models_client_id_idx").on(table.clientId),
+}));
 
 // Service conciliation (monthly service vs billed reconciliation)
 export const serviceConciliations = pgTable("service_conciliations", {
@@ -109,7 +115,9 @@ export const serviceConciliations = pgTable("service_conciliations", {
   discrepancies: text("discrepancies"),
   isReconciled: boolean("is_reconciled").default(false),
   createdAt: timestamp("created_at").defaultNow(),
-});
+}, (table) => ({
+  clientIdIdx: index("service_conciliations_client_id_idx").on(table.clientId),
+}));
 
 // Validators
 export const insertServiceClientSchema = createInsertSchema(serviceClients, {
