@@ -13,6 +13,7 @@ import {
   followUpAlerts,
   ventasReales,
   kpisMensuales,
+  stageTransitions,
   type InsertProspect,
   type InsertLead,
   type InsertActivity,
@@ -32,6 +33,16 @@ import {
   surveyCurrentServices,
 } from "../../../shared/schema/operaciones";
 import { users } from "../../../shared/schema/common";
+import {
+  STAGE,
+  ACTIVE_STAGE_IDS,
+  WON_STAGE_IDS,
+  LOST_STAGE_IDS,
+  HANDOFF_ALLOWED_STAGE_IDS,
+  isWonStage,
+  isLostStage,
+} from "../../../shared/schema/comercial-stages";
+import { addBusinessDays } from "../../../shared/utils/business-days";
 
 // Drizzle pgEnum columns expect the exact union type, but runtime values are strings.
 // This helper casts safely to avoid `as any` while keeping TypeScript happy.
@@ -39,6 +50,7 @@ import { users } from "../../../shared/schema/common";
 const enumCast = <T>(value: string): T => value as unknown as T;
 type ProspectStage = (typeof prospects.stage)["_"]["data"];
 type AlertStatus = (typeof followUpAlerts.status)["_"]["data"];
+type AlertType = (typeof followUpAlerts.alertType)["_"]["data"];
 type Priority = (typeof prospects.priority)["_"]["data"];
 type ProposalStatus = (typeof proposalVersions.status)["_"]["data"];
 
@@ -89,6 +101,7 @@ export async function deleteProspect(id: number) {
     await tx.delete(prospectDocuments).where(eq(prospectDocuments.prospectId, id));
     await tx.delete(proposalVersions).where(eq(proposalVersions.prospectId, id));
     await tx.delete(followUpAlerts).where(eq(followUpAlerts.prospectId, id));
+    await tx.delete(stageTransitions).where(eq(stageTransitions.prospectId, id));
     // Clear FK from leads that were converted to this prospect
     await tx.update(leads).set({ convertedToProspectId: null }).where(eq(leads.convertedToProspectId, id));
     const [deleted] = await tx.delete(prospects).where(eq(prospects.id, id)).returning();
@@ -96,24 +109,177 @@ export async function deleteProspect(id: number) {
   });
 }
 
-export async function updateProspect(id: number, data: Partial<InsertProspect>) {
+// Records a stage change in stage_transitions for later time-in-stage analytics.
+// Non-blocking: failures are logged but don't break the caller.
+async function recordStageTransition(
+  prospectId: number,
+  fromStage: string | null,
+  toStage: string,
+  changedById?: number | null,
+  notes?: string | null,
+) {
+  try {
+    const last = await db.query.stageTransitions.findFirst({
+      where: eq(stageTransitions.prospectId, prospectId),
+      orderBy: [desc(stageTransitions.changedAt)],
+    });
+
+    let durationMs: number | null = null;
+    const now = Date.now();
+    if (last?.changedAt) {
+      durationMs = now - new Date(last.changedAt).getTime();
+    } else {
+      const p = await db.query.prospects.findFirst({
+        where: eq(prospects.id, prospectId),
+        columns: { createdAt: true },
+      });
+      if (p?.createdAt) durationMs = now - new Date(p.createdAt).getTime();
+    }
+
+    await db.insert(stageTransitions).values({
+      prospectId,
+      fromStage,
+      toStage,
+      changedById: changedById ?? null,
+      durationInPrevStageMs: durationMs,
+      notes: notes ?? null,
+    });
+  } catch (err) {
+    console.error("[comercial] Failed to record stage transition:", err);
+  }
+}
+
+// True when the "Agendar levantamiento" form has every field Operaciones needs
+// to actually prepare the visit. Used to trigger the auto-advance to Propuesta.
+// Keep in sync with the ProspectLevantamiento form's required fields.
+//
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function isSchedulingComplete(levData: any): boolean {
+  if (!levData) return false;
+  const sched = levData.scheduling;
+  if (!sched) return false;
+  if (!sched.proposedDate || !sched.proposedTime) return false;
+  if (!sched.siteAddress || typeof sched.siteAddress !== "string" || !sched.siteAddress.trim()) return false;
+  if (!sched.contactName || !sched.contactPhone || !sched.contactEmail) return false;
+  // At least one participant across any area (or in legacy responsibleIds)
+  const pba = sched.participantsByArea || {};
+  const totalParticipants =
+    (pba.comercial?.length || 0) +
+    (pba.operaciones?.length || 0) +
+    (pba.subproductos?.length || 0);
+  const legacyResponsibles = Array.isArray(sched.responsibleIds) ? sched.responsibleIds.length : 0;
+  if (totalParticipants === 0 && legacyResponsibles === 0) return false;
+  // At least one waste type with a non-empty wasteType id
+  const wasteTypes = Array.isArray(levData.wasteTypes) ? levData.wasteTypes : [];
+  if (!wasteTypes.some((wt: { wasteType?: string }) => wt?.wasteType && String(wt.wasteType).trim())) {
+    return false;
+  }
+  return true;
+}
+
+export async function updateProspect(
+  id: number,
+  data: Partial<InsertProspect>,
+  actorId?: number,
+) {
+  // If stage is about to change (either from caller or from our auto-advance
+  // below), snapshot the old one so we can log the transition.
+  const current = await db.query.prospects.findFirst({
+    where: eq(prospects.id, id),
+    columns: { stage: true, surveyDate: true, proposalDeadline: true, assignedToId: true, name: true },
+  });
+  const oldStage = current?.stage ?? null;
+
+  // Auto-advance rule (Fase 2 bloque 3 — Vero spec):
+  //   When the user is in stage 'propuesta' (business "Agendar levantamiento")
+  //   and a single updateProspect call makes the levantamientoData scheduling
+  //   fully complete, move the prospect to 'negociacion' (business "Propuesta")
+  //   and set a 3-business-day deadline for uploading the propuesta file.
+  const patch: Record<string, unknown> = { ...data, updatedAt: new Date() };
+  let triggeredAutoAdvance = false;
+  let newDeadline: Date | null = null;
+  const incomingLevData = (data as { levantamientoData?: unknown }).levantamientoData;
+  const willStayInPropuesta = typeof data.stage !== "string" || data.stage === STAGE.PROPUESTA;
+  if (
+    incomingLevData &&
+    oldStage === STAGE.PROPUESTA &&
+    willStayInPropuesta &&
+    isSchedulingComplete(incomingLevData)
+  ) {
+    // Parse surveyDate from the form if present (same field the form writes),
+    // falling back to whatever is currently stored on the prospect.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const schedDateStr = (incomingLevData as any)?.scheduling?.proposedDate || current?.surveyDate;
+    if (schedDateStr) {
+      const base = new Date(schedDateStr);
+      if (!Number.isNaN(base.getTime())) {
+        newDeadline = addBusinessDays(base, 3);
+        patch.stage = STAGE.NEGOCIACION;
+        patch.proposalDeadline = newDeadline;
+        patch.surveyDate = schedDateStr;
+        triggeredAutoAdvance = true;
+      }
+    }
+  }
+
   const [updated] = await db
     .update(prospects)
-    .set({ ...data, updatedAt: new Date() })
+    .set(patch)
     .where(eq(prospects.id, id))
     .returning();
+
+  if (
+    updated &&
+    typeof patch.stage === "string" &&
+    oldStage !== null &&
+    oldStage !== patch.stage
+  ) {
+    await recordStageTransition(
+      id,
+      oldStage,
+      patch.stage,
+      actorId,
+      triggeredAutoAdvance ? "Auto-advance: agendamiento de levantamiento completo" : null,
+    );
+  }
+
+  // Create a follow-up alert so Dirección sees the pending propuesta deadline.
+  if (triggeredAutoAdvance && updated && newDeadline) {
+    try {
+      await db.insert(followUpAlerts).values({
+        prospectId: id,
+        alertType: enumCast<AlertType>("proposal_deadline_pending"),
+        status: enumCast<AlertStatus>("pending"),
+        title: `Propuesta pendiente: ${updated.name}`,
+        message: `Se agendó el levantamiento. Fecha límite para subir la propuesta: ${newDeadline.toLocaleDateString("es-MX", { day: "numeric", month: "short", year: "numeric" })}.`,
+        priority: enumCast<Priority>("alta"),
+        dueDate: newDeadline,
+        assignedToId: updated.assignedToId ?? null,
+      });
+    } catch (err) {
+      console.error("[comercial] Failed to create proposal-deadline alert:", err);
+    }
+  }
+
   return updated;
 }
 
 export async function rejectProspect(
   id: number,
   rejectionReasonId: number,
-  rejectionDetail: string
+  rejectionDetail: string,
+  actorId?: number,
 ) {
+  const current = await db.query.prospects.findFirst({
+    where: eq(prospects.id, id),
+    columns: { stage: true },
+  });
+  const oldStage = current?.stage ?? null;
+
   const [updated] = await db
     .update(prospects)
     .set({
-      stage: "cierre_perdido",
+      stage: STAGE.CIERRE_PERDIDO,
       probability: 0,
       rejectionReasonId,
       rejectionDetail,
@@ -122,29 +288,34 @@ export async function rejectProspect(
     })
     .where(eq(prospects.id, id))
     .returning();
+
+  if (updated && oldStage && oldStage !== STAGE.CIERRE_PERDIDO) {
+    await recordStageTransition(id, oldStage, STAGE.CIERRE_PERDIDO, actorId, rejectionDetail || null);
+  }
+
   return updated;
 }
 
 // --- Qualify Lead → Prospecto ---
 
-export async function qualifyProspect(id: number, data: {
-  industry: string;
-  potential: string;
-  estimatedValue?: string | number;
-  estimatedVolume?: string;
-  probability: number;
-  priority: string;
-  contactRole?: string;
-  contactEmail?: string;
-  reason?: string;
-  nextStep?: string;
-}) {
-  // Verify prospect exists and is in 'lead' stage
+export async function qualifyProspect(
+  id: number,
+  data: {
+    // Per Vero's flow (Prospecto stage): solo datos de contacto + ubicación.
+    // Industria viene de Lead; potencial / cotización / residuos llegan después.
+    contactRole: string;
+    contactPhone: string;
+    contactEmail: string;
+    location: string;
+    serviceFrequency?: string;
+  },
+  actorId?: number,
+) {
   const prospect = await db.query.prospects.findFirst({
     where: eq(prospects.id, id),
   });
   if (!prospect) throw new Error("NOT_FOUND");
-  if (prospect.stage !== "lead") {
+  if (prospect.stage !== STAGE.LEAD) {
     throw new Error("CONFLICT:El prospecto no esta en etapa 'lead'");
   }
 
@@ -152,20 +323,19 @@ export async function qualifyProspect(id: number, data: {
     .update(prospects)
     .set({
       stage: "prospecto",
-      industry: data.industry,
-      potential: data.potential,
-      estimatedValue: data.estimatedValue ? String(data.estimatedValue) : null,
-      estimatedVolume: data.estimatedVolume || null,
-      probability: data.probability,
-      priority: enumCast<Priority>(data.priority || "media"),
-      contactRole: data.contactRole || null,
-      contactEmail: data.contactEmail || null,
-      reason: data.reason || null,
-      nextStep: data.nextStep || null,
+      contactRole: data.contactRole,
+      contactPhone: data.contactPhone,
+      contactEmail: data.contactEmail,
+      location: data.location,
+      serviceFrequency: data.serviceFrequency || null,
       updatedAt: new Date(),
     })
     .where(eq(prospects.id, id))
     .returning();
+
+  if (updated) {
+    await recordStageTransition(id, STAGE.LEAD, "prospecto", actorId);
+  }
 
   return updated;
 }
@@ -196,18 +366,14 @@ export async function assignLead(id: number, assignedToId: number) {
 export async function convertLeadToProspect(
   leadId: number,
   qualifyData: {
-    industry?: string;
+    // Per Vero's flow (Prospecto stage): solo datos de contacto + ubicación
+    // + frecuencia opcional. La industria viene del Lead; potencial /
+    // cotización / residuos llegan en etapas posteriores.
+    contactRole?: string;
+    contactPhone?: string;
+    contactEmail?: string;
     location?: string;
-    potential?: string;
-    estimatedValue?: string;
-    estimatedVolume?: string;
-    wasteInfo?: {
-      wasteTypes: string[];
-      estimatedVolume: string;
-      hasCurrentProvider: boolean;
-      currentProviderName?: string;
-      reasonForChange?: string;
-    };
+    serviceFrequency?: string;
   }
 ) {
   const lead = await db.query.leads.findFirst({ where: eq(leads.id, leadId) });
@@ -215,25 +381,21 @@ export async function convertLeadToProspect(
   if (!lead.isActive) throw new Error("CONFLICT:Este lead ya fue convertido");
 
   const result = await db.transaction(async (tx) => {
-    // Create prospect from lead data
+    // Create prospect from lead data (industria viene del Lead, location +
+    // contact info se enriquecen desde el formulario de calificación).
     const [prospect] = await tx
       .insert(prospects)
       .values({
         name: lead.companyName,
         contactName: lead.contactName,
-        contactRole: lead.contactRole || null,
-        contactPhone: lead.contactPhone || null,
-        contactEmail: lead.contactEmail || null,
-        industry: qualifyData.industry || null,
-        location: qualifyData.location || null,
-        potential: qualifyData.potential || null,
-        estimatedValue: qualifyData.estimatedValue || null,
-        estimatedVolume: qualifyData.estimatedVolume || null,
-        levantamientoData: qualifyData.wasteInfo
-          ? { qualificationWaste: qualifyData.wasteInfo }
-          : null,
-        stage: "contacto_inicial",
-        probability: 10,
+        contactRole: qualifyData.contactRole || lead.contactRole || null,
+        contactPhone: qualifyData.contactPhone || lead.contactPhone || null,
+        contactEmail: qualifyData.contactEmail || lead.contactEmail || null,
+        industry: lead.industry || null,
+        location: qualifyData.location || lead.location || null,
+        serviceFrequency: qualifyData.serviceFrequency || null,
+        stage: STAGE.PRESENTACION,
+        probability: 20,
         priority: "media",
       })
       .returning();
@@ -263,13 +425,13 @@ export async function getRejectionReasons() {
 
 export async function getPipelineSummary() {
   // New stages + legacy equivalents grouped together
-  const stageGroups = [
-    { key: "contacto_inicial", values: ["contacto_inicial", "lead"] },
-    { key: "presentacion", values: ["presentacion"] },
-    { key: "levantamiento", values: ["levantamiento"] },
-    { key: "propuesta", values: ["propuesta"] },
-    { key: "negociacion", values: ["negociacion"] },
-    { key: "cierre_ganado", values: ["cierre_ganado", "cierre"] },
+  const stageGroups: { key: string; values: string[] }[] = [
+    { key: STAGE.CONTACTO_INICIAL, values: [STAGE.CONTACTO_INICIAL, STAGE.LEAD] },
+    { key: STAGE.PRESENTACION, values: [STAGE.PRESENTACION] },
+    { key: STAGE.LEVANTAMIENTO, values: [STAGE.LEVANTAMIENTO] },
+    { key: STAGE.PROPUESTA, values: [STAGE.PROPUESTA] },
+    { key: STAGE.NEGOCIACION, values: [STAGE.NEGOCIACION] },
+    { key: STAGE.CIERRE_GANADO, values: [...WON_STAGE_IDS] },
   ];
   const results = [];
 
@@ -323,8 +485,7 @@ export async function sendProspectToOperaciones(prospectId: number, sentById: nu
   if (!prospect) throw new Error("NOT_FOUND");
 
   // State guard: only early stages can be sent
-  const allowedStages = ["lead", "contacto_inicial", "presentacion", "levantamiento"];
-  if (!allowedStages.includes(prospect.stage)) {
+  if (!(HANDOFF_ALLOWED_STAGE_IDS as readonly string[]).includes(prospect.stage)) {
     throw new Error("CONFLICT:El prospecto ya paso la etapa de levantamiento");
   }
 
@@ -344,15 +505,23 @@ export async function sendProspectToOperaciones(prospectId: number, sentById: nu
   // For now, typed as Record to avoid `as any` while keeping indexability.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const levData = prospect.levantamientoData as Record<string, any> | null;
-  if (!levData?.generalInfo?.razonSocial) {
-    throw new Error("VALIDATION:Se requiere al menos razon social en datos de levantamiento");
-  }
+  // razón social defaults to prospect.name — the Comercial form doesn't ask for it
+  // explicitly; Operaciones can refine later in their review step.
+  const razonSocial = levData?.generalInfo?.razonSocial || prospect.name;
   if (!levData?.wasteTypes?.length || !levData.wasteTypes[0]?.wasteType) {
     throw new Error("VALIDATION:Se requiere al menos un tipo de residuo");
   }
 
   // All writes in a single transaction
   const result = await db.transaction(async (tx) => {
+    // Prefer the explicit scheduling.siteAddress (captured by Comercial on the
+    // 'Agendar Levantamiento' form) and fall back to the legacy generalInfo.direccion
+    // that older records used.
+    const siteAddress =
+      levData?.scheduling?.siteAddress ||
+      levData?.generalInfo?.direccion ||
+      null;
+
     // Create survey (scheduledDate = null until operaciones accepts)
     const [survey] = await tx
       .insert(surveys)
@@ -362,10 +531,15 @@ export async function sendProspectToOperaciones(prospectId: number, sentById: nu
         type: "Levantamiento",
         estimatedVolume: prospect.estimatedVolume,
         estimatedValue: prospect.estimatedValue,
-        address: levData.generalInfo?.direccion || null,
+        address: siteAddress,
         generalInfo: {
-          ...levData.generalInfo,
-          proposedScheduling: levData.scheduling || null,
+          ...(levData?.generalInfo || {}),
+          razonSocial,
+          direccion: siteAddress,
+          // proposedScheduling carries every scheduling field captured by
+          // Comercial (contactRole, participantsByArea, accessRequirements,
+          // vehiclePlates, etc.) so Operaciones has the full context.
+          proposedScheduling: levData?.scheduling || null,
         },
         prospectId: prospect.id,
         sentById,
@@ -412,7 +586,7 @@ export async function sendProspectToOperaciones(prospectId: number, sentById: nu
     const [updated] = await tx
       .update(prospects)
       .set({
-        stage: "levantamiento",
+        stage: STAGE.LEVANTAMIENTO,
         surveyId: survey.id,
         sentToOpsAt: new Date(),
         sentToOpsById: sentById,
@@ -545,6 +719,29 @@ export async function cancelMeeting(id: number) {
   return updated;
 }
 
+// Generic partial update for a meeting row — used by the inline-edit UI so
+// cualquier campo editable puede modificarse sin abrir modal. Cubre el spec
+// de Vero para la etapa Reunión (tipo, objetivo, asistentes, etc.).
+export async function updateMeeting(
+  id: number,
+  data: Partial<Pick<InsertMeeting, "title" | "description" | "scheduledAt" | "duration" | "location" | "meetingUrl" | "meetingType" | "objective" | "attendees">>,
+) {
+  const [updated] = await db
+    .update(prospectMeetings)
+    .set({ ...data, updatedAt: new Date() })
+    .where(eq(prospectMeetings.id, id))
+    .returning();
+  return updated;
+}
+
+export async function deleteMeeting(id: number) {
+  const [deleted] = await db
+    .delete(prospectMeetings)
+    .where(eq(prospectMeetings.id, id))
+    .returning();
+  return deleted;
+}
+
 // --- Documents ---
 
 export async function getProspectDocuments(prospectId: number) {
@@ -610,6 +807,31 @@ export async function sendProposal(id: number, sentById: number) {
     .set({ status: "enviada", sentAt: new Date(), sentById, updatedAt: new Date() })
     .where(eq(proposalVersions.id, id))
     .returning();
+
+  // Mark the propuesta as delivered on the prospect and stop the SLA clock
+  // (Fase 2 bloque 3). Also auto-resolve the pending/overdue deadline alerts
+  // so Dirección's tray doesn't keep nagging.
+  if (updated?.prospectId) {
+    const now = new Date();
+    await db
+      .update(prospects)
+      .set({ proposalDate: now, proposalDeadline: null, updatedAt: now })
+      .where(eq(prospects.id, updated.prospectId));
+    await db
+      .update(followUpAlerts)
+      .set({ status: enumCast<AlertStatus>("auto_resolved"), acknowledgedAt: now })
+      .where(
+        and(
+          eq(followUpAlerts.prospectId, updated.prospectId),
+          eq(followUpAlerts.status, enumCast<AlertStatus>("pending")),
+          or(
+            eq(followUpAlerts.alertType, enumCast<AlertType>("proposal_deadline_pending")),
+            eq(followUpAlerts.alertType, enumCast<AlertType>("proposal_deadline_overdue")),
+          ),
+        ),
+      );
+  }
+
   return updated;
 }
 
@@ -622,13 +844,65 @@ export async function changeProposalStatus(id: number, status: string) {
   return updated;
 }
 
+// Generic partial update for a proposal — usado por la UI inline para
+// campos como utilidad, recipientName, recipientRole, notes, validUntil.
+export async function updateProposal(
+  id: number,
+  data: Partial<Pick<InsertProposal, "amount" | "utilidad" | "recipientName" | "recipientRole" | "notes" | "validUntil">>,
+) {
+  const [updated] = await db
+    .update(proposalVersions)
+    .set({ ...data, updatedAt: new Date() })
+    .where(eq(proposalVersions.id, id))
+    .returning();
+  // Si cambió el amount, sincronizar con prospect.estimatedValue — mismo
+  // comportamiento que updateProposalAmount.
+  if (updated && data.amount !== undefined && updated.prospectId) {
+    await db
+      .update(prospects)
+      .set({ estimatedValue: String(data.amount), updatedAt: new Date() })
+      .where(eq(prospects.id, updated.prospectId));
+  }
+  return updated;
+}
+
 export async function updateProposalAmount(id: number, amount: string) {
   const [updated] = await db
     .update(proposalVersions)
     .set({ amount, updatedAt: new Date() })
     .where(eq(proposalVersions.id, id))
     .returning();
+  if (updated?.prospectId) {
+    await db
+      .update(prospects)
+      .set({ estimatedValue: amount, updatedAt: new Date() })
+      .where(eq(prospects.id, updated.prospectId));
+  }
   return updated;
+}
+
+// --- Stage Transitions (audit log) ---
+
+export async function getStageTransitions(prospectId: number) {
+  return db.query.stageTransitions.findMany({
+    where: eq(stageTransitions.prospectId, prospectId),
+    orderBy: [desc(stageTransitions.changedAt)],
+  });
+}
+
+// Average duration (in ms) a prospect spent in each "from" stage, aggregated across
+// all prospects that have at least one transition out of that stage.
+export async function getAverageDurationByStage() {
+  const rows = await db
+    .select({
+      stage: stageTransitions.fromStage,
+      avgMs: sql<number>`coalesce(avg(${stageTransitions.durationInPrevStageMs}), 0)::bigint`,
+      samples: sql<number>`count(*)::int`,
+    })
+    .from(stageTransitions)
+    .where(sql`${stageTransitions.fromStage} is not null and ${stageTransitions.durationInPrevStageMs} is not null`)
+    .groupBy(stageTransitions.fromStage);
+  return rows;
 }
 
 // --- Alerts ---
@@ -681,7 +955,7 @@ export async function generateAlerts() {
   const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
   // Find prospects with overdue follow-ups
-  const activeStages = ["contacto_inicial", "presentacion", "lead", "levantamiento", "propuesta", "negociacion"];
+  const activeStages = ACTIVE_STAGE_IDS;
   const overdueProspects = await db.query.prospects.findMany({
     where: and(
       lte(prospects.nextFollowUpAt, now),
@@ -779,8 +1053,8 @@ export async function getSalesForecast() {
     .where(
       and(
         or(
-          eq(prospects.stage, "propuesta"),
-          eq(prospects.stage, "negociacion")
+          eq(prospects.stage, STAGE.PROPUESTA),
+          eq(prospects.stage, STAGE.NEGOCIACION)
         )
       )
     )
@@ -797,7 +1071,7 @@ export async function getWinLossAnalysis() {
       count: sql<number>`count(*)::int`,
     })
     .from(prospects)
-    .where(or(eq(prospects.stage, "cierre_ganado"), eq(prospects.stage, "cierre")))
+    .where(or(...WON_STAGE_IDS.map((s) => eq(prospects.stage, s))))
     .groupBy(prospects.opportunity);
 
   const losses = await db
@@ -807,7 +1081,7 @@ export async function getWinLossAnalysis() {
     })
     .from(prospects)
     .leftJoin(rejectionReasons, eq(prospects.rejectionReasonId, rejectionReasons.id))
-    .where(or(eq(prospects.stage, "cierre_perdido"), eq(prospects.stage, "rechazada")))
+    .where(or(...LOST_STAGE_IDS.map((s) => eq(prospects.stage, s))))
     .groupBy(rejectionReasons.reason);
 
   const totalWins = wins.reduce((sum, w) => sum + w.count, 0);
@@ -836,8 +1110,8 @@ export async function getCompetitorAnalysis() {
         competitorStats[comp] = { mentions: 0, wins: 0, losses: 0 };
       }
       competitorStats[comp].mentions++;
-      if (["cierre", "cierre_ganado"].includes(p.stage)) competitorStats[comp].wins++;
-      if (["rechazada", "cierre_perdido"].includes(p.stage)) competitorStats[comp].losses++;
+      if (isWonStage(p.stage)) competitorStats[comp].wins++;
+      if (isLostStage(p.stage)) competitorStats[comp].losses++;
     }
   }
 
@@ -968,7 +1242,7 @@ export async function createOrUpdateKpiMensual(data: InsertKpiMensual) {
 export async function getRechazadasConVencimiento() {
   return db.query.prospects.findMany({
     where: and(
-      or(eq(prospects.stage, "rechazada"), eq(prospects.stage, "cierre_perdido")),
+      or(...LOST_STAGE_IDS.map((s) => eq(prospects.stage, s))),
       sql`${prospects.fechaVencimientoContrato} is not null`
     ),
     orderBy: [prospects.fechaVencimientoContrato],
@@ -981,7 +1255,7 @@ export async function getRechazadasProximasAVencer(diasAnticipacion: number = 30
 
   return db.query.prospects.findMany({
     where: and(
-      or(eq(prospects.stage, "rechazada"), eq(prospects.stage, "cierre_perdido")),
+      or(...LOST_STAGE_IDS.map((s) => eq(prospects.stage, s))),
       sql`${prospects.fechaVencimientoContrato} is not null`,
       lte(prospects.fechaVencimientoContrato, fechaLimite)
     ),
@@ -1029,7 +1303,7 @@ export async function getComercialTeam() {
   // Calculate closed deal values from cierre_ganado prospects
   // Priority: proposal amount > estimatedValue > 0
   const closedProspects = await db.query.prospects.findMany({
-    where: eq(prospects.stage, "cierre_ganado"),
+    where: eq(prospects.stage, STAGE.CIERRE_GANADO),
     columns: { id: true, assignedToId: true, estimatedValue: true },
   });
 
@@ -1134,6 +1408,14 @@ export async function getWeeklyReport(userId: number, weekStart: string) {
       eq(comercialWeeklyReports.createdById, userId),
       eq(comercialWeeklyReports.weekStart, weekStart),
     ),
+  });
+}
+
+export async function listWeeklyReports(userId: number, limit = 12) {
+  return db.query.comercialWeeklyReports.findMany({
+    where: eq(comercialWeeklyReports.createdById, userId),
+    orderBy: [desc(comercialWeeklyReports.weekStart)],
+    limit,
   });
 }
 

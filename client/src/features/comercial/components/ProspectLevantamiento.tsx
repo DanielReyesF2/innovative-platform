@@ -6,12 +6,14 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { useProspect, useUpdateProspect, useSendToOperaciones } from "../api";
 import { useToast } from "@/components/ui/use-toast";
-import { EPP_OPTIONS, WASTE_TYPES_CATALOG } from "@/lib/comercial-constants";
+import { EPP_OPTIONS, WASTE_TYPES_CATALOG, ACCESS_REQUIREMENTS_OPTIONS } from "@/lib/comercial-constants";
+import { canHandoffStage } from "@shared/schema/comercial-stages";
 import type { User } from "@shared/schema/common";
 import {
   CalendarCheck, HardHat, Save, Recycle,
-  Send, CheckCircle, Users, Phone, Mail,
+  Send, CheckCircle, Users, Phone,
   ChevronDown, ChevronRight, Trash2, Plus,
+  MapPin, ShieldCheck, Car,
 } from "lucide-react";
 
 // ─── Field helper ───
@@ -44,13 +46,28 @@ function CollapsibleSection({ title, icon, children, defaultOpen = false }: {
   );
 }
 
+// Parse a legacy `quantity` string like "18 ton/mes" or "50 kg" into value + unit.
+// Defaults unit to "ton" when ambiguous (matches previous implicit behavior).
+function parseLegacyQuantity(raw: unknown): { value: string; unit: "kg" | "ton" } {
+  if (typeof raw !== "string" || !raw.trim()) return { value: "", unit: "ton" };
+  const match = raw.match(/^\s*([\d.,]+)\s*(kg|ton|tonelada|toneladas|kilogramo|kilogramos|kilos?)/i);
+  if (!match) return { value: raw, unit: "ton" };
+  const unit = match[2].toLowerCase().startsWith("k") ? "kg" : "ton";
+  return { value: match[1].replace(",", "."), unit };
+}
+
 // ─── Section: Tipos de Residuo ───
 function WasteTypesSection({ data, onChange }: { data: Record<string, unknown>[]; onChange: (d: Record<string, unknown>[]) => void }) {
-  const addRow = () => onChange([...data, { wasteType: "", quantity: "", currentDestination: "" }]);
+  const addRow = () => onChange([...data, { wasteType: "", quantityValue: "", quantityUnit: "ton", quantity: "", currentDestination: "" }]);
   const removeRow = (i: number) => onChange(data.filter((_, idx) => idx !== i));
   const updateRow = (i: number, key: string, val: string) => {
     const updated = [...data];
     updated[i] = { ...updated[i], [key]: val } as Record<string, unknown>;
+    onChange(updated);
+  };
+  const updateRowFields = (i: number, fields: Record<string, unknown>) => {
+    const updated = [...data];
+    updated[i] = { ...updated[i], ...fields };
     onChange(updated);
   };
   const categories = [...new Set(WASTE_TYPES_CATALOG.map(w => w.category))];
@@ -61,6 +78,16 @@ function WasteTypesSection({ data, onChange }: { data: Record<string, unknown>[]
       {data.map((row: Record<string, unknown>, i: number) => {
         const currentType = row.wasteType as string;
         const isLegacyValue = currentType && !WASTE_TYPES_CATALOG.some(w => w.id === currentType || w.label === currentType);
+        const legacy = parseLegacyQuantity(row.quantity);
+        const quantityValue = ((row.quantityValue as string) ?? legacy.value) || "";
+        const quantityUnit = ((row.quantityUnit as "kg" | "ton") ?? legacy.unit) || "ton";
+        const setQuantity = (value: string, unit: "kg" | "ton") => {
+          updateRowFields(i, {
+            quantityValue: value,
+            quantityUnit: unit,
+            quantity: value ? `${value} ${unit}/mes` : "",
+          });
+        };
         return (
           <div key={i} className="mb-3 rounded-lg border p-3">
             <div className="mb-2 flex items-center justify-between">
@@ -86,7 +113,47 @@ function WasteTypesSection({ data, onChange }: { data: Record<string, unknown>[]
                   </select>
                 )}
               </div>
-              <Field label="Cantidad" value={row.quantity} onChange={(v) => updateRow(i, "quantity", v)} placeholder="Ej: 18 ton/mes" />
+              <div>
+                <Label className="text-xs">Cantidad mensual</Label>
+                <div className="mt-1 flex items-stretch gap-1.5">
+                  <Input
+                    type="number"
+                    inputMode="decimal"
+                    min="0"
+                    step="any"
+                    value={quantityValue}
+                    onChange={(e) => setQuantity(e.target.value, quantityUnit)}
+                    placeholder="Ej: 18"
+                    className="flex-1"
+                  />
+                  <div className="inline-flex shrink-0 overflow-hidden rounded-md border border-input">
+                    <button
+                      type="button"
+                      onClick={() => setQuantity(quantityValue, "kg")}
+                      className={`px-2.5 text-xs font-medium transition-colors ${
+                        quantityUnit === "kg"
+                          ? "bg-[#00a8a8] text-white"
+                          : "bg-background text-[#6b7280] hover:bg-[#f3f4f6]"
+                      }`}
+                      aria-pressed={quantityUnit === "kg"}
+                    >
+                      kg
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setQuantity(quantityValue, "ton")}
+                      className={`px-2.5 text-xs font-medium transition-colors ${
+                        quantityUnit === "ton"
+                          ? "bg-[#00a8a8] text-white"
+                          : "bg-background text-[#6b7280] hover:bg-[#f3f4f6]"
+                      }`}
+                      aria-pressed={quantityUnit === "ton"}
+                    >
+                      ton
+                    </button>
+                  </div>
+                </div>
+              </div>
               <Field label="Destino Actual" value={row.currentDestination} onChange={(v) => updateRow(i, "currentDestination", v)} />
             </div>
           </div>
@@ -94,6 +161,61 @@ function WasteTypesSection({ data, onChange }: { data: Record<string, unknown>[]
       })}
       <Button variant="outline" size="sm" onClick={addRow}><Plus className="mr-1 h-3 w-3" /> Agregar residuo</Button>
     </CollapsibleSection>
+  );
+}
+
+// Team member shape consumed by the scheduling form. Adds areaSlug coming from
+// the joined areas table so we can split participants by business area.
+type TeamMemberRow = Pick<User, "id" | "name" | "codigo" | "email"> & {
+  areaSlug: string | null;
+  areaName: string | null;
+};
+
+// ─── Area participant selector (shared by comercial / operaciones / subproductos) ───
+function AreaParticipants({
+  label,
+  color,
+  selectedIds,
+  teamMembers,
+  onToggle,
+  emptyLabel,
+}: {
+  label: string;
+  color: string;
+  selectedIds: number[];
+  teamMembers: TeamMemberRow[];
+  onToggle: (id: number) => void;
+  emptyLabel: string;
+}) {
+  return (
+    <div>
+      <Label className="text-xs font-semibold" style={{ color }}>{label}</Label>
+      {teamMembers.length === 0 ? (
+        <p className="mt-1 text-[11px] italic text-[#9ca3af]">{emptyLabel}</p>
+      ) : (
+        <div className="mt-1 flex flex-wrap gap-1.5">
+          {teamMembers.map((m) => {
+            const active = selectedIds.includes(m.id);
+            return (
+              <button
+                key={m.id}
+                type="button"
+                onClick={() => onToggle(m.id)}
+                className="rounded-full px-2.5 py-1 text-xs font-medium transition-colors flex items-center gap-1.5"
+                style={active
+                  ? { backgroundColor: color, color: "white" }
+                  : { backgroundColor: "#f3f4f6", color: "#6b7280" }}
+              >
+                <span className="w-4 h-4 rounded-full bg-white/25 flex items-center justify-center text-[9px] font-bold">
+                  {m.codigo || m.name.split(" ").map(n => n[0]).join("").substring(0, 2)}
+                </span>
+                {m.name.split(" ").slice(0, 2).join(" ")}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -109,8 +231,8 @@ export function ProspectLevantamiento({ prospectId }: ProspectLevantamientoProps
   const sendToOps = useSendToOperaciones();
   const { toast } = useToast();
 
-  // Team members for responsable dropdown
-  const { data: teamMembers = [] } = useQuery<Pick<User, "id" | "name" | "codigo" | "email">[]>({
+  // Team members for participants dropdowns (include area slug from joined areas table)
+  const { data: teamMembers = [] } = useQuery<TeamMemberRow[]>({
     queryKey: ["/api/auth/team"],
     staleTime: 5 * 60 * 1000,
   });
@@ -118,12 +240,29 @@ export function ProspectLevantamiento({ prospectId }: ProspectLevantamientoProps
   // Scheduling state
   const [schedDate, setSchedDate] = useState("");
   const [schedTime, setSchedTime] = useState("");
-  const [schedResponsibles, setSchedResponsibles] = useState<number[]>([]);
   const [schedEpp, setSchedEpp] = useState<string[]>([]);
+  const [schedNotes, setSchedNotes] = useState("");
+
+  // Site + contact fields
+  const [schedSiteAddress, setSchedSiteAddress] = useState("");
   const [schedContactName, setSchedContactName] = useState("");
+  const [schedContactRole, setSchedContactRole] = useState("");
   const [schedContactPhone, setSchedContactPhone] = useState("");
   const [schedContactEmail, setSchedContactEmail] = useState("");
-  const [schedNotes, setSchedNotes] = useState("");
+
+  // Participants split by area
+  const [partComercial, setPartComercial] = useState<number[]>([]);
+  const [partOperaciones, setPartOperaciones] = useState<number[]>([]);
+  const [partSubproductos, setPartSubproductos] = useState<number[]>([]);
+
+  // Access requirements + vehicle plates
+  const [schedAccessReqs, setSchedAccessReqs] = useState<string[]>([]);
+  const [schedAccessReqsOther, setSchedAccessReqsOther] = useState("");
+  const [schedVehiclePlates, setSchedVehiclePlates] = useState("");
+
+  // Fecha de entrega del levantamiento por parte de Operaciones — campo que
+  // Comercial captura cuando Ops le confirma cuándo entregará el documento.
+  const [schedDeliveryDate, setSchedDeliveryDate] = useState("");
 
   const [wasteTypes, setWasteTypes] = useState<Record<string, unknown>[]>([]);
   const [initialized, setInitialized] = useState(false);
@@ -136,12 +275,28 @@ export function ProspectLevantamiento({ prospectId }: ProspectLevantamientoProps
     if (sched) {
       setSchedDate((sched.proposedDate as string) || "");
       setSchedTime((sched.proposedTime as string) || "");
-      setSchedResponsibles((sched.responsibleIds as number[]) || []);
       setSchedEpp((sched.epp as string[]) || []);
+      setSchedNotes((sched.notes as string) || "");
+      setSchedSiteAddress((sched.siteAddress as string) || "");
       setSchedContactName((sched.contactName as string) || "");
+      setSchedContactRole((sched.contactRole as string) || "");
       setSchedContactPhone((sched.contactPhone as string) || "");
       setSchedContactEmail((sched.contactEmail as string) || "");
-      setSchedNotes((sched.notes as string) || "");
+      setSchedAccessReqs((sched.accessRequirements as string[]) || []);
+      setSchedAccessReqsOther((sched.accessRequirementsOther as string) || "");
+      setSchedVehiclePlates((sched.vehiclePlates as string) || "");
+      setSchedDeliveryDate((sched.deliveryDate as string) || "");
+
+      // Participants: new structure first, legacy fallback so old data
+      // shows up as comercial until the user re-assigns.
+      const pba = sched.participantsByArea as Record<string, number[]> | undefined;
+      if (pba) {
+        setPartComercial(Array.isArray(pba.comercial) ? pba.comercial : []);
+        setPartOperaciones(Array.isArray(pba.operaciones) ? pba.operaciones : []);
+        setPartSubproductos(Array.isArray(pba.subproductos) ? pba.subproductos : []);
+      } else if (Array.isArray(sched.responsibleIds) && (sched.responsibleIds as number[]).length) {
+        setPartComercial(sched.responsibleIds as number[]);
+      }
     }
     setInitialized(true);
   }
@@ -154,7 +309,14 @@ export function ProspectLevantamiento({ prospectId }: ProspectLevantamientoProps
     );
   }
 
-  // Preserve any existing levantamientoData (generalInfo, wasteTypes, etc.) and update scheduling
+  const allParticipants = Array.from(new Set([...partComercial, ...partOperaciones, ...partSubproductos]));
+  const participantsInfo = allParticipants
+    .map((id) => teamMembers.find((m) => m.id === id))
+    .filter((m): m is TeamMemberRow => Boolean(m));
+
+  // Preserve any existing levantamientoData (generalInfo, wasteTypes, etc.) and update scheduling.
+  // Keeps flat responsibleIds alongside participantsByArea for backward compat with
+  // handoff flows / downstream consumers that haven't been updated yet.
   const existingData = (prospect?.levantamientoData || {}) as Record<string, unknown>;
   const buildFullData = () => ({
     ...existingData,
@@ -162,13 +324,25 @@ export function ProspectLevantamiento({ prospectId }: ProspectLevantamientoProps
     scheduling: {
       proposedDate: schedDate,
       proposedTime: schedTime,
-      responsibleIds: schedResponsibles,
-      responsibleNames: schedResponsibles.map(id => teamMembers.find(m => m.id === id)?.name || "").filter(Boolean),
-      responsibleEmails: schedResponsibles.map(id => teamMembers.find(m => m.id === id)?.email || "").filter(Boolean),
-      epp: schedEpp,
+      siteAddress: schedSiteAddress.trim() || null,
       contactName: schedContactName.trim(),
+      contactRole: schedContactRole.trim() || null,
       contactPhone: schedContactPhone.trim(),
       contactEmail: schedContactEmail.trim(),
+      participantsByArea: {
+        comercial: partComercial,
+        operaciones: partOperaciones,
+        subproductos: partSubproductos,
+      },
+      // Flat fields for backward compat (handoff validations, reports, etc.)
+      responsibleIds: allParticipants,
+      responsibleNames: participantsInfo.map((m) => m.name),
+      responsibleEmails: participantsInfo.map((m) => m.email),
+      epp: schedEpp,
+      accessRequirements: schedAccessReqs,
+      accessRequirementsOther: schedAccessReqsOther.trim() || null,
+      vehiclePlates: schedVehiclePlates.trim() || null,
+      deliveryDate: schedDeliveryDate || null,
       notes: schedNotes.trim() || null,
     },
   });
@@ -187,8 +361,12 @@ export function ProspectLevantamiento({ prospectId }: ProspectLevantamientoProps
       toast({ title: "Fecha y hora son requeridos", variant: "destructive" });
       return;
     }
-    if (schedResponsibles.length === 0) {
-      toast({ title: "Selecciona al menos un responsable", variant: "destructive" });
+    if (!schedSiteAddress.trim()) {
+      toast({ title: "La dirección del sitio es requerida", variant: "destructive" });
+      return;
+    }
+    if (allParticipants.length === 0) {
+      toast({ title: "Selecciona al menos un participante por área", variant: "destructive" });
       return;
     }
     try {
@@ -203,17 +381,21 @@ export function ProspectLevantamiento({ prospectId }: ProspectLevantamientoProps
 
   const canSendToOps =
     prospect &&
-    ["contacto_inicial", "presentacion", "levantamiento"].includes(prospect.stage) &&
+    canHandoffStage(prospect.stage) &&
     !prospect.surveyId;
 
   const sentToOps = prospect?.sentToOpsAt;
 
-  const toggleResponsible = (id: number) => {
-    setSchedResponsibles(prev => prev.includes(id) ? prev.filter(r => r !== id) : [...prev, id]);
+  const toggleId = (setter: React.Dispatch<React.SetStateAction<number[]>>) => (id: number) => {
+    setter((prev) => prev.includes(id) ? prev.filter((r) => r !== id) : [...prev, id]);
+  };
+
+  const toggleAccessReq = (id: string) => {
+    setSchedAccessReqs((prev) => prev.includes(id) ? prev.filter((r) => r !== id) : [...prev, id]);
   };
 
   const toggleEpp = (id: string) => {
-    setSchedEpp(prev => prev.includes(id) ? prev.filter(e => e !== id) : [...prev, id]);
+    setSchedEpp((prev) => prev.includes(id) ? prev.filter((e) => e !== id) : [...prev, id]);
   };
 
   return (
@@ -241,9 +423,12 @@ export function ProspectLevantamiento({ prospectId }: ProspectLevantamientoProps
             <CalendarCheck className="h-4 w-4" />
             Agendar Levantamiento
           </div>
+          <p className="text-[11px] text-muted-foreground mt-0.5">
+            Toda esta información se enviará a Operaciones para preparar la visita.
+          </p>
         </div>
-        <CardContent className="pt-0 space-y-4">
-          {/* Date & Time */}
+        <CardContent className="pt-0 space-y-5">
+          {/* 1. Fecha y hora */}
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
               <Label className="text-xs">Fecha Propuesta *</Label>
@@ -255,57 +440,107 @@ export function ProspectLevantamiento({ prospectId }: ProspectLevantamientoProps
             </div>
           </div>
 
-          {/* Responsables (multi-select from team) */}
-          <div>
-            <Label className="text-xs flex items-center gap-1">
-              <Users className="h-3 w-3" /> Responsables del Levantamiento *
-            </Label>
-            <p className="text-[10px] text-muted-foreground mb-2">Selecciona quién(es) irán al levantamiento</p>
-            <div className="flex flex-wrap gap-1.5">
-              {teamMembers.map(member => (
-                <button
-                  key={member.id}
-                  type="button"
-                  onClick={() => toggleResponsible(member.id)}
-                  className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors flex items-center gap-1.5 ${
-                    schedResponsibles.includes(member.id)
-                      ? "bg-[#00a8a8] text-white"
-                      : "bg-[#f3f4f6] text-[#6b7280] hover:bg-[#e5e7eb]"
-                  }`}
-                >
-                  <span className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-[9px] font-bold">
-                    {member.codigo || member.name.split(" ").map(n => n[0]).join("").substring(0, 2)}
-                  </span>
-                  {member.name.split(" ").slice(0, 2).join(" ")}
-                </button>
-              ))}
-            </div>
-            {schedResponsibles.length > 0 && (
-              <div className="mt-2 text-[10px] text-[#6b7280]">
-                {schedResponsibles.map(id => {
-                  const m = teamMembers.find(t => t.id === id);
-                  return m ? `${m.name} (${m.email})` : "";
-                }).filter(Boolean).join(" · ")}
+          {/* 1b. Ejecutivo responsable + fecha de entrega por operaciones */}
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div>
+              <Label className="text-xs">Ejecutivo responsable</Label>
+              <div className="mt-1 h-10 flex items-center rounded-md border border-input bg-[#f9fafb] px-3 text-sm text-[#1c2c4a]">
+                {(() => {
+                  const owner = teamMembers.find((m) => m.id === prospect?.assignedToId);
+                  return owner ? owner.name : <span className="text-[#9ca3af]">Sin asignar</span>;
+                })()}
               </div>
-            )}
+              <p className="text-[10px] text-muted-foreground mt-0.5">
+                Toma el ejecutivo asignado al prospecto. Se edita desde el Kanban.
+              </p>
+            </div>
+            <div>
+              <Label className="text-xs">Fecha entrega de Operaciones</Label>
+              <Input
+                type="date"
+                value={schedDeliveryDate}
+                onChange={(e) => setSchedDeliveryDate(e.target.value)}
+                className="mt-1"
+              />
+              <p className="text-[10px] text-muted-foreground mt-0.5">
+                Cuando Operaciones entregará el documento de levantamiento.
+              </p>
+            </div>
           </div>
 
-          {/* Contacto en sitio */}
+          {/* 2. Dirección del sitio */}
+          <div>
+            <Label className="text-xs flex items-center gap-1">
+              <MapPin className="h-3 w-3" /> Dirección del sitio *
+            </Label>
+            <Input
+              value={schedSiteAddress}
+              onChange={(e) => setSchedSiteAddress(e.target.value)}
+              placeholder="Calle, número, colonia, ciudad, estado, CP"
+              className="mt-1"
+            />
+            <p className="text-[10px] text-muted-foreground mt-0.5">
+              Dirección completa de planta / sede donde se hará el levantamiento (no la ciudad general del prospecto).
+            </p>
+          </div>
+
+          {/* 3. Contacto en sitio */}
           <div>
             <Label className="text-xs flex items-center gap-1 mb-2">
               <Phone className="h-3 w-3" /> Contacto que recibe en sitio
             </Label>
-            <div className="grid gap-3 sm:grid-cols-3">
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               <Field label="Nombre" value={schedContactName} onChange={setSchedContactName} placeholder="Quien recibe" />
-              <Field label="Teléfono" value={schedContactPhone} onChange={setSchedContactPhone} placeholder="55 1234 5678" />
-              <div>
-                <Label className="text-xs">Correo</Label>
-                <Input type="email" value={schedContactEmail} onChange={(e) => setSchedContactEmail(e.target.value)} placeholder="contacto@empresa.com" className="mt-1" />
-              </div>
+              <Field label="Puesto" value={schedContactRole} onChange={setSchedContactRole} placeholder="Ej: Gerente de Planta" />
+              <Field label="Teléfono" value={schedContactPhone} onChange={setSchedContactPhone} type="tel" placeholder="55 1234 5678" />
+              <Field label="Correo" value={schedContactEmail} onChange={setSchedContactEmail} type="email" placeholder="contacto@empresa.com" />
             </div>
           </div>
 
-          {/* EPP (multi-select chips) */}
+          {/* 4. Participantes por área */}
+          <div>
+            <Label className="text-xs flex items-center gap-1">
+              <Users className="h-3 w-3" /> Participantes por área *
+            </Label>
+            <p className="text-[10px] text-muted-foreground mb-2">
+              Selecciona quién de cada área asistirá al levantamiento.
+            </p>
+            <div className="space-y-3">
+              <AreaParticipants
+                label="Comercial"
+                color="#00a8a8"
+                selectedIds={partComercial}
+                // Users con area 'comercial' + los que aún no tienen área asignada
+                // (legacy) caen aquí por default para no perderlos de la lista.
+                teamMembers={teamMembers.filter((m) => !m.areaSlug || m.areaSlug === "comercial")}
+                onToggle={toggleId(setPartComercial)}
+                emptyLabel="Sin usuarios en Comercial — asígnalos desde Settings"
+              />
+              <AreaParticipants
+                label="Operaciones"
+                color="#0D47A1"
+                selectedIds={partOperaciones}
+                teamMembers={teamMembers.filter((m) => m.areaSlug === "operaciones")}
+                onToggle={toggleId(setPartOperaciones)}
+                emptyLabel="Sin usuarios en Operaciones — asígnalos desde Settings"
+              />
+              <AreaParticipants
+                label="Subproductos"
+                color="#F57C00"
+                selectedIds={partSubproductos}
+                teamMembers={teamMembers.filter((m) => m.areaSlug === "subproductos")}
+                onToggle={toggleId(setPartSubproductos)}
+                emptyLabel="Sin usuarios en Subproductos — asígnalos desde Settings"
+              />
+            </div>
+            {allParticipants.length > 0 && (
+              <p className="text-[10px] text-[#6b7280] mt-2">
+                {allParticipants.length} participante{allParticipants.length === 1 ? "" : "s"} asignado{allParticipants.length === 1 ? "" : "s"} en total
+              </p>
+            )}
+          </div>
+
+          {/* 5. EPP Necesario */}
           <div>
             <Label className="text-xs flex items-center gap-1">
               <HardHat className="h-3 w-3" /> EPP Necesario
@@ -328,7 +563,55 @@ export function ProspectLevantamiento({ prospectId }: ProspectLevantamientoProps
             </div>
           </div>
 
-          {/* Notes */}
+          {/* 6. Requisitos de acceso */}
+          <div>
+            <Label className="text-xs flex items-center gap-1">
+              <ShieldCheck className="h-3 w-3" /> Requisitos de acceso
+            </Label>
+            <p className="text-[10px] text-muted-foreground mb-2">
+              Qué hay que presentar o traer para entrar al sitio.
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {ACCESS_REQUIREMENTS_OPTIONS.map(req => (
+                <button
+                  key={req.id}
+                  type="button"
+                  onClick={() => toggleAccessReq(req.id)}
+                  className={`rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
+                    schedAccessReqs.includes(req.id)
+                      ? "bg-[#7C3AED] text-white"
+                      : "bg-[#f3f4f6] text-[#6b7280] hover:bg-[#e5e7eb]"
+                  }`}
+                >
+                  {req.label}
+                </button>
+              ))}
+            </div>
+            <Input
+              value={schedAccessReqsOther}
+              onChange={(e) => setSchedAccessReqsOther(e.target.value)}
+              placeholder="Otros requisitos (texto libre)"
+              className="mt-2"
+            />
+          </div>
+
+          {/* 7. Placas de vehículos */}
+          <div>
+            <Label className="text-xs flex items-center gap-1">
+              <Car className="h-3 w-3" /> Placas de vehículos
+            </Label>
+            <Input
+              value={schedVehiclePlates}
+              onChange={(e) => setSchedVehiclePlates(e.target.value)}
+              placeholder="Ej: ABC-123-A, XYZ-987-B"
+              className="mt-1"
+            />
+            <p className="text-[10px] text-muted-foreground mt-0.5">
+              Separa con coma si son varios. Útil para el registro de vehículos al ingresar al sitio.
+            </p>
+          </div>
+
+          {/* 8. Notas */}
           <div>
             <Label className="text-xs">Notas (opcional)</Label>
             <textarea

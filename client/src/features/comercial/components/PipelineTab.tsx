@@ -25,8 +25,13 @@ export function PipelineTab({ onViewHub }: Props) {
   const [filterEjecutivo, setFilterEjecutivo] = useState('todos');
   const [filterEtapa, setFilterEtapa] = useState('todos');
 
-  // Prospect drawer
-  const [selectedProspecto, setSelectedProspecto] = useState<KanbanProspecto | null>(null);
+  // Prospect drawer — store id only so the drawer always reads live data from
+  // kanbanProspectos. Fixes the "hay que salir para avanzar" UX bug where the
+  // snapshot kept showing the old stage after advancing.
+  const [selectedProspectoId, setSelectedProspectoId] = useState<number | null>(null);
+  const selectedProspecto = selectedProspectoId
+    ? kanbanProspectos.find((p) => p.id === selectedProspectoId) ?? null
+    : null;
 
   return (
     <>
@@ -136,7 +141,7 @@ export function PipelineTab({ onViewHub }: Props) {
                       const svc = SERVICE_COLORS[primaryService] || SERVICE_COLORS.rme;
                       return (
                         <tr key={p.id} className="border-b border-[#e5e7eb] hover:brightness-95 cursor-pointer transition-colors"
-                          style={{ backgroundColor: svc.bg }} onClick={() => setSelectedProspecto(p)}>
+                          style={{ backgroundColor: svc.bg }} onClick={() => setSelectedProspectoId(p.id)}>
                           <td className="px-4 py-2.5">
                             <div className="flex items-center gap-2">
                               <div className="w-0.5 h-8 rounded-full flex-shrink-0" style={{ backgroundColor: svc.border }} />
@@ -190,7 +195,7 @@ export function PipelineTab({ onViewHub }: Props) {
       })()}
 
       {selectedProspecto && (
-        <ProspectoDrawer prospecto={selectedProspecto} onClose={() => setSelectedProspecto(null)} />
+        <ProspectoDrawer prospecto={selectedProspecto} onClose={() => setSelectedProspectoId(null)} />
       )}
     </>
   );

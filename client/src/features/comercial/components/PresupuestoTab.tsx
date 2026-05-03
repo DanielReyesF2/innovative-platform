@@ -1,11 +1,35 @@
 import { useState, useEffect } from 'react';
 import { DollarSign, Edit3, Pencil, X, Save } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList } from 'recharts';
 import { fmtM, fmtCurrency } from '@/lib/utils';
 import { ExecutiveAvatar, KANBAN_STAGES } from '@/lib/comercial-constants';
 import { useComercialData } from '../hooks/useComercialData';
 import { useToast } from '@/components/ui/use-toast';
-import { apiRequest, queryClient } from '@/lib/queryClient';
+import { apiRequest, invalidateByPrefix } from '@/lib/queryClient';
+
+// Recharts label renderer: hide label when value is 0 so bars without data
+// stay clean. Formats the rest as "$11.0M" (compact) matching tooltip.
+// Recharts passes SVG props where x/y can be string | number, so we coerce.
+function BarValueLabel(props: { x?: string | number; y?: string | number; width?: string | number; value?: string | number; fill?: string }) {
+  const { x = 0, y = 0, width = 0, value = 0, fill = '#1c2c4a' } = props;
+  const numValue = Number(value) || 0;
+  if (numValue <= 0) return null;
+  const numX = Number(x) || 0;
+  const numY = Number(y) || 0;
+  const numW = Number(width) || 0;
+  return (
+    <text
+      x={numX + numW / 2}
+      y={numY - 4}
+      textAnchor="middle"
+      fill={fill}
+      fontSize={9}
+      fontWeight={600}
+    >
+      {fmtM(numValue, 1)}
+    </text>
+  );
+}
 
 export function PresupuestoTab() {
   const {
@@ -34,17 +58,6 @@ export function PresupuestoTab() {
   const MESES_NOMBRE = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
   const mesNombre = MESES_NOMBRE[ventaRealMes - 1];
 
-  const presupuestoTotal = salesTeamData.reduce((s, m) => s + (m.presupuestoAnual2026 || 0), 0);
-  const ventasCerradasAnual = salesTeamData.reduce((s, m) => s + (m.ventasRealesAnual || 0), 0);
-  const presupuestoMesEquipo = salesTeamData.reduce((s, m) => s + (m.presupuestoMensual || 0), 0);
-
-  // Material tracking
-  const materialData = kanbanProspectos
-    .filter(p => p.propuesta?.carton || p.propuesta?.playo)
-    .map(p => ({ carton: p.propuesta?.carton || 0, playo: p.propuesta?.playo || 0 }));
-  const totalCarton = materialData.reduce((s, m) => s + m.carton, 0);
-  const totalPlayo = materialData.reduce((s, m) => s + m.playo, 0);
-
   return (
     <>
       {/* Presupuesto Chart */}
@@ -52,12 +65,13 @@ export function PresupuestoTab() {
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-sm font-semibold text-[#1c2c4a] flex items-center gap-2">
             <DollarSign size={16} className="text-[#00a8a8]" />
-            Presupuesto Mensual 2026 vs Real
+            Presupuesto Mensual 2026 · Valor Cotización · Venta Real
           </h3>
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-3 text-[10px] text-[#6b7280]">
               <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded bg-[#1B5E20] inline-block" /> Presupuesto</span>
-              <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded bg-[#00a8a8] inline-block" /> Real</span>
+              <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded bg-[#0D47A1] inline-block" /> Valor Cotización</span>
+              <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded bg-[#00a8a8] inline-block" /> Venta Real</span>
             </div>
             {canEditBudget && (
               <button
@@ -69,48 +83,27 @@ export function PresupuestoTab() {
             )}
           </div>
         </div>
-        <ResponsiveContainer width="100%" height={220}>
-          <BarChart data={presupuestoEvolution} barGap={2}>
+        <ResponsiveContainer width="100%" height={260}>
+          <BarChart data={presupuestoEvolution} barGap={2} margin={{ top: 20, right: 8, left: 0, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" vertical={false} />
             <XAxis dataKey="mes" tick={{ fontSize: 10, fill: '#6b7280' }} axisLine={false} tickLine={false} />
             <YAxis tick={{ fontSize: 9, fill: '#6b7280' }} axisLine={false} tickLine={false} tickFormatter={(v: number) => fmtM(v, 0)} />
             <Tooltip
               contentStyle={{ fontSize: 11, borderRadius: 8, border: '1px solid #e5e7eb' }}
-              formatter={(value: number) => [fmtM(value), '']}
+              formatter={(value: number, name: string) => [fmtM(value), name]}
               labelStyle={{ fontWeight: 600, color: '#1c2c4a' }}
             />
-            <Bar dataKey="presupuesto" name="Presupuesto" fill="#1B5E20" radius={[3, 3, 0, 0]} />
-            <Bar dataKey="real" name="Real" fill="#00a8a8" radius={[3, 3, 0, 0]} />
+            <Bar dataKey="presupuesto" name="Presupuesto" fill="#1B5E20" radius={[3, 3, 0, 0]}>
+              <LabelList dataKey="presupuesto" content={(p) => <BarValueLabel {...p} fill="#1B5E20" />} />
+            </Bar>
+            <Bar dataKey="cotizacion" name="Valor Cotización" fill="#0D47A1" radius={[3, 3, 0, 0]}>
+              <LabelList dataKey="cotizacion" content={(p) => <BarValueLabel {...p} fill="#0D47A1" />} />
+            </Bar>
+            <Bar dataKey="real" name="Venta Real" fill="#00a8a8" radius={[3, 3, 0, 0]}>
+              <LabelList dataKey="real" content={(p) => <BarValueLabel {...p} fill="#00a8a8" />} />
+            </Bar>
           </BarChart>
         </ResponsiveContainer>
-        <div className="mt-3 pt-3 border-t border-[#e5e7eb] grid grid-cols-3 md:grid-cols-6 gap-3">
-          <div className="text-center">
-            <div className="text-[10px] text-[#6b7280]">Presupuesto Anual</div>
-            <div className="text-sm font-bold text-[#1c2c4a]">{fmtM(presupuestoTotal, 0)}</div>
-          </div>
-          <div className="text-center">
-            <div className="text-[10px] text-[#6b7280]">Venta Cerrada Anual</div>
-            <div className="text-sm font-bold text-[#00a8a8]">{fmtM(ventasCerradasAnual)}</div>
-          </div>
-          <div className="text-center">
-            <div className="text-[10px] text-[#6b7280]">% Avance</div>
-            <div className={`text-sm font-bold ${presupuestoTotal > 0 && (ventasCerradasAnual / presupuestoTotal) >= 0.5 ? 'text-[#2E7D32]' : 'text-[#F57C00]'}`}>
-              {presupuestoTotal > 0 ? Math.round(ventasCerradasAnual / presupuestoTotal * 100) : 0}%
-            </div>
-          </div>
-          <div className="text-center">
-            <div className="text-[10px] text-[#6b7280]">Presupuesto {new Date().toLocaleDateString('es-MX', { month: 'long' }).replace(/^\w/, c => c.toUpperCase())}</div>
-            <div className="text-sm font-bold text-[#1c2c4a]">{fmtM(presupuestoMesEquipo)}</div>
-          </div>
-          <div className="text-center">
-            <div className="text-[10px] text-[#6b7280]">Cartón</div>
-            <div className="text-sm font-bold text-[#F59E0B]">{totalCarton >= 1000 ? `${(totalCarton / 1000).toFixed(0)}k` : totalCarton.toLocaleString()} <span className="text-[10px] font-normal text-[#6b7280]">kg</span></div>
-          </div>
-          <div className="text-center">
-            <div className="text-[10px] text-[#6b7280]">Playo</div>
-            <div className="text-sm font-bold text-[#3B82F6]">{totalPlayo >= 1000 ? `${(totalPlayo / 1000).toFixed(0)}k` : totalPlayo.toLocaleString()} <span className="text-[10px] font-normal text-[#6b7280]">kg</span></div>
-          </div>
-        </div>
       </div>
 
       {/* Combined: Presupuesto y Cuentas */}
@@ -196,8 +189,8 @@ export function PresupuestoTab() {
                               setEditingBudget(null);
                               apiRequest('PATCH', '/api/comercial/sales-metrics', { userId: member.dbUserId, period: selectedPeriod, monthlyBudget: monto })
                                 .then(() => {
-                                  queryClient.invalidateQueries({ queryKey: ['/api/comercial/team'] });
-                                  queryClient.invalidateQueries({ queryKey: ['/api/comercial/sales-metrics'] });
+                                  invalidateByPrefix('/api/comercial/team');
+                                  invalidateByPrefix('/api/comercial/sales-metrics');
                                   toast({ title: `Presupuesto actualizado: $${monto.toLocaleString()}` });
                                 })
                                 .catch(() => toast({ title: 'Error al guardar presupuesto', variant: 'destructive' }));
@@ -211,8 +204,8 @@ export function PresupuestoTab() {
                             if (monto !== memberBudgetMes) {
                               apiRequest('PATCH', '/api/comercial/sales-metrics', { userId: member.dbUserId, period: selectedPeriod, monthlyBudget: monto })
                                 .then(() => {
-                                  queryClient.invalidateQueries({ queryKey: ['/api/comercial/team'] });
-                                  queryClient.invalidateQueries({ queryKey: ['/api/comercial/sales-metrics'] });
+                                  invalidateByPrefix('/api/comercial/team');
+                                  invalidateByPrefix('/api/comercial/sales-metrics');
                                   toast({ title: `Presupuesto actualizado: $${monto.toLocaleString()}` });
                                 })
                                 .catch(() => toast({ title: 'Error al guardar presupuesto', variant: 'destructive' }));
@@ -250,8 +243,8 @@ export function PresupuestoTab() {
                               setEditingVentaReal(null);
                               apiRequest('POST', '/api/comercial/ventas-reales', { userId: member.dbUserId, mes: ventaRealMes, año: ventaRealAño, monto })
                                 .then(() => {
-                                  queryClient.invalidateQueries({ queryKey: ['/api/comercial/ventas-reales'] });
-                                  queryClient.invalidateQueries({ queryKey: ['/api/comercial/team'] });
+                                  invalidateByPrefix('/api/comercial/ventas-reales');
+                                  invalidateByPrefix('/api/comercial/team');
                                   toast({ title: `Venta cerrada guardada: $${monto.toLocaleString()}` });
                                 })
                                 .catch(() => {
@@ -269,8 +262,8 @@ export function PresupuestoTab() {
                             if (monto > 0) {
                               apiRequest('POST', '/api/comercial/ventas-reales', { userId: member.dbUserId, mes: ventaRealMes, año: ventaRealAño, monto })
                                 .then(() => {
-                                  queryClient.invalidateQueries({ queryKey: ['/api/comercial/ventas-reales'] });
-                                  queryClient.invalidateQueries({ queryKey: ['/api/comercial/team'] });
+                                  invalidateByPrefix('/api/comercial/ventas-reales');
+                                  invalidateByPrefix('/api/comercial/team');
                                   toast({ title: `Venta cerrada guardada: $${monto.toLocaleString()}` });
                                 })
                                 .catch(() => {
@@ -506,8 +499,8 @@ function BudgetEditModal({ salesTeamData, year, onClose }: {
         });
       }
       await Promise.all(promises);
-      queryClient.invalidateQueries({ queryKey: ['/api/comercial/team'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/comercial/sales-metrics'] });
+      invalidateByPrefix('/api/comercial/team');
+      invalidateByPrefix('/api/comercial/sales-metrics');
       toast({ title: `Objetivos guardados — se divide entre ${memberCount} ejecutivos` });
       onClose();
     } catch {

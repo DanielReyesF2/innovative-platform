@@ -21,6 +21,8 @@ export default defineConfig({
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
     sourcemap: false,
+    // Evita calcular gzip en consola (ahorra tiempo al final del build)
+    reportCompressedSize: false,
     commonjsOptions: {
       transformMixedEsModules: true,
     },

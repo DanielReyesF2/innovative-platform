@@ -79,7 +79,7 @@ export function ModalMotivoRechazo({ prospecto, onClose, onSave }: Props) {
                 <p className="font-semibold mb-1">Información importante</p>
                 <p>
                   El registro del motivo de rechazo es obligatorio y ayudará a mejorar nuestros procesos comerciales.
-                  Valor estimado de esta propuesta: {fmtCurrency(prospecto?.facturacionEstimada || prospecto?.propuesta?.ventaTotal || 0)}
+                  Valor cotización de esta propuesta: {fmtCurrency(prospecto?.facturacionEstimada || prospecto?.propuesta?.ventaTotal || 0)}
                 </p>
               </div>
             </div>

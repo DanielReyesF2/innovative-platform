@@ -4,34 +4,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useUpdateProspect, useConvertLead } from "../api";
 import { useToast } from "@/components/ui/use-toast";
-import { ArrowRight, UserCheck, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowRight, UserCheck } from "lucide-react";
 import { KANBAN_STAGES } from "@/lib/comercial-constants";
-const INDUSTRIES = [
-  "Manufactura",
-  "Alimentos",
-  "Retail",
-  "Logistica",
-  "Salud",
-  "Hoteleria",
-  "Construccion",
-  "Automotriz",
-  "Bebidas",
-  "Farmaceutica",
-  "Otro",
-];
-
-const WASTE_TYPES = [
-  "Carton/Papel",
-  "Plastico",
-  "Metal",
-  "Organico",
-  "Madera",
-  "Vidrio",
-  "Peligroso",
-  "Electronico",
-  "Textil",
-  "Otro",
-];
+import { STAGE } from "@shared/schema/comercial-stages";
 
 interface QualifyProspect {
   id: number;
@@ -42,9 +17,11 @@ interface QualifyProspect {
   ciudad?: string | null;
   location?: string | null;
   status?: string;
-  contacto?: { nombre?: string; telefono?: string };
+  contacto?: { nombre?: string; telefono?: string; puesto?: string; correo?: string };
   contactName?: string | null;
   contactPhone?: string | null;
+  contactRole?: string | null;
+  contactEmail?: string | null;
 }
 
 interface QualifyLeadDialogProps {
@@ -54,322 +31,169 @@ interface QualifyLeadDialogProps {
   onQualified?: () => void;
 }
 
+// Siguiendo el flujo que definió Vero: Lead → Prospecto solo requiere los
+// datos de contacto profundos + ubicación. Industria viene del Lead, y
+// potencial / valor cotización / residuos se capturan más adelante.
 export function QualifyLeadDialog({ prospect, isLead, onClose, onQualified }: QualifyLeadDialogProps) {
-  const [step, setStep] = useState(1);
-
-  // Step 1: Business data
-  const [business, setBusiness] = useState({
-    industry: prospect.industria || prospect.industry || "",
+  const [form, setForm] = useState({
+    contactRole: prospect.contacto?.puesto || prospect.contactRole || "",
+    contactPhone: prospect.contacto?.telefono || prospect.contactPhone || "",
+    contactEmail: prospect.contacto?.correo || prospect.contactEmail || "",
     location: prospect.ciudad || prospect.location || "",
-    potential: "Medio",
-    estimatedValue: "",
-  });
-
-  // Step 2: Waste info
-  const [waste, setWaste] = useState({
-    wasteTypes: [] as string[],
-    estimatedVolume: "",
-    hasCurrentProvider: false,
-    currentProviderName: "",
-    reasonForChange: "",
+    serviceFrequency: "",
   });
 
   const updateProspect = useUpdateProspect();
   const convertLead = useConvertLead();
   const { toast } = useToast();
 
-  const setBiz = (key: string, val: string) => setBusiness({ ...business, [key]: val });
+  const setField = (key: string, val: string) => setForm((prev) => ({ ...prev, [key]: val }));
 
-  const toggleWasteType = (type: string) => {
-    setWaste((prev) => ({
-      ...prev,
-      wasteTypes: prev.wasteTypes.includes(type)
-        ? prev.wasteTypes.filter((t) => t !== type)
-        : [...prev.wasteTypes, type],
-    }));
-  };
+  const missing: string[] = [];
+  if (!form.contactRole.trim()) missing.push("Cargo");
+  if (!form.contactPhone.trim()) missing.push("Teléfono");
+  if (!form.contactEmail.trim()) missing.push("Correo");
+  if (!form.location.trim()) missing.push("Ubicación");
+  const canSubmit = missing.length === 0;
 
   const handleSubmit = async () => {
+    if (!canSubmit) {
+      toast({ title: `Faltan: ${missing.join(", ")}`, variant: "destructive" });
+      return;
+    }
     try {
-      const wasteInfo = waste.wasteTypes.length > 0
-        ? {
-            wasteTypes: waste.wasteTypes,
-            estimatedVolume: waste.estimatedVolume.trim(),
-            hasCurrentProvider: waste.hasCurrentProvider,
-            currentProviderName: waste.currentProviderName.trim() || undefined,
-            reasonForChange: waste.reasonForChange.trim() || undefined,
-          }
-        : undefined;
+      const payload = {
+        contactRole: form.contactRole.trim(),
+        contactPhone: form.contactPhone.trim(),
+        contactEmail: form.contactEmail.trim(),
+        location: form.location.trim(),
+        serviceFrequency: form.serviceFrequency.trim() || undefined,
+      };
 
       if (isLead) {
-        // Lead from leads table → convert to prospect via dedicated endpoint
-        await convertLead.mutateAsync({
-          id: prospect.id,
-          industry: business.industry || undefined,
-          location: business.location.trim() || undefined,
-          potential: business.potential || undefined,
-          estimatedValue: business.estimatedValue || undefined,
-          estimatedVolume: waste.estimatedVolume.trim() || undefined,
-          wasteInfo,
-        });
+        await convertLead.mutateAsync({ id: prospect.id, ...payload });
       } else {
-        // Existing prospect → update via PATCH
         await updateProspect.mutateAsync({
           id: prospect.id,
-          industry: business.industry || undefined,
-          location: business.location.trim() || undefined,
-          potential: business.potential || undefined,
-          estimatedValue: business.estimatedValue || undefined,
-          estimatedVolume: waste.estimatedVolume.trim() || undefined,
-          levantamientoData: wasteInfo ? { qualificationWaste: wasteInfo } : undefined,
-          stage: "presentacion",
+          ...payload,
+          stage: STAGE.PRESENTACION,
           probability: 20,
         });
       }
-      toast({ title: "Lead calificado exitosamente" });
+      toast({ title: "Lead calificado a Prospecto" });
       onQualified?.();
     } catch {
-      toast({ title: "Error al calificar lead", variant: "destructive" });
+      toast({ title: "Error al calificar el lead", variant: "destructive" });
     }
   };
 
-  const fromLabel = KANBAN_STAGES.find(s => s.id === prospect.status)?.label || "Lead Nuevo";
-  const toLabel = KANBAN_STAGES.find(s => s.id === "presentacion")?.label || "Reunión";
+  const fromLabel = KANBAN_STAGES.find(s => s.id === prospect.status)?.label || "Lead";
+  const toLabel = KANBAN_STAGES.find(s => s.id === STAGE.PRESENTACION)?.label || "Prospecto";
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-lg max-h-[90vh] flex flex-col rounded-lg bg-background shadow-lg">
+      <div className="w-full max-w-md rounded-lg bg-background shadow-lg flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between border-b px-6 py-4 shrink-0">
+        <div className="flex items-center justify-between border-b px-6 py-4">
           <div className="flex items-center gap-2">
             <UserCheck className="h-5 w-5 text-primary" />
             <h2 className="text-lg font-bold">Calificar Lead</h2>
           </div>
-          <Button variant="ghost" size="sm" onClick={onClose}>
-            ✕
-          </Button>
+          <Button variant="ghost" size="sm" onClick={onClose}>✕</Button>
         </div>
 
-        {/* Prospect info + step indicator */}
+        {/* Context */}
         <div className="space-y-3 px-6 pt-4">
           <div className="rounded-lg bg-muted/50 p-3">
             <div className="text-sm font-medium">{prospect.empresa || prospect.name}</div>
-            <div className="text-xs text-muted-foreground">
-              {prospect.contacto?.nombre || prospect.contactName}
-              {(prospect.contacto?.telefono || prospect.contactPhone) && ` · ${prospect.contacto?.telefono || prospect.contactPhone}`}
-            </div>
+            {(prospect.contacto?.nombre || prospect.contactName) && (
+              <div className="text-xs text-muted-foreground">
+                {prospect.contacto?.nombre || prospect.contactName}
+              </div>
+            )}
           </div>
-
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <div className="flex items-center gap-2 text-sm">
             <span className="rounded bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700">
               {fromLabel}
             </span>
-            <ArrowRight className="h-4 w-4" />
+            <ArrowRight className="h-4 w-4 text-muted-foreground" />
             <span className="rounded bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800">
               {toLabel}
             </span>
           </div>
-
-          {/* Step indicator */}
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1.5">
-              <div
-                className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${
-                  step >= 1 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
-                }`}
-              >
-                1
-              </div>
-              <span className={`text-xs ${step === 1 ? "font-medium" : "text-muted-foreground"}`}>
-                Negocio
-              </span>
-            </div>
-            <div className="h-px flex-1 bg-border" />
-            <div className="flex items-center gap-1.5">
-              <div
-                className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${
-                  step >= 2 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
-                }`}
-              >
-                2
-              </div>
-              <span className={`text-xs ${step === 2 ? "font-medium" : "text-muted-foreground"}`}>
-                Residuos
-              </span>
-            </div>
-          </div>
         </div>
 
-        {/* Step content */}
-        <div className="space-y-4 px-6 py-4 overflow-y-auto">
-          {step === 1 && (
-            <>
-              <div>
-                <Label>Industria / Giro</Label>
-                <select
-                  value={business.industry}
-                  onChange={(e) => setBiz("industry", e.target.value)}
-                  className="mt-1 h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
-                >
-                  <option value="">Seleccionar...</option>
-                  {INDUSTRIES.map((ind) => (
-                    <option key={ind} value={ind}>
-                      {ind}
-                    </option>
-                  ))}
-                </select>
-              </div>
+        {/* Fields */}
+        <div className="space-y-3 px-6 py-4">
+          <div>
+            <Label>Cargo *</Label>
+            <Input
+              value={form.contactRole}
+              onChange={(e) => setField("contactRole", e.target.value)}
+              placeholder="Ej: Gerente de Operaciones"
+              className="mt-1"
+            />
+          </div>
 
-              <div>
-                <Label>Ubicacion</Label>
-                <Input
-                  value={business.location}
-                  onChange={(e) => setBiz("location", e.target.value)}
-                  placeholder="Ej: CDMX, Monterrey, Guadalajara..."
-                  className="mt-1"
-                />
-              </div>
+          <div>
+            <Label>Teléfono *</Label>
+            <Input
+              type="tel"
+              value={form.contactPhone}
+              onChange={(e) => setField("contactPhone", e.target.value)}
+              placeholder="55 1234 5678"
+              className="mt-1"
+            />
+          </div>
 
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <Label>Potencial</Label>
-                  <select
-                    value={business.potential}
-                    onChange={(e) => setBiz("potential", e.target.value)}
-                    className="mt-1 h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
-                  >
-                    <option value="Bajo">Bajo</option>
-                    <option value="Medio">Medio</option>
-                    <option value="Alto">Alto</option>
-                    <option value="Muy Alto">Muy Alto</option>
-                  </select>
-                </div>
-                <div>
-                  <Label>Valor estimado ($)</Label>
-                  <Input
-                    type="number"
-                    value={business.estimatedValue}
-                    onChange={(e) => setBiz("estimatedValue", e.target.value)}
-                    placeholder="0.00"
-                    className="mt-1"
-                  />
-                </div>
-              </div>
-            </>
-          )}
+          <div>
+            <Label>Correo *</Label>
+            <Input
+              type="email"
+              value={form.contactEmail}
+              onChange={(e) => setField("contactEmail", e.target.value)}
+              placeholder="contacto@empresa.com"
+              className="mt-1"
+            />
+          </div>
 
-          {step === 2 && (
-            <>
-              <div>
-                <Label>Tipos de residuo que genera</Label>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {WASTE_TYPES.map((type) => (
-                    <button
-                      key={type}
-                      type="button"
-                      onClick={() => toggleWasteType(type)}
-                      className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-                        waste.wasteTypes.includes(type)
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted text-muted-foreground hover:bg-muted/80"
-                      }`}
-                    >
-                      {type}
-                    </button>
-                  ))}
-                </div>
-              </div>
+          <div>
+            <Label>Ubicación *</Label>
+            <Input
+              value={form.location}
+              onChange={(e) => setField("location", e.target.value)}
+              placeholder="Ej: CDMX, Monterrey, Guadalajara..."
+              className="mt-1"
+            />
+          </div>
 
-              <div>
-                <Label>Volumen estimado mensual</Label>
-                <Input
-                  value={waste.estimatedVolume}
-                  onChange={(e) => setWaste({ ...waste, estimatedVolume: e.target.value })}
-                  placeholder="Ej: 120 ton/mes"
-                  className="mt-1"
-                />
-              </div>
-
-              <div>
-                <Label>Tiene proveedor de residuos actualmente?</Label>
-                <div className="mt-2 flex gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setWaste({ ...waste, hasCurrentProvider: false })}
-                    className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
-                      !waste.hasCurrentProvider
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted text-muted-foreground"
-                    }`}
-                  >
-                    No
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setWaste({ ...waste, hasCurrentProvider: true })}
-                    className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
-                      waste.hasCurrentProvider
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted text-muted-foreground"
-                    }`}
-                  >
-                    Si
-                  </button>
-                </div>
-              </div>
-
-              {waste.hasCurrentProvider && (
-                <>
-                  <div>
-                    <Label>Nombre del proveedor</Label>
-                    <Input
-                      value={waste.currentProviderName}
-                      onChange={(e) => setWaste({ ...waste, currentProviderName: e.target.value })}
-                      placeholder="Ej: PASA, Veolia..."
-                      className="mt-1"
-                    />
-                  </div>
-                  <div>
-                    <Label>Razon de cambio</Label>
-                    <textarea
-                      value={waste.reasonForChange}
-                      onChange={(e) => setWaste({ ...waste, reasonForChange: e.target.value })}
-                      placeholder="Por que buscan cambiar de proveedor?"
-                      className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                      rows={2}
-                    />
-                  </div>
-                </>
-              )}
-            </>
-          )}
+          <div>
+            <Label>Frecuencia del servicio</Label>
+            <Input
+              value={form.serviceFrequency}
+              onChange={(e) => setField("serviceFrequency", e.target.value)}
+              placeholder="Ej: Mensual, quincenal, bajo demanda (opcional)"
+              className="mt-1"
+            />
+            <p className="text-[11px] text-muted-foreground mt-1">
+              Opcional. Puedes dejarlo en blanco si aún no se definió.
+            </p>
+          </div>
         </div>
 
         {/* Footer */}
-        <div className="flex justify-between border-t px-6 py-3 shrink-0">
-          <div>
-            {step === 2 && (
-              <Button variant="ghost" onClick={() => setStep(1)}>
-                <ChevronLeft className="mr-1 h-4 w-4" />
-                Atras
-              </Button>
-            )}
+        <div className="flex items-center justify-between border-t px-6 py-3">
+          <div className="text-[11px] text-muted-foreground">
+            * Requerido
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={onClose}>
-              Cancelar
+            <Button variant="outline" onClick={onClose}>Cancelar</Button>
+            <Button
+              onClick={handleSubmit}
+              disabled={!canSubmit || updateProspect.isPending || convertLead.isPending}
+            >
+              {(updateProspect.isPending || convertLead.isPending) ? "Calificando..." : "Calificar Lead"}
             </Button>
-            {step === 1 && (
-              <Button onClick={() => setStep(2)}>
-                Siguiente
-                <ChevronRight className="ml-1 h-4 w-4" />
-              </Button>
-            )}
-            {step === 2 && (
-              <Button onClick={handleSubmit} disabled={updateProspect.isPending || convertLead.isPending}>
-                {(updateProspect.isPending || convertLead.isPending) ? "Calificando..." : "Calificar Lead"}
-              </Button>
-            )}
           </div>
         </div>
       </div>

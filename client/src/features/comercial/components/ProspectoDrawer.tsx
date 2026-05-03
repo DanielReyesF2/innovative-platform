@@ -3,27 +3,58 @@ import type { KanbanProspecto, PendingMove, SeguimientoData } from '@shared/type
 import type { ProspectNote, ProspectDocument } from '@shared/schema/comercial';
 import { useQuery } from '@tanstack/react-query';
 import {
-  X, ChevronRight, Edit3, Trash2, Users, Package, ClipboardList, Clock,
+  X, ChevronRight, Trash2, Users, ClipboardList, Clock,
   MessageSquare, FileText, Send, Phone, Mail, Copy, Check, XCircle,
-  AlertCircle, Bell, CheckCircle, RotateCcw, PhoneCall, CalendarClock,
-  Upload, Paperclip, Image, BarChart3, Lock, Sparkles, Leaf, Target,
+  RotateCcw, PhoneCall, CalendarClock,
+  Upload, Paperclip, Image, BarChart3, Lock, Sparkles, Target,
 } from 'lucide-react';
 import { ProspectTimeline } from './ProspectTimeline';
 import { ProspectNotes } from './ProspectNotes';
 import { ProspectMeetings } from './ProspectMeetings';
 import { ProspectDocuments } from './ProspectDocuments';
 import { ProspectProposals } from './ProspectProposals';
-import { ProspectEditDialog } from './ProspectEditDialog';
 import { ProspectLevantamiento } from './ProspectLevantamiento';
 import { ModalMotivoRechazo } from './ModalMotivoRechazo';
 import { StageGateModal } from './StageGateModal';
-import { fmtK, fmtCurrency } from '@/lib/utils';
+import { AgendarReunionModal } from './AgendarReunionModal';
+import { AgendarLevantamientoModal } from './AgendarLevantamientoModal';
+import { InlineText, InlineNumber, InlineSelect, InlineMonth, InlineDate, InlineChips } from './InlineEdit';
+import { fmtCurrency } from '@/lib/utils';
 import { useToast } from '@/components/ui/use-toast';
 import {
-  KANBAN_STAGES, SERVICIOS_INNOVATIVE, SERVICE_COLORS, STAGE_GATES,
-  classifyRechazo, getSeguimientoUrgency, getRecoveryState, RECHAZO_CATEGORIES,
-  timeAgo, isTabLocked, tabUnlockLabel,
+  KANBAN_STAGES, SERVICIOS_INNOVATIVE, STAGE_GATES, INDUSTRIAS,
+  classifyRechazo, getSeguimientoUrgency, getRecoveryState,
+  timeAgo, isTabLocked, tabUnlockLabel, proposalDeadlineChip,
 } from '@/lib/comercial-constants';
+
+// ─── Notion/Apple-style helpers for the Info tab ─────────────────────────
+// Kept inline because they are only used by the drawer and don't deserve
+// their own file.
+
+function SectionTitle({ children }: { children: React.ReactNode }) {
+  return (
+    <h3 className="text-[11px] font-semibold text-[#9ca3af] uppercase tracking-widest mb-3">
+      {children}
+    </h3>
+  );
+}
+
+function InfoRow({
+  label,
+  children,
+  multiline = false,
+}: {
+  label: string;
+  children: React.ReactNode;
+  multiline?: boolean;
+}) {
+  return (
+    <div className={`grid grid-cols-[140px_1fr] gap-4 py-1.5 text-sm ${multiline ? 'items-start' : 'items-center'}`}>
+      <div className="text-[#9ca3af]">{label}</div>
+      <div className="text-[#1c2c4a] min-w-0">{children}</div>
+    </div>
+  );
+}
 import { useRejectProspect } from '../api';
 import { QualifyLeadDialog } from './QualifyLeadDialog';
 import { useComercialData } from '../hooks/useComercialData';
@@ -31,10 +62,9 @@ import { useComercialData } from '../hooks/useComercialData';
 interface Props {
   prospecto: KanbanProspecto;
   onClose: () => void;
-  onEdit?: (p: KanbanProspecto) => void;
 }
 
-export function ProspectoDrawer({ prospecto, onClose, onEdit }: Props) {
+export function ProspectoDrawer({ prospecto, onClose }: Props) {
   const { toast } = useToast();
   const {
     authUser,
@@ -49,10 +79,20 @@ export function ProspectoDrawer({ prospecto, onClose, onEdit }: Props) {
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [prospectoNuevaNota, setProspectoNuevaNota] = useState('');
   const [showQualifyDialog, setShowQualifyDialog] = useState(false);
-  const [showEditDialog, setShowEditDialog] = useState(false);
   const [showRechazoModal, setShowRechazoModal] = useState(false);
   const [pendingStageGate, setPendingStageGate] = useState<PendingMove | null>(null);
   const rejectProspect = useRejectProspect();
+
+  // Inline-edit single save helper — one source of truth for all 14 editable fields
+  // that used to live in the old ProspectEditDialog.
+  const saveProspectField = async (patch: Record<string, unknown>) => {
+    try {
+      await updateProspectMutation.mutateAsync({ id: prospecto.id, ...patch });
+    } catch (e) {
+      toast({ title: 'Error al guardar', variant: 'destructive' });
+      throw e;
+    }
+  };
 
   if (!prospecto) return null;
   const p = prospecto;
@@ -70,13 +110,7 @@ export function ProspectoDrawer({ prospecto, onClose, onEdit }: Props) {
   });
 
   const stageInfo = KANBAN_STAGES.find(s => s.id === p.status);
-  const dias = p.fecha ? Math.floor((new Date().getTime() - new Date(p.fecha).getTime()) / (1000 * 60 * 60 * 24)) : null;
   const valor = p.propuesta?.ventaTotal || p.facturacionEstimada || 0;
-  const sc = p.servicios?.map((s) => {
-    const svc = SERVICIOS_INNOVATIVE.find(si => si.id === s);
-    const col = SERVICE_COLORS[s] || { bg: '#f3f4f6', text: '#6b7280', label: s, border: '#6b7280' };
-    return { ...col, nombre: svc?.nombre || s, id: s };
-  }) || [];
 
   const copyToClipboard = (text: string, fieldName: string) => {
     navigator.clipboard.writeText(text);
@@ -171,15 +205,34 @@ export function ProspectoDrawer({ prospecto, onClose, onEdit }: Props) {
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4 backdrop-blur-sm" onClick={onClose}>
       <div className="bg-white rounded-2xl max-w-3xl w-full max-h-[85vh] overflow-hidden shadow-2xl flex flex-col" onClick={e => e.stopPropagation()}>
         {/* Header */}
-        <div className="px-6 pt-5 pb-4 border-b border-[#f0f0f0]">
-          <div className="flex items-start justify-between">
-            <div className="flex-1">
-              <h2 className="text-xl font-semibold text-[#1a1a1a] tracking-tight">{p.empresa}</h2>
-              <div className="flex items-center gap-2 mt-1.5">
-                <span className="text-sm text-[#666]">{p.ciudad}</span>
-                {p.industria && <span className="text-sm text-[#999]">·</span>}
-                {p.industria && <span className="text-sm text-[#666]">{p.industria}</span>}
-                <span className={`ml-2 px-2 py-0.5 rounded-full text-xs font-medium ${
+        <div className="px-6 pt-5 pb-3 border-b border-[#f0f0f0]">
+          {/* Row 1: Company title (inline editable) + close */}
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex-1 min-w-0">
+              <InlineText
+                value={p.empresa || ''}
+                onSave={(v) => saveProspectField({ name: v || null })}
+                emptyLabel="Nombre de empresa"
+                displayClassName="text-xl font-semibold text-[#1a1a1a] tracking-tight"
+                className="text-xl font-semibold w-full max-w-md"
+              />
+              {/* Row 2: meta (ubicación · industria · stage · deadline) — all inline edit */}
+              <div className="flex items-center flex-wrap gap-x-2 gap-y-1 mt-1.5 text-sm text-[#666]">
+                <InlineText
+                  value={p.ciudad || ''}
+                  onSave={(v) => saveProspectField({ location: v || null })}
+                  emptyLabel="Ubicación"
+                  displayClassName="text-[#666]"
+                />
+                <span className="text-[#ddd]">·</span>
+                <InlineSelect
+                  value={p.industria || undefined}
+                  options={INDUSTRIAS.map((ind) => ({ value: ind, label: ind }))}
+                  onSave={(v) => saveProspectField({ industry: v || null })}
+                  emptyLabel="Industria"
+                  displayClassName="text-[#666]"
+                />
+                <span className={`ml-1 px-2 py-0.5 rounded-full text-xs font-medium ${
                   stageInfo?.color === '#2E7D32' ? 'bg-green-100 text-green-700' :
                   stageInfo?.color === '#7C3AED' ? 'bg-purple-100 text-purple-700' :
                   stageInfo?.color === '#00a8a8' ? 'bg-teal-100 text-teal-700' :
@@ -187,99 +240,106 @@ export function ProspectoDrawer({ prospecto, onClose, onEdit }: Props) {
                   stageInfo?.color === '#0D47A1' ? 'bg-blue-100 text-blue-700' :
                   'bg-gray-100 text-gray-600'
                 }`}>{stageInfo?.label || p.status}</span>
+                {(() => {
+                  const chip = proposalDeadlineChip(p);
+                  if (!chip) return null;
+                  return (
+                    <span
+                      className="px-2 py-0.5 rounded-full text-[11px] font-semibold inline-flex items-center gap-1"
+                      style={{ backgroundColor: chip.bg, color: chip.color, border: `1px solid ${chip.color}30` }}
+                      title="Fecha límite para subir la propuesta (3 días hábiles desde que se agendó el levantamiento)"
+                    >
+                      <CalendarClock size={11} />
+                      {chip.label}
+                    </span>
+                  );
+                })()}
               </div>
             </div>
-            <div className="flex items-center gap-1.5">
-              {/* Avanzar Etapa */}
-              {(() => {
-                const stageIds: string[] = KANBAN_STAGES.map(s => s.id);
-                const currentIdx = stageIds.indexOf(p.status);
-                const nextStage = currentIdx >= 0 && currentIdx < stageIds.length - 1 ? KANBAN_STAGES[currentIdx + 1] : null;
-                if (!nextStage) return null;
-                return (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      // From contacto_inicial → open qualify dialog instead of advancing directly
-                      if (p.status === 'contacto_inicial') {
-                        setShowQualifyDialog(true);
-                        return;
-                      }
-                      const gate = STAGE_GATES[nextStage.id];
-                      if (gate && !gate.validate(p)) {
-                        setPendingStageGate({ prospecto: p, fromStage: p.status, toStage: nextStage.id });
-                        return;
-                      }
-                      changeProspectoStage(p.id, nextStage.id);
-                    }}
-                    className="flex items-center gap-1 px-2.5 py-1.5 bg-[#00a8a8] hover:bg-[#008b8b] text-white rounded-lg text-xs font-medium transition-all"
-                  >
-                    <ChevronRight size={14} /> {p.status === 'contacto_inicial' ? 'Calificar' : `Avanzar a ${nextStage.label}`}
-                  </button>
-                );
-              })()}
-              {/* Rechazar */}
-              {p.status !== 'cierre_perdido' && p.status !== 'cierre_ganado' && (
-                <button
-                  onClick={(e) => { e.stopPropagation(); setShowRechazoModal(true); }}
-                  className="flex items-center gap-1 px-2 py-1.5 bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 rounded-lg text-xs font-medium transition-all"
-                >
-                  <XCircle size={14} /> Rechazar
-                </button>
-              )}
-              <button
-                onClick={(e) => { e.stopPropagation(); setShowEditDialog(true); }}
-                className="flex items-center gap-1 px-2 py-1.5 text-[#00a8a8] border border-[#00a8a8]/30 hover:bg-[#00a8a8]/10 rounded-lg text-xs font-medium transition-all"
-                title="Editar prospecto"
-              >
-                <Edit3 size={14} /> Editar
-              </button>
-              {(authUser?.role === 'admin' || authUser?.role === 'comercial' || authUser?.role === 'director') && (
-                <button
-                  onClick={async (e) => {
-                    e.stopPropagation();
-                    if (window.confirm(`¿Eliminar prospecto "${p.empresa}"? Esta acción no se puede deshacer.`)) {
-                      try {
-                        await deleteProspectMutation.mutateAsync(p.id);
-                        onClose();
-                      } catch {
-                        toast({ title: 'Error al eliminar prospecto', variant: 'destructive' });
-                      }
-                    }
-                  }}
-                  className="p-1.5 text-[#999] hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
-                  title="Eliminar prospecto"
-                >
-                  <Trash2 size={16} />
-                </button>
-              )}
-              <button onClick={onClose} className="text-[#999] hover:text-[#333] p-1 transition-colors">
-                <X size={20} />
-              </button>
-            </div>
+            <button onClick={onClose} className="text-[#999] hover:text-[#333] p-1 transition-colors flex-shrink-0" title="Cerrar">
+              <X size={20} />
+            </button>
           </div>
 
-          {/* Progress Bar */}
-          <div className="flex items-center gap-0.5 mt-4 -mx-6 px-6">
+          {/* Row 3: Slim progress bar — dots connected, labels only on hover */}
+          <div className="flex items-center gap-0.5 mt-4">
             {KANBAN_STAGES.map((stage, idx) => {
               const currentIdx = KANBAN_STAGES.findIndex(s => s.id === p.status);
               const isPast = idx < currentIdx;
               const isCurrent = idx === currentIdx;
               return (
-                <div key={stage.id} className="flex-1 flex flex-col items-center gap-1">
-                  <div
-                    className="w-full h-1.5 rounded-full transition-all"
-                    style={{
-                      backgroundColor: isPast || isCurrent ? stage.color : '#e5e7eb',
-                      opacity: isPast ? 0.5 : 1,
-                    }}
-                  />
-                  <span className={`text-[9px] font-medium truncate max-w-full ${isCurrent ? 'text-[#1a1a1a]' : 'text-[#bbb]'}`}>
-                    {stage.label}
-                  </span>
-                </div>
+                <div
+                  key={stage.id}
+                  className="flex-1 h-1.5 rounded-full transition-all"
+                  style={{
+                    backgroundColor: isPast || isCurrent ? stage.color : '#e5e7eb',
+                    opacity: isPast ? 0.5 : 1,
+                  }}
+                  title={stage.label}
+                />
               );
             })}
+          </div>
+          <div className="mt-1 text-[10px] text-[#9ca3af] text-center">
+            Etapa actual: <span className="font-medium text-[#1c2c4a]">{stageInfo?.label || p.status}</span>
+          </div>
+
+          {/* Row 4: Actions — compact, own row so header no longer feels crammed */}
+          <div className="flex items-center gap-2 mt-3">
+            {(() => {
+              const stageIds: string[] = KANBAN_STAGES.map(s => s.id);
+              const currentIdx = stageIds.indexOf(p.status);
+              const nextStage = currentIdx >= 0 && currentIdx < stageIds.length - 1 ? KANBAN_STAGES[currentIdx + 1] : null;
+              if (!nextStage) return null;
+              return (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (p.status === 'contacto_inicial') {
+                      setShowQualifyDialog(true);
+                      return;
+                    }
+                    const gate = STAGE_GATES[nextStage.id];
+                    if (gate && !gate.validate(p)) {
+                      setPendingStageGate({ prospecto: p, fromStage: p.status, toStage: nextStage.id });
+                      return;
+                    }
+                    changeProspectoStage(p.id, nextStage.id);
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-[#00a8a8] hover:bg-[#008b8b] text-white rounded-lg text-xs font-semibold transition-all shadow-sm"
+                >
+                  <ChevronRight size={14} />
+                  {p.status === 'contacto_inicial' ? 'Calificar prospecto' : `Avanzar a ${nextStage.label}`}
+                </button>
+              );
+            })()}
+            {p.status !== 'cierre_perdido' && p.status !== 'cierre_ganado' && (
+              <button
+                onClick={(e) => { e.stopPropagation(); setShowRechazoModal(true); }}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-white text-red-600 border border-red-200 hover:bg-red-50 rounded-lg text-xs font-medium transition-all"
+              >
+                <XCircle size={14} /> Rechazar
+              </button>
+            )}
+            {(authUser?.role === 'admin' || authUser?.role === 'comercial' || authUser?.role === 'director') && (
+              <button
+                onClick={async (e) => {
+                  e.stopPropagation();
+                  if (window.confirm(`¿Eliminar prospecto "${p.empresa}"? Esta acción no se puede deshacer.`)) {
+                    try {
+                      await deleteProspectMutation.mutateAsync(p.id);
+                      onClose();
+                    } catch {
+                      toast({ title: 'Error al eliminar prospecto', variant: 'destructive' });
+                    }
+                  }
+                }}
+                className="ml-auto flex items-center gap-1 p-1.5 text-[#9ca3af] hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                title="Eliminar prospecto"
+              >
+                <Trash2 size={14} />
+              </button>
+            )}
           </div>
 
           {/* Tabs */}
@@ -446,113 +506,184 @@ export function ProspectoDrawer({ prospecto, onClose, onEdit }: Props) {
                 );
               })()}
 
-              <div className="p-5 space-y-5">
-                {/* Value + date row */}
-                <div className="flex items-center gap-3">
-                  <div className="flex-1 bg-[#EFF6FF] rounded-xl p-3 text-center">
-                    <div className="text-xs text-[#6b7280] mb-0.5">Valor estimado</div>
-                    <div className="text-xl font-bold text-[#0D47A1]">{valor > 0 ? fmtCurrency(valor) : '—'}</div>
-                  </div>
-                  <div className="flex-1 bg-[#f3f4f6] rounded-xl p-3 text-center">
-                    <div className="text-xs text-[#6b7280] mb-0.5">Días en seguimiento</div>
-                    <div className="text-xl font-bold text-[#1c2c4a]">{dias !== null ? dias : '—'}</div>
-                  </div>
-                </div>
-
-                {/* Fechas clave */}
-                {(p.meetingDate || p.surveyDate) && (
-                  <div className="flex items-center gap-3">
+              <div className="p-6 space-y-8">
+                {/* Stats row — compact, hidden if nothing to show */}
+                {(valor > 0 || p.meetingDate || p.surveyDate) && (
+                  <div className="flex flex-wrap gap-x-10 gap-y-4">
+                    {valor > 0 && (
+                      <div>
+                        <div className="text-[10px] font-semibold text-[#9ca3af] uppercase tracking-widest mb-0.5">Valor cotización</div>
+                        <div className="text-lg font-semibold text-[#0D47A1]">{fmtCurrency(valor)}</div>
+                      </div>
+                    )}
                     {p.meetingDate && (
-                      <div className="flex-1 bg-white rounded-xl border border-[#e5e7eb] p-3 flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-orange-50 flex items-center justify-center flex-shrink-0">
-                          <CalendarClock size={16} className="text-orange-600" />
-                        </div>
-                        <div>
-                          <div className="text-[11px] text-[#6b7280]">Fecha de reunión</div>
-                          <div className="text-sm font-semibold text-[#1c2c4a]">{new Date(p.meetingDate + 'T12:00:00').toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
-                        </div>
+                      <div>
+                        <div className="text-[10px] font-semibold text-[#9ca3af] uppercase tracking-widest mb-0.5">Fecha reunión</div>
+                        <div className="text-sm font-medium text-[#1c2c4a]">{new Date(p.meetingDate + 'T12:00:00').toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
                       </div>
                     )}
                     {p.surveyDate && (
-                      <div className="flex-1 bg-white rounded-xl border border-[#e5e7eb] p-3 flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-teal-50 flex items-center justify-center flex-shrink-0">
-                          <Target size={16} className="text-teal-600" />
-                        </div>
-                        <div>
-                          <div className="text-[11px] text-[#6b7280]">Fecha de levantamiento</div>
-                          <div className="text-sm font-semibold text-[#1c2c4a]">{new Date(p.surveyDate + 'T12:00:00').toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
-                        </div>
+                      <div>
+                        <div className="text-[10px] font-semibold text-[#9ca3af] uppercase tracking-widest mb-0.5">Fecha levantamiento</div>
+                        <div className="text-sm font-medium text-[#1c2c4a]">{new Date(p.surveyDate + 'T12:00:00').toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
                       </div>
                     )}
                   </div>
                 )}
 
-                {/* Contact */}
-                {(p.contacto && p.contacto.nombre) ? (
-                  <div className="bg-white rounded-xl border border-[#e5e7eb] overflow-hidden">
-                    <div className="px-4 py-3 bg-[#f9fafb] border-b border-[#e5e7eb]">
-                      <h3 className="text-sm font-semibold text-[#1c2c4a] flex items-center gap-2"><Users size={14} /> Contacto</h3>
-                    </div>
-                    <div className="p-4 space-y-3">
-                      <div>
-                        <div className="text-sm font-semibold text-[#1c2c4a]">{p.contacto.nombre}</div>
-                        {p.contacto.puesto && <div className="text-xs text-[#6b7280]">{p.contacto.puesto}</div>}
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        {p.contacto.telefono && (
-                          <a href={`tel:${p.contacto.telefono}`} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-50 text-green-700 text-xs font-medium hover:bg-green-100 transition-colors">
-                            <Phone size={12} /> Llamar
-                          </a>
-                        )}
-                        {p.contacto.telefono && (
-                          <a href={`https://wa.me/52${p.contacto.telefono.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-white text-xs font-semibold hover:opacity-90 transition-colors shadow-sm" style={{ backgroundColor: '#25D366' }}>
-                            <MessageSquare size={14} /> WhatsApp
-                          </a>
-                        )}
-                        {p.contacto.correo && (
-                          <a href={`mailto:${p.contacto.correo}`} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 text-xs font-medium hover:bg-blue-100 transition-colors">
-                            <Mail size={12} /> Email
-                          </a>
-                        )}
-                      </div>
-                      {p.contacto.correo && (
-                        <div className="flex items-center justify-between group">
-                          <div className="flex items-center gap-2 text-sm text-[#6b7280]"><Mail size={13} className="text-[#9ca3af]" /><span>{p.contacto.correo}</span></div>
-                          <button onClick={() => copyToClipboard(p.contacto.correo, 'correo')} className="opacity-0 group-hover:opacity-100 text-[#9ca3af] hover:text-[#00a8a8] transition-all p-1">
-                            {copiedField === 'correo' ? <Check size={13} className="text-green-500" /> : <Copy size={13} />}
-                          </button>
-                        </div>
+                {/* Socio Ambiental — sección de cierre, visible SOLO cuando
+                    el prospecto ya está en esa etapa. Captura los campos del
+                    spec de Vero para guardar el acuerdo comercial; los datos
+                    de contrato se sincronizarán con el futuro módulo Socios
+                    Ambientales cuando exista. */}
+                {p.status === 'cierre_ganado' && (
+                  <section>
+                    <SectionTitle>Cierre</SectionTitle>
+                    <div className="space-y-0.5">
+                      <InfoRow label="Fecha de cierre">
+                        <InlineDate
+                          value={p.closeDate ? String(p.closeDate).split('T')[0] : null}
+                          onSave={(v) => saveProspectField({ closeDate: v ? new Date(v + 'T12:00:00').toISOString() : null })}
+                          emptyLabel="Sin fecha"
+                        />
+                      </InfoRow>
+                      <InfoRow label="Inicio de operaciones">
+                        <InlineDate
+                          value={p.operationsStartDate}
+                          onSave={(v) => saveProspectField({ operationsStartDate: v })}
+                          emptyLabel="Sin fecha"
+                        />
+                      </InfoRow>
+                      <InfoRow label="¿Hay contrato?">
+                        <InlineSelect
+                          value={p.hasContract === true ? 'si' : p.hasContract === false ? 'no' : undefined}
+                          options={[
+                            { value: 'no', label: 'No' },
+                            { value: 'si', label: 'Sí' },
+                          ]}
+                          onSave={(v) => saveProspectField({ hasContract: v === 'si' })}
+                          emptyLabel="Por definir"
+                        />
+                      </InfoRow>
+                      {p.hasContract && (
+                        <>
+                          <InfoRow label="Tiempo de contrato">
+                            <InlineNumber
+                              value={p.contractDurationMonths}
+                              onSave={(v) => saveProspectField({ contractDurationMonths: v })}
+                              min={0}
+                              suffix="meses"
+                              emptyLabel="Sin definir"
+                            />
+                          </InfoRow>
+                          <InfoRow label="Crédito servicios">
+                            <InlineNumber
+                              value={p.paymentTermsServices}
+                              onSave={(v) => saveProspectField({ paymentTermsServices: v })}
+                              min={0}
+                              suffix="días"
+                              emptyLabel="Sin definir"
+                            />
+                          </InfoRow>
+                          <InfoRow label="Crédito valorizables">
+                            <InlineNumber
+                              value={p.paymentTermsValuables}
+                              onSave={(v) => saveProspectField({ paymentTermsValuables: v })}
+                              min={0}
+                              suffix="días"
+                              emptyLabel="Sin definir"
+                            />
+                          </InfoRow>
+                        </>
                       )}
-                      {p.contacto.telefono && (
-                        <div className="flex items-center justify-between group">
-                          <div className="flex items-center gap-2 text-sm text-[#6b7280]"><Phone size={13} className="text-[#9ca3af]" /><span>{p.contacto.telefono}</span></div>
-                          <button onClick={() => copyToClipboard(p.contacto.telefono, 'telefono')} className="opacity-0 group-hover:opacity-100 text-[#9ca3af] hover:text-[#00a8a8] transition-all p-1">
-                            {copiedField === 'telefono' ? <Check size={13} className="text-green-500" /> : <Copy size={13} />}
-                          </button>
-                        </div>
-                      )}
                     </div>
-                  </div>
-                ) : null}
-
-                {/* Services */}
-                {sc.length > 0 && (
-                  <div className="bg-white rounded-xl border border-[#e5e7eb] overflow-hidden">
-                    <div className="px-4 py-3 bg-[#f9fafb] border-b border-[#e5e7eb]">
-                      <h3 className="text-sm font-semibold text-[#1c2c4a] flex items-center gap-2"><Package size={14} /> Servicios</h3>
-                    </div>
-                    <div className="p-4 flex flex-wrap gap-2">
-                      {sc.map((s) => (
-                        <span key={s.id} className="px-3 py-1.5 rounded-lg text-xs font-semibold" style={{ backgroundColor: s.bg, color: s.text, border: `1px solid ${s.border || s.text}20` }}>
-                          {s.nombre}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
+                  </section>
                 )}
 
-                {/* Qualification Waste Data */}
+                {/* Datos generales (Empresa, Ubicación, Industria) ahora viven
+                    en el header del drawer como campos inline editables, así que
+                    ya no los repetimos aquí. */}
+
+                {/* Contacto — flat Notion-style section */}
+                <section>
+                  <SectionTitle>Contacto</SectionTitle>
+                  <div className="space-y-0.5">
+                    <InfoRow label="Nombre">
+                      <InlineText
+                        value={p.contacto?.nombre || ''}
+                        onSave={(v) => saveProspectField({ contactName: v || null })}
+                        emptyLabel="Agregar contacto"
+                        displayClassName="font-medium text-[#1c2c4a]"
+                      />
+                    </InfoRow>
+                    <InfoRow label="Puesto">
+                      <InlineText
+                        value={p.contacto?.puesto || ''}
+                        onSave={(v) => saveProspectField({ contactRole: v || null })}
+                        emptyLabel="Agregar puesto"
+                      />
+                    </InfoRow>
+                    <InfoRow label="Teléfono">
+                      <InlineText
+                        value={p.contacto?.telefono || ''}
+                        onSave={(v) => saveProspectField({ contactPhone: v || null })}
+                        emptyLabel="Agregar teléfono"
+                        type="tel"
+                      />
+                    </InfoRow>
+                    <InfoRow label="Correo">
+                      <InlineText
+                        value={p.contacto?.correo || ''}
+                        onSave={(v) => saveProspectField({ contactEmail: v || null })}
+                        emptyLabel="Agregar correo"
+                        type="email"
+                      />
+                    </InfoRow>
+                  </div>
+                  {(p.contacto?.telefono || p.contacto?.correo) && (
+                    <div className="flex flex-wrap gap-2 mt-3">
+                      {p.contacto?.telefono && (
+                        <a href={`tel:${p.contacto.telefono}`} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-50 text-green-700 text-xs font-medium hover:bg-green-100 transition-colors">
+                          <Phone size={12} /> Llamar
+                        </a>
+                      )}
+                      {p.contacto?.telefono && (
+                        <a href={`https://wa.me/52${p.contacto.telefono.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-white text-xs font-semibold hover:opacity-90 transition-colors" style={{ backgroundColor: '#25D366' }}>
+                          <MessageSquare size={12} /> WhatsApp
+                        </a>
+                      )}
+                      {p.contacto?.correo && (
+                        <a href={`mailto:${p.contacto.correo}`} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 text-xs font-medium hover:bg-blue-100 transition-colors">
+                          <Mail size={12} /> Email
+                        </a>
+                      )}
+                      {p.contacto?.telefono && (
+                        <button onClick={() => copyToClipboard(p.contacto.telefono, 'telefono')} className="inline-flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-[#6b7280] text-xs font-medium hover:bg-[#f3f4f6] transition-colors" title="Copiar teléfono">
+                          {copiedField === 'telefono' ? <Check size={13} className="text-green-500" /> : <Copy size={13} />}
+                        </button>
+                      )}
+                      {p.contacto?.correo && (
+                        <button onClick={() => copyToClipboard(p.contacto.correo, 'correo')} className="inline-flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-[#6b7280] text-xs font-medium hover:bg-[#f3f4f6] transition-colors" title="Copiar correo">
+                          {copiedField === 'correo' ? <Check size={13} className="text-green-500" /> : <Copy size={13} />}
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </section>
+
+                {/* Servicios — flat */}
+                <section>
+                  <SectionTitle>Servicios</SectionTitle>
+                  <InlineChips
+                    value={(p.servicios || []) as string[]}
+                    options={SERVICIOS_INNOVATIVE.map((svc) => ({ value: svc.id, label: svc.nombre }))}
+                    onSave={(v) => saveProspectField({ services: v })}
+                    emptyLabel="Sin servicios seleccionados — haz clic para elegir"
+                  />
+                </section>
+
+                {/* Residuos (Calificación) — flat, read-only */}
                 {!!(p.levantamientoData as Record<string, unknown>)?.qualificationWaste && (() => {
                   const qw = (p.levantamientoData as Record<string, unknown>).qualificationWaste as {
                     wasteTypes?: string[];
@@ -562,161 +693,163 @@ export function ProspectoDrawer({ prospecto, onClose, onEdit }: Props) {
                     reasonForChange?: string;
                   };
                   return (
-                    <div className="bg-white rounded-xl border border-[#e5e7eb] overflow-hidden">
-                      <div className="px-4 py-3 bg-[#f0fdf4] border-b border-[#e5e7eb]">
-                        <h3 className="text-sm font-semibold text-[#1c2c4a] flex items-center gap-2"><Leaf size={14} className="text-[#22C55E]" /> Residuos (Calificacion)</h3>
-                      </div>
-                      <div className="p-4 space-y-3">
+                    <section>
+                      <SectionTitle>Residuos (Calificación)</SectionTitle>
+                      <div className="space-y-0.5">
                         {qw.wasteTypes && qw.wasteTypes.length > 0 && (
-                          <div className="flex flex-wrap gap-1.5">
-                            {qw.wasteTypes.map((wt: string) => (
-                              <span key={wt} className="px-2.5 py-1 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-200">
-                                {wt}
-                              </span>
-                            ))}
+                          <div className="py-1.5">
+                            <div className="flex flex-wrap gap-1.5">
+                              {qw.wasteTypes.map((wt: string) => (
+                                <span key={wt} className="px-2.5 py-1 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-200">
+                                  {wt}
+                                </span>
+                              ))}
+                            </div>
                           </div>
                         )}
                         {qw.estimatedVolume && (
-                          <div className="flex items-center justify-between text-sm">
-                            <span className="text-[#6b7280]">Volumen estimado</span>
-                            <span className="font-medium text-[#1c2c4a]">{qw.estimatedVolume}</span>
-                          </div>
+                          <InfoRow label="Volumen estimado">{qw.estimatedVolume}</InfoRow>
                         )}
                         {qw.hasCurrentProvider && qw.currentProviderName && (
-                          <div className="flex items-center justify-between text-sm">
-                            <span className="text-[#6b7280]">Proveedor actual</span>
-                            <span className="font-medium text-[#1c2c4a]">{qw.currentProviderName}</span>
-                          </div>
+                          <InfoRow label="Proveedor actual">{qw.currentProviderName}</InfoRow>
                         )}
                         {qw.reasonForChange && (
-                          <div className="text-sm">
-                            <span className="text-[#6b7280]">Razon de cambio: </span>
-                            <span className="text-[#1c2c4a]">{qw.reasonForChange}</span>
-                          </div>
+                          <InfoRow label="Razón de cambio" multiline>
+                            <span className="whitespace-pre-wrap">{qw.reasonForChange}</span>
+                          </InfoRow>
                         )}
                       </div>
-                    </div>
+                    </section>
                   );
                 })()}
 
-                {/* Details */}
-                {(p.volumenEstimado || p.propuesta?.ventaTotal || p.motivoRechazo || p.fecha || p.potential || p.probability || p.priority || p.nextStep) && (
-                  <div className="bg-white rounded-xl border border-[#e5e7eb] overflow-hidden">
-                    <div className="px-4 py-3 bg-[#f9fafb] border-b border-[#e5e7eb]">
-                      <h3 className="text-sm font-semibold text-[#1c2c4a] flex items-center gap-2"><ClipboardList size={14} /> Detalles</h3>
-                    </div>
-                    <div className="p-4 space-y-2.5">
-                      {p.potential && (
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-[#6b7280]">Potencial</span>
-                          <span className={`font-medium px-2 py-0.5 rounded-full text-xs ${
-                            p.potential === 'Muy Alto' ? 'bg-green-100 text-green-700' :
-                            p.potential === 'Alto' ? 'bg-blue-100 text-blue-700' :
-                            p.potential === 'Medio' ? 'bg-yellow-100 text-yellow-700' :
-                            'bg-gray-100 text-gray-600'
-                          }`}>{p.potential}</span>
-                        </div>
-                      )}
-                      {p.probability != null && p.probability > 0 && (
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-[#6b7280]">Probabilidad</span>
-                          <span className="font-medium text-[#1c2c4a]">{p.probability}%</span>
-                        </div>
-                      )}
-                      {p.priority && p.priority !== 'media' && (
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-[#6b7280]">Prioridad</span>
-                          <span className={`font-medium px-2 py-0.5 rounded-full text-xs ${
-                            p.priority === 'muy_alta' ? 'bg-red-100 text-red-700' :
-                            p.priority === 'alta' ? 'bg-orange-100 text-orange-700' :
-                            'bg-gray-100 text-gray-600'
-                          }`}>{p.priority === 'muy_alta' ? 'Muy Alta' : p.priority === 'alta' ? 'Alta' : p.priority === 'baja' ? 'Baja' : 'Media'}</span>
-                        </div>
-                      )}
-                      {p.volumenEstimado && (
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-[#6b7280]">
-                            {p.serviceVolumes && Object.keys(p.serviceVolumes).length > 0
-                              ? 'Volumen total'
-                              : 'Volumen estimado (general)'}
-                          </span>
-                          <span className="font-medium text-[#1c2c4a]">{p.volumenEstimado}</span>
-                        </div>
-                      )}
-                      {p.serviceVolumes && Object.keys(p.serviceVolumes).length > 0 && (
-                        <div className="text-sm space-y-1 pl-2 border-l-2 border-[#e5e7eb]">
-                          {Object.entries(p.serviceVolumes as Record<string, string>).map(([svcId, vol]) => {
-                            const svc = SERVICIOS_INNOVATIVE.find(s => s.id === svcId);
-                            return vol ? (
-                              <div key={svcId} className="flex items-center justify-between">
-                                <span className="text-[#6b7280] text-xs">{svc?.nombre || svcId}</span>
-                                <span className="text-xs font-medium text-[#1c2c4a]">{vol}</span>
-                              </div>
-                            ) : null;
-                          })}
-                        </div>
-                      )}
-                      {p.propuesta?.ventaTotal && (
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-[#6b7280]">Venta total (contrato)</span>
-                          <span className="font-bold text-[#0D47A1]">{fmtCurrency(p.propuesta.ventaTotal)}</span>
-                        </div>
-                      )}
-                      {p.motivoRechazo && (() => {
-                        const cat = classifyRechazo(p.motivoRechazo, p.motivoRechazoCategory);
-                        return (
-                          <div className="flex items-center justify-between text-sm">
-                            <span className="text-[#6b7280]">Motivo rechazo</span>
-                            <div className="flex items-center gap-1.5">
-                              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full" style={{ backgroundColor: `${cat?.color}15`, color: cat?.color }}>{cat?.label}</span>
-                              <span className="font-medium text-sm truncate max-w-[200px]" style={{ color: cat?.color }}>{p.motivoRechazo}</span>
-                            </div>
-                          </div>
-                        );
-                      })()}
-                      {p.fecha && (
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-[#6b7280]">Primer contacto</span>
-                          <span className="font-medium text-[#1c2c4a]">{p.fecha}</span>
-                        </div>
-                      )}
-                      {p.fechaRegistro && p.fechaRegistro !== p.fecha && (
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-[#6b7280]">Registrado</span>
-                          <span className="font-medium text-[#9ca3af]">{p.fechaRegistro}</span>
-                        </div>
-                      )}
-                      {p.nextStep && (
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-[#6b7280]">Siguiente paso</span>
-                          <span className="font-medium text-[#1c2c4a] truncate max-w-[250px]">{p.nextStep}</span>
-                        </div>
-                      )}
-                      {p.reason && (
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-[#6b7280]">Razon de interes</span>
-                          <span className="font-medium text-[#1c2c4a] truncate max-w-[250px]">{p.reason}</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
+                {/* Detalles — flat Notion-style, inline edit */}
+                <section>
+                  <SectionTitle>Detalles</SectionTitle>
+                  <div className="space-y-0.5">
+                    <InfoRow label="Potencial">
+                      <InlineSelect
+                        value={p.potential || undefined}
+                        options={[
+                          { value: 'Bajo', label: 'Bajo', badgeClass: 'bg-gray-100 text-gray-600' },
+                          { value: 'Medio', label: 'Medio', badgeClass: 'bg-yellow-100 text-yellow-700' },
+                          { value: 'Alto', label: 'Alto', badgeClass: 'bg-blue-100 text-blue-700' },
+                          { value: 'Muy Alto', label: 'Muy Alto', badgeClass: 'bg-green-100 text-green-700' },
+                        ]}
+                        onSave={(v) => saveProspectField({ potential: v || null })}
+                        emptyLabel="Sin definir"
+                      />
+                    </InfoRow>
+                    <InfoRow label="Probabilidad">
+                      <InlineNumber
+                        value={p.probability ?? null}
+                        onSave={(v) => saveProspectField({ probability: v })}
+                        min={0}
+                        max={100}
+                        suffix="%"
+                        emptyLabel="Sin definir"
+                      />
+                    </InfoRow>
+                    <InfoRow label="Prioridad">
+                      <InlineSelect
+                        value={p.priority || undefined}
+                        options={[
+                          { value: 'baja', label: 'Baja', badgeClass: 'bg-gray-100 text-gray-600' },
+                          { value: 'media', label: 'Media', badgeClass: 'bg-gray-100 text-gray-600' },
+                          { value: 'alta', label: 'Alta', badgeClass: 'bg-orange-100 text-orange-700' },
+                          { value: 'muy_alta', label: 'Muy Alta', badgeClass: 'bg-red-100 text-red-700' },
+                        ]}
+                        onSave={(v) => saveProspectField({ priority: v || null })}
+                        emptyLabel="Sin definir"
+                      />
+                    </InfoRow>
+                    <InfoRow label="Mes de cierre">
+                      <InlineMonth
+                        value={p.estimatedCloseTime}
+                        onSave={(v) => saveProspectField({ estimatedCloseTime: v })}
+                        emptyLabel="Sin definir"
+                      />
+                    </InfoRow>
+                    <InfoRow label="Fecha est. de inicio">
+                      <InlineDate
+                        value={p.estimatedStartDate}
+                        onSave={(v) => saveProspectField({ estimatedStartDate: v })}
+                        emptyLabel="Sin definir"
+                      />
+                    </InfoRow>
+                    <InfoRow label="Siguiente paso" multiline>
+                      <InlineText
+                        value={p.nextStep || ''}
+                        onSave={(v) => saveProspectField({ nextStep: v || null })}
+                        emptyLabel="Agregar siguiente paso"
+                        placeholder="Ej: Agendar reunión con gerente..."
+                        multiline
+                        className="w-full"
+                      />
+                    </InfoRow>
+                    <InfoRow label="Razón de interés" multiline>
+                      <InlineText
+                        value={p.reason || ''}
+                        onSave={(v) => saveProspectField({ reason: v || null })}
+                        emptyLabel="Agregar razón"
+                        placeholder="Ej: Busca certificación TRUE..."
+                        multiline
+                        className="w-full"
+                      />
+                    </InfoRow>
 
-                {/* Notes inline */}
-                <div className="bg-white rounded-xl border border-[#e5e7eb] overflow-hidden">
-                  <div className="px-4 py-3 bg-[#f9fafb] border-b border-[#e5e7eb]">
-                    <h3 className="text-sm font-semibold text-[#1c2c4a] flex items-center gap-2">
-                      <MessageSquare size={14} /> Notas
-                      {apiNotas.length > 0 && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#e5e7eb] text-[#6b7280]">{apiNotas.length}</span>}
-                    </h3>
+                    {/* Read-only informational fields — solo aparecen si tienen valor.
+                        La venta total ya no se muestra aquí: vive en el stats row
+                        superior como "Valor cotización" (evita duplicar). */}
+                    {p.volumenEstimado && (
+                      <InfoRow label={p.serviceVolumes && Object.keys(p.serviceVolumes).length > 0 ? 'Volumen total' : 'Volumen estimado'}>
+                        {p.volumenEstimado}
+                      </InfoRow>
+                    )}
+                    {p.serviceVolumes && Object.keys(p.serviceVolumes).length > 0 &&
+                      Object.entries(p.serviceVolumes as Record<string, string>).map(([svcId, vol]) => {
+                        const svc = SERVICIOS_INNOVATIVE.find(s => s.id === svcId);
+                        return vol ? (
+                          <InfoRow key={svcId} label={svc?.nombre || svcId}>
+                            <span className="text-[#6b7280]">{vol}</span>
+                          </InfoRow>
+                        ) : null;
+                      })
+                    }
+                    {p.motivoRechazo && (() => {
+                      const cat = classifyRechazo(p.motivoRechazo, p.motivoRechazoCategory);
+                      return (
+                        <InfoRow label="Motivo rechazo" multiline>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full" style={{ backgroundColor: `${cat?.color}15`, color: cat?.color }}>{cat?.label}</span>
+                            <span className="text-sm" style={{ color: cat?.color }}>{p.motivoRechazo}</span>
+                          </div>
+                        </InfoRow>
+                      );
+                    })()}
+                    {p.fecha && (
+                      <InfoRow label="Primer contacto">{p.fecha}</InfoRow>
+                    )}
+                    {p.fechaRegistro && p.fechaRegistro !== p.fecha && (
+                      <InfoRow label="Registrado">
+                        <span className="text-[#9ca3af]">{p.fechaRegistro}</span>
+                      </InfoRow>
+                    )}
                   </div>
-                  <div className="p-4 space-y-3">
+                </section>
+
+                {/* Notas — flat */}
+                <section>
+                  <SectionTitle>
+                    Notas {apiNotas.length > 0 && <span className="ml-1 text-[#6b7280]">· {apiNotas.length}</span>}
+                  </SectionTitle>
+                  <div className="space-y-3">
                     <div className="flex gap-2">
                       <textarea
                         value={prospectoNuevaNota}
                         onChange={(e) => setProspectoNuevaNota(e.target.value)}
                         onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); agregarNota(); } }}
-                        placeholder="Escribe una nota... (Enter para guardar)"
+                        placeholder="Escribe una nota... (Enter guarda)"
                         className="flex-1 border border-[#e5e7eb] rounded-lg px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#00a8a8]/30 focus:border-[#00a8a8]"
                         rows={1}
                       />
@@ -725,53 +858,48 @@ export function ProspectoDrawer({ prospecto, onClose, onEdit }: Props) {
                         <Send size={14} />
                       </button>
                     </div>
-                    {apiNotas.length > 0 ? (
-                      <div className="space-y-2 max-h-48 overflow-y-auto">
+                    {apiNotas.length > 0 && (
+                      <div className="space-y-2 max-h-56 overflow-y-auto">
                         {[...apiNotas].reverse().map((nota) => (
-                          <div key={nota.id} className="bg-[#f9fafb] rounded-lg p-3 group">
+                          <div key={nota.id} className="group px-1 py-2 border-b border-[#f3f4f6] last:border-b-0">
                             <div className="flex items-start justify-between gap-2">
                               <p className="text-sm text-[#1c2c4a] flex-1 whitespace-pre-wrap">{nota.content}</p>
                               <button onClick={async () => {
                                 try { await deleteNoteMutation.mutateAsync({ prospectId: realProspectId, noteId: nota.id }); }
                                 catch { toast({ title: 'Error al eliminar nota', variant: 'destructive' }); }
                               }}
-                                className="opacity-0 group-hover:opacity-100 text-[#6b7280] hover:text-red-500 transition-all flex-shrink-0 mt-0.5">
+                                className="opacity-0 group-hover:opacity-100 text-[#9ca3af] hover:text-red-500 transition-all flex-shrink-0 mt-0.5">
                                 <Trash2 size={12} />
                               </button>
                             </div>
-                            <div className="flex items-center gap-1 mt-1.5 text-[10px] text-[#9ca3af]">
+                            <div className="flex items-center gap-1 mt-1 text-[10px] text-[#9ca3af]">
                               <Clock size={9} /> {timeAgo(nota.createdAt ? String(nota.createdAt) : null) || 'ahora'}
                             </div>
                           </div>
                         ))}
                       </div>
-                    ) : (
-                      <p className="text-xs text-[#9ca3af] text-center py-2">Agrega una nota...</p>
                     )}
                   </div>
-                </div>
+                </section>
 
-                {/* Files inline */}
-                <div className="bg-white rounded-xl border border-[#e5e7eb] overflow-hidden">
-                  <div className="px-4 py-3 bg-[#f9fafb] border-b border-[#e5e7eb]">
-                    <h3 className="text-sm font-semibold text-[#1c2c4a] flex items-center gap-2">
-                      <Paperclip size={14} /> Archivos
-                      {apiDocumentos.length > 0 && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#e5e7eb] text-[#6b7280]">{apiDocumentos.length}</span>}
-                    </h3>
-                  </div>
-                  <div className="p-4 space-y-3">
-                    <div className="border border-dashed border-[#d1d5db] hover:border-[#00a8a8] rounded-lg p-3 text-center transition-colors cursor-pointer"
+                {/* Archivos — flat */}
+                <section>
+                  <SectionTitle>
+                    Archivos {apiDocumentos.length > 0 && <span className="ml-1 text-[#6b7280]">· {apiDocumentos.length}</span>}
+                  </SectionTitle>
+                  <div className="space-y-2">
+                    <div className="border border-dashed border-[#e5e7eb] hover:border-[#00a8a8] rounded-lg p-3 text-center transition-colors cursor-pointer"
                       onClick={() => drawerFileRef.current?.click()}>
                       <input type="file" ref={drawerFileRef} className="hidden" multiple
                         accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,.xlsx,.xls,.csv,.doc,.docx"
                         onChange={handleFileUpload} />
-                      <Upload size={16} className="text-[#d1d5db] mx-auto mb-1" />
-                      <p className="text-xs text-[#6b7280]">Click para subir archivos</p>
+                      <Upload size={14} className="text-[#9ca3af] mx-auto mb-0.5" />
+                      <p className="text-[11px] text-[#9ca3af]">Click o arrastra para subir archivos</p>
                     </div>
-                    {apiDocumentos.length > 0 ? (
-                      <div className="space-y-1.5 max-h-40 overflow-y-auto">
+                    {apiDocumentos.length > 0 && (
+                      <div className="space-y-0.5 max-h-40 overflow-y-auto">
                         {[...apiDocumentos].reverse().map((archivo) => (
-                          <div key={archivo.id} className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-[#f9fafb] group transition-colors">
+                          <div key={archivo.id} className="flex items-center gap-2.5 px-1 py-2 rounded hover:bg-[#f9fafb] group transition-colors">
                             <div className="w-7 h-7 rounded-md bg-[#f3f4f6] flex items-center justify-center flex-shrink-0">
                               {getFileIcon(archivo.mimeType ?? undefined)}
                             </div>
@@ -783,17 +911,15 @@ export function ProspectoDrawer({ prospecto, onClose, onEdit }: Props) {
                               try { await deleteDocumentMutation.mutateAsync({ prospectId: realProspectId, docId: archivo.id }); }
                               catch { toast({ title: 'Error al eliminar documento', variant: 'destructive' }); }
                             }}
-                              className="opacity-0 group-hover:opacity-100 text-[#6b7280] hover:text-red-500 transition-all">
+                              className="opacity-0 group-hover:opacity-100 text-[#9ca3af] hover:text-red-500 transition-all">
                               <Trash2 size={12} />
                             </button>
                           </div>
                         ))}
                       </div>
-                    ) : (
-                      <p className="text-xs text-[#9ca3af] text-center py-2">Sube un archivo...</p>
                     )}
                   </div>
-                </div>
+                </section>
               </div>
             </>
           )}
@@ -808,17 +934,30 @@ export function ProspectoDrawer({ prospecto, onClose, onEdit }: Props) {
           />
         )}
 
-        {/* Edit Dialog */}
-        {showEditDialog && (
-          <ProspectEditDialog
-            prospect={p}
-            onClose={() => setShowEditDialog(false)}
-            onSaved={() => setShowEditDialog(false)}
+        {/* Stage Gate Modal — para transiciones con formulario completo
+            usamos modales dedicados. Para el resto seguimos con el gate
+            genérico (inline missingFields).
+              - Prospecto → Reunión (DB levantamiento): AgendarReunionModal
+              - Reunión → Agendar Levantamiento (DB propuesta): AgendarLevantamientoModal
+                con soporte para guardar borrador cuando aún no se tiene toda
+                la info (fecha, hora, dirección, EPP, placas, residuos, etc.). */}
+        {pendingStageGate && pendingStageGate.toStage === 'levantamiento' && (
+          <AgendarReunionModal
+            prospecto={pendingStageGate.prospecto}
+            onClose={() => setPendingStageGate(null)}
+            onAdvanced={() => setPendingStageGate(null)}
           />
         )}
-
-        {/* Stage Gate Modal */}
-        {pendingStageGate && (
+        {pendingStageGate && pendingStageGate.toStage === 'propuesta' && (
+          <AgendarLevantamientoModal
+            prospecto={pendingStageGate.prospecto}
+            onClose={() => setPendingStageGate(null)}
+            onAdvanced={() => setPendingStageGate(null)}
+          />
+        )}
+        {pendingStageGate
+          && pendingStageGate.toStage !== 'levantamiento'
+          && pendingStageGate.toStage !== 'propuesta' && (
           <StageGateModal
             pendingMove={pendingStageGate}
             onForce={() => {

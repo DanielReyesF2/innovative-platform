@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { ChevronRight, type LucideIcon } from 'lucide-react';
 import type { Prospect } from '@shared/schema/comercial';
 import type { User } from '@shared/schema/common';
+import { STAGE } from '@shared/schema/comercial-stages';
+import { businessDaysBetween } from '@shared/utils/business-days';
 import type { KanbanProspecto, SeguimientoData, SeguimientoUrgency, CampoCompleto, StageGate } from '@shared/types/comercial';
 export type { GateMissingField } from '@shared/types/comercial';
 
@@ -10,7 +12,7 @@ export type { GateMissingField } from '@shared/types/comercial';
  * - Timestamps arrive as ISO strings (not Date objects)
  * - Includes joined rejection reason fields
  */
-export type ApiProspect = Omit<Prospect, 'createdAt' | 'updatedAt' | 'rejectionDate' | 'proposalDate' | 'lastContactAt' | 'nextFollowUpAt' | 'fechaVencimientoContrato' | 'sentToOpsAt'> & {
+export type ApiProspect = Omit<Prospect, 'createdAt' | 'updatedAt' | 'rejectionDate' | 'proposalDate' | 'lastContactAt' | 'nextFollowUpAt' | 'fechaVencimientoContrato' | 'sentToOpsAt' | 'proposalDeadline' | 'closeDate'> & {
   createdAt: string | null;
   updatedAt: string | null;
   rejectionDate?: string | null;
@@ -19,6 +21,8 @@ export type ApiProspect = Omit<Prospect, 'createdAt' | 'updatedAt' | 'rejectionD
   nextFollowUpAt?: string | null;
   fechaVencimientoContrato?: string | null;
   sentToOpsAt?: string | null;
+  proposalDeadline?: string | null;
+  closeDate?: string | null;
   rejectionReasonText?: string | null;
   rejectionReasonCategory?: string | null;
 };
@@ -89,6 +93,20 @@ export const EPP_OPTIONS = [
   { id: 'pantalon_largo', label: 'Pantalón Largo' },
 ] as const;
 
+// ═══════ REQUISITOS DE ACCESO A SITIO ═══════
+// Lo que el personal debe llevar / presentar para entrar al sitio del cliente
+// durante el levantamiento. Catálogo base — la UI permite agregar "Otro" libre.
+export const ACCESS_REQUIREMENTS_OPTIONS = [
+  { id: 'ine', label: 'INE' },
+  { id: 'credencial_empresa', label: 'Credencial empresa' },
+  { id: 'pase_qr', label: 'Pase QR' },
+  { id: 'registro_previo', label: 'Registro previo' },
+  { id: 'documentos_vehiculo', label: 'Docs vehículo' },
+  { id: 'seguro_vehiculo', label: 'Seguro vigente' },
+  { id: 'examen_medico', label: 'Examen médico' },
+  { id: 'induccion_seguridad', label: 'Inducción seguridad' },
+] as const;
+
 export const SERVICE_COLORS: Record<string, { bg: string; border: string; text: string; label: string }> = {
   rme:            { bg: '#EFF6FF', border: '#3B82F6', text: '#2563EB', label: 'RME' },
   rsu:            { bg: '#F0FDF4', border: '#22C55E', text: '#16A34A', label: 'RSU' },
@@ -112,22 +130,22 @@ export const INDUSTRIAS = [
 // Labels reflect the BUSINESS flow, not the DB stage IDs.
 // See CLAUDE.md "Stage ID vs Business Label Mismatch" for details.
 export const KANBAN_STAGES = [
-  { id: 'contacto_inicial', label: 'Lead', color: '#6b7280', prob: '5%' },
-  { id: 'presentacion', label: 'Prospecto', color: '#0D47A1', prob: '20%' },
-  { id: 'levantamiento', label: 'Reunión', color: '#F57C00', prob: '35%' },
-  { id: 'propuesta', label: 'Agendar levantamiento', color: '#00a8a8', prob: '50%' },
-  { id: 'negociacion', label: 'Propuesta', color: '#7C3AED', prob: '70%' },
-  { id: 'cierre_ganado', label: 'Socio Ambiental', color: '#2E7D32', prob: '100%' },
+  { id: STAGE.CONTACTO_INICIAL, label: 'Lead', color: '#6b7280', prob: '5%' },
+  { id: STAGE.PRESENTACION, label: 'Prospecto', color: '#0D47A1', prob: '20%' },
+  { id: STAGE.LEVANTAMIENTO, label: 'Reunión', color: '#F57C00', prob: '35%' },
+  { id: STAGE.PROPUESTA, label: 'Agendar levantamiento', color: '#00a8a8', prob: '50%' },
+  { id: STAGE.NEGOCIACION, label: 'Propuesta', color: '#7C3AED', prob: '70%' },
+  { id: STAGE.CIERRE_GANADO, label: 'Socio Ambiental', color: '#2E7D32', prob: '100%' },
 ] as const;
 
 export const STAGE_PROBABILITY: Record<string, number> = {
-  contacto_inicial: 0.05,
-  presentacion: 0.20,
-  levantamiento: 0.35,
-  propuesta: 0.50,
-  negociacion: 0.70,
-  cierre_ganado: 1.0,
-  cierre_perdido: 0,
+  [STAGE.CONTACTO_INICIAL]: 0.05,
+  [STAGE.PRESENTACION]: 0.20,
+  [STAGE.LEVANTAMIENTO]: 0.35,
+  [STAGE.PROPUESTA]: 0.50,
+  [STAGE.NEGOCIACION]: 0.70,
+  [STAGE.CIERRE_GANADO]: 1.0,
+  [STAGE.CIERRE_PERDIDO]: 0,
 };
 
 // ═══════ KPI METAS ═══════
@@ -347,9 +365,47 @@ export const dbProspectToKanban = (prospect: ApiProspect, usersMap: Record<numbe
     estimatedCloseTime: prospect.estimatedCloseTime || null,
     meetingDate: prospect.meetingDate || null,
     surveyDate: prospect.surveyDate || null,
+    proposalDeadline: prospect.proposalDeadline || null,
+    proposalDate: prospect.proposalDate || null,
+    estimatedStartDate: prospect.estimatedStartDate || null,
+    closeDate: prospect.closeDate || null,
+    operationsStartDate: prospect.operationsStartDate || null,
+    hasContract: prospect.hasContract ?? null,
+    contractDurationMonths: prospect.contractDurationMonths ?? null,
+    paymentTermsServices: prospect.paymentTermsServices ?? null,
+    paymentTermsValuables: prospect.paymentTermsValuables ?? null,
     updatedAt: prospect.updatedAt || null,
   };
 };
+
+/**
+ * Build a chip descriptor for the propuesta SLA deadline. Returns null when
+ * the deadline isn't applicable — either no deadline recorded or a propuesta
+ * was already uploaded (so the SLA clock is stopped).
+ */
+export function proposalDeadlineChip(p: KanbanProspecto): {
+  label: string;
+  color: string;
+  bg: string;
+  overdue: boolean;
+} | null {
+  if (!p.proposalDeadline) return null;
+  // Propuesta already uploaded → SLA stopped, don't show chip.
+  if (p.proposalDate) return null;
+  const deadline = new Date(p.proposalDeadline);
+  if (Number.isNaN(deadline.getTime())) return null;
+  const now = new Date();
+  const diffBusiness = businessDaysBetween(now, deadline);
+  const overdue = deadline.getTime() < now.getTime();
+  if (overdue) {
+    const daysLate = Math.max(1, Math.abs(diffBusiness));
+    return { label: `Vencido ${daysLate}d`, color: '#DC2626', bg: '#FEF2F2', overdue: true };
+  }
+  if (diffBusiness <= 1) {
+    return { label: `Vence hoy`, color: '#F57C00', bg: '#FFF7ED', overdue: false };
+  }
+  return { label: `Vence en ${diffBusiness}d hábiles`, color: '#00a8a8', bg: '#ECFEFE', overdue: false };
+}
 
 export const calcularPipelineData = (prospectos: KanbanProspecto[]) => {
   const stages = ['contacto_inicial', 'presentacion', 'levantamiento', 'propuesta', 'negociacion', 'cierre_ganado'];
@@ -453,7 +509,11 @@ export function tabUnlockLabel(tabId: string): string {
 // ═══════ STAGE GATES ═══════
 
 export const STAGE_GATES: Record<string, StageGate> = {
-  // No gate for presentacion (Lead→Prospecto): movimiento libre
+  // Lead (contacto_inicial) → Prospecto (presentacion): se califica desde el
+  // QualifyLeadDialog, no por este gate.
+
+  // Prospecto (presentacion) → Reunión (DB levantamiento): requiere que haya
+  // fecha de reunión agendada.
   levantamiento: {
     label: 'Fecha de Reunión',
     validate: (p) => !!p.meetingDate,
@@ -463,16 +523,26 @@ export const STAGE_GATES: Record<string, StageGate> = {
       ...(!p.meetingDate ? [{ key: 'meetingDate', label: 'Fecha de reunión', type: 'date' as const, placeholder: '' }] : []),
     ],
   },
+  // Reunión (DB levantamiento) → Agendar Levantamiento (DB propuesta):
+  // per Vero, el prospecto debe tener próximo paso definido (campo obligatorio
+  // de Reunión) además de la fecha de levantamiento agendada.
   propuesta: {
-    label: 'Levantamiento Agendado',
-    validate: (p) => !!p.surveyDate,
-    message: () => 'Falta agendar fecha de levantamiento',
-    requirement: 'Requiere: Fecha de levantamiento agendada',
+    label: 'Agendamiento + Próximo paso',
+    validate: (p) => !!p.surveyDate && !!(p.nextStep && p.nextStep.trim()),
+    message: (p) => {
+      const missing = [];
+      if (!p.surveyDate) missing.push('fecha de levantamiento');
+      if (!p.nextStep || !p.nextStep.trim()) missing.push('próximo paso');
+      return `Falta: ${missing.join(' y ')}`;
+    },
+    requirement: 'Requiere: Fecha de levantamiento agendada + Próximo paso definido',
     missingFields: (p) => [
       ...(!p.surveyDate ? [{ key: 'surveyDate', label: 'Fecha de levantamiento', type: 'date' as const, placeholder: '' }] : []),
+      ...((!p.nextStep || !p.nextStep.trim()) ? [{ key: 'nextStep', label: 'Próximo paso', type: 'text' as const, placeholder: 'Ej: confirmar volumen con gerente' }] : []),
     ],
   },
-  // No gate for negociacion: movimiento libre, el valor se toma de la propuesta subida
+  // No gate for negociacion: auto-advance cuando se completa el agendamiento
+  // (ver server/storage.ts isSchedulingComplete + updateProspect hook).
 };
 
 // ═══════ SHARED COMPONENTS ═══════

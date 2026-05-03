@@ -40,8 +40,8 @@ import {
 import { useToast } from "@/components/ui/use-toast";
 import { useProspectDocuments, useCreateDocument, useDeleteDocument } from "../api";
 import type { ProspectDocument } from "@shared/schema/comercial";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { getAuthToken } from "@/lib/queryClient";
+import { useMutation } from "@tanstack/react-query";
+import { getAuthToken, invalidateByPrefix } from "@/lib/queryClient";
 
 interface ProspectDocumentsProps {
   prospectId: number;
@@ -91,7 +91,6 @@ const formatFileSize = (bytes?: number) => {
 
 export function ProspectDocuments({ prospectId }: ProspectDocumentsProps) {
   const { toast } = useToast();
-  const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
@@ -138,7 +137,7 @@ export function ProspectDocuments({ prospectId }: ProspectDocumentsProps) {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/comercial/prospects/${prospectId}/documents`] });
+      invalidateByPrefix(`/api/comercial/prospects/${prospectId}`);
       toast({ title: "Documento subido correctamente" });
       setUploadType("otro");
       setMarkAsClosed(false);

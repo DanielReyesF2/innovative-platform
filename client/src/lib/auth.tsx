@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react";
+import { flushSync } from "react-dom";
 import { apiRequest, getAuthToken, setAuthToken, removeAuthToken, queryClient } from "./queryClient";
 import { useLocation } from "wouter";
 
@@ -38,11 +39,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    // Evita que una petición antigua pise el login recién hecho (token ya cambió)
+    const tokenAlInicio = token;
+
     try {
       const res = await apiRequest("GET", "/api/auth/user");
       const userData = await res.json();
+      if (getAuthToken() !== tokenAlInicio) return;
       setUser(userData);
     } catch {
+      if (getAuthToken() !== tokenAlInicio) return;
       removeAuthToken();
       setUser(null);
     } finally {
@@ -62,11 +68,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         password,
       });
       const data = await res.json();
-      setAuthToken(data.token);
-      setUser(data.user);
+      // Aplica token y usuario en el mismo ciclo antes de navegar (evita carreras con refreshUser)
+      flushSync(() => {
+        setAuthToken(data.token);
+        setUser(data.user as User);
+      });
       queryClient.clear();
 
-      // Redirect to saved path or dashboard
       const redirectPath = sessionStorage.getItem("redirectAfterLogin") || "/";
       sessionStorage.removeItem("redirectAfterLogin");
       setLocation(redirectPath);

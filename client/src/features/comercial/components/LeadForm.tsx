@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { useCreateProspect } from "../api";
 import { useToast } from "@/components/ui/use-toast";
 import { SERVICIOS_INNOVATIVE } from "@/lib/comercial-constants";
+import { STAGE } from "@shared/schema/comercial-stages";
 import type { TeamMember } from "@shared/types/comercial";
 
 const SOURCE_LABELS: Record<string, string> = {
@@ -64,7 +65,7 @@ export function LeadForm({ onClose, salesTeam, defaultAssignee }: LeadFormProps)
         contactPhone: form.contactPhone.trim() || undefined,
         contactEmail: form.contactEmail.trim() || undefined,
         source: form.source,
-        stage: "contacto_inicial",
+        stage: STAGE.CONTACTO_INICIAL,
         probability: 10,
         priority: "media",
         reason: form.notes.trim() || undefined,
@@ -74,8 +75,35 @@ export function LeadForm({ onClose, salesTeam, defaultAssignee }: LeadFormProps)
       });
       toast({ title: "Lead creado exitosamente" });
       onClose();
-    } catch {
-      toast({ title: "Error al crear lead", variant: "destructive" });
+    } catch (err) {
+      // apiRequest arroja Error(`${status}: ${text}`) — extraemos el mensaje
+      // real del servidor para que el usuario vea POR QUÉ falló (Zod, FK,
+      // length, lo que sea) en lugar del toast genérico que esconde bugs.
+      const raw = err instanceof Error ? err.message : "Error al crear lead";
+      let detail = raw;
+      try {
+        const colonIdx = raw.indexOf(": ");
+        if (colonIdx > 0) {
+          const body = raw.slice(colonIdx + 2);
+          const parsed = JSON.parse(body);
+          detail = parsed.message || body;
+          if (parsed.errors && Array.isArray(parsed.errors)) {
+            const first = parsed.errors[0];
+            if (first?.path && first?.message) {
+              detail = `${detail} — ${first.path.join(".")} ${first.message}`;
+            }
+          }
+          // Servidor puede añadir `detail` con el error crudo de la DB
+          // (FK violation, check constraint, etc.) — lo mostramos para que
+          // quien prueba (Vero/Cristina) nos diga el texto exacto.
+          if (parsed.detail) {
+            detail = `${detail} · ${parsed.detail}`;
+          }
+        }
+      } catch {
+        // raw ya es el mejor mensaje disponible
+      }
+      toast({ title: "No se pudo crear el lead", description: detail, variant: "destructive" });
     }
   };
 

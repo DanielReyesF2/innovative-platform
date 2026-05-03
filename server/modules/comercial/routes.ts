@@ -4,6 +4,7 @@ import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
 import { requireAuth, requireRole } from "../../middleware/auth";
+import { STAGE } from "../../../shared/schema/comercial-stages";
 import {
   getProspects,
   getProspectById,
@@ -34,6 +35,8 @@ import {
   createMeeting,
   completeMeeting,
   cancelMeeting,
+  updateMeeting,
+  deleteMeeting,
   getProspectDocuments,
   createDocument,
   deleteDocument,
@@ -42,6 +45,9 @@ import {
   sendProposal,
   changeProposalStatus,
   updateProposalAmount,
+  updateProposal,
+  getStageTransitions,
+  getAverageDurationByStage,
   getAlerts,
   getPendingAlertsCount,
   acknowledgeAlert,
@@ -97,19 +103,15 @@ const rejectProspectSchema = z.object({
   rejectionDetail: z.string().max(2000).optional().default(""),
 });
 
+// Per Vero's flow (Prospecto stage): solo pedimos datos de contacto que
+// faltan del Lead + ubicación + frecuencia opcional. Potencial / cotización
+// / residuos entran en etapas posteriores, NO aquí.
 const convertLeadSchema = z.object({
-  industry: z.string().max(100).optional(),
+  contactRole: z.string().max(200).optional(),
+  contactPhone: z.string().max(50).optional(),
+  contactEmail: z.string().email().max(200).optional(),
   location: z.string().max(200).optional(),
-  potential: z.string().max(20).optional(),
-  estimatedValue: z.string().max(50).optional(),
-  estimatedVolume: z.string().max(100).optional(),
-  wasteInfo: z.object({
-    wasteTypes: z.array(z.string()),
-    estimatedVolume: z.string(),
-    hasCurrentProvider: z.boolean(),
-    currentProviderName: z.string().optional(),
-    reasonForChange: z.string().optional(),
-  }).optional(),
+  serviceFrequency: z.string().max(100).optional(),
 });
 
 const assignLeadSchema = z.object({
@@ -234,7 +236,11 @@ router.post("/prospects", async (req, res) => {
     res.status(201).json(prospect);
   } catch (error) {
     console.error("[comercial] Create prospect error:", error);
-    res.status(500).json({ message: "Internal server error" });
+    // Surface the real DB error message so the client (and Vero/Cristina
+    // cuando debuggen) vea POR QUÉ falla, no un genérico 500. Un FK violation
+    // típico se ve como 'foreign key constraint' + nombre de la columna.
+    const msg = getErrorMessage(error);
+    res.status(500).json({ message: "No se pudo crear el prospecto", detail: msg });
   }
 });
 
@@ -244,7 +250,7 @@ router.patch("/prospects/:id", async (req, res) => {
     if (!allowed.success) {
       return res.status(400).json({ message: "Datos invalidos", errors: allowed.error.errors });
     }
-    const updated = await updateProspect(Number(req.params.id), allowed.data);
+    const updated = await updateProspect(Number(req.params.id), allowed.data, req.user?.id);
     if (!updated) return res.status(404).json({ message: "Prospecto no encontrado" });
     res.json(updated);
   } catch (error) {
@@ -279,7 +285,8 @@ router.post("/prospects/:id/reject", async (req, res) => {
     const updated = await rejectProspect(
       Number(req.params.id),
       parsed.data.rejectionReasonId,
-      parsed.data.rejectionDetail || ""
+      parsed.data.rejectionDetail || "",
+      req.user?.id,
     );
     if (!updated) return res.status(404).json({ message: "Prospecto no encontrado" });
     res.json(updated);
@@ -297,7 +304,7 @@ router.post("/prospects/:id/qualify", async (req, res) => {
     if (!parsed.success) {
       return res.status(400).json({ message: "Datos invalidos", errors: parsed.error.errors });
     }
-    const updated = await qualifyProspect(Number(req.params.id), parsed.data);
+    const updated = await qualifyProspect(Number(req.params.id), parsed.data, req.user?.id);
     res.json(updated);
   } catch (error) {
     console.error("[comercial] Qualify prospect error:", error);
@@ -619,6 +626,36 @@ router.post("/prospects/:prospectId/meetings/:meetingId/cancel", async (req, res
   }
 });
 
+// Partial update of a meeting row — used by the inline-edit UI. Validates
+// only the keys the caller sends (safeParse of a partial schema), so the
+// client can save one field at a time.
+router.patch("/prospects/:prospectId/meetings/:meetingId", async (req, res) => {
+  try {
+    const parsed = insertMeetingSchema.partial().safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ message: "Datos invalidos", errors: parsed.error.errors });
+    }
+    const data = parsed.data as Parameters<typeof updateMeeting>[1];
+    const updated = await updateMeeting(Number(req.params.meetingId), data);
+    if (!updated) return res.status(404).json({ message: "Reunion no encontrada" });
+    res.json(updated);
+  } catch (error) {
+    console.error("[comercial] Update meeting error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+router.delete("/prospects/:prospectId/meetings/:meetingId", async (req, res) => {
+  try {
+    const deleted = await deleteMeeting(Number(req.params.meetingId));
+    if (!deleted) return res.status(404).json({ message: "Reunion no encontrada" });
+    res.json({ success: true });
+  } catch (error) {
+    console.error("[comercial] Delete meeting error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
 // --- Documents ---
 
 router.get("/prospects/:id/documents", async (req, res) => {
@@ -739,6 +776,39 @@ router.patch("/prospects/:prospectId/proposals/:proposalId/amount", async (req, 
   }
 });
 
+// Generic PATCH for any proposal field — utilidad, recipient, notes,
+// validUntil. Frontend (ProspectProposals inline edit) lo usa para guardar
+// campo por campo.
+const updateProposalFieldsSchema = z.object({
+  amount: z.union([z.string(), z.number()]).optional(),
+  utilidad: z.union([z.string(), z.number()]).optional(),
+  recipientName: z.string().max(200).nullable().optional(),
+  recipientRole: z.string().max(200).nullable().optional(),
+  notes: z.string().max(2000).nullable().optional(),
+  validUntil: z.string().nullable().optional(),
+});
+
+router.patch("/prospects/:prospectId/proposals/:proposalId", async (req, res) => {
+  try {
+    const parsed = updateProposalFieldsSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ message: "Datos inválidos", errors: parsed.error.errors });
+    }
+    const payload = parsed.data as Parameters<typeof updateProposal>[1];
+    // Normalizar numbers a string para campos numeric
+    const data: Record<string, unknown> = { ...payload };
+    if (data.amount !== undefined && data.amount !== null) data.amount = String(data.amount);
+    if (data.utilidad !== undefined && data.utilidad !== null) data.utilidad = String(data.utilidad);
+    if (data.validUntil && typeof data.validUntil === "string") data.validUntil = new Date(data.validUntil);
+    const updated = await updateProposal(Number(req.params.proposalId), data as Parameters<typeof updateProposal>[1]);
+    if (!updated) return res.status(404).json({ message: "Propuesta no encontrada" });
+    res.json(updated);
+  } catch (error) {
+    console.error("[comercial] Update proposal error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
 // --- Proposal File Upload (20MB limit) ---
 
 const proposalUpload = multer({
@@ -842,6 +912,28 @@ router.post("/alerts/generate", requireRole("admin"), async (_req, res) => {
     res.json(result);
   } catch (error) {
     console.error("[comercial] Generate alerts error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+// --- Stage Transitions (time-in-stage metrics) ---
+
+router.get("/prospects/:id/stage-transitions", async (req, res) => {
+  try {
+    const rows = await getStageTransitions(Number(req.params.id));
+    res.json(rows);
+  } catch (error) {
+    console.error("[comercial] Stage transitions error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+router.get("/reports/stage-durations", async (_req, res) => {
+  try {
+    const rows = await getAverageDurationByStage();
+    res.json(rows);
+  } catch (error) {
+    console.error("[comercial] Stage durations report error:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 });
@@ -1039,7 +1131,7 @@ router.post("/prospects/:id/documents/upload", upload.single("file"), async (req
 
     // If it's an OC and user wants to mark as closed
     if (tipo === "orden_compra" && markAsClosed) {
-      await updateProspect(prospectId, { stage: "cierre_ganado" });
+      await updateProspect(prospectId, { stage: STAGE.CIERRE_GANADO }, req.user?.id);
     }
 
     res.status(201).json(document);

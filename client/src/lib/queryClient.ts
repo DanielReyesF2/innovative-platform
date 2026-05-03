@@ -71,11 +71,18 @@ export async function apiRequest(
     headers["Authorization"] = `Bearer ${token}`;
   }
 
+  // Evita pantalla infinita de carga si el servidor no responde o hay puerto incorrecto
+  const signal =
+    typeof AbortSignal !== "undefined" && typeof AbortSignal.timeout === "function"
+      ? AbortSignal.timeout(30_000)
+      : undefined;
+
   const res = await fetch(url, {
     method,
     headers,
     body: data ? JSON.stringify(data) : undefined,
     credentials: "include",
+    signal,
   });
 
   await throwIfResNotOk(res);
@@ -120,7 +127,7 @@ export const queryClient = new QueryClient({
     queries: {
       queryFn: getQueryFn({ on401: "throw" }),
       refetchOnWindowFocus: true,
-      staleTime: 5 * 60 * 1000, // 5 minutes
+      staleTime: 0,
       retry: (failureCount, error) => {
         if (error instanceof Error && error.message.includes("401")) {
           return false;
@@ -136,3 +143,18 @@ export const queryClient = new QueryClient({
     },
   },
 });
+
+// Invalidate every query whose first key item starts with `prefix`.
+//
+// React Query v4 prefix-matches on array items, not on the content of a
+// string item. A list query keyed `["/api/x"]` and a detail query keyed
+// `["/api/x/5"]` look unrelated even though they share a URL prefix.
+// This helper closes that gap by matching the first key as a string.
+export function invalidateByPrefix(prefix: string) {
+  return queryClient.invalidateQueries({
+    predicate: (query) => {
+      const first = query.queryKey[0];
+      return typeof first === "string" && first.startsWith(prefix);
+    },
+  });
+}

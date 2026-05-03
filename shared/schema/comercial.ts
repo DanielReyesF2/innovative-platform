@@ -1,4 +1,4 @@
-import { pgTable, serial, text, integer, timestamp, boolean, numeric, jsonb, pgEnum, uniqueIndex, index, date } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, integer, timestamp, boolean, numeric, jsonb, pgEnum, uniqueIndex, index, date, bigint } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { users } from "./common";
@@ -54,6 +54,12 @@ export const meetingStatusEnum = pgEnum("meeting_status", [
   "reprogramada",
 ]);
 
+// Modalidad de una reunión — requerido por el spec de Vero en etapa Reunión.
+export const meetingTypeEnum = pgEnum("meeting_type", [
+  "virtual",
+  "presencial",
+]);
+
 export const proposalStatusEnum = pgEnum("proposal_status", [
   "borrador",
   "enviada",
@@ -74,6 +80,9 @@ export const alertTypeEnum = pgEnum("alert_type", [
   "stale_prospect",
   "high_value_at_risk",
   "scheduled_reminder",
+  // SLA de 3 días hábiles para subir propuesta después de agendar el levantamiento.
+  "proposal_deadline_pending",
+  "proposal_deadline_overdue",
 ]);
 
 // Rejection reasons catalog
@@ -103,6 +112,9 @@ export const prospects = pgTable("prospects", {
   contactRole: text("contact_role"),
   contactPhone: text("contact_phone"),
   contactEmail: text("contact_email"),
+  // Frecuencia con la que el cliente requeriría el servicio (opcional, se
+  // captura al calificar Lead → Prospecto).
+  serviceFrequency: text("service_frequency"),
   source: leadSourceEnum("source").default("otro"),
   lastActivity: text("last_activity"),
   priority: priorityEnum("priority").default("media"),
@@ -132,6 +144,25 @@ export const prospects = pgTable("prospects", {
   firstContactDate: date("first_contact_date"), // business date: when initial contact happened
   meetingDate: date("meeting_date"), // when the meeting is scheduled
   surveyDate: date("survey_date"), // when the levantamiento is scheduled
+  // SLA: set when agendamiento de levantamiento is complete and prospect
+  // auto-advances to "Propuesta" (DB stage=negociacion). End of business day
+  // at surveyDate + 3 business days. Cleared once proposalDate is recorded.
+  proposalDeadline: timestamp("proposal_deadline"),
+  // Fecha estimada de inicio de operaciones — se captura al mandar la
+  // propuesta (spec Vero). Distinta de operationsStartDate que es la fecha
+  // real ya cerrada.
+  estimatedStartDate: date("estimated_start_date"),
+  // Socio Ambiental (Fase 2 bloque 4 — spec Vero).
+  // Se captura una vez que el prospecto se cierra ganado. Los campos de
+  // contrato / tiempo / días de crédito viven aquí por ahora; más adelante
+  // se van a sincronizar con el futuro módulo "Socios Ambientales" cuando
+  // exista.
+  closeDate: timestamp("close_date"),
+  operationsStartDate: date("operations_start_date"),
+  hasContract: boolean("has_contract").default(false),
+  contractDurationMonths: integer("contract_duration_months"),
+  paymentTermsServices: integer("payment_terms_services"), // días
+  paymentTermsValuables: integer("payment_terms_valuables"), // días
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => ({
@@ -226,6 +257,13 @@ export const prospectMeetings = pgTable("prospect_meetings", {
   location: text("location"),
   meetingUrl: text("meeting_url"),
   status: meetingStatusEnum("status").default("programada"),
+  // Modalidad de la reunión — requerido en etapa Reunión por el flujo de Vero.
+  meetingType: meetingTypeEnum("meeting_type"),
+  // Objetivo de la reunión — dimensionar oportunidad, validar levantamiento, etc.
+  objective: text("objective"),
+  // attendees: JSONB con forma [{ side: 'prospect'|'innovative', name, role }]
+  // para que la UI pueda separar asistentes del cliente vs de Innovative con su
+  // cargo. Se sigue aceptando formato legacy (array de strings).
   attendees: jsonb("attendees"),
   outcome: text("outcome"),
   completedAt: timestamp("completed_at"),
@@ -260,6 +298,11 @@ export const proposalVersions = pgTable("proposal_versions", {
   name: text("name").notNull(),
   url: text("url").notNull(),
   amount: numeric("amount", { precision: 14, scale: 2 }),
+  // Margen de utilidad (%) — campo obligatorio del spec de Vero en Propuesta.
+  utilidad: numeric("utilidad", { precision: 5, scale: 2 }),
+  // Contacto receptor de la propuesta (nombre + cargo) — también del spec.
+  recipientName: text("recipient_name"),
+  recipientRole: text("recipient_role"),
   validUntil: timestamp("valid_until"),
   status: proposalStatusEnum("status").default("borrador"),
   notes: text("notes"),
@@ -270,6 +313,22 @@ export const proposalVersions = pgTable("proposal_versions", {
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => ({
   prospectIdIdx: index("proposal_versions_prospect_id_idx").on(table.prospectId),
+}));
+
+// Stage Transitions (audit log of prospect stage changes — for lapso metrics)
+// Populated on every change of prospects.stage. Purely additive; no field
+// drives UI state today, but dashboards query this to show time-in-stage.
+export const stageTransitions = pgTable("stage_transitions", {
+  id: serial("id").primaryKey(),
+  prospectId: integer("prospect_id").references(() => prospects.id).notNull(),
+  fromStage: text("from_stage"), // null only for prospects migrated without prior state
+  toStage: text("to_stage").notNull(),
+  changedById: integer("changed_by_id").references(() => users.id), // null for system-driven transitions
+  changedAt: timestamp("changed_at").defaultNow().notNull(),
+  durationInPrevStageMs: bigint("duration_in_prev_stage_ms", { mode: "number" }), // null on first transition (no prior stage)
+  notes: text("notes"),
+}, (table) => ({
+  byProspect: index("stage_transitions_prospect_idx").on(table.prospectId, table.changedAt),
 }));
 
 // Follow-up Alerts
@@ -302,17 +361,16 @@ export const insertProspectSchema = createInsertSchema(prospects, {
   serviceVolumes: z.record(z.string().max(50), z.string().max(100)).optional(),
 }).omit({ id: true, createdAt: true, updatedAt: true });
 
+// Per Vero's flow (Prospecto stage): only contact data is required at this
+// step. Industria is captured in Lead; potencial / valor cotización /
+// residuos / volumen aparecen en etapas posteriores. serviceFrequency es
+// opcional.
 export const qualifyProspectSchema = z.object({
-  industry: z.string().min(1).max(100),
-  potential: z.string().min(1).max(20),
-  estimatedValue: z.union([z.string(), z.number()]).optional(),
-  estimatedVolume: z.string().max(100).optional(),
-  probability: z.number().min(0).max(100),
-  priority: z.enum(["muy_alta", "alta", "media", "baja"]),
-  contactRole: z.string().max(200).optional(),
-  contactEmail: z.string().email().max(200).optional(),
-  reason: z.string().max(500).optional(),
-  nextStep: z.string().max(500).optional(),
+  contactRole: z.string().min(1, "Cargo requerido").max(200),
+  contactPhone: z.string().min(1, "Teléfono requerido").max(50),
+  contactEmail: z.string().email("Correo inválido").max(200),
+  location: z.string().min(1, "Ubicación requerida").max(200),
+  serviceFrequency: z.string().max(100).optional(),
 });
 
 export const insertLeadSchema = createInsertSchema(leads, {
@@ -427,6 +485,7 @@ export type ProposalVersion = typeof proposalVersions.$inferSelect;
 export type InsertProposal = z.infer<typeof insertProposalSchema>;
 export type FollowUpAlert = typeof followUpAlerts.$inferSelect;
 export type InsertAlert = z.infer<typeof insertAlertSchema>;
+export type StageTransition = typeof stageTransitions.$inferSelect;
 
 // === RESUMEN SEMANAL (Weekly Management Report) ===
 

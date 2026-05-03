@@ -61,6 +61,20 @@ export interface KanbanProspecto {
   estimatedCloseTime: string | null;
   meetingDate: string | null;
   surveyDate: string | null;
+  // Deadline (ISO string) to upload the propuesta after the levantamiento was
+  // agendado. Set server-side by the auto-advance hook. Null until the
+  // prospect reaches Propuesta stage via that flow.
+  proposalDeadline: string | null;
+  proposalDate: string | null;
+  // Fecha estimada de inicio (Fase 2 bloque 5 — se captura al mandar propuesta).
+  estimatedStartDate: string | null;
+  // Socio Ambiental (Fase 2 bloque 4).
+  closeDate: string | null;
+  operationsStartDate: string | null;
+  hasContract: boolean | null;
+  contractDurationMonths: number | null;
+  paymentTermsServices: number | null;
+  paymentTermsValuables: number | null;
   updatedAt: string | null;
 }
 

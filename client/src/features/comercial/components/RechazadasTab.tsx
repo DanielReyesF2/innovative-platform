@@ -20,11 +20,15 @@ interface Props {
 export function RechazadasTab({ onSelectProspecto }: Props) {
   const { kanbanProspectos, updateProspectMutation } = useComercialData();
   const { toast } = useToast();
-  const [selectedProspecto, setSelectedProspecto] = useState<KanbanProspecto | null>(null);
+  // Store id only so the drawer always renders against live data after mutations.
+  const [selectedProspectoId, setSelectedProspectoId] = useState<number | null>(null);
+  const selectedProspecto = selectedProspectoId
+    ? kanbanProspectos.find((p) => p.id === selectedProspectoId) ?? null
+    : null;
 
   const handleSelect = (p: KanbanProspecto) => {
     if (onSelectProspecto) onSelectProspecto(p);
-    else setSelectedProspecto(p);
+    else setSelectedProspectoId(p.id);
   };
 
   const guardarSeguimiento = async (prospectoId: number, data: Partial<SeguimientoData>) => {
@@ -163,7 +167,7 @@ export function RechazadasTab({ onSelectProspecto }: Props) {
 
       {/* Prospect drawer (internal fallback) */}
       {selectedProspecto && !onSelectProspecto && (
-        <ProspectoDrawer prospecto={selectedProspecto} onClose={() => setSelectedProspecto(null)} />
+        <ProspectoDrawer prospecto={selectedProspecto} onClose={() => setSelectedProspectoId(null)} />
       )}
     </div>
   );

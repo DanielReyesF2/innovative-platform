@@ -54,6 +54,7 @@ app.get("/api/health", (_req, res) => {
 });
 
 // Load all modules dynamically
+console.log("[server] Cargando módulos de API…");
 await loadModules(app);
 
 // In production, serve static files
@@ -81,13 +82,15 @@ if (process.env.NODE_ENV === "production") {
     res.sendFile(path.join(publicDir, "index.html"));
   });
 } else {
-  // In development, set up Vite HMR middleware
+  // In development, set up Vite HMR middleware (la primera vez puede tardar varios minutos)
+  console.log("[server] Iniciando Vite en modo middleware (espera…)");
   const { createServer: createViteServer } = await import("vite");
   const vite = await createViteServer({
     server: { middlewareMode: true },
     appType: "spa",
   });
   app.use(vite.middlewares);
+  console.log("[server] Vite listo.");
 }
 
 // Start server

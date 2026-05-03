@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { apiRequest, queryClient } from '@/lib/queryClient';
+import { apiRequest, invalidateByPrefix } from '@/lib/queryClient';
 import { useAuth } from '@/lib/auth';
 import {
   dbProspectToKanban,
@@ -121,6 +121,23 @@ export function useComercialData() {
       const key = `${vr.año}-${vr.mes}`;
       realPorMes[key] = (realPorMes[key] || 0) + Number(vr.monto);
     });
+
+    // Cotización por mes = suma del estimatedValue de prospectos activos cuyo
+    // estimatedCloseTime cae en ese mes (excluye cierre_perdido). El
+    // estimatedValue ya está sincronizado con la propuesta aceptada / más
+    // reciente (ver updateProposalAmount en backend + backfill).
+    const cotizacionPorMes: Record<string, number> = {};
+    kanbanProspectos.forEach((p) => {
+      if (p.status === 'cierre_perdido') return;
+      const ect = p.estimatedCloseTime; // "YYYY-MM"
+      if (!ect) return;
+      const amount = Number(p.propuesta?.ventaTotal || p.facturacionEstimada || 0);
+      if (amount <= 0) return;
+      const [year, month] = ect.split('-');
+      const key = `${year}-${Number(month)}`;
+      cotizacionPorMes[key] = (cotizacionPorMes[key] || 0) + amount;
+    });
+
     const currentYear = new Date().getFullYear();
     return MONTH_LABELS.map(row => {
       const period = `${currentYear}-${String(row.mesNum).padStart(2, '0')}`;
@@ -128,26 +145,37 @@ export function useComercialData() {
         const budgets = m.presupuestosMensuales || {};
         return sum + (budgets[period] || 0);
       }, 0);
+      const key = `${currentYear}-${row.mesNum}`;
       return {
         mes: row.mes,
         presupuesto: monthBudget,
-        real: realPorMes[`${currentYear}-${row.mesNum}`] || 0,
+        real: realPorMes[key] || 0,
+        cotizacion: cotizacionPorMes[key] || 0,
       };
     });
-  }, [dbVentasReales, dbTeamRaw]);
+  }, [dbVentasReales, dbTeamRaw, kanbanProspectos]);
 
   const pipelineData = useMemo(() => calcularPipelineData(kanbanProspectos), [kanbanProspectos]);
 
   // ═══════ MUTATIONS ═══════
+  // Prospect stage/data changes ripple into team-level aggregates (closed-deal
+  // totals, budget cumplimiento, dashboard cards) because the backend's
+  // getComercialTeam sums prospectos in cierre_ganado per executive. Always
+  // invalidate the team + ventas-reales queries too so the greeting, KPI
+  // cards and team list refresh in lock-step with the kanban.
+  const invalidateProspectAggregates = () => {
+    invalidateByPrefix('/api/comercial/prospects');
+    invalidateByPrefix('/api/comercial/pipeline');
+    invalidateByPrefix('/api/comercial/team');
+    invalidateByPrefix('/api/comercial/ventas-reales');
+  };
+
   const updateProspectMutation = useMutation({
     mutationFn: async ({ id, ...data }: UpdateProspectPayload) => {
       const res = await apiRequest("PATCH", `/api/comercial/prospects/${id}`, data);
       return res.json();
     },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/comercial/prospects'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/comercial/pipeline'] });
-    },
+    onSettled: invalidateProspectAggregates,
   });
 
   const createProspectMutation = useMutation({
@@ -155,10 +183,7 @@ export function useComercialData() {
       const res = await apiRequest("POST", "/api/comercial/prospects", data);
       return res.json();
     },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/comercial/prospects'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/comercial/pipeline'] });
-    },
+    onSettled: invalidateProspectAggregates,
   });
 
   const deleteProspectMutation = useMutation({
@@ -166,10 +191,7 @@ export function useComercialData() {
       const res = await apiRequest("DELETE", `/api/comercial/prospects/${id}`);
       return res.json();
     },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/comercial/prospects'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/comercial/pipeline'] });
-    },
+    onSettled: invalidateProspectAggregates,
   });
 
   const rejectProspectMutation = useMutation({
@@ -177,10 +199,7 @@ export function useComercialData() {
       const res = await apiRequest("POST", `/api/comercial/prospects/${id}/reject`, data);
       return res.json();
     },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/comercial/prospects'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/comercial/pipeline'] });
-    },
+    onSettled: invalidateProspectAggregates,
   });
 
   const createNoteMutation = useMutation({
@@ -189,7 +208,7 @@ export function useComercialData() {
       return res.json();
     },
     onSettled: (_data, _error, variables) => {
-      queryClient.invalidateQueries({ queryKey: [`/api/comercial/prospects/${variables.prospectId}/notes`] });
+      invalidateByPrefix('/api/comercial/prospects');
     },
   });
 
@@ -199,7 +218,7 @@ export function useComercialData() {
       return res.json();
     },
     onSettled: (_data, _error, variables) => {
-      queryClient.invalidateQueries({ queryKey: [`/api/comercial/prospects/${variables.prospectId}/notes`] });
+      invalidateByPrefix('/api/comercial/prospects');
     },
   });
 
@@ -209,7 +228,7 @@ export function useComercialData() {
       return res.json();
     },
     onSettled: (_data, _error, variables) => {
-      queryClient.invalidateQueries({ queryKey: [`/api/comercial/prospects/${variables.prospectId}/documents`] });
+      invalidateByPrefix('/api/comercial/prospects');
     },
   });
 
@@ -219,7 +238,7 @@ export function useComercialData() {
       return res.json();
     },
     onSettled: (_data, _error, variables) => {
-      queryClient.invalidateQueries({ queryKey: [`/api/comercial/prospects/${variables.prospectId}/documents`] });
+      invalidateByPrefix('/api/comercial/prospects');
     },
   });
 
