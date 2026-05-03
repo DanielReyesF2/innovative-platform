@@ -5,7 +5,6 @@ import {
   leads,
   rejectionReasons,
   salesMetrics,
-  pipelineSnapshots,
   prospectActivities,
   prospectNotes,
   prospectMeetings,

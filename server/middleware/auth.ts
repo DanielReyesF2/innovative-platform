@@ -33,7 +33,9 @@ export function generateToken(user: JwtPayload): string {
 export function verifyToken(token: string): JwtPayload | null {
   try {
     return jwt.verify(token, JWT_SECRET) as JwtPayload;
-  } catch {
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : "unknown";
+    console.warn("[auth] Token verification failed:", reason);
     return null;
   }
 }

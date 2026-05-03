@@ -19,7 +19,6 @@ const TABLES_TO_TRUNCATE = [
   "surveys",
   // Comercial tables
   "sales_metrics",
-  "pipeline_snapshots",
   "leads",
   "prospects",
   "rejection_reasons",

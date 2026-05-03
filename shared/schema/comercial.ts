@@ -155,16 +155,6 @@ export const leads = pgTable("leads", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-// Pipeline stages summary (for fast dashboard queries)
-export const pipelineSnapshots = pgTable("pipeline_snapshots", {
-  id: serial("id").primaryKey(),
-  stage: text("stage").notNull(),
-  count: integer("count").notNull().default(0),
-  totalValue: numeric("total_value", { precision: 14, scale: 2 }).default("0"),
-  target: integer("target").default(0),
-  snapshotDate: timestamp("snapshot_date").defaultNow(),
-});
-
 // Sales team members (extends users with commercial metrics)
 export const salesMetrics = pgTable("sales_metrics", {
   id: serial("id").primaryKey(),
@@ -398,7 +388,6 @@ export type Lead = typeof leads.$inferSelect;
 export type InsertLead = z.infer<typeof insertLeadSchema>;
 export type RejectionReason = typeof rejectionReasons.$inferSelect;
 export type SalesMetrics = typeof salesMetrics.$inferSelect;
-export type PipelineSnapshot = typeof pipelineSnapshots.$inferSelect;
 export type QualifyProspectData = z.infer<typeof qualifyProspectSchema>;
 
 // New types

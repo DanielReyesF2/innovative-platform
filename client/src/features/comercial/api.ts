@@ -5,7 +5,6 @@ import type {
   Lead,
   RejectionReason,
   SalesMetrics,
-  PipelineSnapshot,
   ProspectActivity,
   ProspectNote,
   ProspectMeeting,
@@ -186,7 +185,7 @@ export function useComercialTeam() {
 // --- Pipeline ---
 
 export function usePipeline() {
-  return useQuery<PipelineSnapshot[]>({
+  return useQuery<{ stage: string; count: number; totalValue: string }[]>({
     queryKey: ["/api/comercial/pipeline"],
   });
 }

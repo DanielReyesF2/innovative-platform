@@ -2,6 +2,7 @@ import "dotenv/config";
 import express from "express";
 import compression from "compression";
 import helmet from "helmet";
+import rateLimit from "express-rate-limit";
 import { createServer } from "http";
 import { loadModules } from "./module-loader";
 
@@ -13,7 +14,7 @@ app.use(
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+        scriptSrc: ["'self'", "'unsafe-inline'"],
         styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
         fontSrc: ["'self'", "https://fonts.gstatic.com"],
         imgSrc: ["'self'", "data:", "blob:", "https:"],
@@ -22,6 +23,16 @@ app.use(
     },
   })
 );
+
+// Global rate limiting for API endpoints (100 req/min per IP)
+app.use("/api", rateLimit({
+  windowMs: 60 * 1000,
+  max: 100,
+  message: { message: "Demasiadas solicitudes. Intenta de nuevo en un minuto." },
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: (req) => req.path === "/health",
+}));
 
 // Compression (skip SSE streams)
 app.use(
