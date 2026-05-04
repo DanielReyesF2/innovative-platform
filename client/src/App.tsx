@@ -1,5 +1,6 @@
 import { Switch, Route } from 'wouter';
 import { QueryClientProvider } from '@tanstack/react-query';
+import { lazy, Suspense } from 'react';
 import { queryClient } from './lib/queryClient';
 import { AuthProvider } from './lib/auth';
 import { Toaster } from './components/ui/toaster';
@@ -7,12 +8,13 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { ProtectedRoute } from './components/layout/ProtectedRoute';
 
 import LoginPage from './features/auth/page';
-import DashboardPage from './features/dashboard/page';
 import ComercialPage from './features/comercial/page';
-import OperacionesPage from './features/operaciones/page';
-import SubproductosPage from './features/subproductos/page';
-import SettingsPage from './features/settings/page';
-import ProfilePage from './features/auth/profile-page';
+
+const DashboardPage = lazy(() => import('./features/dashboard/page'));
+const OperacionesPage = lazy(() => import('./features/operaciones/page'));
+const SubproductosPage = lazy(() => import('./features/subproductos/page'));
+const SettingsPage = lazy(() => import('./features/settings/page'));
+const ProfilePage = lazy(() => import('./features/auth/profile-page'));
 
 function Router() {
   return (
@@ -51,7 +53,9 @@ export default function App() {
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
-          <Router />
+          <Suspense fallback={<div className="flex items-center justify-center h-screen">Cargando...</div>}>
+            <Router />
+          </Suspense>
           <Toaster />
         </AuthProvider>
       </QueryClientProvider>

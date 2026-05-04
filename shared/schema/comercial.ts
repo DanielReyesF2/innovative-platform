@@ -350,6 +350,32 @@ export const followUpAlerts = pgTable("follow_up_alerts", {
   statusIdx: index("follow_up_alerts_status_idx").on(table.status),
 }));
 
+// --- JSONB Zod schemas ---
+
+export const meetingAttendeeSchema = z.object({
+  side: z.enum(["prospect", "innovative"]),
+  name: z.string().min(1).max(200),
+  role: z.string().max(200).optional(),
+});
+
+export const attendeesSchema = z.array(meetingAttendeeSchema).max(20);
+
+export const activityMetadataSchema = z.record(z.string(), z.unknown()).optional();
+
+export const levantamientoDataSchema = z.object({
+  generalInfo: z.object({
+    razonSocial: z.string().max(300).optional(),
+    direccion: z.string().max(500).optional(),
+  }).passthrough().optional(),
+  wasteTypes: z.array(z.object({
+    wasteType: z.string().min(1),
+  }).passthrough()).optional(),
+  scheduling: z.object({
+    siteAddress: z.string().max(500).optional(),
+    proposedDate: z.string().optional(),
+  }).passthrough().optional(),
+}).passthrough().optional();
+
 // Validators
 export const insertProspectSchema = createInsertSchema(prospects, {
   name: z.string().min(1).max(200),
@@ -359,6 +385,7 @@ export const insertProspectSchema = createInsertSchema(prospects, {
   probability: z.number().min(0).max(100).optional(),
   services: z.array(z.string().max(50)).max(10).optional(),
   serviceVolumes: z.record(z.string().max(50), z.string().max(100)).optional(),
+  levantamientoData: levantamientoDataSchema,
 }).omit({ id: true, createdAt: true, updatedAt: true });
 
 // Per Vero's flow (Prospecto stage): only contact data is required at this
@@ -395,6 +422,7 @@ export const insertSalesMetricsSchema = createInsertSchema(salesMetrics).omit({
 export const insertActivitySchema = createInsertSchema(prospectActivities, {
   title: z.string().min(1).max(200),
   activityDate: z.date().optional(),
+  metadata: activityMetadataSchema,
 }).omit({ id: true, createdAt: true });
 
 export const insertNoteSchema = createInsertSchema(prospectNotes, {
@@ -403,6 +431,7 @@ export const insertNoteSchema = createInsertSchema(prospectNotes, {
 
 export const insertMeetingSchema = createInsertSchema(prospectMeetings, {
   title: z.string().min(1).max(200),
+  attendees: attendeesSchema.optional(),
 }).omit({ id: true, createdAt: true, updatedAt: true });
 
 export const insertProspectDocumentSchema = createInsertSchema(prospectDocuments, {

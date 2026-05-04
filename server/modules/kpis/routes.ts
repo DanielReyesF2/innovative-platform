@@ -29,6 +29,7 @@ import {
   insertActionPlanSchema,
   updateActionPlanSchema,
 } from "../../../shared/schema/kpis";
+import { isErrorWithMessage } from "../../utils/errors";
 
 export const router = Router();
 
@@ -260,8 +261,8 @@ router.post("/:id/entries", async (req, res) => {
       recordedById: currentUser.id,
     });
     res.status(201).json(entry);
-  } catch (error: any) {
-    if (error.message === "KPI_NOT_FOUND") {
+  } catch (error: unknown) {
+    if (isErrorWithMessage(error, "KPI_NOT_FOUND")) {
       return res.status(404).json({ message: "KPI no encontrado" });
     }
     console.error("[kpis] Create entry error:", error);

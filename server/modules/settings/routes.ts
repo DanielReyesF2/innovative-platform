@@ -38,6 +38,7 @@ import {
   updateCompanySettingsSchema,
   upsertModuleConfigSchema,
 } from "../../../shared/schema/settings";
+import { getErrorMessage, isErrorWithMessage } from "../../utils/errors";
 
 export const router = Router();
 
@@ -112,8 +113,8 @@ router.post("/users", async (req, res) => {
       details: { name: user.name, email: user.email },
     });
     res.status(201).json(user);
-  } catch (error: any) {
-    if (error.message === "EMAIL_EXISTS") {
+  } catch (error: unknown) {
+    if (isErrorWithMessage(error, "EMAIL_EXISTS")) {
       return res.status(409).json({ message: "El email ya esta registrado" });
     }
     console.error("[settings] Create user error:", error);
@@ -135,14 +136,14 @@ router.patch("/users/:id", async (req, res) => {
       details: parsed,
     });
     res.json(updated);
-  } catch (error: any) {
-    if (error.message === "CANNOT_CHANGE_OWN_ROLE") {
+  } catch (error: unknown) {
+    if (isErrorWithMessage(error, "CANNOT_CHANGE_OWN_ROLE")) {
       return res.status(400).json({ message: "No puedes cambiar tu propio rol" });
     }
-    if (error.message === "CANNOT_DEACTIVATE_SELF") {
+    if (isErrorWithMessage(error, "CANNOT_DEACTIVATE_SELF")) {
       return res.status(400).json({ message: "No puedes desactivarte a ti mismo" });
     }
-    if (error.message === "EMAIL_EXISTS") {
+    if (isErrorWithMessage(error, "EMAIL_EXISTS")) {
       return res.status(409).json({ message: "El email ya esta registrado" });
     }
     console.error("[settings] Update user error:", error);
@@ -162,8 +163,8 @@ router.post("/users/:id/toggle-active", async (req, res) => {
       performedById: currentUser.id,
     });
     res.json(updated);
-  } catch (error: any) {
-    if (error.message === "CANNOT_DEACTIVATE_SELF") {
+  } catch (error: unknown) {
+    if (isErrorWithMessage(error, "CANNOT_DEACTIVATE_SELF")) {
       return res.status(400).json({ message: "No puedes desactivarte a ti mismo" });
     }
     console.error("[settings] Toggle user active error:", error);
@@ -228,8 +229,8 @@ router.post("/roles", async (req, res) => {
       details: { name: role.name },
     });
     res.status(201).json(role);
-  } catch (error: any) {
-    if (error.message === "ROLE_NAME_EXISTS") {
+  } catch (error: unknown) {
+    if (isErrorWithMessage(error, "ROLE_NAME_EXISTS")) {
       return res.status(409).json({ message: "Ya existe un rol con ese nombre" });
     }
     console.error("[settings] Create role error:", error);
@@ -270,11 +271,11 @@ router.delete("/roles/:id", async (req, res) => {
       details: { name: deleted.name },
     });
     res.json({ message: "Rol eliminado" });
-  } catch (error: any) {
-    if (error.message === "CANNOT_DELETE_SYSTEM_ROLE") {
+  } catch (error: unknown) {
+    if (isErrorWithMessage(error, "CANNOT_DELETE_SYSTEM_ROLE")) {
       return res.status(400).json({ message: "No se puede eliminar un rol del sistema" });
     }
-    if (error.message === "ROLE_IN_USE") {
+    if (isErrorWithMessage(error, "ROLE_IN_USE")) {
       return res.status(400).json({ message: "El rol tiene usuarios asignados" });
     }
     console.error("[settings] Delete role error:", error);
@@ -348,8 +349,8 @@ router.delete("/areas/:id", async (req, res) => {
       details: { name: deleted.name },
     });
     res.json({ message: "Area eliminada" });
-  } catch (error: any) {
-    if (error.message === "AREA_IN_USE") {
+  } catch (error: unknown) {
+    if (isErrorWithMessage(error, "AREA_IN_USE")) {
       return res.status(400).json({ message: "El area tiene usuarios asignados" });
     }
     console.error("[settings] Delete area error:", error);

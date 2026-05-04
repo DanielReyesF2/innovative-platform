@@ -1285,19 +1285,20 @@ export async function getComercialTeam() {
   });
   const metricsMap = new Map(metricsRows.map(m => [m.userId, m]));
 
-  // Get ALL months of current year for annual budget + per-month budgets
-  const allYearMetrics = await db.query.salesMetrics.findMany();
+  // Get current year metrics for annual budget + per-month budgets
   const yearPrefix = `${currentYear}-`;
+  const allYearMetrics = await db
+    .select()
+    .from(salesMetrics)
+    .where(sql`${salesMetrics.period} like ${yearPrefix + '%'}`);
   const annualBudgetMap = new Map<number, number>();
   const monthlyBudgetsMap = new Map<number, Record<string, number>>();
   for (const m of allYearMetrics) {
-    if (m.period.startsWith(yearPrefix)) {
-      const budget = Number(m.monthlyBudget) || 0;
-      annualBudgetMap.set(m.userId, (annualBudgetMap.get(m.userId) || 0) + budget);
-      const userBudgets = monthlyBudgetsMap.get(m.userId) || {};
-      userBudgets[m.period] = budget;
-      monthlyBudgetsMap.set(m.userId, userBudgets);
-    }
+    const budget = Number(m.monthlyBudget) || 0;
+    annualBudgetMap.set(m.userId, (annualBudgetMap.get(m.userId) || 0) + budget);
+    const userBudgets = monthlyBudgetsMap.get(m.userId) || {};
+    userBudgets[m.period] = budget;
+    monthlyBudgetsMap.set(m.userId, userBudgets);
   }
 
   // Calculate closed deal values from cierre_ganado prospects

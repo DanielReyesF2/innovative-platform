@@ -5,6 +5,7 @@ import {
   kpis,
   kpiEntries,
   kpiActionPlans,
+  type Kpi,
 } from "../../../shared/schema/kpis";
 import { areas } from "../../../shared/schema/common";
 
@@ -44,10 +45,10 @@ export async function getKpis(filters?: {
     conditions.push(eq(kpis.categoryId, filters.categoryId));
   }
   if (filters?.status) {
-    conditions.push(eq(kpis.status, filters.status as any));
+    conditions.push(eq(kpis.status, filters.status as Kpi["status"]));
   }
   if (filters?.frequency) {
-    conditions.push(eq(kpis.frequency, filters.frequency as any));
+    conditions.push(eq(kpis.frequency, filters.frequency as Kpi["frequency"]));
   }
   if (filters?.ownerId) {
     conditions.push(eq(kpis.ownerId, filters.ownerId));
@@ -62,24 +63,37 @@ export async function getKpis(filters?: {
     .where(conditions.length > 0 ? and(...conditions) : undefined)
     .orderBy(kpis.displayOrder, kpis.name);
 
-  // Attach last entry for each KPI
-  const result = [];
-  for (const kpi of allKpis) {
-    const lastEntry = await db.query.kpiEntries.findFirst({
-      where: eq(kpiEntries.kpiId, kpi.id),
-      orderBy: [desc(kpiEntries.createdAt)],
-    });
+  if (allKpis.length === 0) return [];
 
-    const category = kpi.categoryId
-      ? await db.query.kpiCategories.findFirst({
-          where: eq(kpiCategories.id, kpi.categoryId),
-        })
-      : null;
+  // Batch: get all categories and last entries in 2 queries instead of 2N
+  const kpiIds = allKpis.map((k) => k.id);
+  const categoryIds = [...new Set(allKpis.map((k) => k.categoryId).filter(Boolean))] as number[];
 
-    result.push({ ...kpi, lastEntry: lastEntry || null, category: category || null });
+  const [allCategories, allEntries] = await Promise.all([
+    categoryIds.length > 0
+      ? db.select().from(kpiCategories).where(inArray(kpiCategories.id, categoryIds))
+      : Promise.resolve([]),
+    db
+      .select()
+      .from(kpiEntries)
+      .where(inArray(kpiEntries.kpiId, kpiIds))
+      .orderBy(desc(kpiEntries.createdAt)),
+  ]);
+
+  const categoryMap = new Map(allCategories.map((c) => [c.id, c]));
+  // Build map of kpiId → most recent entry
+  const lastEntryMap = new Map<number, typeof allEntries[number]>();
+  for (const entry of allEntries) {
+    if (!lastEntryMap.has(entry.kpiId)) {
+      lastEntryMap.set(entry.kpiId, entry);
+    }
   }
 
-  return result;
+  return allKpis.map((kpi) => ({
+    ...kpi,
+    lastEntry: lastEntryMap.get(kpi.id) || null,
+    category: (kpi.categoryId ? categoryMap.get(kpi.categoryId) : null) || null,
+  }));
 }
 
 export async function getKpiById(id: number) {
@@ -102,15 +116,15 @@ export async function getKpiById(id: number) {
   return { ...kpi, lastEntry: lastEntry || null, category: category || null };
 }
 
-export async function createKpi(data: Record<string, any>, createdById: number) {
+export async function createKpi(data: Record<string, unknown>, createdById: number) {
   const [kpi] = await db
     .insert(kpis)
-    .values({ ...data, createdById } as any)
+    .values({ ...data, createdById } as typeof kpis.$inferInsert)
     .returning();
   return kpi;
 }
 
-export async function updateKpi(id: number, data: Record<string, any>) {
+export async function updateKpi(id: number, data: Record<string, unknown>) {
   const [updated] = await db
     .update(kpis)
     .set({ ...data, updatedAt: new Date() })
@@ -141,17 +155,30 @@ export async function getKpiSummary(areaId?: number) {
     .from(kpis)
     .where(and(...conditions));
 
-  let total = activeKpis.length;
+  const total = activeKpis.length;
+  if (total === 0) return { total: 0, onTarget: 0, atRisk: 0, offTarget: 0 };
+
+  // Batch: get last entries for all active KPIs in one query
+  const kpiIds = activeKpis.map((k) => k.id);
+  const allEntries = await db
+    .select()
+    .from(kpiEntries)
+    .where(inArray(kpiEntries.kpiId, kpiIds))
+    .orderBy(desc(kpiEntries.createdAt));
+
+  const lastEntryMap = new Map<number, typeof allEntries[number]>();
+  for (const entry of allEntries) {
+    if (!lastEntryMap.has(entry.kpiId)) {
+      lastEntryMap.set(entry.kpiId, entry);
+    }
+  }
+
   let onTarget = 0;
   let atRisk = 0;
   let offTarget = 0;
 
   for (const kpi of activeKpis) {
-    const lastEntry = await db.query.kpiEntries.findFirst({
-      where: eq(kpiEntries.kpiId, kpi.id),
-      orderBy: [desc(kpiEntries.createdAt)],
-    });
-
+    const lastEntry = lastEntryMap.get(kpi.id);
     if (!lastEntry || !lastEntry.compliance) continue;
 
     const compliance = Number(lastEntry.compliance);
@@ -313,29 +340,29 @@ export async function getPendingActionPlans(areaId?: number) {
 }
 
 export async function createActionPlan(
-  data: Record<string, any>,
+  data: Record<string, unknown>,
   createdById: number
 ) {
-  const values: Record<string, any> = { ...data, createdById };
+  const values: Record<string, unknown> = { ...data, createdById };
   if (data.dueDate) {
-    values.dueDate = new Date(data.dueDate);
+    values.dueDate = new Date(data.dueDate as string);
   }
 
   const [plan] = await db
     .insert(kpiActionPlans)
-    .values(values as any)
+    .values(values as typeof kpiActionPlans.$inferInsert)
     .returning();
   return plan;
 }
 
-export async function updateActionPlan(id: number, data: Record<string, any>) {
-  const values: Record<string, any> = { ...data, updatedAt: new Date() };
+export async function updateActionPlan(id: number, data: Record<string, unknown>) {
+  const values: Record<string, unknown> = { ...data, updatedAt: new Date() };
 
   if (data.status === "completado") {
     values.completedDate = new Date();
   }
   if (data.dueDate) {
-    values.dueDate = new Date(data.dueDate);
+    values.dueDate = new Date(data.dueDate as string);
   }
 
   const [updated] = await db

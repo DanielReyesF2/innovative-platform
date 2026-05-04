@@ -77,6 +77,7 @@ import {
   insertSurveyProposalRentalsSchema,
   insertGateConfigSchema,
 } from "../../../shared/schema/operaciones";
+import { getErrorMessage } from "../../utils/errors";
 
 export const router = Router();
 
@@ -136,12 +137,12 @@ router.post(
         req.user!.id
       );
       res.json(updated);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("[operaciones] Accept survey error:", error);
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: error.errors[0].message });
       }
-      const msg = error.message || "Internal server error";
+      const msg = getErrorMessage(error);
       if (msg.startsWith("NOT_FOUND")) return res.status(404).json({ message: "Levantamiento no encontrado" });
       if (msg.startsWith("CONFLICT:")) return res.status(409).json({ message: msg.slice(9) });
       res.status(500).json({ message: "Internal server error" });
@@ -161,12 +162,12 @@ router.post(
         req.user!.id
       );
       res.json(result);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("[operaciones] Reject survey error:", error);
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: error.errors[0].message });
       }
-      const msg = error.message || "Internal server error";
+      const msg = getErrorMessage(error);
       if (msg.startsWith("NOT_FOUND")) return res.status(404).json({ message: "Levantamiento no encontrado" });
       if (msg.startsWith("CONFLICT:")) return res.status(409).json({ message: msg.slice(9) });
       res.status(500).json({ message: "Internal server error" });
@@ -222,9 +223,9 @@ router.post("/surveys", async (req, res) => {
     const parsed = insertSurveySchema.parse(body);
     const survey = await createSurvey(parsed);
     res.status(201).json(survey);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("[operaciones] Create survey error:", error);
-    res.status(400).json({ message: error.message || "Datos invalidos" });
+    res.status(400).json({ message: getErrorMessage(error) });
   }
 });
 
@@ -257,7 +258,7 @@ const validSectionNames = [
 router.patch("/surveys/:id/section/:name", async (req, res) => {
   try {
     const sectionName = req.params.name;
-    if (!validSectionNames.includes(sectionName as any)) {
+    if (!(validSectionNames as readonly string[]).includes(sectionName)) {
       return res.status(400).json({ message: `Sección inválida: ${sectionName}. Secciones válidas: ${validSectionNames.join(", ")}` });
     }
     const updated = await updateSurveySection(
@@ -266,9 +267,9 @@ router.patch("/surveys/:id/section/:name", async (req, res) => {
       req.body
     );
     res.json(updated);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("[operaciones] Update section error:", error);
-    res.status(400).json({ message: error.message || "Datos invalidos" });
+    res.status(400).json({ message: getErrorMessage(error) });
   }
 });
 
@@ -279,9 +280,9 @@ router.get("/surveys/:id/gate-status", async (req, res) => {
     const gateName = (req.query.gate as string) || "phase1";
     const result = await checkGateCompleteness(Number(req.params.id), gateName);
     res.json(result);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("[operaciones] Gate status error:", error);
-    res.status(400).json({ message: error.message || "Error checking gate" });
+    res.status(400).json({ message: getErrorMessage(error) });
   }
 });
 
@@ -301,9 +302,9 @@ router.post("/surveys/:id/advance", async (req, res) => {
       return res.status(422).json(result);
     }
     res.json(result);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("[operaciones] Advance status error:", error);
-    res.status(400).json({ message: error.message || "Error advancing status" });
+    res.status(400).json({ message: getErrorMessage(error) });
   }
 });
 

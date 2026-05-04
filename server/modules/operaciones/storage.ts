@@ -21,6 +21,7 @@ import {
   operationAreaSchema,
   type InsertSurvey,
   type InsertDocument,
+  type Survey,
 } from "../../../shared/schema/operaciones";
 import { prospects } from "../../../shared/schema/comercial";
 import { users } from "../../../shared/schema/common";
@@ -89,7 +90,7 @@ export async function getSurveyById(id: number) {
 
 export async function getSurveysByStatus(status: string) {
   return db.query.surveys.findMany({
-    where: eq(surveys.status, status as any),
+    where: eq(surveys.status, status as Survey["status"]),
     orderBy: [desc(surveys.createdAt)],
   });
 }
@@ -143,12 +144,12 @@ export async function updateSurveySection(id: number, sectionName: string, data:
   });
   if (!current) throw new Error("Levantamiento no encontrado");
 
-  const currentValue = (current as any)[sectionConfig.column] || {};
-  const merged = { ...currentValue, ...parsed };
+  const currentValue = (current as Record<string, unknown>)[sectionConfig.column as string] || {};
+  const merged = { ...(currentValue as Record<string, unknown>), ...parsed };
 
   const [updated] = await db
     .update(surveys)
-    .set({ [sectionConfig.column]: merged, updatedAt: new Date() } as any)
+    .set({ [sectionConfig.column]: merged, updatedAt: new Date() } as Partial<InsertSurvey>)
     .where(eq(surveys.id, id))
     .returning();
 
@@ -271,8 +272,8 @@ export async function advanceSurveyStatus(id: number, targetStatus: string) {
     }
   }
 
-  const updateData: any = {
-    status: targetStatus,
+  const updateData: Partial<InsertSurvey> & { updatedAt: Date } = {
+    status: targetStatus as Survey["status"],
     updatedAt: new Date(),
   };
 
@@ -536,7 +537,7 @@ export async function deleteDocument(id: number) {
 
 export async function getPendingReviewSurveys() {
   return db.query.surveys.findMany({
-    where: eq(surveys.status, "pendiente_operaciones" as any),
+    where: eq(surveys.status, "pendiente_operaciones" as Survey["status"]),
     orderBy: [desc(surveys.createdAt)],
   });
 }
@@ -619,7 +620,7 @@ export async function getSurveySummary() {
     const [row] = await db
       .select({ count: sql<number>`count(*)::int` })
       .from(surveys)
-      .where(eq(surveys.status, status as any));
+      .where(eq(surveys.status, status as Survey["status"]));
     results[status] = row.count;
   }
 
