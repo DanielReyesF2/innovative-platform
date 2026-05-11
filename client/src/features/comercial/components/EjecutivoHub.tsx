@@ -15,6 +15,8 @@ import { useComercialData } from '../hooks/useComercialData';
 import { useToast } from '@/components/ui/use-toast';
 import { HubKanbanCard } from './HubKanbanCard';
 import { StageGateModal } from './StageGateModal';
+import { AgendarReunionModal } from './AgendarReunionModal';
+import { AgendarLevantamientoModal } from './AgendarLevantamientoModal';
 import { ProspectoDrawer } from './ProspectoDrawer';
 import { InsightsBanner } from './InsightsBanner';
 import { apiRequest, invalidateByPrefix } from '@/lib/queryClient';
@@ -395,8 +397,26 @@ export function EjecutivoHub({ member, onBack, onShowNuevoLead }: Props) {
           </div>
         )}
 
-        {/* Stage Gate Modal */}
-        {showStageGateModal && pendingMove && (
+        {/* Stage Gate Modals — same logic as ProspectoDrawer:
+           levantamiento → AgendarReunionModal, propuesta → AgendarLevantamientoModal,
+           everything else → generic StageGateModal */}
+        {showStageGateModal && pendingMove && pendingMove.toStage === 'levantamiento' && (
+          <AgendarReunionModal
+            prospecto={pendingMove.prospecto}
+            onClose={() => { setShowStageGateModal(false); setPendingMove(null); }}
+            onAdvanced={() => { setShowStageGateModal(false); setPendingMove(null); }}
+          />
+        )}
+        {showStageGateModal && pendingMove && pendingMove.toStage === 'propuesta' && (
+          <AgendarLevantamientoModal
+            prospecto={pendingMove.prospecto}
+            onClose={() => { setShowStageGateModal(false); setPendingMove(null); }}
+            onAdvanced={() => { setShowStageGateModal(false); setPendingMove(null); }}
+          />
+        )}
+        {showStageGateModal && pendingMove
+          && pendingMove.toStage !== 'levantamiento'
+          && pendingMove.toStage !== 'propuesta' && (
           <StageGateModal
             pendingMove={pendingMove}
             isHub
