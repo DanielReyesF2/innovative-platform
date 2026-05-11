@@ -63,6 +63,7 @@ import {
   getPendingReviewSurveys,
   acceptSurvey,
   rejectSurvey,
+  getOpsTeamStats,
 } from "./storage";
 import {
   insertSurveySchema,
@@ -82,6 +83,18 @@ import { getErrorMessage } from "../../utils/errors";
 export const router = Router();
 
 router.use(requireAuth);
+
+// ─── Team Dashboard ─────────────────────────────────────
+
+router.get("/team", async (_req, res) => {
+  try {
+    const stats = await getOpsTeamStats();
+    res.json(stats);
+  } catch (error) {
+    console.error("[operaciones] Get team stats error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
 
 // ─── Surveys (Levantamientos) ───────────────────────────
 

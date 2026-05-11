@@ -626,3 +626,51 @@ export async function getSurveySummary() {
 
   return results;
 }
+
+// ─── Ops Team Dashboard ─────────────────────────────────
+
+export async function getOpsTeamStats() {
+  // Get all operaciones users
+  const opsUsers = await db.query.users.findMany({
+    where: eq(users.role, "operaciones"),
+    columns: { id: true, name: true, email: true, codigo: true },
+  });
+
+  // Get all surveys with an assigned ops user
+  const allSurveys = await db.query.surveys.findMany({
+    columns: {
+      id: true,
+      status: true,
+      assignedOperationsId: true,
+      acceptedAt: true,
+      createdAt: true,
+      completedDate: true,
+    },
+  });
+
+  return opsUsers.map((user) => {
+    const mySurveys = allSurveys.filter((s) => s.assignedOperationsId === user.id);
+    const assigned = mySurveys.filter((s) => s.status === "agendado" || s.status === "en_sitio").length;
+    const completed = mySurveys.filter((s) => s.status === "completado").length;
+    const total = mySurveys.length;
+
+    // Avg response time: time between createdAt and acceptedAt (in hours)
+    const responseTimes = mySurveys
+      .filter((s) => s.acceptedAt && s.createdAt)
+      .map((s) => (new Date(s.acceptedAt!).getTime() - new Date(s.createdAt!).getTime()) / (1000 * 60 * 60));
+    const avgResponseHours = responseTimes.length > 0
+      ? Math.round(responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length)
+      : null;
+
+    return {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      codigo: user.codigo,
+      assigned,
+      completed,
+      total,
+      avgResponseHours,
+    };
+  });
+}

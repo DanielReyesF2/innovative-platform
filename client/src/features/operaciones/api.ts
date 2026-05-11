@@ -1,6 +1,26 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 
+// ─── Team Dashboard ─────────────────────────────────────
+
+interface OpsTeamMember {
+  id: number;
+  name: string;
+  email: string;
+  codigo: string | null;
+  assigned: number;
+  completed: number;
+  total: number;
+  avgResponseHours: number | null;
+}
+
+export function useOpsTeam() {
+  return useQuery<OpsTeamMember[]>({
+    queryKey: ["/api/operaciones/team"],
+    staleTime: 60 * 1000,
+  });
+}
+
 // ─── Surveys ────────────────────────────────────────────
 
 export function useSurveys() {

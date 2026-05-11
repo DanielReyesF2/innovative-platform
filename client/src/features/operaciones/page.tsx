@@ -16,6 +16,8 @@ import {
   Plus,
   Inbox,
   BarChart3,
+  Users,
+  MapPin,
 } from "lucide-react";
 import {
   useSurveys,
@@ -23,7 +25,9 @@ import {
   useDocuments,
   useExpiredDocuments,
   usePendingReviewSurveys,
+  useOpsTeam,
 } from "./api";
+import { ExecutiveAvatar } from "@/lib/comercial-constants";
 import { KpiSection } from "@/features/kpis/components/KpiSection";
 import { ReviewSurveyModal } from "./components/ReviewSurveyModal";
 
@@ -60,6 +64,7 @@ export default function OperacionesPage() {
   const { data: documents = [], isError: docsError } = useDocuments();
   const { data: expiredDocs = [] } = useExpiredDocuments();
   const { data: pendingReview = [] } = usePendingReviewSurveys();
+  const { data: opsTeam = [] } = useOpsTeam();
 
   const isError = surveysError || docsError;
 
@@ -127,6 +132,75 @@ export default function OperacionesPage() {
           </p>
         </div>
       </div>
+
+      {/* Equipo */}
+      {opsTeam.length > 0 && (
+        <>
+          <div className="flex items-center gap-2">
+            <div className="w-1 h-5 rounded-full bg-gradient-to-b from-[#00a8a8] to-[#0D47A1]" />
+            <Users size={16} className="text-[#00a8a8]" />
+            <h2 className="text-sm font-semibold text-[#1c2c4a]">Equipo de Campo</h2>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+            {opsTeam.map((member) => {
+              const completionPct = member.total > 0
+                ? Math.round((member.completed / member.total) * 100)
+                : 0;
+              const barColor = completionPct >= 80 ? '#2E7D32' : completionPct >= 40 ? '#F57C00' : '#ef4444';
+
+              return (
+                <div
+                  key={member.id}
+                  className="bg-white rounded-xl border border-[#e5e7eb] p-4 hover:shadow-lg hover:border-[#00a8a8]/40 transition-all group relative overflow-hidden"
+                >
+                  <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#00a8a8] to-[#0D47A1] opacity-60 group-hover:opacity-100 transition-opacity" />
+
+                  {/* Avatar + Name */}
+                  <div className="flex items-center gap-3 mb-3">
+                    <ExecutiveAvatar codigo={member.codigo || "??"} name={member.name} size="lg" />
+                    <div className="min-w-0">
+                      <div className="text-sm font-semibold text-[#1c2c4a] truncate">
+                        {member.name.split(' ').slice(0, 2).join(' ')}
+                      </div>
+                      <div className="text-[10px] text-[#6b7280] flex items-center gap-1">
+                        <MapPin size={9} /> Campo
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* KPIs */}
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] text-[#6b7280]">Asignados</span>
+                      <span className="text-sm font-bold text-[#1c2c4a]">{member.assigned}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] text-[#6b7280]">Completados</span>
+                      <span className="text-sm font-bold text-[#2E7D32]">{member.completed}</span>
+                    </div>
+                  </div>
+
+                  {/* Progress bar */}
+                  <div className="mt-2.5 mb-1">
+                    <div className="w-full h-1.5 bg-[#f3f4f6] rounded-full overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all"
+                        style={{ width: `${Math.min(completionPct, 100)}%`, backgroundColor: barColor }}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between mt-1">
+                      <span className="text-[9px] text-[#6b7280]">{member.total} total</span>
+                      {member.avgResponseHours !== null && (
+                        <span className="text-[9px] text-[#6b7280]">~{member.avgResponseHours}h resp.</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </>
+      )}
 
       {/* KPI Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
