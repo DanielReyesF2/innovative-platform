@@ -13,9 +13,17 @@ import {
   Target,
   Calendar,
   User,
+  MapPin,
+  Phone,
+  Users,
+  HardHat,
+  ShieldCheck,
+  Car,
+  Clock,
 } from "lucide-react";
 import { useAcceptSurvey, useRejectSurvey, useSurvey } from "../api";
 import { useToast } from "@/components/ui/use-toast";
+import { EPP_OPTIONS, ACCESS_REQUIREMENTS_OPTIONS } from "@/lib/comercial-constants";
 
 interface ReviewSurveyModalProps {
   survey: any;
@@ -37,12 +45,7 @@ export function ReviewSurveyModal({ survey, onClose, users = [] }: ReviewSurveyM
 
   const surveyData = fullSurvey || survey;
   const generalInfo = (surveyData.generalInfo as any) || {};
-  const proposedScheduling = generalInfo.proposedScheduling as {
-    proposedDate?: string;
-    proposedTime?: string;
-    responsibleName?: string;
-    notes?: string;
-  } | null;
+  const scheduling = generalInfo.proposedScheduling as Record<string, any> | null;
 
   const handleAccept = async () => {
     if (!scheduledDate || !assignedToId) {
@@ -80,6 +83,20 @@ export function ReviewSurveyModal({ survey, onClose, users = [] }: ReviewSurveyM
     }
   };
 
+  // Resolve EPP / access requirement IDs to labels
+  const eppLabels = (scheduling?.epp as string[] | undefined)
+    ?.map((id: string) => EPP_OPTIONS.find((e) => e.id === id)?.label || id)
+    ?? [];
+  const accessLabels = (scheduling?.accessRequirements as string[] | undefined)
+    ?.map((id: string) => ACCESS_REQUIREMENTS_OPTIONS.find((r) => r.id === id)?.label || id)
+    ?? [];
+
+  // Waste types from scheduling (what comercial captured)
+  const schedulingWaste = (generalInfo.wasteTypes as any[] | undefined) || [];
+  // Waste types from relational table (if populated)
+  const relationalWaste = (surveyData.wasteTypes as any[] | undefined) || [];
+  const wasteToShow = relationalWaste.length > 0 ? relationalWaste : schedulingWaste;
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
       <div className="flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-lg bg-background shadow-lg">
@@ -99,65 +116,176 @@ export function ReviewSurveyModal({ survey, onClose, users = [] }: ReviewSurveyM
 
         {/* Content */}
         <div className="flex-1 overflow-auto p-6 space-y-4">
-          {/* Proposed scheduling from comercial */}
-          {proposedScheduling && (
-            <div className="rounded-lg border border-cyan-200 bg-cyan-50 p-4">
-              <div className="flex items-center gap-2 mb-2">
+          {/* ═══ Scheduling proposal from comercial ═══ */}
+          {scheduling && (
+            <div className="rounded-lg border border-cyan-200 bg-cyan-50 p-4 space-y-3">
+              <div className="flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-cyan-700" />
                 <span className="text-sm font-semibold text-cyan-800">Propuesta de Comercial</span>
               </div>
+
+              {/* Date, time, delivery date */}
               <div className="grid gap-2 sm:grid-cols-3 text-sm">
-                {proposedScheduling.proposedDate && (
+                {scheduling.proposedDate && (
                   <div>
-                    <span className="text-xs text-cyan-600">Fecha</span>
+                    <span className="text-xs text-cyan-600">Fecha propuesta</span>
                     <div className="font-medium text-cyan-900">
-                      {new Date(proposedScheduling.proposedDate + "T12:00:00").toLocaleDateString("es-MX", { weekday: "short", year: "numeric", month: "short", day: "numeric" })}
+                      {new Date(scheduling.proposedDate + "T12:00:00").toLocaleDateString("es-MX", { weekday: "short", year: "numeric", month: "short", day: "numeric" })}
                     </div>
                   </div>
                 )}
-                {proposedScheduling.proposedTime && (
+                {scheduling.proposedTime && (
                   <div>
                     <span className="text-xs text-cyan-600">Hora</span>
-                    <div className="font-medium text-cyan-900">{proposedScheduling.proposedTime}</div>
+                    <div className="font-medium text-cyan-900">{scheduling.proposedTime}</div>
                   </div>
                 )}
-                {proposedScheduling.responsibleName && (
+                {scheduling.deliveryDate && (
                   <div>
-                    <span className="text-xs text-cyan-600">Responsable</span>
-                    <div className="font-medium text-cyan-900 flex items-center gap-1">
-                      <User className="h-3 w-3" />
-                      {proposedScheduling.responsibleName}
+                    <span className="text-xs text-cyan-600">Entrega de Ops</span>
+                    <div className="font-medium text-cyan-900">
+                      {new Date(scheduling.deliveryDate + "T12:00:00").toLocaleDateString("es-MX", { weekday: "short", year: "numeric", month: "short", day: "numeric" })}
                     </div>
                   </div>
                 )}
               </div>
-              {proposedScheduling.notes && (
-                <div className="mt-2 text-xs text-cyan-700">
-                  <span className="font-medium">Notas:</span> {proposedScheduling.notes}
+
+              {scheduling.notes && (
+                <div className="text-xs text-cyan-700">
+                  <span className="font-medium">Notas:</span> {scheduling.notes}
                 </div>
               )}
             </div>
           )}
 
-          {/* General Info */}
+          {/* ═══ Datos de la Empresa ═══ */}
           <SectionCard title="Datos de la Empresa" icon={<Building2 className="h-4 w-4" />}>
             <div className="grid gap-3 sm:grid-cols-2">
-              <InfoRow label="Razon Social" value={generalInfo.razonSocial} />
+              <InfoRow label="Razón Social" value={generalInfo.razonSocial} />
               <InfoRow label="RFC" value={generalInfo.rfc} />
-              <InfoRow label="Direccion" value={generalInfo.direccion} />
+              <InfoRow label="Dirección" value={generalInfo.direccion} />
               <InfoRow label="Giro" value={generalInfo.giro} />
               <InfoRow label="Num. Empleados" value={generalInfo.numEmpleados} />
               <InfoRow label="Horario" value={generalInfo.horarioOperacion} />
-              <InfoRow label="Contacto Operativo" value={generalInfo.contactoOperativo} />
-              <InfoRow label="Telefono Operativo" value={generalInfo.telefonoOperativo} />
             </div>
           </SectionCard>
 
-          {/* Waste Types */}
-          {surveyData.wasteTypes && surveyData.wasteTypes.length > 0 && (
+          {/* ═══ Contacto en sitio ═══ */}
+          {scheduling && (scheduling.contactName || scheduling.contactPhone) && (
+            <SectionCard title="Contacto en Sitio" icon={<Phone className="h-4 w-4" />}>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                <InfoRow label="Nombre" value={scheduling.contactName} />
+                <InfoRow label="Puesto" value={scheduling.contactRole} />
+                <InfoRow label="Teléfono" value={scheduling.contactPhone} />
+                <InfoRow label="Correo" value={scheduling.contactEmail} />
+              </div>
+            </SectionCard>
+          )}
+
+          {/* ═══ Dirección del sitio ═══ */}
+          {scheduling?.siteAddress && (
+            <SectionCard title="Dirección del Sitio" icon={<MapPin className="h-4 w-4" />}>
+              <p className="text-sm">{scheduling.siteAddress}</p>
+            </SectionCard>
+          )}
+
+          {/* ═══ Participantes ═══ */}
+          {scheduling?.responsibleNames && scheduling.responsibleNames.length > 0 && (
+            <SectionCard title="Equipo Asignado" icon={<Users className="h-4 w-4" />}>
+              <div className="space-y-2">
+                {scheduling.participantsByArea && (
+                  <div className="grid gap-3 sm:grid-cols-3">
+                    <ParticipantArea
+                      label="Comercial"
+                      color="#00a8a8"
+                      names={scheduling.responsibleNames}
+                      ids={scheduling.participantsByArea.comercial}
+                      allIds={scheduling.responsibleIds}
+                    />
+                    <ParticipantArea
+                      label="Operaciones"
+                      color="#0D47A1"
+                      names={scheduling.responsibleNames}
+                      ids={scheduling.participantsByArea.operaciones}
+                      allIds={scheduling.responsibleIds}
+                    />
+                    <ParticipantArea
+                      label="Subproductos"
+                      color="#F57C00"
+                      names={scheduling.responsibleNames}
+                      ids={scheduling.participantsByArea.subproductos}
+                      allIds={scheduling.responsibleIds}
+                    />
+                  </div>
+                )}
+                {!scheduling.participantsByArea && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {scheduling.responsibleNames.map((name: string, i: number) => (
+                      <span key={i} className="rounded-full bg-[#f3f4f6] px-2.5 py-1 text-xs font-medium text-[#1c2c4a]">
+                        {name}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </SectionCard>
+          )}
+
+          {/* ═══ Requisitos operacionales ═══ */}
+          {(eppLabels.length > 0 || accessLabels.length > 0 || scheduling?.vehiclePlates) && (
+            <SectionCard title="Requisitos Operacionales" icon={<ShieldCheck className="h-4 w-4" />}>
+              <div className="space-y-3">
+                {eppLabels.length > 0 && (
+                  <div>
+                    <div className="flex items-center gap-1.5 mb-1.5">
+                      <HardHat className="h-3.5 w-3.5 text-[#F57C00]" />
+                      <span className="text-xs font-semibold text-[#1c2c4a]">EPP Necesario</span>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {eppLabels.map((label: string, i: number) => (
+                        <span key={i} className="rounded-full bg-[#F57C00]/10 px-2.5 py-1 text-xs font-medium text-[#F57C00]">
+                          {label}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {accessLabels.length > 0 && (
+                  <div>
+                    <div className="flex items-center gap-1.5 mb-1.5">
+                      <ShieldCheck className="h-3.5 w-3.5 text-[#7C3AED]" />
+                      <span className="text-xs font-semibold text-[#1c2c4a]">Requisitos de Acceso</span>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {accessLabels.map((label: string, i: number) => (
+                        <span key={i} className="rounded-full bg-[#7C3AED]/10 px-2.5 py-1 text-xs font-medium text-[#7C3AED]">
+                          {label}
+                        </span>
+                      ))}
+                    </div>
+                    {scheduling?.accessRequirementsOther && (
+                      <p className="mt-1 text-xs text-muted-foreground">Otros: {scheduling.accessRequirementsOther}</p>
+                    )}
+                  </div>
+                )}
+                {scheduling?.vehiclePlates && (
+                  <div>
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <Car className="h-3.5 w-3.5 text-[#6b7280]" />
+                      <span className="text-xs font-semibold text-[#1c2c4a]">Placas de Vehículos</span>
+                    </div>
+                    <p className="text-sm">{scheduling.vehiclePlates}</p>
+                  </div>
+                )}
+              </div>
+            </SectionCard>
+          )}
+
+          {/* ═══ Waste Types ═══ */}
+          {wasteToShow.length > 0 && (
             <SectionCard title="Tipos de Residuo" icon={<Recycle className="h-4 w-4" />}>
               <div className="space-y-2">
-                {surveyData.wasteTypes.map((wt: any, i: number) => (
+                {wasteToShow.map((wt: any, i: number) => (
                   <div key={i} className="rounded border p-2 text-sm">
                     <span className="font-medium">{wt.wasteType}</span>
                     {wt.quantity && <span className="ml-2 text-muted-foreground">{wt.quantity}</span>}
@@ -176,31 +304,31 @@ export function ReviewSurveyModal({ survey, onClose, users = [] }: ReviewSurveyM
             </SectionCard>
           )}
 
-          {/* Current Services */}
+          {/* ═══ Current Services ═══ */}
           {surveyData.currentServices && (
             <SectionCard title="Servicios Actuales" icon={<Truck className="h-4 w-4" />}>
               <div className="grid gap-3 sm:grid-cols-2">
                 <InfoRow label="Proveedor" value={surveyData.currentServices.providerName} />
-                <InfoRow label="Contrato Activo" value={surveyData.currentServices.contractActive ? "Si" : "No"} />
+                <InfoRow label="Contrato Activo" value={surveyData.currentServices.contractActive ? "Sí" : "No"} />
                 <InfoRow label="Costo Mensual" value={surveyData.currentServices.monthlyCost ? `$${Number(surveyData.currentServices.monthlyCost).toLocaleString("es-MX")}` : undefined} />
                 <InfoRow label="Frecuencia" value={surveyData.currentServices.collectionFrequency} />
                 <InfoRow label="Tipo Servicio" value={surveyData.currentServices.serviceType} />
-                <InfoRow label="Satisfaccion" value={surveyData.currentServices.satisfactionLevel ? `${surveyData.currentServices.satisfactionLevel}/10` : undefined} />
-                <InfoRow label="Razon de Cambio" value={surveyData.currentServices.reasonForChange} />
+                <InfoRow label="Satisfacción" value={surveyData.currentServices.satisfactionLevel ? `${surveyData.currentServices.satisfactionLevel}/10` : undefined} />
+                <InfoRow label="Razón de Cambio" value={surveyData.currentServices.reasonForChange} />
               </div>
             </SectionCard>
           )}
 
-          {/* Infrastructure */}
+          {/* ═══ Infrastructure ═══ */}
           {surveyData.infrastructure && (
             <SectionCard title="Infraestructura" icon={<Warehouse className="h-4 w-4" />}>
               <div className="grid gap-3 sm:grid-cols-2">
-                <InfoRow label="Area Almacenamiento" value={surveyData.infrastructure.hasStorageArea ? "Si" : "No"} />
-                <InfoRow label="Tamano Area" value={surveyData.infrastructure.storageAreaSize} />
+                <InfoRow label="Área Almacenamiento" value={surveyData.infrastructure.hasStorageArea ? "Sí" : "No"} />
+                <InfoRow label="Tamaño Área" value={surveyData.infrastructure.storageAreaSize} />
                 <InfoRow label="Tipo Almacenamiento" value={surveyData.infrastructure.storageType} />
                 <InfoRow label="Contenedores" value={surveyData.infrastructure.containerCount?.toString()} />
-                <InfoRow label="Compactadora" value={surveyData.infrastructure.hasCompactor ? "Si" : "No"} />
-                <InfoRow label="Bodega" value={surveyData.infrastructure.hasWarehouse ? "Si" : "No"} />
+                <InfoRow label="Compactadora" value={surveyData.infrastructure.hasCompactor ? "Sí" : "No"} />
+                <InfoRow label="Bodega" value={surveyData.infrastructure.hasWarehouse ? "Sí" : "No"} />
                 <InfoRow label="Acceso Vehicular" value={surveyData.infrastructure.vehicleAccess} />
                 <InfoRow label="Restricciones" value={surveyData.infrastructure.scheduleRestrictions} />
                 <InfoRow label="Espacio Disponible" value={surveyData.infrastructure.availableSpace} />
@@ -208,24 +336,24 @@ export function ReviewSurveyModal({ survey, onClose, users = [] }: ReviewSurveyM
             </SectionCard>
           )}
 
-          {/* Needs */}
+          {/* ═══ Needs ═══ */}
           {surveyData.needs && (
             <SectionCard title="Necesidades" icon={<Target className="h-4 w-4" />}>
               <div className="grid gap-3 sm:grid-cols-2">
-                <InfoRow label="Separacion" value={surveyData.needs.needsSeparation ? "Si" : "No"} />
-                <InfoRow label="Valorizacion" value={surveyData.needs.needsValorization ? "Si" : "No"} />
-                <InfoRow label="Trazabilidad" value={surveyData.needs.needsTraceability ? "Si" : "No"} />
-                <InfoRow label="Reportes Mensuales" value={surveyData.needs.needsMonthlyReporting ? "Si" : "No"} />
+                <InfoRow label="Separación" value={surveyData.needs.needsSeparation ? "Sí" : "No"} />
+                <InfoRow label="Valorización" value={surveyData.needs.needsValorization ? "Sí" : "No"} />
+                <InfoRow label="Trazabilidad" value={surveyData.needs.needsTraceability ? "Sí" : "No"} />
+                <InfoRow label="Reportes Mensuales" value={surveyData.needs.needsMonthlyReporting ? "Sí" : "No"} />
                 <InfoRow label="Certificaciones" value={Array.isArray(surveyData.needs.certifications) ? surveyData.needs.certifications.join(", ") : surveyData.needs.certifications} />
                 <InfoRow label="Presupuesto" value={surveyData.needs.availableBudget ? `$${Number(surveyData.needs.availableBudget).toLocaleString("es-MX")}` : undefined} />
                 <InfoRow label="Urgencia" value={surveyData.needs.urgency} />
-                <InfoRow label="Tomador de Decision" value={surveyData.needs.decisionMaker} />
+                <InfoRow label="Tomador de Decisión" value={surveyData.needs.decisionMaker} />
                 <InfoRow label="Metas Ambientales" value={surveyData.needs.environmentalGoals} />
               </div>
             </SectionCard>
           )}
 
-          {/* Estimated values */}
+          {/* ═══ Estimated values ═══ */}
           <div className="grid gap-3 sm:grid-cols-2">
             <InfoRow label="Volumen Estimado" value={survey.estimatedVolume} />
             <InfoRow label="Valor Estimado" value={survey.estimatedValue ? `$${Number(survey.estimatedValue).toLocaleString("es-MX")}` : undefined} />
@@ -245,8 +373,8 @@ export function ReviewSurveyModal({ survey, onClose, users = [] }: ReviewSurveyM
                 Rechazar
               </Button>
               <Button onClick={() => {
-                if (proposedScheduling?.proposedDate && !scheduledDate) {
-                  setScheduledDate(proposedScheduling.proposedDate);
+                if (scheduling?.proposedDate && !scheduledDate) {
+                  setScheduledDate(scheduling.proposedDate);
                 }
                 setAction("accept");
               }}>
@@ -348,6 +476,46 @@ export function ReviewSurveyModal({ survey, onClose, users = [] }: ReviewSurveyM
     </div>
   );
 }
+
+// ─── Helper: participant area display ────────────────────
+
+function ParticipantArea({
+  label,
+  color,
+  names,
+  ids,
+  allIds,
+}: {
+  label: string;
+  color: string;
+  names: string[];
+  ids: number[];
+  allIds: number[];
+}) {
+  if (!ids || ids.length === 0) return null;
+  const areaNames = ids.map((id: number) => {
+    const idx = allIds.indexOf(id);
+    return idx >= 0 ? names[idx] : `ID ${id}`;
+  });
+  return (
+    <div>
+      <span className="text-[11px] font-semibold" style={{ color }}>{label}</span>
+      <div className="mt-1 flex flex-wrap gap-1">
+        {areaNames.map((name: string, i: number) => (
+          <span
+            key={i}
+            className="rounded-full px-2 py-0.5 text-xs font-medium text-white"
+            style={{ backgroundColor: color }}
+          >
+            {name.split(" ").slice(0, 2).join(" ")}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Helper: section card ────────────────────────────────
 
 function SectionCard({
   title,

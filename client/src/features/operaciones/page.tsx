@@ -30,6 +30,7 @@ import {
 import { ExecutiveAvatar } from "@/lib/comercial-constants";
 import { KpiSection } from "@/features/kpis/components/KpiSection";
 import { ReviewSurveyModal } from "./components/ReviewSurveyModal";
+import { OperacionesCalendar } from "./components/OperacionesCalendar";
 
 const STATUS_LABELS: Record<string, string> = {
   borrador_comercial: "Borrador Comercial",
@@ -201,6 +202,13 @@ export default function OperacionesPage() {
           </div>
         </>
       )}
+
+      {/* Calendario de levantamientos — siempre visible */}
+      <OperacionesCalendar
+        surveys={surveys}
+        opsTeam={opsTeam.map(m => ({ id: m.id, name: m.name, codigo: m.codigo }))}
+        onSurveyClick={(id) => navigate(`/operaciones/levantamiento/${id}`)}
+      />
 
       {/* KPI Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
