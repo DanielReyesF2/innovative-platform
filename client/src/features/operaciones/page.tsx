@@ -211,7 +211,10 @@ export default function OperacionesPage() {
       <OperacionesCalendar
         surveys={surveys}
         opsTeam={opsTeam.map(m => ({ id: m.id, name: m.name, codigo: m.codigo }))}
-        onSurveyClick={(id) => navigate(`/operaciones/levantamiento/${id}`)}
+        onSurveyClick={(id) => {
+          const found = surveys.find((s: any) => s.id === id);
+          if (found) setReviewSurvey(found);
+        }}
       />
 
       {/* KPI Cards */}
