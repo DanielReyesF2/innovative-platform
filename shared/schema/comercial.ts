@@ -169,6 +169,7 @@ export const prospects = pgTable("prospects", {
   assignedToIdx: index("prospects_assigned_to_id_idx").on(table.assignedToId),
   stageIdx: index("prospects_stage_idx").on(table.stage),
   rejectionReasonIdx: index("prospects_rejection_reason_id_idx").on(table.rejectionReasonId),
+  surveyIdx: index("prospects_survey_id_idx").on(table.surveyId),
 }));
 
 // Leads (incoming opportunities not yet qualified)
