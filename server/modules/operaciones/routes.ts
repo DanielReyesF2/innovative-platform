@@ -122,7 +122,7 @@ const rejectSurveySchema = z.object({
 
 router.get(
   "/surveys/pending-review",
-  requireRole("admin", "operaciones"),
+  requireRole("admin", "director", "operaciones"),
   async (_req, res) => {
     try {
       const surveys = await getPendingReviewSurveys();
@@ -136,7 +136,7 @@ router.get(
 
 router.post(
   "/surveys/:id/accept",
-  requireRole("admin", "operaciones"),
+  requireRole("admin", "director", "operaciones"),
   async (req, res) => {
     try {
       const parsed = acceptSurveySchema.parse(req.body);
@@ -165,7 +165,7 @@ router.post(
 
 router.post(
   "/surveys/:id/reject",
-  requireRole("admin", "operaciones"),
+  requireRole("admin", "director", "operaciones"),
   async (req, res) => {
     try {
       const parsed = rejectSurveySchema.parse(req.body);
