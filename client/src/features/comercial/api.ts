@@ -1,5 +1,5 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { apiRequest, invalidateByPrefix } from "@/lib/queryClient";
+import { apiRequest, getAuthToken, invalidateByPrefix } from "@/lib/queryClient";
 import type { ApiProspect } from "@/lib/comercial-constants";
 import type {
   Lead,
@@ -413,6 +413,33 @@ export function useDeleteDocument() {
   return useMutation({
     mutationFn: async ({ prospectId, docId }: { prospectId: number; docId: number }) => {
       const res = await apiRequest("DELETE", `/api/comercial/prospects/${prospectId}/documents/${docId}`);
+      return res.json();
+    },
+    onSuccess: () => {
+      invalidateByPrefix("/api/comercial/prospects");
+    },
+  });
+}
+
+export function useUploadDocument() {
+  return useMutation({
+    mutationFn: async ({ prospectId, file, tipo = "otro" }: { prospectId: number; file: File; tipo?: string }) => {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("tipo", tipo);
+
+      const token = getAuthToken();
+      const res = await fetch(`/api/comercial/prospects/${prospectId}/documents/upload`, {
+        method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: formData,
+        credentials: "include",
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ message: "Error al subir archivo" }));
+        throw new Error(err.message);
+      }
       return res.json();
     },
     onSuccess: () => {

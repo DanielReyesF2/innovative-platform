@@ -55,7 +55,7 @@ function InfoRow({
     </div>
   );
 }
-import { useRejectProspect } from '../api';
+import { useRejectProspect, useUploadDocument } from '../api';
 import { QualifyLeadDialog } from './QualifyLeadDialog';
 import { useComercialData } from '../hooks/useComercialData';
 
@@ -72,7 +72,6 @@ export function ProspectoDrawer({ prospecto, onClose }: Props) {
     deleteProspectMutation,
     createNoteMutation,
     deleteNoteMutation,
-    createDocumentMutation,
     deleteDocumentMutation,
   } = useComercialData();
   const [drawerTab, setDrawerTab] = useState('info');
@@ -82,6 +81,7 @@ export function ProspectoDrawer({ prospecto, onClose }: Props) {
   const [showRechazoModal, setShowRechazoModal] = useState(false);
   const [pendingStageGate, setPendingStageGate] = useState<PendingMove | null>(null);
   const rejectProspect = useRejectProspect();
+  const uploadDocumentMutation = useUploadDocument();
 
   // Inline-edit single save helper — one source of truth for all 14 editable fields
   // that used to live in the old ProspectEditDialog.
@@ -157,17 +157,11 @@ export function ProspectoDrawer({ prospecto, onClose }: Props) {
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
-    // DEBT: Uses fake local:// URL — should use real upload endpoint POST /prospects/:id/documents/upload
     for (const f of files) {
       try {
-        await createDocumentMutation.mutateAsync({
+        await uploadDocumentMutation.mutateAsync({
           prospectId: realProspectId,
-          name: f.name,
-          type: 'otro',
-          url: `local://${f.name}`,
-          fileSize: f.size,
-          mimeType: f.type,
-          uploadedById: authUser?.id,
+          file: f,
         });
       } catch {
         toast({ title: `Error al subir ${f.name}`, variant: 'destructive' });
