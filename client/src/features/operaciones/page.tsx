@@ -468,6 +468,7 @@ export default function OperacionesPage() {
         <ReviewSurveyModal
           survey={reviewSurvey}
           onClose={() => setReviewSurvey(null)}
+          users={opsTeam.map(m => ({ id: m.id, name: m.name }))}
         />
       )}
     </div>
