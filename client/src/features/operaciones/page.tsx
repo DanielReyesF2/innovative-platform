@@ -75,6 +75,10 @@ export default function OperacionesPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [reviewSurvey, setReviewSurvey] = useState<any>(null);
+  const [showLivePanel, setShowLivePanel] = useState(false);
+
+  // Live: surveys where personnel is on-site right now
+  const liveSurveys = surveys.filter((s: any) => s.status === "en_sitio");
 
   // Filter surveys (exclude pendiente_operaciones from main list)
   const filteredSurveys = surveys
@@ -478,6 +482,79 @@ export default function OperacionesPage() {
           onClose={() => setReviewSurvey(null)}
           users={opsTeam.map(m => ({ id: m.id, name: m.name }))}
         />
+      )}
+
+      {/* ═══ Live floating button ═══ */}
+      {liveSurveys.length > 0 && (
+        <>
+          <button
+            onClick={() => setShowLivePanel(!showLivePanel)}
+            className="fixed bottom-6 right-6 z-40 flex items-center gap-2 rounded-full bg-[#0D47A1] px-5 py-3 text-white shadow-lg hover:bg-[#1565C0] transition-all hover:scale-105 active:scale-95"
+          >
+            <span className="relative flex h-3 w-3">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500" />
+            </span>
+            <span className="text-sm font-semibold">
+              {liveSurveys.length} en sitio
+            </span>
+            <MapPin size={16} />
+          </button>
+
+          {/* Live panel */}
+          {showLivePanel && (
+            <div className="fixed bottom-20 right-6 z-40 w-80 rounded-xl bg-white border border-[#e5e7eb] shadow-2xl overflow-hidden">
+              <div className="px-4 py-3 bg-gradient-to-r from-[#0D47A1] to-[#00a8a8] flex items-center justify-between">
+                <div className="flex items-center gap-2 text-white">
+                  <span className="relative flex h-2.5 w-2.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500" />
+                  </span>
+                  <span className="text-sm font-bold">Levantamientos en Vivo</span>
+                </div>
+                <button
+                  onClick={() => setShowLivePanel(false)}
+                  className="text-white/70 hover:text-white text-lg leading-none"
+                >
+                  ✕
+                </button>
+              </div>
+              <div className="max-h-64 overflow-y-auto divide-y divide-[#f3f4f6]">
+                {liveSurveys.map((s: any) => {
+                  const operator = s.assignedOperationsId
+                    ? opsTeam.find(m => m.id === s.assignedOperationsId)
+                    : null;
+                  return (
+                    <button
+                      key={s.id}
+                      onClick={() => {
+                        navigate(`/operaciones/levantamiento/${s.id}`);
+                        setShowLivePanel(false);
+                      }}
+                      className="w-full px-4 py-3 text-left hover:bg-[#f0fdf4] transition-colors"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-green-500 flex-shrink-0" />
+                        <span className="text-sm font-semibold text-[#1c2c4a] truncate">{s.clientName}</span>
+                      </div>
+                      {s.address && (
+                        <div className="mt-1 flex items-center gap-1 text-[11px] text-[#6b7280]">
+                          <MapPin size={10} className="flex-shrink-0" />
+                          <span className="truncate">{s.address}</span>
+                        </div>
+                      )}
+                      {operator && (
+                        <div className="mt-0.5 text-[11px] text-[#00a8a8] font-medium">
+                          {operator.name}
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </>
       )}
     </div>
   );
