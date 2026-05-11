@@ -253,8 +253,8 @@ export function AgendarLevantamientoModal({ prospecto, onClose, onAdvanced }: Pr
 
         {/* Fields */}
         <div className="flex-1 overflow-y-auto px-6 py-4 space-y-5">
-          {/* Fecha + hora + entrega ops */}
-          <div className="grid gap-3 sm:grid-cols-3">
+          {/* Fecha + hora */}
+          <div className="grid gap-3 sm:grid-cols-2">
             <div>
               <Label className="text-xs">Fecha *</Label>
               <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="mt-1" />
@@ -262,10 +262,6 @@ export function AgendarLevantamientoModal({ prospecto, onClose, onAdvanced }: Pr
             <div>
               <Label className="text-xs">Hora *</Label>
               <Input type="time" value={time} onChange={(e) => setTime(e.target.value)} className="mt-1" />
-            </div>
-            <div>
-              <Label className="text-xs">Entrega de Ops</Label>
-              <Input type="date" value={deliveryDate} onChange={(e) => setDeliveryDate(e.target.value)} className="mt-1" />
             </div>
           </div>
 

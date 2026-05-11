@@ -440,32 +440,18 @@ export function ProspectLevantamiento({ prospectId }: ProspectLevantamientoProps
             </div>
           </div>
 
-          {/* 1b. Ejecutivo responsable + fecha de entrega por operaciones */}
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div>
-              <Label className="text-xs">Ejecutivo responsable</Label>
-              <div className="mt-1 h-10 flex items-center rounded-md border border-input bg-[#f9fafb] px-3 text-sm text-[#1c2c4a]">
-                {(() => {
-                  const owner = teamMembers.find((m) => m.id === prospect?.assignedToId);
-                  return owner ? owner.name : <span className="text-[#9ca3af]">Sin asignar</span>;
-                })()}
-              </div>
-              <p className="text-[10px] text-muted-foreground mt-0.5">
-                Toma el ejecutivo asignado al prospecto. Se edita desde el Kanban.
-              </p>
+          {/* 1b. Ejecutivo responsable */}
+          <div>
+            <Label className="text-xs">Ejecutivo responsable</Label>
+            <div className="mt-1 h-10 flex items-center rounded-md border border-input bg-[#f9fafb] px-3 text-sm text-[#1c2c4a]">
+              {(() => {
+                const owner = teamMembers.find((m) => m.id === prospect?.assignedToId);
+                return owner ? owner.name : <span className="text-[#9ca3af]">Sin asignar</span>;
+              })()}
             </div>
-            <div>
-              <Label className="text-xs">Fecha entrega de Operaciones</Label>
-              <Input
-                type="date"
-                value={schedDeliveryDate}
-                onChange={(e) => setSchedDeliveryDate(e.target.value)}
-                className="mt-1"
-              />
-              <p className="text-[10px] text-muted-foreground mt-0.5">
-                Cuando Operaciones entregará el documento de levantamiento.
-              </p>
-            </div>
+            <p className="text-[10px] text-muted-foreground mt-0.5">
+              Toma el ejecutivo asignado al prospecto. Se edita desde el Kanban.
+            </p>
           </div>
 
           {/* 2. Dirección del sitio */}

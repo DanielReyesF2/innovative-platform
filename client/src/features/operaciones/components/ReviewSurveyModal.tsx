@@ -140,14 +140,6 @@ export function ReviewSurveyModal({ survey, onClose, users = [] }: ReviewSurveyM
                     <div className="font-medium text-cyan-900">{scheduling.proposedTime}</div>
                   </div>
                 )}
-                {scheduling.deliveryDate && (
-                  <div>
-                    <span className="text-xs text-cyan-600">Entrega de Ops</span>
-                    <div className="font-medium text-cyan-900">
-                      {new Date(scheduling.deliveryDate + "T12:00:00").toLocaleDateString("es-MX", { weekday: "short", year: "numeric", month: "short", day: "numeric" })}
-                    </div>
-                  </div>
-                )}
               </div>
 
               {scheduling.notes && (
