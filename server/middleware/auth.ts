@@ -1,5 +1,5 @@
+import type { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
-import type { Request, Response, NextFunction } from "express";
 
 if (!process.env.JWT_SECRET) {
   throw new Error("FATAL: JWT_SECRET environment variable must be set.");
@@ -26,7 +26,7 @@ export function generateToken(user: JwtPayload): string {
       companyId: user.companyId,
     },
     JWT_SECRET,
-    { expiresIn: JWT_EXPIRES_IN }
+    { expiresIn: JWT_EXPIRES_IN },
   );
 }
 
@@ -71,7 +71,7 @@ export function requireAdmin(req: Request, res: Response, next: NextFunction) {
 export function requireRole(...roles: string[]) {
   return (req: Request, res: Response, next: NextFunction) => {
     const user = req.user;
-    if (!user || !roles.includes(user.role)) {
+    if (!(user && roles.includes(user.role))) {
       return res.status(403).json({ message: `Requires one of: ${roles.join(", ")}` });
     }
     next();

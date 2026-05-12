@@ -1,8 +1,7 @@
+import { Image, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Plus, Trash2, Image } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { photosApi } from "../../api";
 
@@ -32,7 +31,7 @@ export default function FotosSection({ surveyId, disabled }: Props) {
         onError: () => {
           toast({ title: "Error al guardar", description: "Intenta de nuevo", variant: "destructive" });
         },
-      }
+      },
     );
     setNewUrl("");
     setNewCaption("");
@@ -47,15 +46,26 @@ export default function FotosSection({ surveyId, disabled }: Props) {
               <div className="aspect-video bg-muted flex items-center justify-center">
                 <Image className="h-8 w-8 text-muted-foreground" />
               </div>
-              <div className="p-2 text-xs text-muted-foreground truncate">
-                {photo.caption || photo.url}
-              </div>
+              <div className="p-2 text-xs text-muted-foreground truncate">{photo.caption || photo.url}</div>
               {!disabled && (
                 <Button
                   variant="destructive"
                   size="sm"
                   className="absolute top-1 right-1 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                  onClick={() => deleteMutation.mutate({ surveyId, itemId: photo.id }, { onError: () => { toast({ title: "Error al eliminar", description: "Intenta de nuevo", variant: "destructive" }); } })}
+                  onClick={() =>
+                    deleteMutation.mutate(
+                      { surveyId, itemId: photo.id },
+                      {
+                        onError: () => {
+                          toast({
+                            title: "Error al eliminar",
+                            description: "Intenta de nuevo",
+                            variant: "destructive",
+                          });
+                        },
+                      },
+                    )
+                  }
                 >
                   <Trash2 className="h-3 w-3" />
                 </Button>
@@ -64,9 +74,7 @@ export default function FotosSection({ surveyId, disabled }: Props) {
           ))}
         </div>
       ) : (
-        <p className="text-center text-sm text-muted-foreground py-4">
-          No hay fotografías registradas
-        </p>
+        <p className="text-center text-sm text-muted-foreground py-4">No hay fotografías registradas</p>
       )}
       {!disabled && (
         <div className="flex gap-2">

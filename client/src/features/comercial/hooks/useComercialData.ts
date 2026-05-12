@@ -1,16 +1,12 @@
-import { useState, useEffect, useMemo } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { apiRequest, invalidateByPrefix } from '@/lib/queryClient';
-import { useAuth } from '@/lib/auth';
-import {
-  dbProspectToKanban,
-  calcularPipelineData,
-  MONTH_LABELS,
-} from '@/lib/comercial-constants';
-import type { ApiProspect } from '@/lib/comercial-constants';
-import type { KanbanProspecto, TeamMember } from '@shared/types/comercial';
-import type { User } from '@shared/schema/common';
-import { PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
+import type { User } from "@shared/schema/common";
+import type { KanbanProspecto, TeamMember } from "@shared/types/comercial";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { useEffect, useMemo, useState } from "react";
+import { useAuth } from "@/lib/auth";
+import type { ApiProspect } from "@/lib/comercial-constants";
+import { calcularPipelineData, dbProspectToKanban, MONTH_LABELS } from "@/lib/comercial-constants";
+import { apiRequest, invalidateByPrefix } from "@/lib/queryClient";
 
 // ═══════ API RESPONSE SHAPES ═══════
 
@@ -60,29 +56,39 @@ export function useComercialData() {
   const { user: authUser } = useAuth();
 
   // ═══════ QUERIES ═══════
-  const { data: dbProspectsRaw = [], isLoading: prospectsLoading, isError: prospectsError } = useQuery<ApiProspect[]>({
-    queryKey: ['/api/comercial/prospects'],
+  const {
+    data: dbProspectsRaw = [],
+    isLoading: prospectsLoading,
+    isError: prospectsError,
+  } = useQuery<ApiProspect[]>({
+    queryKey: ["/api/comercial/prospects"],
     staleTime: 30 * 1000,
   });
 
-  const { data: dbUsers = [] } = useQuery<Pick<User, 'id' | 'name' | 'codigo'>[]>({
-    queryKey: ['/api/auth/team'],
+  const { data: dbUsers = [] } = useQuery<Pick<User, "id" | "name" | "codigo">[]>({
+    queryKey: ["/api/auth/team"],
     staleTime: 5 * 60 * 1000,
   });
 
   const usersMap = useMemo(() => {
-    const map: Record<number, Pick<User, 'name' | 'codigo'>> = {};
-    dbUsers.forEach((u) => { map[u.id] = u; });
+    const map: Record<number, Pick<User, "name" | "codigo">> = {};
+    dbUsers.forEach((u) => {
+      map[u.id] = u;
+    });
     return map;
   }, [dbUsers]);
 
-  const { data: dbTeamRaw = [], isLoading: teamLoading, isError: teamError } = useQuery<ApiTeamMember[]>({
-    queryKey: ['/api/comercial/team'],
+  const {
+    data: dbTeamRaw = [],
+    isLoading: teamLoading,
+    isError: teamError,
+  } = useQuery<ApiTeamMember[]>({
+    queryKey: ["/api/comercial/team"],
     staleTime: 5 * 60 * 1000,
   });
 
   const { data: dbVentasReales = [] } = useQuery<ApiVentaReal[]>({
-    queryKey: ['/api/comercial/ventas-reales'],
+    queryKey: ["/api/comercial/ventas-reales"],
     staleTime: 60 * 1000,
   });
 
@@ -95,23 +101,31 @@ export function useComercialData() {
     return dbTeamRaw.map((m) => ({
       id: m.id,
       dbUserId: m.id,
-      codigo: m.codigo || '',
+      codigo: m.codigo || "",
       name: m.name,
-      role: m.role === 'director' ? 'Directora Comercial' : 'Ejecutiva',
-      ubicacion: '',
-      zona: '',
-      avatar: '👤',
+      role: m.role === "director" ? "Directora Comercial" : "Ejecutiva",
+      ubicacion: "",
+      zona: "",
+      avatar: "👤",
       presupuestoAnual2026: m.presupuestoAnual || 0,
       presupuestoMensual: m.presupuestoMensual || 0,
       presupuestosMensuales: m.presupuestosMensuales || {},
       ventasReales: m.ventasReales || 0,
       ventasRealesAnual: m.ventasRealesAnual || 0,
-      cumplimientoPresupuesto: m.presupuestoMensual > 0
-        ? Math.round((m.ventasReales / m.presupuestoMensual) * 100) : 0,
-      leads: 0, levantamientos: 0, propuestasEnviadas: 0, reuniones: 0, cierres: 0,
-      tasaConversion: 0, tiempoRespuesta: '', satisfaccionCliente: 0,
-      activitiesSemanal: 0, eficienciaGlobal: 0,
-      ultimaActividad: '', notas: '', kpisSemanales: [],
+      cumplimientoPresupuesto: m.presupuestoMensual > 0 ? Math.round((m.ventasReales / m.presupuestoMensual) * 100) : 0,
+      leads: 0,
+      levantamientos: 0,
+      propuestasEnviadas: 0,
+      reuniones: 0,
+      cierres: 0,
+      tasaConversion: 0,
+      tiempoRespuesta: "",
+      satisfaccionCliente: 0,
+      activitiesSemanal: 0,
+      eficienciaGlobal: 0,
+      ultimaActividad: "",
+      notas: "",
+      kpisSemanales: [],
     }));
   }, [dbTeamRaw]);
 
@@ -128,19 +142,19 @@ export function useComercialData() {
     // reciente (ver updateProposalAmount en backend + backfill).
     const cotizacionPorMes: Record<string, number> = {};
     kanbanProspectos.forEach((p) => {
-      if (p.status === 'cierre_perdido') return;
+      if (p.status === "cierre_perdido") return;
       const ect = p.estimatedCloseTime; // "YYYY-MM"
       if (!ect) return;
       const amount = Number(p.propuesta?.ventaTotal || p.facturacionEstimada || 0);
       if (amount <= 0) return;
-      const [year, month] = ect.split('-');
+      const [year, month] = ect.split("-");
       const key = `${year}-${Number(month)}`;
       cotizacionPorMes[key] = (cotizacionPorMes[key] || 0) + amount;
     });
 
     const currentYear = new Date().getFullYear();
-    return MONTH_LABELS.map(row => {
-      const period = `${currentYear}-${String(row.mesNum).padStart(2, '0')}`;
+    return MONTH_LABELS.map((row) => {
+      const period = `${currentYear}-${String(row.mesNum).padStart(2, "0")}`;
       const monthBudget = dbTeamRaw.reduce((sum, m) => {
         const budgets = m.presupuestosMensuales || {};
         return sum + (budgets[period] || 0);
@@ -164,10 +178,10 @@ export function useComercialData() {
   // invalidate the team + ventas-reales queries too so the greeting, KPI
   // cards and team list refresh in lock-step with the kanban.
   const invalidateProspectAggregates = () => {
-    invalidateByPrefix('/api/comercial/prospects');
-    invalidateByPrefix('/api/comercial/pipeline');
-    invalidateByPrefix('/api/comercial/team');
-    invalidateByPrefix('/api/comercial/ventas-reales');
+    invalidateByPrefix("/api/comercial/prospects");
+    invalidateByPrefix("/api/comercial/pipeline");
+    invalidateByPrefix("/api/comercial/team");
+    invalidateByPrefix("/api/comercial/ventas-reales");
   };
 
   const updateProspectMutation = useMutation({
@@ -204,11 +218,14 @@ export function useComercialData() {
 
   const createNoteMutation = useMutation({
     mutationFn: async ({ prospectId, content }: { prospectId: number; content: string }) => {
-      const res = await apiRequest("POST", `/api/comercial/prospects/${prospectId}/notes`, { content, createdById: authUser?.id });
+      const res = await apiRequest("POST", `/api/comercial/prospects/${prospectId}/notes`, {
+        content,
+        createdById: authUser?.id,
+      });
       return res.json();
     },
-    onSettled: (_data, _error, variables) => {
-      invalidateByPrefix('/api/comercial/prospects');
+    onSettled: (_data, _error, _variables) => {
+      invalidateByPrefix("/api/comercial/prospects");
     },
   });
 
@@ -217,8 +234,8 @@ export function useComercialData() {
       const res = await apiRequest("DELETE", `/api/comercial/prospects/${prospectId}/notes/${noteId}`);
       return res.json();
     },
-    onSettled: (_data, _error, variables) => {
-      invalidateByPrefix('/api/comercial/prospects');
+    onSettled: (_data, _error, _variables) => {
+      invalidateByPrefix("/api/comercial/prospects");
     },
   });
 
@@ -227,8 +244,8 @@ export function useComercialData() {
       const res = await apiRequest("POST", `/api/comercial/prospects/${prospectId}/documents`, data);
       return res.json();
     },
-    onSettled: (_data, _error, variables) => {
-      invalidateByPrefix('/api/comercial/prospects');
+    onSettled: (_data, _error, _variables) => {
+      invalidateByPrefix("/api/comercial/prospects");
     },
   });
 
@@ -237,8 +254,8 @@ export function useComercialData() {
       const res = await apiRequest("DELETE", `/api/comercial/prospects/${prospectId}/documents/${docId}`);
       return res.json();
     },
-    onSettled: (_data, _error, variables) => {
-      invalidateByPrefix('/api/comercial/prospects');
+    onSettled: (_data, _error, _variables) => {
+      invalidateByPrefix("/api/comercial/prospects");
     },
   });
 
@@ -259,27 +276,25 @@ export function useComercialData() {
   }, [dbVentasReales, salesTeamData]);
 
   // ═══════ DND ═══════
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
-  );
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
 
   // ═══════ USER INFO ═══════
   const currentUserCodigo = useMemo(() => {
-    if (!authUser) return 'VA';
+    if (!authUser) return "VA";
     const member = salesTeamData.find((m) => m.dbUserId === authUser.id);
-    return member?.codigo || 'VA';
+    return member?.codigo || "VA";
   }, [authUser, salesTeamData]);
 
   const currentUserName = useMemo(() => {
-    if (!authUser) return 'Usuario';
-    return authUser.name.split(' ')[0];
+    if (!authUser) return "Usuario";
+    return authUser.name.split(" ")[0];
   }, [authUser]);
 
   const userGreeting = (() => {
     const h = new Date().getHours();
-    if (h < 12) return 'Buenos días';
-    if (h < 19) return 'Buenas tardes';
-    return 'Buenas noches';
+    if (h < 12) return "Buenos días";
+    if (h < 19) return "Buenas tardes";
+    return "Buenas noches";
   })();
 
   return {

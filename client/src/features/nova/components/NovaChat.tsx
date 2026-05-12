@@ -1,10 +1,10 @@
-import { useState, useRef, useEffect } from "react";
-import { getAuthToken } from "@/lib/queryClient";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Bot, Send, User } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { getAuthToken } from "@/lib/queryClient";
 import { cn } from "@/lib/utils";
 
 interface Message {
@@ -29,7 +29,7 @@ export function NovaChat({ mode = "page" }: NovaChatProps) {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages]);
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -91,22 +91,14 @@ export function NovaChat({ mode = "page" }: NovaChatProps) {
                 if (parsed.type === "message" || parsed.content) {
                   assistantContent += parsed.content || "";
                   setMessages((prev) =>
-                    prev.map((m) =>
-                      m.id === assistantMessage.id
-                        ? { ...m, content: assistantContent }
-                        : m
-                    )
+                    prev.map((m) => (m.id === assistantMessage.id ? { ...m, content: assistantContent } : m)),
                   );
                 }
               } catch {
                 // Raw text chunk
                 assistantContent += data;
                 setMessages((prev) =>
-                  prev.map((m) =>
-                    m.id === assistantMessage.id
-                      ? { ...m, content: assistantContent }
-                      : m
-                  )
+                  prev.map((m) => (m.id === assistantMessage.id ? { ...m, content: assistantContent } : m)),
                 );
               }
             }
@@ -140,13 +132,7 @@ export function NovaChat({ mode = "page" }: NovaChatProps) {
         ) : (
           <div className="space-y-4 py-4">
             {messages.map((msg) => (
-              <div
-                key={msg.id}
-                className={cn(
-                  "flex gap-3",
-                  msg.role === "user" ? "justify-end" : "justify-start"
-                )}
-              >
+              <div key={msg.id} className={cn("flex gap-3", msg.role === "user" ? "justify-end" : "justify-start")}>
                 {msg.role === "assistant" && (
                   <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
                     <Bot className="h-4 w-4" />
@@ -155,9 +141,7 @@ export function NovaChat({ mode = "page" }: NovaChatProps) {
                 <div
                   className={cn(
                     "max-w-[80%] rounded-lg px-4 py-2 text-sm",
-                    msg.role === "user"
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted"
+                    msg.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted",
                   )}
                 >
                   <p className="whitespace-pre-wrap">{msg.content}</p>
@@ -206,11 +190,7 @@ export function NovaChat({ mode = "page" }: NovaChatProps) {
   );
 
   if (mode === "widget") {
-    return (
-      <div className="flex h-full flex-col overflow-hidden">
-        {chatContent}
-      </div>
-    );
+    return <div className="flex h-full flex-col overflow-hidden">{chatContent}</div>;
   }
 
   return (
@@ -221,9 +201,7 @@ export function NovaChat({ mode = "page" }: NovaChatProps) {
           Nova AI
         </CardTitle>
       </CardHeader>
-      <CardContent className="flex flex-1 flex-col overflow-hidden p-0">
-        {chatContent}
-      </CardContent>
+      <CardContent className="flex flex-1 flex-col overflow-hidden p-0">{chatContent}</CardContent>
     </Card>
   );
 }

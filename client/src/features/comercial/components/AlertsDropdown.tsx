@@ -1,31 +1,14 @@
-import { useState } from "react";
+import type { FollowUpAlert } from "@shared/schema/comercial";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { AlertTriangle, Bell, Calendar, Check, Clock, TrendingDown, X } from "lucide-react";
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  Bell,
-  AlertTriangle,
-  Clock,
-  TrendingDown,
-  Calendar,
-  Check,
-  X,
-} from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import {
-  useAlerts,
-  usePendingAlertsCount,
-  useAcknowledgeAlert,
-  useDismissAlert,
-} from "../api";
-import type { FollowUpAlert } from "@shared/schema/comercial";
+import { useAcknowledgeAlert, useAlerts, useDismissAlert, usePendingAlertsCount } from "../api";
 
 const alertTypeIcons: Record<string, React.ReactNode> = {
   overdue_follow_up: <Clock className="h-4 w-4 text-orange-500" />,
@@ -118,18 +101,15 @@ export function AlertsDropdown() {
           <ScrollArea className="h-[400px]">
             <div className="p-2 space-y-2">
               {alerts.map((alert: FollowUpAlert) => (
-                <div
-                  key={alert.id}
-                  className="bg-card border rounded-lg p-3 hover:bg-accent/50 transition-colors"
-                >
+                <div key={alert.id} className="bg-card border rounded-lg p-3 hover:bg-accent/50 transition-colors">
                   <div className="flex items-start gap-3">
                     <div className="flex-shrink-0 mt-0.5">
-                      {alertTypeIcons[alert.alertType ?? ''] || <Bell className="h-4 w-4" />}
+                      {alertTypeIcons[alert.alertType ?? ""] || <Bell className="h-4 w-4" />}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <p className="font-medium text-sm">{alert.title}</p>
-                        <Badge className={priorityColors[alert.priority ?? 'media'] || priorityColors.media}>
+                        <Badge className={priorityColors[alert.priority ?? "media"] || priorityColors.media}>
                           {alert.priority}
                         </Badge>
                       </div>
@@ -137,9 +117,7 @@ export function AlertsDropdown() {
                         {alertTypeLabels[alert.alertType] || alert.alertType}
                       </p>
                       {alert.message && (
-                        <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                          {alert.message}
-                        </p>
+                        <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{alert.message}</p>
                       )}
                       {alert.dueDate && (
                         <p className="text-xs text-muted-foreground mt-1">
@@ -149,12 +127,7 @@ export function AlertsDropdown() {
                     </div>
                   </div>
                   <div className="flex gap-2 mt-2 justify-end">
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="h-7 text-xs"
-                      onClick={() => handleDismiss(alert.id)}
-                    >
+                    <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => handleDismiss(alert.id)}>
                       <X className="h-3 w-3 mr-1" />
                       Descartar
                     </Button>

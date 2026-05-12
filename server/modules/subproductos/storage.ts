@@ -1,13 +1,13 @@
-import { db } from "../../db";
-import { eq, desc, and, sql } from "drizzle-orm";
+import { desc, eq, sql } from "drizzle-orm";
 import {
-  serviceClients,
-  traceabilityRecords,
   clientReports,
   economicModels,
-  serviceConciliations,
   type InsertServiceClient,
+  serviceClients,
+  serviceConciliations,
+  traceabilityRecords,
 } from "../../../shared/schema/subproductos";
+import { db } from "../../db";
 
 // --- Service Clients ---
 
@@ -74,13 +74,12 @@ export async function getTraceabilitySummary(clientId: number) {
       waterSaved: acc.waterSaved + (r.waterSaved || 0),
       revenue: acc.revenue + Number(r.monthlyRevenue || 0),
     }),
-    { recycling: 0, compost: 0, reuse: 0, landfill: 0, treesSaved: 0, co2Avoided: 0, waterSaved: 0, revenue: 0 }
+    { recycling: 0, compost: 0, reuse: 0, landfill: 0, treesSaved: 0, co2Avoided: 0, waterSaved: 0, revenue: 0 },
   );
 
   const totalManaged = totals.recycling + totals.compost + totals.reuse + totals.landfill;
-  const diversionRate = totalManaged > 0
-    ? ((totals.recycling + totals.compost + totals.reuse) / totalManaged) * 100
-    : 0;
+  const diversionRate =
+    totalManaged > 0 ? ((totals.recycling + totals.compost + totals.reuse) / totalManaged) * 100 : 0;
 
   return { ...totals, totalManaged, diversionRate, periods: records.length };
 }
@@ -115,11 +114,7 @@ export async function updateReportStatus(id: number, status: string) {
   if (status === "enviado") updates.sentDate = new Date();
   if (status === "confirmado") updates.confirmedDate = new Date();
 
-  const [updated] = await db
-    .update(clientReports)
-    .set(updates)
-    .where(eq(clientReports.id, id))
-    .returning();
+  const [updated] = await db.update(clientReports).set(updates).where(eq(clientReports.id, id)).returning();
   return updated;
 }
 

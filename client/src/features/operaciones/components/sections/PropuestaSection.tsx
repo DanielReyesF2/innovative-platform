@@ -1,12 +1,7 @@
 import { useState } from "react";
-import EditableTable, { type ColumnDef } from "../EditableTable";
 import { useToast } from "@/components/ui/use-toast";
-import {
-  proposalPersonnelApi,
-  proposalEquipmentApi,
-  proposalSuppliesApi,
-  proposalRentalsApi,
-} from "../../api";
+import { proposalEquipmentApi, proposalPersonnelApi, proposalRentalsApi, proposalSuppliesApi } from "../../api";
+import EditableTable, { type ColumnDef } from "../EditableTable";
 
 interface Props {
   surveyId: number;

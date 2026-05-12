@@ -1,22 +1,22 @@
-import { useState, useCallback, useRef } from "react";
+import { ArrowLeft, Check } from "lucide-react";
+import { useCallback, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Check, AlertCircle } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import { useSurvey, useUpdateSurvey, useUpdateSurveySection, useGateStatus, useAdvanceSurveyStatus } from "../api";
+import { useAdvanceSurveyStatus, useGateStatus, useSurvey, useUpdateSurvey, useUpdateSurveySection } from "../api";
 import SurveySection from "./SurveySection";
+import AreaOperacionSection from "./sections/AreaOperacionSection";
+import EquipoPermitidoSection from "./sections/EquipoPermitidoSection";
+import FotosSection from "./sections/FotosSection";
 import GeneralesSection from "./sections/GeneralesSection";
 import InstalacionesSection from "./sections/InstalacionesSection";
-import PersonalSection from "./sections/PersonalSection";
-import RecoleccionesSection from "./sections/RecoleccionesSection";
-import EquipoPermitidoSection from "./sections/EquipoPermitidoSection";
 import LegalSection from "./sections/LegalSection";
-import AreaOperacionSection from "./sections/AreaOperacionSection";
-import SubproductosSection from "./sections/SubproductosSection";
-import ServiciosSection from "./sections/ServiciosSection";
-import FotosSection from "./sections/FotosSection";
-import PropuestaSection from "./sections/PropuestaSection";
 import ObservacionesSection from "./sections/ObservacionesSection";
+import PersonalSection from "./sections/PersonalSection";
+import PropuestaSection from "./sections/PropuestaSection";
+import RecoleccionesSection from "./sections/RecoleccionesSection";
+import ServiciosSection from "./sections/ServiciosSection";
+import SubproductosSection from "./sections/SubproductosSection";
 import ValidacionSection from "./sections/ValidacionSection";
 
 const STATUS_LABELS: Record<string, string> = {
@@ -71,11 +71,11 @@ export default function SurveyForm({ surveyId }: SurveyFormProps) {
             onError: () => {
               toast({ title: "Error al guardar", description: "Intenta de nuevo", variant: "destructive" });
             },
-          }
+          },
         );
       }, 800);
     },
-    [surveyId, updateSection, toast]
+    [surveyId, updateSection, toast],
   );
 
   // Debounced survey field save (for top-level fields like observations, siteType, etc.)
@@ -92,11 +92,11 @@ export default function SurveyForm({ surveyId }: SurveyFormProps) {
             onError: () => {
               toast({ title: "Error al guardar", description: "Intenta de nuevo", variant: "destructive" });
             },
-          }
+          },
         );
       }, 800);
     },
-    [surveyId, updateSurvey, toast]
+    [surveyId, updateSurvey, toast],
   );
 
   const handleAdvance = () => {
@@ -125,7 +125,7 @@ export default function SurveyForm({ surveyId }: SurveyFormProps) {
         onError: (err: any) => {
           toast({ variant: "destructive", description: err.message || "Error al avanzar" });
         },
-      }
+      },
     );
   };
 
@@ -181,9 +181,7 @@ export default function SurveyForm({ surveyId }: SurveyFormProps) {
             >
               {STATUS_LABELS[survey.status] || survey.status}
             </span>
-            {survey.address && (
-              <span className="text-sm text-muted-foreground">{survey.address}</span>
-            )}
+            {survey.address && <span className="text-sm text-muted-foreground">{survey.address}</span>}
           </div>
         </div>
       </div>
@@ -210,16 +208,14 @@ export default function SurveyForm({ surveyId }: SurveyFormProps) {
         <SurveySection
           title="Generales"
           sectionNumber={1}
-          completionStatus={survey.address && survey.siteType ? "complete" : survey.address || survey.siteType ? "partial" : "empty"}
+          completionStatus={
+            survey.address && survey.siteType ? "complete" : survey.address || survey.siteType ? "partial" : "empty"
+          }
           completionText={`${[survey.address, survey.siteType].filter(Boolean).length}/2`}
           isOpen={openSection === 1}
           onToggle={() => setOpenSection(openSection === 1 ? 0 : 1)}
         >
-          <GeneralesSection
-            data={survey}
-            onSave={(data) => debouncedFieldSave(data)}
-            disabled={isCompleted}
-          />
+          <GeneralesSection data={survey} onSave={(data) => debouncedFieldSave(data)} disabled={isCompleted} />
         </SurveySection>
 
         {/* Section 2: Instalaciones */}
@@ -397,7 +393,9 @@ export default function SurveyForm({ surveyId }: SurveyFormProps) {
           title="Validacion"
           sectionNumber={13}
           locked={!isPhase2Unlocked}
-          completionStatus={isPhase2Unlocked ? (survey.elaboratedById && survey.approvedById ? "complete" : "empty") : "locked"}
+          completionStatus={
+            isPhase2Unlocked ? (survey.elaboratedById && survey.approvedById ? "complete" : "empty") : "locked"
+          }
           isOpen={openSection === 13}
           onToggle={() => setOpenSection(openSection === 13 ? 0 : 13)}
         >

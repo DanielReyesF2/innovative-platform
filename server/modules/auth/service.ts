@@ -1,13 +1,13 @@
 import bcrypt from "bcrypt";
-import { db } from "../../db";
-import { users } from "../../../shared/schema/common";
-import { generateToken } from "../../middleware/auth";
 import { eq } from "drizzle-orm";
+import { users } from "../../../shared/schema/common";
+import { db } from "../../db";
+import { generateToken } from "../../middleware/auth";
 
 // Login user by exact email match and password
 export async function loginUser(
   username: string,
-  password: string
+  password: string,
 ): Promise<{ token: string; user: Record<string, unknown> } | null> {
   try {
     // Find user by exact email only (no prefix/wildcard matching)
@@ -21,11 +21,7 @@ export async function loginUser(
     if (user.isActive === false) return null;
 
     // Verify password — only accept bcrypt hashes
-    if (
-      !user.password.startsWith("$2a$") &&
-      !user.password.startsWith("$2b$") &&
-      !user.password.startsWith("$2y$")
-    ) {
+    if (!(user.password.startsWith("$2a$") || user.password.startsWith("$2b$") || user.password.startsWith("$2y$"))) {
       console.error("[auth] SECURITY: Password not hashed with bcrypt");
       return null;
     }
@@ -34,10 +30,7 @@ export async function loginUser(
     if (!passwordMatches) return null;
 
     // Update last login
-    await db
-      .update(users)
-      .set({ lastLogin: new Date() })
-      .where(eq(users.id, user.id));
+    await db.update(users).set({ lastLogin: new Date() }).where(eq(users.id, user.id));
 
     // Generate token
     const token = generateToken({

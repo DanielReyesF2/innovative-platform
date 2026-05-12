@@ -1,4 +1,4 @@
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 
 // ─── Team Dashboard ─────────────────────────────────────
@@ -116,7 +116,15 @@ export function usePendingReviewSurveys() {
 
 export function useAcceptSurvey() {
   return useMutation({
-    mutationFn: async ({ id, ...data }: { id: number; scheduledDate: string; assignedToId: number; schedulingNotes?: string }) => {
+    mutationFn: async ({
+      id,
+      ...data
+    }: {
+      id: number;
+      scheduledDate: string;
+      assignedToId: number;
+      schedulingNotes?: string;
+    }) => {
       const res = await apiRequest("POST", `/api/operaciones/surveys/${id}/accept`, data);
       return res.json();
     },

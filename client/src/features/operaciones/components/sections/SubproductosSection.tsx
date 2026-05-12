@@ -1,6 +1,6 @@
-import EditableTable, { type ColumnDef } from "../EditableTable";
 import { useToast } from "@/components/ui/use-toast";
 import { subproductsApi } from "../../api";
+import EditableTable, { type ColumnDef } from "../EditableTable";
 
 interface Props {
   surveyId: number;

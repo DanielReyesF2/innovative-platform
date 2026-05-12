@@ -40,16 +40,12 @@ export async function loadModules(app: Express) {
     }
 
     try {
-      const manifest: ModuleManifest = JSON.parse(
-        fs.readFileSync(manifestPath, "utf-8")
-      );
+      const manifest: ModuleManifest = JSON.parse(fs.readFileSync(manifestPath, "utf-8"));
 
       // Validate required env vars
       for (const envVar of manifest.requiredEnvVars || []) {
         if (!process.env[envVar]) {
-          console.warn(
-            `[modules] Warning: ${manifest.name} requires ${envVar} but it's not set`
-          );
+          console.warn(`[modules] Warning: ${manifest.name} requires ${envVar} but it's not set`);
         }
       }
 
@@ -58,9 +54,7 @@ export async function loadModules(app: Express) {
 
       if (router) {
         app.use(manifest.apiPrefix, router);
-        console.log(
-          `[modules] Mounted ${manifest.name} v${manifest.version} at ${manifest.apiPrefix}`
-        );
+        console.log(`[modules] Mounted ${manifest.name} v${manifest.version} at ${manifest.apiPrefix}`);
       } else {
         console.warn(`[modules] No router registered for ${entry.name}`);
       }
@@ -83,7 +77,7 @@ export async function loadModules(app: Express) {
           icon: m.icon,
           basePath: m.basePath,
           navOrder: m.navOrder,
-        }))
+        })),
     );
   });
 

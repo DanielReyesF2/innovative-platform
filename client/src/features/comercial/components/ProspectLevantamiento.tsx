@@ -1,44 +1,80 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent } from "@/components/ui/card";
-import { useProspect, useUpdateProspect, useSendToOperaciones } from "../api";
-import { useToast } from "@/components/ui/use-toast";
-import { EPP_OPTIONS, WASTE_TYPES_CATALOG, ACCESS_REQUIREMENTS_OPTIONS } from "@/lib/comercial-constants";
 import { canHandoffStage } from "@shared/schema/comercial-stages";
 import type { User } from "@shared/schema/common";
+import { useQuery } from "@tanstack/react-query";
 import {
-  CalendarCheck, HardHat, Save, Recycle,
-  Send, CheckCircle, Users, Phone,
-  ChevronDown, ChevronRight, Trash2, Plus,
-  MapPin, ShieldCheck, Car,
+  CalendarCheck,
+  Car,
+  CheckCircle,
+  ChevronDown,
+  ChevronRight,
+  HardHat,
+  MapPin,
+  Phone,
+  Plus,
+  Recycle,
+  Save,
+  Send,
+  ShieldCheck,
+  Trash2,
+  Users,
 } from "lucide-react";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/components/ui/use-toast";
+import { ACCESS_REQUIREMENTS_OPTIONS, EPP_OPTIONS, WASTE_TYPES_CATALOG } from "@/lib/comercial-constants";
+import { useProspect, useSendToOperaciones, useUpdateProspect } from "../api";
 
 // ─── Field helper ───
 function Field({
-  label, value, onChange, type = "text", placeholder,
+  label,
+  value,
+  onChange,
+  type = "text",
+  placeholder,
 }: {
-  label: string; value: unknown; onChange: (v: string) => void; type?: string; placeholder?: string;
+  label: string;
+  value: unknown;
+  onChange: (v: string) => void;
+  type?: string;
+  placeholder?: string;
 }) {
   return (
     <div>
       <Label className="text-xs">{label}</Label>
-      <Input type={type} value={(value as string) || ""} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} className="mt-1" />
+      <Input
+        type={type}
+        value={(value as string) || ""}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="mt-1"
+      />
     </div>
   );
 }
 
 // ─── Collapsible Section ───
-function CollapsibleSection({ title, icon, children, defaultOpen = false }: {
-  title: string; icon: React.ReactNode; children: React.ReactNode; defaultOpen?: boolean;
+function CollapsibleSection({
+  title,
+  icon,
+  children,
+  defaultOpen = false,
+}: {
+  title: string;
+  icon: React.ReactNode;
+  children: React.ReactNode;
+  defaultOpen?: boolean;
 }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
     <Card>
       <button onClick={() => setOpen(!open)} className="flex w-full items-center justify-between px-4 py-3 text-left">
-        <div className="flex items-center gap-2 text-sm font-semibold">{icon}{title}</div>
+        <div className="flex items-center gap-2 text-sm font-semibold">
+          {icon}
+          {title}
+        </div>
         {open ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
       </button>
       {open && <CardContent className="pt-0">{children}</CardContent>}
@@ -57,8 +93,18 @@ function parseLegacyQuantity(raw: unknown): { value: string; unit: "kg" | "ton" 
 }
 
 // ─── Section: Tipos de Residuo ───
-function WasteTypesSection({ data, onChange }: { data: Record<string, unknown>[]; onChange: (d: Record<string, unknown>[]) => void }) {
-  const addRow = () => onChange([...data, { wasteType: "", quantityValue: "", quantityUnit: "ton", quantity: "", currentDestination: "" }]);
+function WasteTypesSection({
+  data,
+  onChange,
+}: {
+  data: Record<string, unknown>[];
+  onChange: (d: Record<string, unknown>[]) => void;
+}) {
+  const addRow = () =>
+    onChange([
+      ...data,
+      { wasteType: "", quantityValue: "", quantityUnit: "ton", quantity: "", currentDestination: "" },
+    ]);
   const removeRow = (i: number) => onChange(data.filter((_, idx) => idx !== i));
   const updateRow = (i: number, key: string, val: string) => {
     const updated = [...data];
@@ -70,14 +116,15 @@ function WasteTypesSection({ data, onChange }: { data: Record<string, unknown>[]
     updated[i] = { ...updated[i], ...fields };
     onChange(updated);
   };
-  const categories = [...new Set(WASTE_TYPES_CATALOG.map(w => w.category))];
+  const categories = [...new Set(WASTE_TYPES_CATALOG.map((w) => w.category))];
 
   return (
     <CollapsibleSection title="Tipos de Residuo" icon={<Recycle className="h-4 w-4" />} defaultOpen>
       {data.length === 0 && <p className="mb-3 text-sm text-muted-foreground">Agrega al menos un tipo de residuo</p>}
       {data.map((row: Record<string, unknown>, i: number) => {
         const currentType = row.wasteType as string;
-        const isLegacyValue = currentType && !WASTE_TYPES_CATALOG.some(w => w.id === currentType || w.label === currentType);
+        const isLegacyValue =
+          currentType && !WASTE_TYPES_CATALOG.some((w) => w.id === currentType || w.label === currentType);
         const legacy = parseLegacyQuantity(row.quantity);
         const quantityValue = ((row.quantityValue as string) ?? legacy.value) || "";
         const quantityUnit = ((row.quantityUnit as "kg" | "ton") ?? legacy.unit) || "ton";
@@ -92,21 +139,32 @@ function WasteTypesSection({ data, onChange }: { data: Record<string, unknown>[]
           <div key={i} className="mb-3 rounded-lg border p-3">
             <div className="mb-2 flex items-center justify-between">
               <span className="text-xs font-medium">Residuo #{i + 1}</span>
-              <Button variant="ghost" size="sm" onClick={() => removeRow(i)}><Trash2 className="h-3 w-3" /></Button>
+              <Button variant="ghost" size="sm" onClick={() => removeRow(i)}>
+                <Trash2 className="h-3 w-3" />
+              </Button>
             </div>
             <div className="grid gap-2 sm:grid-cols-2">
               <div>
                 <Label className="text-xs">Tipo *</Label>
                 {isLegacyValue ? (
-                  <Input value={currentType} onChange={(e) => updateRow(i, "wasteType", e.target.value)} className="mt-1" />
+                  <Input
+                    value={currentType}
+                    onChange={(e) => updateRow(i, "wasteType", e.target.value)}
+                    className="mt-1"
+                  />
                 ) : (
-                  <select value={currentType} onChange={(e) => updateRow(i, "wasteType", e.target.value)}
-                    className="mt-1 h-10 w-full rounded-md border border-input bg-background px-3 text-sm">
+                  <select
+                    value={currentType}
+                    onChange={(e) => updateRow(i, "wasteType", e.target.value)}
+                    className="mt-1 h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                  >
                     <option value="">Seleccionar residuo...</option>
-                    {categories.map(cat => (
+                    {categories.map((cat) => (
                       <optgroup key={cat} label={cat}>
-                        {WASTE_TYPES_CATALOG.filter(w => w.category === cat).map(w => (
-                          <option key={w.id} value={w.id}>{w.label}</option>
+                        {WASTE_TYPES_CATALOG.filter((w) => w.category === cat).map((w) => (
+                          <option key={w.id} value={w.id}>
+                            {w.label}
+                          </option>
                         ))}
                       </optgroup>
                     ))}
@@ -154,12 +212,18 @@ function WasteTypesSection({ data, onChange }: { data: Record<string, unknown>[]
                   </div>
                 </div>
               </div>
-              <Field label="Destino Actual" value={row.currentDestination} onChange={(v) => updateRow(i, "currentDestination", v)} />
+              <Field
+                label="Destino Actual"
+                value={row.currentDestination}
+                onChange={(v) => updateRow(i, "currentDestination", v)}
+              />
             </div>
           </div>
         );
       })}
-      <Button variant="outline" size="sm" onClick={addRow}><Plus className="mr-1 h-3 w-3" /> Agregar residuo</Button>
+      <Button variant="outline" size="sm" onClick={addRow}>
+        <Plus className="mr-1 h-3 w-3" /> Agregar residuo
+      </Button>
     </CollapsibleSection>
   );
 }
@@ -189,7 +253,9 @@ function AreaParticipants({
 }) {
   return (
     <div>
-      <Label className="text-xs font-semibold" style={{ color }}>{label}</Label>
+      <Label className="text-xs font-semibold" style={{ color }}>
+        {label}
+      </Label>
       {teamMembers.length === 0 ? (
         <p className="mt-1 text-[11px] italic text-[#9ca3af]">{emptyLabel}</p>
       ) : (
@@ -202,12 +268,17 @@ function AreaParticipants({
                 type="button"
                 onClick={() => onToggle(m.id)}
                 className="rounded-full px-2.5 py-1 text-xs font-medium transition-colors flex items-center gap-1.5"
-                style={active
-                  ? { backgroundColor: color, color: "white" }
-                  : { backgroundColor: "#f3f4f6", color: "#6b7280" }}
+                style={
+                  active ? { backgroundColor: color, color: "white" } : { backgroundColor: "#f3f4f6", color: "#6b7280" }
+                }
               >
                 <span className="w-4 h-4 rounded-full bg-white/25 flex items-center justify-center text-[9px] font-bold">
-                  {m.codigo || m.name.split(" ").map(n => n[0]).join("").substring(0, 2)}
+                  {m.codigo ||
+                    m.name
+                      .split(" ")
+                      .map((n) => n[0])
+                      .join("")
+                      .substring(0, 2)}
                 </span>
                 {m.name.split(" ").slice(0, 2).join(" ")}
               </button>
@@ -357,7 +428,7 @@ export function ProspectLevantamiento({ prospectId }: ProspectLevantamientoProps
   };
 
   const handleSendToOps = async () => {
-    if (!schedDate || !schedTime) {
+    if (!(schedDate && schedTime)) {
       toast({ title: "Fecha y hora son requeridos", variant: "destructive" });
       return;
     }
@@ -379,23 +450,20 @@ export function ProspectLevantamiento({ prospectId }: ProspectLevantamientoProps
     }
   };
 
-  const canSendToOps =
-    prospect &&
-    canHandoffStage(prospect.stage) &&
-    !prospect.surveyId;
+  const canSendToOps = prospect && canHandoffStage(prospect.stage) && !prospect.surveyId;
 
   const sentToOps = prospect?.sentToOpsAt;
 
   const toggleId = (setter: React.Dispatch<React.SetStateAction<number[]>>) => (id: number) => {
-    setter((prev) => prev.includes(id) ? prev.filter((r) => r !== id) : [...prev, id]);
+    setter((prev) => (prev.includes(id) ? prev.filter((r) => r !== id) : [...prev, id]));
   };
 
   const toggleAccessReq = (id: string) => {
-    setSchedAccessReqs((prev) => prev.includes(id) ? prev.filter((r) => r !== id) : [...prev, id]);
+    setSchedAccessReqs((prev) => (prev.includes(id) ? prev.filter((r) => r !== id) : [...prev, id]));
   };
 
   const toggleEpp = (id: string) => {
-    setSchedEpp((prev) => prev.includes(id) ? prev.filter((e) => e !== id) : [...prev, id]);
+    setSchedEpp((prev) => (prev.includes(id) ? prev.filter((e) => e !== id) : [...prev, id]));
   };
 
   return (
@@ -411,10 +479,7 @@ export function ProspectLevantamiento({ prospectId }: ProspectLevantamientoProps
       )}
 
       {/* Tipos de Residuo */}
-      <WasteTypesSection
-        data={wasteTypes}
-        onChange={setWasteTypes}
-      />
+      <WasteTypesSection data={wasteTypes} onChange={setWasteTypes} />
 
       {/* Agendar Levantamiento */}
       <Card>
@@ -476,10 +541,32 @@ export function ProspectLevantamiento({ prospectId }: ProspectLevantamientoProps
               <Phone className="h-3 w-3" /> Contacto que recibe en sitio
             </Label>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              <Field label="Nombre" value={schedContactName} onChange={setSchedContactName} placeholder="Quien recibe" />
-              <Field label="Puesto" value={schedContactRole} onChange={setSchedContactRole} placeholder="Ej: Gerente de Planta" />
-              <Field label="Teléfono" value={schedContactPhone} onChange={setSchedContactPhone} type="tel" placeholder="55 1234 5678" />
-              <Field label="Correo" value={schedContactEmail} onChange={setSchedContactEmail} type="email" placeholder="contacto@empresa.com" />
+              <Field
+                label="Nombre"
+                value={schedContactName}
+                onChange={setSchedContactName}
+                placeholder="Quien recibe"
+              />
+              <Field
+                label="Puesto"
+                value={schedContactRole}
+                onChange={setSchedContactRole}
+                placeholder="Ej: Gerente de Planta"
+              />
+              <Field
+                label="Teléfono"
+                value={schedContactPhone}
+                onChange={setSchedContactPhone}
+                type="tel"
+                placeholder="55 1234 5678"
+              />
+              <Field
+                label="Correo"
+                value={schedContactEmail}
+                onChange={setSchedContactEmail}
+                type="email"
+                placeholder="contacto@empresa.com"
+              />
             </div>
           </div>
 
@@ -521,7 +608,8 @@ export function ProspectLevantamiento({ prospectId }: ProspectLevantamientoProps
             </div>
             {allParticipants.length > 0 && (
               <p className="text-[10px] text-[#6b7280] mt-2">
-                {allParticipants.length} participante{allParticipants.length === 1 ? "" : "s"} asignado{allParticipants.length === 1 ? "" : "s"} en total
+                {allParticipants.length} participante{allParticipants.length === 1 ? "" : "s"} asignado
+                {allParticipants.length === 1 ? "" : "s"} en total
               </p>
             )}
           </div>
@@ -532,7 +620,7 @@ export function ProspectLevantamiento({ prospectId }: ProspectLevantamientoProps
               <HardHat className="h-3 w-3" /> EPP Necesario
             </Label>
             <div className="flex flex-wrap gap-1.5 mt-2">
-              {EPP_OPTIONS.map(epp => (
+              {EPP_OPTIONS.map((epp) => (
                 <button
                   key={epp.id}
                   type="button"
@@ -558,7 +646,7 @@ export function ProspectLevantamiento({ prospectId }: ProspectLevantamientoProps
               Qué hay que presentar o traer para entrar al sitio.
             </p>
             <div className="flex flex-wrap gap-1.5">
-              {ACCESS_REQUIREMENTS_OPTIONS.map(req => (
+              {ACCESS_REQUIREMENTS_OPTIONS.map((req) => (
                 <button
                   key={req.id}
                   type="button"

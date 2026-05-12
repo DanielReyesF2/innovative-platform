@@ -1,31 +1,48 @@
-import { useState, useCallback } from 'react';
-import { ArrowLeft, Plus, Lock, ChevronDown, ChevronUp, X, AlertCircle, Calendar, Bell, DollarSign, Edit3, Save, Target, Check } from 'lucide-react';
-import { DndContext, closestCenter, DragOverlay, useDroppable } from '@dnd-kit/core';
-import type { DragStartEvent, DragEndEvent } from '@dnd-kit/core';
-import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { fmtM } from '@/lib/utils';
+import type { DragEndEvent, DragStartEvent } from "@dnd-kit/core";
+import { closestCenter, DndContext, DragOverlay, useDroppable } from "@dnd-kit/core";
+import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import type { PendingMove, TeamMember } from "@shared/types/comercial";
 import {
-  KANBAN_STAGES,
-  STAGE_GATES,
+  AlertCircle,
+  ArrowLeft,
+  Bell,
+  Calendar,
+  ChevronDown,
+  ChevronUp,
+  DollarSign,
+  Edit3,
+  Lock,
+  Plus,
+  Save,
+  Target,
+  X,
+} from "lucide-react";
+import { useCallback, useState } from "react";
+import { useToast } from "@/components/ui/use-toast";
+import {
+  classifyRechazo,
   ExecutiveAvatar,
   getSeguimientoUrgency,
-  classifyRechazo,
-} from '@/lib/comercial-constants';
-import { useComercialData } from '../hooks/useComercialData';
-import { useToast } from '@/components/ui/use-toast';
-import { HubKanbanCard } from './HubKanbanCard';
-import { StageGateModal } from './StageGateModal';
-import { AgendarReunionModal } from './AgendarReunionModal';
-import { AgendarLevantamientoModal } from './AgendarLevantamientoModal';
-import { ProspectoDrawer } from './ProspectoDrawer';
-import { InsightsBanner } from './InsightsBanner';
-import { apiRequest, invalidateByPrefix } from '@/lib/queryClient';
-import type { KanbanProspecto, TeamMember, PendingMove } from '@shared/types/comercial';
+  KANBAN_STAGES,
+  STAGE_GATES,
+} from "@/lib/comercial-constants";
+import { apiRequest, invalidateByPrefix } from "@/lib/queryClient";
+import { fmtM } from "@/lib/utils";
+import { useComercialData } from "../hooks/useComercialData";
+import { AgendarLevantamientoModal } from "./AgendarLevantamientoModal";
+import { AgendarReunionModal } from "./AgendarReunionModal";
+import { HubKanbanCard } from "./HubKanbanCard";
+import { InsightsBanner } from "./InsightsBanner";
+import { ProspectoDrawer } from "./ProspectoDrawer";
+import { StageGateModal } from "./StageGateModal";
 
 function HubDroppableColumn({ stageId, children }: { stageId: string; children: React.ReactNode }) {
   const { isOver, setNodeRef } = useDroppable({ id: `hub-${stageId}`, data: { stageId } });
   return (
-    <div ref={setNodeRef} className={`min-h-[120px] transition-colors rounded-lg flex-1 ${isOver ? 'bg-[#00a8a8]/5 ring-2 ring-[#00a8a8]/30' : ''}`}>
+    <div
+      ref={setNodeRef}
+      className={`min-h-[120px] transition-colors rounded-lg flex-1 ${isOver ? "bg-[#00a8a8]/5 ring-2 ring-[#00a8a8]/30" : ""}`}
+    >
       {children}
     </div>
   );
@@ -48,18 +65,18 @@ export function EjecutivoHub({ member, onBack, onShowNuevoLead }: Props) {
   } = useComercialData();
   const { toast } = useToast();
 
-  const memberProspectos = kanbanProspectos.filter(p => p.ejecutivo === member.codigo);
-  const memberRechazados = memberProspectos.filter(p => p.status === 'cierre_perdido');
+  const memberProspectos = kanbanProspectos.filter((p) => p.ejecutivo === member.codigo);
+  const memberRechazados = memberProspectos.filter((p) => p.status === "cierre_perdido");
 
   // State — store id only so the drawer re-reads live data after mutations.
   const [selectedProspectoId, setSelectedProspectoId] = useState<number | null>(null);
   const selectedProspecto = selectedProspectoId
-    ? kanbanProspectos.find((p) => p.id === selectedProspectoId) ?? null
+    ? (kanbanProspectos.find((p) => p.id === selectedProspectoId) ?? null)
     : null;
   const [hubActiveKanbanId, setHubActiveKanbanId] = useState<number | null>(null);
   const [showRechazadasModal, setShowRechazadasModal] = useState(false);
   const [showVentasRealesModal, setShowVentasRealesModal] = useState(false);
-  const [ventaRealMonto, setVentaRealMonto] = useState('');
+  const [ventaRealMonto, setVentaRealMonto] = useState("");
   const [ventaRealMes, setVentaRealMes] = useState(new Date().getMonth() + 1);
   const [ventaRealAño, setVentaRealAño] = useState(new Date().getFullYear());
   const [expandedColumns, setExpandedColumns] = useState<Record<string, boolean>>({});
@@ -71,48 +88,55 @@ export function EjecutivoHub({ member, onBack, onShowNuevoLead }: Props) {
     setHubActiveKanbanId(event.active.id as number);
   }, []);
 
-  const hubHandleDragEnd = useCallback((event: DragEndEvent) => {
-    setHubActiveKanbanId(null);
-    const { active, over } = event;
-    if (!over || !active) return;
-    const prospecto = memberProspectos.find(p => p.id === active.id);
-    if (!prospecto) return;
-    const overId = String(over.id);
-    const targetStage = over.data?.current?.type === 'card'
-      ? memberProspectos.find(p => p.id === over.id)?.status
-      : overId.startsWith('hub-') ? overId.replace('hub-', '') : overId;
-    if (!targetStage || targetStage === prospecto.status) return;
-    const validStages: string[] = KANBAN_STAGES.map(s => s.id);
-    if (!validStages.includes(targetStage)) return;
-    const gate = STAGE_GATES[targetStage];
-    if (gate && !gate.validate(prospecto)) {
-      setShowStageGateModal(true);
-      setPendingMove({ prospecto, fromStage: prospecto.status, toStage: targetStage });
-      return;
-    }
-    updateProspectMutation.mutate(
-      { id: prospecto.id, stage: targetStage },
-      {
-        // selectedProspecto is derived from kanbanProspectos, so the React Query
-        // invalidation inside updateProspectMutation refreshes the drawer
-        // automatically. No manual state patching needed here.
-        onError: () => toast({ title: 'Error al cambiar etapa', variant: 'destructive' }),
+  const hubHandleDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      setHubActiveKanbanId(null);
+      const { active, over } = event;
+      if (!(over && active)) return;
+      const prospecto = memberProspectos.find((p) => p.id === active.id);
+      if (!prospecto) return;
+      const overId = String(over.id);
+      const targetStage =
+        over.data?.current?.type === "card"
+          ? memberProspectos.find((p) => p.id === over.id)?.status
+          : overId.startsWith("hub-")
+            ? overId.replace("hub-", "")
+            : overId;
+      if (!targetStage || targetStage === prospecto.status) return;
+      const validStages: string[] = KANBAN_STAGES.map((s) => s.id);
+      if (!validStages.includes(targetStage)) return;
+      const gate = STAGE_GATES[targetStage];
+      if (gate && !gate.validate(prospecto)) {
+        setShowStageGateModal(true);
+        setPendingMove({ prospecto, fromStage: prospecto.status, toStage: targetStage });
+        return;
       }
-    );
-  }, [memberProspectos, updateProspectMutation, toast]);
+      updateProspectMutation.mutate(
+        { id: prospecto.id, stage: targetStage },
+        {
+          // selectedProspecto is derived from kanbanProspectos, so the React Query
+          // invalidation inside updateProspectMutation refreshes the drawer
+          // automatically. No manual state patching needed here.
+          onError: () => toast({ title: "Error al cambiar etapa", variant: "destructive" }),
+        },
+      );
+    },
+    [memberProspectos, updateProspectMutation, toast],
+  );
 
-  const hubActiveCard = hubActiveKanbanId ? memberProspectos.find(p => p.id === hubActiveKanbanId) : null;
+  const hubActiveCard = hubActiveKanbanId ? memberProspectos.find((p) => p.id === hubActiveKanbanId) : null;
 
   return (
     <div className="bg-[#faf7f2] min-h-full">
       <div className="max-w-[1400px] mx-auto">
-
         {/* UNIFIED HEADER CARD — single container: identity + insights + actions */}
         <div className="bg-white rounded-xl shadow-sm border border-[#e5e7eb]/60 px-5 py-4 mb-4">
           {/* Top row: back + avatar + name | actions */}
           <div className="flex items-center gap-3">
-            <button onClick={onBack}
-              className="flex items-center justify-center w-9 h-9 rounded-lg border border-[#e5e7eb] hover:bg-[#f3f4f6] transition-colors flex-shrink-0">
+            <button
+              onClick={onBack}
+              className="flex items-center justify-center w-9 h-9 rounded-lg border border-[#e5e7eb] hover:bg-[#f3f4f6] transition-colors flex-shrink-0"
+            >
               <ArrowLeft size={18} className="text-[#6b7280]" />
             </button>
             <ExecutiveAvatar codigo={member.codigo} name={member.name} size="xl" />
@@ -121,44 +145,83 @@ export function EjecutivoHub({ member, onBack, onShowNuevoLead }: Props) {
             </div>
             {/* Action buttons */}
             <div className="flex items-center gap-2 flex-shrink-0">
-              {memberRechazados.length > 0 && (() => {
-                const vencidos = memberRechazados.filter(p => getSeguimientoUrgency({ fechaSeguimiento: p.fechaSeguimiento, accion: p.followUpAction, recoveryStatus: p.recoveryStatus, fechaVencimientoContrato: p.fechaVencimientoContrato })?.overdue).length;
-                const conSeg = memberRechazados.filter(p => p.fechaSeguimiento).length;
-                return (
-                  <button onClick={() => setShowRechazadasModal(true)}
-                    className={`flex items-center gap-2 rounded-lg border px-2.5 py-1.5 hover:shadow-sm transition-all ${vencidos > 0 ? 'border-red-300 bg-red-50' : 'border-[#e5e7eb] bg-[#f9fafb]'}`}>
-                    {vencidos > 0 && <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />}
-                    <span className="text-sm font-bold" style={{ color: vencidos > 0 ? '#EF4444' : '#F59E0B' }}>{memberRechazados.length}</span>
-                    <div className="text-left">
-                      <div className="text-[11px] font-semibold text-[#1c2c4a]">Rechazadas</div>
-                      <div className="text-[9px] text-[#9ca3af]">{conSeg}/{memberRechazados.length} seg.</div>
-                    </div>
-                  </button>
-                );
-              })()}
+              {memberRechazados.length > 0 &&
+                (() => {
+                  const vencidos = memberRechazados.filter(
+                    (p) =>
+                      getSeguimientoUrgency({
+                        fechaSeguimiento: p.fechaSeguimiento,
+                        accion: p.followUpAction,
+                        recoveryStatus: p.recoveryStatus,
+                        fechaVencimientoContrato: p.fechaVencimientoContrato,
+                      })?.overdue,
+                  ).length;
+                  const conSeg = memberRechazados.filter((p) => p.fechaSeguimiento).length;
+                  return (
+                    <button
+                      onClick={() => setShowRechazadasModal(true)}
+                      className={`flex items-center gap-2 rounded-lg border px-2.5 py-1.5 hover:shadow-sm transition-all ${vencidos > 0 ? "border-red-300 bg-red-50" : "border-[#e5e7eb] bg-[#f9fafb]"}`}
+                    >
+                      {vencidos > 0 && <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />}
+                      <span className="text-sm font-bold" style={{ color: vencidos > 0 ? "#EF4444" : "#F59E0B" }}>
+                        {memberRechazados.length}
+                      </span>
+                      <div className="text-left">
+                        <div className="text-[11px] font-semibold text-[#1c2c4a]">Rechazadas</div>
+                        <div className="text-[9px] text-[#9ca3af]">
+                          {conSeg}/{memberRechazados.length} seg.
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })()}
               {member.presupuestoAnual2026 > 0 && (
-                <button onClick={() => setShowVentasRealesModal(true)}
+                <button
+                  onClick={() => setShowVentasRealesModal(true)}
                   className="flex items-center gap-2 rounded-lg border border-[#e5e7eb] bg-[#f9fafb] px-2.5 py-1.5 hover:shadow-sm hover:border-[#0067B0]/30 transition-all"
-                  title={`Avance del mes: ${fmtM(member.ventasReales)} vendido / ${fmtM(member.presupuestoMensual)} meta`}>
-                  <span className="text-sm font-bold" style={{ color: member.cumplimientoPresupuesto >= 70 ? '#2E7D32' : member.cumplimientoPresupuesto >= 40 ? '#F57C00' : '#DC2626' }}>
+                  title={`Avance del mes: ${fmtM(member.ventasReales)} vendido / ${fmtM(member.presupuestoMensual)} meta`}
+                >
+                  <span
+                    className="text-sm font-bold"
+                    style={{
+                      color:
+                        member.cumplimientoPresupuesto >= 70
+                          ? "#2E7D32"
+                          : member.cumplimientoPresupuesto >= 40
+                            ? "#F57C00"
+                            : "#DC2626",
+                    }}
+                  >
                     {member.cumplimientoPresupuesto}%
                   </span>
                   <div className="text-left">
                     <div className="text-[11px] font-semibold text-[#1c2c4a]">Presupuesto mes</div>
-                    <div className="text-[9px] text-[#6b7280]">{fmtM(member.ventasReales)} de {fmtM(member.presupuestoMensual)}</div>
+                    <div className="text-[9px] text-[#6b7280]">
+                      {fmtM(member.ventasReales)} de {fmtM(member.presupuestoMensual)}
+                    </div>
                     <div className="w-16 h-1.5 bg-[#e5e7eb] rounded-full overflow-hidden mt-0.5">
-                      <div className="h-full rounded-full" style={{
-                        width: `${Math.min(member.cumplimientoPresupuesto, 100)}%`,
-                        backgroundColor: member.cumplimientoPresupuesto >= 70 ? '#2E7D32' : member.cumplimientoPresupuesto >= 40 ? '#F57C00' : '#DC2626',
-                      }} />
+                      <div
+                        className="h-full rounded-full"
+                        style={{
+                          width: `${Math.min(member.cumplimientoPresupuesto, 100)}%`,
+                          backgroundColor:
+                            member.cumplimientoPresupuesto >= 70
+                              ? "#2E7D32"
+                              : member.cumplimientoPresupuesto >= 40
+                                ? "#F57C00"
+                                : "#DC2626",
+                        }}
+                      />
                     </div>
                   </div>
                   <Edit3 size={12} className="text-[#0067B0]" />
                 </button>
               )}
               {onShowNuevoLead && (
-                <button onClick={() => onShowNuevoLead(member.codigo)}
-                  className="flex items-center gap-2 px-4 py-2 bg-[#1c2c4a] hover:bg-[#1c2c4a]/90 text-white rounded-lg text-sm font-semibold transition-all shadow-sm hover:shadow-md">
+                <button
+                  onClick={() => onShowNuevoLead(member.codigo)}
+                  className="flex items-center gap-2 px-4 py-2 bg-[#1c2c4a] hover:bg-[#1c2c4a]/90 text-white rounded-lg text-sm font-semibold transition-all shadow-sm hover:shadow-md"
+                >
                   <Plus size={16} /> Nuevo Lead
                 </button>
               )}
@@ -177,12 +240,16 @@ export function EjecutivoHub({ member, onBack, onShowNuevoLead }: Props) {
 
         {/* PIPELINE — Kanban personal */}
         <div className="space-y-4">
-
           {/* KANBAN GRID */}
-          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={hubHandleDragStart} onDragEnd={hubHandleDragEnd}>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragStart={hubHandleDragStart}
+            onDragEnd={hubHandleDragEnd}
+          >
             <div className="grid grid-cols-6 gap-2">
-              {KANBAN_STAGES.map(stage => {
-                const stageItems = memberProspectos.filter(p => p.status === stage.id);
+              {KANBAN_STAGES.map((stage) => {
+                const stageItems = memberProspectos.filter((p) => p.status === stage.id);
                 const gate = STAGE_GATES[stage.id];
 
                 return (
@@ -191,13 +258,18 @@ export function EjecutivoHub({ member, onBack, onShowNuevoLead }: Props) {
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <h3 className="text-sm font-bold text-[#1c2c4a]">{stage.label}</h3>
-                          <span className="text-sm font-bold px-2 py-0.5 rounded-md" style={{ backgroundColor: `${stage.color}15`, color: stage.color }}>{stageItems.length}</span>
+                          <span
+                            className="text-sm font-bold px-2 py-0.5 rounded-md"
+                            style={{ backgroundColor: `${stage.color}15`, color: stage.color }}
+                          >
+                            {stageItems.length}
+                          </span>
                         </div>
                         {gate && <Lock size={11} className="text-[#9ca3af]" />}
                       </div>
                     </div>
                     <HubDroppableColumn stageId={stage.id}>
-                      <SortableContext items={stageItems.map(p => p.id)} strategy={verticalListSortingStrategy}>
+                      <SortableContext items={stageItems.map((p) => p.id)} strategy={verticalListSortingStrategy}>
                         {(() => {
                           const MAX_VISIBLE = 3;
                           const isExpanded = expandedColumns[stage.id];
@@ -205,13 +277,30 @@ export function EjecutivoHub({ member, onBack, onShowNuevoLead }: Props) {
                           const hiddenCount = stageItems.length - MAX_VISIBLE;
                           return (
                             <div className="space-y-0">
-                              {visibleItems.map(prospecto => (
-                                <HubKanbanCard key={prospecto.id} prospecto={prospecto} onSelect={(p) => setSelectedProspectoId(p.id)} />
+                              {visibleItems.map((prospecto) => (
+                                <HubKanbanCard
+                                  key={prospecto.id}
+                                  prospecto={prospecto}
+                                  onSelect={(p) => setSelectedProspectoId(p.id)}
+                                />
                               ))}
                               {hiddenCount > 0 && (
-                                <button onClick={(e) => { e.stopPropagation(); setExpandedColumns(prev => ({ ...prev, [stage.id]: !isExpanded })); }}
-                                  className="w-full py-1.5 text-[10px] font-medium text-[#0D47A1] hover:bg-[#0D47A1]/5 rounded-lg transition-colors flex items-center justify-center gap-1">
-                                  {isExpanded ? <>Ver menos <ChevronUp size={12} /></> : <>+{hiddenCount} más <ChevronDown size={12} /></>}
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setExpandedColumns((prev) => ({ ...prev, [stage.id]: !isExpanded }));
+                                  }}
+                                  className="w-full py-1.5 text-[10px] font-medium text-[#0D47A1] hover:bg-[#0D47A1]/5 rounded-lg transition-colors flex items-center justify-center gap-1"
+                                >
+                                  {isExpanded ? (
+                                    <>
+                                      Ver menos <ChevronUp size={12} />
+                                    </>
+                                  ) : (
+                                    <>
+                                      +{hiddenCount} más <ChevronDown size={12} />
+                                    </>
+                                  )}
                                 </button>
                               )}
                             </div>
@@ -232,7 +321,7 @@ export function EjecutivoHub({ member, onBack, onShowNuevoLead }: Props) {
               {hubActiveCard && (
                 <div className="bg-white rounded-lg border-2 border-[#00a8a8] p-2 shadow-xl w-[160px] rotate-2">
                   <h4 className="text-xs font-semibold text-[#1c2c4a] truncate">{hubActiveCard.empresa}</h4>
-                  <div className="text-[10px] text-[#6b7280] mt-0.5">{hubActiveCard.ciudad?.split(',')[0]}</div>
+                  <div className="text-[10px] text-[#6b7280] mt-0.5">{hubActiveCard.ciudad?.split(",")[0]}</div>
                 </div>
               )}
             </DragOverlay>
@@ -249,8 +338,14 @@ export function EjecutivoHub({ member, onBack, onShowNuevoLead }: Props) {
 
         {/* RECHAZADAS MODAL */}
         {showRechazadasModal && memberRechazados.length > 0 && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setShowRechazadasModal(false)}>
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[80vh] overflow-hidden" onClick={e => e.stopPropagation()}>
+          <div
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+            onClick={() => setShowRechazadasModal(false)}
+          >
+            <div
+              className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[80vh] overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
               <div className="flex items-center justify-between p-4 border-b border-[#e5e7eb]">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-[#F59E0B]/10 flex items-center justify-center">
@@ -258,32 +353,60 @@ export function EjecutivoHub({ member, onBack, onShowNuevoLead }: Props) {
                   </div>
                   <div>
                     <h2 className="text-lg font-bold text-[#1c2c4a]">Oportunidades Rechazadas</h2>
-                    <p className="text-xs text-[#6b7280]">{memberRechazados.filter(p => p.fechaSeguimiento).length}/{memberRechazados.length} con seguimiento</p>
+                    <p className="text-xs text-[#6b7280]">
+                      {memberRechazados.filter((p) => p.fechaSeguimiento).length}/{memberRechazados.length} con
+                      seguimiento
+                    </p>
                   </div>
                 </div>
-                <button onClick={() => setShowRechazadasModal(false)} className="p-2 hover:bg-[#f3f4f6] rounded-lg transition-colors">
+                <button
+                  onClick={() => setShowRechazadasModal(false)}
+                  className="p-2 hover:bg-[#f3f4f6] rounded-lg transition-colors"
+                >
                   <X size={20} className="text-[#6b7280]" />
                 </button>
               </div>
               <div className="p-4 overflow-y-auto max-h-[calc(80vh-80px)]">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {memberRechazados.map(p => {
+                  {memberRechazados.map((p) => {
                     const cat = classifyRechazo(p.motivoRechazo, p.motivoRechazoCategory);
-                    const seg = { fechaSeguimiento: p.fechaSeguimiento, accion: p.followUpAction, recoveryStatus: p.recoveryStatus, fechaVencimientoContrato: p.fechaVencimientoContrato };
+                    const seg = {
+                      fechaSeguimiento: p.fechaSeguimiento,
+                      accion: p.followUpAction,
+                      recoveryStatus: p.recoveryStatus,
+                      fechaVencimientoContrato: p.fechaVencimientoContrato,
+                    };
                     const urgency = getSeguimientoUrgency(seg);
                     return (
-                      <div key={p.id}
+                      <div
+                        key={p.id}
                         className="rounded-xl p-3 cursor-pointer hover:shadow-lg transition-all border"
-                        style={{ backgroundColor: cat?.bgColor || '#f3f4f6', borderColor: `${cat?.color}30` || '#e5e7eb', borderLeft: `4px solid ${cat?.color || '#6b7280'}` }}
-                        onClick={() => { setShowRechazadasModal(false); setSelectedProspectoId(p.id); }}>
+                        style={{
+                          backgroundColor: cat?.bgColor || "#f3f4f6",
+                          borderColor: `${cat?.color}30` || "#e5e7eb",
+                          borderLeft: `4px solid ${cat?.color || "#6b7280"}`,
+                        }}
+                        onClick={() => {
+                          setShowRechazadasModal(false);
+                          setSelectedProspectoId(p.id);
+                        }}
+                      >
                         <div className="flex items-center justify-between gap-2 mb-1">
                           <h4 className="text-sm font-semibold text-[#1c2c4a] truncate flex-1">{p.empresa}</h4>
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap" style={{ backgroundColor: `${cat?.color}18`, color: cat?.color }}>{cat?.label}</span>
+                          <span
+                            className="text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap"
+                            style={{ backgroundColor: `${cat?.color}18`, color: cat?.color }}
+                          >
+                            {cat?.label}
+                          </span>
                         </div>
-                        <div className="text-xs text-[#6b7280] mb-2">{p.motivoRechazo || 'Sin motivo'}</div>
+                        <div className="text-xs text-[#6b7280] mb-2">{p.motivoRechazo || "Sin motivo"}</div>
                         <div className="flex items-center justify-between">
                           {seg?.fechaSeguimiento ? (
-                            <span className="text-[10px] font-semibold px-2 py-1 rounded-full flex items-center gap-1" style={{ backgroundColor: urgency?.bg, color: urgency?.color }}>
+                            <span
+                              className="text-[10px] font-semibold px-2 py-1 rounded-full flex items-center gap-1"
+                              style={{ backgroundColor: urgency?.bg, color: urgency?.color }}
+                            >
                               <Calendar size={10} />
                               {urgency?.overdue ? `Vencido ${urgency.days}d` : urgency?.label}
                             </span>
@@ -292,7 +415,11 @@ export function EjecutivoHub({ member, onBack, onShowNuevoLead }: Props) {
                               <Bell size={10} /> Sin seguimiento
                             </span>
                           )}
-                          {cat?.recoverable && <span className="text-[10px] text-green-600 font-medium bg-green-50 px-2 py-0.5 rounded">Recuperable</span>}
+                          {cat?.recoverable && (
+                            <span className="text-[10px] text-green-600 font-medium bg-green-50 px-2 py-0.5 rounded">
+                              Recuperable
+                            </span>
+                          )}
                         </div>
                       </div>
                     );
@@ -305,8 +432,17 @@ export function EjecutivoHub({ member, onBack, onShowNuevoLead }: Props) {
 
         {/* VENTAS REALES MODAL */}
         {showVentasRealesModal && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => { setShowVentasRealesModal(false); setVentaRealMonto(''); }}>
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden" onClick={e => e.stopPropagation()}>
+          <div
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+            onClick={() => {
+              setShowVentasRealesModal(false);
+              setVentaRealMonto("");
+            }}
+          >
+            <div
+              className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
               <div className="flex items-center justify-between p-4 border-b border-[#e5e7eb]">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-[#00a8a8]/10 flex items-center justify-center">
@@ -317,7 +453,13 @@ export function EjecutivoHub({ member, onBack, onShowNuevoLead }: Props) {
                     <p className="text-xs text-[#6b7280]">{member.name}</p>
                   </div>
                 </div>
-                <button onClick={() => { setShowVentasRealesModal(false); setVentaRealMonto(''); }} className="p-2 hover:bg-[#f3f4f6] rounded-lg transition-colors">
+                <button
+                  onClick={() => {
+                    setShowVentasRealesModal(false);
+                    setVentaRealMonto("");
+                  }}
+                  className="p-2 hover:bg-[#f3f4f6] rounded-lg transition-colors"
+                >
                   <X size={20} className="text-[#6b7280]" />
                 </button>
               </div>
@@ -335,61 +477,120 @@ export function EjecutivoHub({ member, onBack, onShowNuevoLead }: Props) {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs font-medium text-[#6b7280] mb-1">Mes</label>
-                    <select value={ventaRealMes} onChange={(e) => setVentaRealMes(Number(e.target.value))}
-                      className="w-full px-3 py-2 border border-[#e5e7eb] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#00a8a8]/30 focus:border-[#00a8a8]">
-                      {['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'].map((m, i) => (
-                        <option key={i} value={i + 1}>{m}</option>
+                    <select
+                      value={ventaRealMes}
+                      onChange={(e) => setVentaRealMes(Number(e.target.value))}
+                      className="w-full px-3 py-2 border border-[#e5e7eb] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#00a8a8]/30 focus:border-[#00a8a8]"
+                    >
+                      {[
+                        "Enero",
+                        "Febrero",
+                        "Marzo",
+                        "Abril",
+                        "Mayo",
+                        "Junio",
+                        "Julio",
+                        "Agosto",
+                        "Septiembre",
+                        "Octubre",
+                        "Noviembre",
+                        "Diciembre",
+                      ].map((m, i) => (
+                        <option key={i} value={i + 1}>
+                          {m}
+                        </option>
                       ))}
                     </select>
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-[#6b7280] mb-1">Año</label>
-                    <select value={ventaRealAño} onChange={(e) => setVentaRealAño(Number(e.target.value))}
-                      className="w-full px-3 py-2 border border-[#e5e7eb] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#00a8a8]/30 focus:border-[#00a8a8]">
-                      {[2025, 2026, 2027].map(y => <option key={y} value={y}>{y}</option>)}
+                    <select
+                      value={ventaRealAño}
+                      onChange={(e) => setVentaRealAño(Number(e.target.value))}
+                      className="w-full px-3 py-2 border border-[#e5e7eb] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#00a8a8]/30 focus:border-[#00a8a8]"
+                    >
+                      {[2025, 2026, 2027].map((y) => (
+                        <option key={y} value={y}>
+                          {y}
+                        </option>
+                      ))}
                     </select>
                   </div>
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-[#6b7280] mb-1">
-                    Venta Cerrada {['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'][ventaRealMes - 1]} {ventaRealAño} (MXN)
+                    Venta Cerrada{" "}
+                    {
+                      [
+                        "Enero",
+                        "Febrero",
+                        "Marzo",
+                        "Abril",
+                        "Mayo",
+                        "Junio",
+                        "Julio",
+                        "Agosto",
+                        "Septiembre",
+                        "Octubre",
+                        "Noviembre",
+                        "Diciembre",
+                      ][ventaRealMes - 1]
+                    }{" "}
+                    {ventaRealAño} (MXN)
                   </label>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6b7280]">$</span>
-                    <input type="number" value={ventaRealMonto} onChange={(e) => setVentaRealMonto(e.target.value)}
+                    <input
+                      type="number"
+                      value={ventaRealMonto}
+                      onChange={(e) => setVentaRealMonto(e.target.value)}
                       placeholder="0.00"
-                      className="w-full pl-7 pr-3 py-3 border border-[#e5e7eb] rounded-lg text-lg font-semibold focus:outline-none focus:ring-2 focus:ring-[#00a8a8]/30 focus:border-[#00a8a8]" />
+                      className="w-full pl-7 pr-3 py-3 border border-[#e5e7eb] rounded-lg text-lg font-semibold focus:outline-none focus:ring-2 focus:ring-[#00a8a8]/30 focus:border-[#00a8a8]"
+                    />
                   </div>
-                  <p className="text-[10px] text-[#9ca3af] mt-1">El porcentaje de cumplimiento se recalculará automáticamente</p>
+                  <p className="text-[10px] text-[#9ca3af] mt-1">
+                    El porcentaje de cumplimiento se recalculará automáticamente
+                  </p>
                 </div>
               </div>
               <div className="p-4 border-t border-[#e5e7eb] flex gap-3">
-                <button onClick={() => { setShowVentasRealesModal(false); setVentaRealMonto(''); }}
-                  className="flex-1 px-4 py-2.5 bg-[#f3f4f6] hover:bg-[#e5e7eb] text-[#1c2c4a] rounded-lg text-sm font-medium transition-colors">
+                <button
+                  onClick={() => {
+                    setShowVentasRealesModal(false);
+                    setVentaRealMonto("");
+                  }}
+                  className="flex-1 px-4 py-2.5 bg-[#f3f4f6] hover:bg-[#e5e7eb] text-[#1c2c4a] rounded-lg text-sm font-medium transition-colors"
+                >
                   Cancelar
                 </button>
                 <button
                   onClick={async () => {
                     if (!ventaRealMonto) return;
                     try {
-                      await apiRequest('POST', '/api/comercial/ventas-reales', {
-                        userId: member.dbUserId, mes: ventaRealMes, año: ventaRealAño, monto: Number(ventaRealMonto)
+                      await apiRequest("POST", "/api/comercial/ventas-reales", {
+                        userId: member.dbUserId,
+                        mes: ventaRealMes,
+                        año: ventaRealAño,
+                        monto: Number(ventaRealMonto),
                       });
                       const editKey = `${member.id}-${ventaRealMes}-${ventaRealAño}`;
                       setVentasRealesEditadas((prev) => ({ ...prev, [editKey]: Number(ventaRealMonto) }));
-                      await invalidateByPrefix('/api/comercial/ventas-reales');
-                      await invalidateByPrefix('/api/comercial/team');
+                      await invalidateByPrefix("/api/comercial/ventas-reales");
+                      await invalidateByPrefix("/api/comercial/team");
                       setShowVentasRealesModal(false);
-                      setVentaRealMonto('');
+                      setVentaRealMonto("");
                       toast({ title: `Venta cerrada guardada: $${Number(ventaRealMonto).toLocaleString()}` });
-                    } catch (err) {
-                      toast({ title: 'Error al guardar venta cerrada', variant: 'destructive' });
+                    } catch (_err) {
+                      toast({ title: "Error al guardar venta cerrada", variant: "destructive" });
                     }
                   }}
                   disabled={!ventaRealMonto}
                   className={`flex-1 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
-                    ventaRealMonto ? 'bg-[#00a8a8] hover:bg-[#008080] text-white' : 'bg-[#e5e7eb] text-[#9ca3af] cursor-not-allowed'
-                  }`}>
+                    ventaRealMonto
+                      ? "bg-[#00a8a8] hover:bg-[#008080] text-white"
+                      : "bg-[#e5e7eb] text-[#9ca3af] cursor-not-allowed"
+                  }`}
+                >
                   <Save size={16} /> Guardar
                 </button>
               </div>
@@ -400,44 +601,66 @@ export function EjecutivoHub({ member, onBack, onShowNuevoLead }: Props) {
         {/* Stage Gate Modals — same logic as ProspectoDrawer:
            levantamiento → AgendarReunionModal, propuesta → AgendarLevantamientoModal,
            everything else → generic StageGateModal */}
-        {showStageGateModal && pendingMove && pendingMove.toStage === 'levantamiento' && (
+        {showStageGateModal && pendingMove && pendingMove.toStage === "levantamiento" && (
           <AgendarReunionModal
             prospecto={pendingMove.prospecto}
-            onClose={() => { setShowStageGateModal(false); setPendingMove(null); }}
-            onAdvanced={() => { setShowStageGateModal(false); setPendingMove(null); }}
+            onClose={() => {
+              setShowStageGateModal(false);
+              setPendingMove(null);
+            }}
+            onAdvanced={() => {
+              setShowStageGateModal(false);
+              setPendingMove(null);
+            }}
           />
         )}
-        {showStageGateModal && pendingMove && pendingMove.toStage === 'propuesta' && (
+        {showStageGateModal && pendingMove && pendingMove.toStage === "propuesta" && (
           <AgendarLevantamientoModal
             prospecto={pendingMove.prospecto}
-            onClose={() => { setShowStageGateModal(false); setPendingMove(null); }}
-            onAdvanced={() => { setShowStageGateModal(false); setPendingMove(null); }}
-          />
-        )}
-        {showStageGateModal && pendingMove
-          && pendingMove.toStage !== 'levantamiento'
-          && pendingMove.toStage !== 'propuesta' && (
-          <StageGateModal
-            pendingMove={pendingMove}
-            isHub
-            onForce={() => {
-              updateProspectMutation.mutate(
-                { id: pendingMove.prospecto.id, stage: pendingMove.toStage },
-                {
-                  onSuccess: () => { setShowStageGateModal(false); setPendingMove(null); },
-                  onError: () => { toast({ title: 'Error al cambiar etapa', variant: 'destructive' }); setShowStageGateModal(false); setPendingMove(null); },
-                }
-              );
+            onClose={() => {
+              setShowStageGateModal(false);
+              setPendingMove(null);
             }}
-            onCancel={() => { setShowStageGateModal(false); setPendingMove(null); }}
+            onAdvanced={() => {
+              setShowStageGateModal(false);
+              setPendingMove(null);
+            }}
           />
         )}
+        {showStageGateModal &&
+          pendingMove &&
+          pendingMove.toStage !== "levantamiento" &&
+          pendingMove.toStage !== "propuesta" && (
+            <StageGateModal
+              pendingMove={pendingMove}
+              isHub
+              onForce={() => {
+                updateProspectMutation.mutate(
+                  { id: pendingMove.prospecto.id, stage: pendingMove.toStage },
+                  {
+                    onSuccess: () => {
+                      setShowStageGateModal(false);
+                      setPendingMove(null);
+                    },
+                    onError: () => {
+                      toast({ title: "Error al cambiar etapa", variant: "destructive" });
+                      setShowStageGateModal(false);
+                      setPendingMove(null);
+                    },
+                  },
+                );
+              }}
+              onCancel={() => {
+                setShowStageGateModal(false);
+                setPendingMove(null);
+              }}
+            />
+          )}
 
         {/* Prospect Drawer */}
         {selectedProspecto && (
           <ProspectoDrawer prospecto={selectedProspecto} onClose={() => setSelectedProspectoId(null)} />
         )}
-
       </div>
     </div>
   );

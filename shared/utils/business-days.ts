@@ -10,7 +10,7 @@
  * start-of-day or end-of-day semantics.
  */
 
-const MS_PER_DAY = 24 * 60 * 60 * 1000;
+const _MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 function isWeekend(d: Date): boolean {
   const day = d.getDay();

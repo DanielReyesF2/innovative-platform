@@ -1,91 +1,104 @@
+import { eq } from "drizzle-orm";
 import { Router } from "express";
+import fs from "fs";
 import multer from "multer";
 import path from "path";
-import fs from "fs";
 import { fileURLToPath } from "url";
-import { requireAuth, requireRole } from "../../middleware/auth";
-import { STAGE } from "../../../shared/schema/comercial-stages";
+import { z } from "zod";
 import {
-  getProspects,
-  getProspectById,
-  getProspectsByStage,
-  createProspect,
-  updateProspect,
-  deleteProspect,
-  rejectProspect,
-  qualifyProspect,
-  getLeads,
-  createLead,
-  assignLead,
-  convertLeadToProspect,
-  getRejectionReasons,
-  getPipelineSummary,
-  getSalesMetrics,
-  getSalesMetricsByUser,
-  sendProspectToOperaciones,
-  // CRM enhancements
-  getProspectActivities,
-  createActivity,
-  getProspectNotes,
-  createNote,
-  updateNote,
-  deleteNote,
-  toggleNotePin,
-  getProspectMeetings,
-  createMeeting,
-  completeMeeting,
-  cancelMeeting,
-  updateMeeting,
-  deleteMeeting,
-  getProspectDocuments,
-  createDocument,
-  deleteDocument,
-  getProposalVersions,
-  createProposal,
-  sendProposal,
-  changeProposalStatus,
-  updateProposalAmount,
-  updateProposal,
-  getStageTransitions,
-  getAverageDurationByStage,
-  getAlerts,
-  getPendingAlertsCount,
+  insertActivitySchema,
+  insertKpiMensualSchema,
+  insertLeadSchema,
+  insertMeetingSchema,
+  insertNoteSchema,
+  insertProposalSchema,
+  insertProspectDocumentSchema,
+  insertProspectSchema,
+  insertVentaRealSchema,
+  insertWeeklyReportSchema,
+  proposalStatusEnum,
+  qualifyProspectSchema,
+} from "../../../shared/schema/comercial";
+import { STAGE } from "../../../shared/schema/comercial-stages";
+import { users } from "../../../shared/schema/common";
+import { db } from "../../db";
+import { triggerWebhook } from "../../lib/webhook";
+import { requireAuth, requireRole } from "../../middleware/auth";
+import {
   acknowledgeAlert,
+  assignLead,
+  cancelMeeting,
+  changeProposalStatus,
+  completeMeeting,
+  convertLeadToProspect,
+  createActivity,
+  createCommitment,
+  createDocument,
+  createLead,
+  createMeeting,
+  createNote,
+  createOrUpdateKpiMensual,
+  createOrUpdateVentaReal,
+  createProposal,
+  createProspect,
+  deleteCommitment,
+  deleteDocument,
+  deleteMeeting,
+  deleteNote,
+  deleteProspect,
   dismissAlert,
   generateAlerts,
-  getLeadSourcesReport,
-  getSalesForecast,
-  getWinLossAnalysis,
-  getCompetitorAnalysis,
+  getAlerts,
+  getAverageDurationByStage,
   getComercialTeam,
+  getCommitmentsByWeek,
+  getCommitmentsInRange,
+  getCompetitorAnalysis,
+  getKpisMensuales,
+  getKpisMensualesByUser,
+  getLeadSourcesReport,
+  getLeads,
+  getPendingAlertsCount,
+  getPendingCommitments,
+  getPipelineSummary,
+  getProposalVersions,
+  // CRM enhancements
+  getProspectActivities,
+  getProspectById,
+  getProspectDocuments,
+  getProspectMeetings,
+  getProspectNotes,
+  getProspects,
+  getProspectsByStage,
+  getRechazadasConVencimiento,
+  getRechazadasProximasAVencer,
+  getRejectionReasons,
+  getSalesForecast,
+  getSalesMetrics,
+  getSalesMetricsByUser,
+  getStageTransitions,
   // Post-reunion Vero
   getVentasReales,
   getVentasRealesByUser,
-  createOrUpdateVentaReal,
-  getKpisMensuales,
-  getKpisMensualesByUser,
-  createOrUpdateKpiMensual,
-  upsertSalesMetric,
-  getRechazadasConVencimiento,
-  getRechazadasProximasAVencer,
   getWeeklyReport,
-  upsertWeeklyReport,
-  markWeeklyReportAsSent,
   getWeeklyReportsInRange,
-  getCommitmentsByWeek,
-  getPendingCommitments,
-  createCommitment,
-  updateCommitmentStatus,
+  getWinLossAnalysis,
+  markWeeklyReportAsSent,
+  qualifyProspect,
+  rejectProspect,
+  sendProposal,
+  sendProspectToOperaciones,
+  toggleNotePin,
   updateCommitment,
-  deleteCommitment,
-  getCommitmentsInRange,
+  updateCommitmentStatus,
+  updateMeeting,
+  updateNote,
+  updateProposal,
+  updateProposalAmount,
+  updateProspect,
+  upsertSalesMetric,
+  upsertWeeklyReport,
 } from "./storage";
-import { z } from "zod";
-import { insertProspectSchema, insertLeadSchema, insertVentaRealSchema, insertKpiMensualSchema, qualifyProspectSchema, insertActivitySchema, insertNoteSchema, insertMeetingSchema, insertProspectDocumentSchema, insertProposalSchema, proposalStatusEnum, insertWeeklyReportSchema } from "../../../shared/schema/comercial";
-import { triggerWebhook } from "../../lib/webhook";
-import { db } from "../../db";
-import { users } from "../../../shared/schema/common";
-import { eq } from "drizzle-orm";
 
 /** Extract error message safely without `as any` */
 function getErrorMessage(error: unknown): string {
@@ -278,7 +291,7 @@ router.post("/prospects/:id/reject", async (req, res) => {
     }
     // Validate rejection reason exists in DB
     const reasons = await getRejectionReasons();
-    const validReason = reasons.find(r => r.id === parsed.data.rejectionReasonId);
+    const validReason = reasons.find((r) => r.id === parsed.data.rejectionReasonId);
     if (!validReason) {
       return res.status(400).json({ message: "Motivo de rechazo inválido" });
     }
@@ -317,26 +330,19 @@ router.post("/prospects/:id/qualify", async (req, res) => {
 
 // --- Handoff to Operaciones ---
 
-router.post(
-  "/prospects/:id/send-to-operaciones",
-  requireRole("admin", "comercial", "director"),
-  async (req, res) => {
-    try {
-      const result = await sendProspectToOperaciones(
-        Number(req.params.id),
-        req.user!.id
-      );
-      res.json(result);
-    } catch (error) {
-      console.error("[comercial] Send to operaciones error:", error);
-      const msg = getErrorMessage(error);
-      if (msg.startsWith("NOT_FOUND")) return res.status(404).json({ message: "Prospecto no encontrado" });
-      if (msg.startsWith("CONFLICT:")) return res.status(409).json({ message: msg.slice(9) });
-      if (msg.startsWith("VALIDATION:")) return res.status(400).json({ message: msg.slice(11) });
-      res.status(500).json({ message: "Internal server error" });
-    }
+router.post("/prospects/:id/send-to-operaciones", requireRole("admin", "comercial", "director"), async (req, res) => {
+  try {
+    const result = await sendProspectToOperaciones(Number(req.params.id), req.user!.id);
+    res.json(result);
+  } catch (error) {
+    console.error("[comercial] Send to operaciones error:", error);
+    const msg = getErrorMessage(error);
+    if (msg.startsWith("NOT_FOUND")) return res.status(404).json({ message: "Prospecto no encontrado" });
+    if (msg.startsWith("CONFLICT:")) return res.status(409).json({ message: msg.slice(9) });
+    if (msg.startsWith("VALIDATION:")) return res.status(400).json({ message: msg.slice(11) });
+    res.status(500).json({ message: "Internal server error" });
   }
-);
+});
 
 // --- Leads ---
 
@@ -846,7 +852,8 @@ router.post("/prospects/:id/proposals/upload", proposalUpload.single("file"), as
 
     // Get next version number
     const existing = await getProposalVersions(prospectId);
-    const nextVersion = existing.length > 0 ? Math.max(...existing.map((p: { version: number | null }) => p.version || 1)) + 1 : 1;
+    const nextVersion =
+      existing.length > 0 ? Math.max(...existing.map((p: { version: number | null }) => p.version || 1)) + 1 : 1;
 
     const proposal = await createProposal({
       prospectId,
@@ -1205,17 +1212,9 @@ router.post("/weekly-report/send", async (req, res) => {
     // Ensure report exists (save content first if provided)
     let report = await getWeeklyReport(req.user!.id, weekStart);
     if (!report) {
-      report = await upsertWeeklyReport(
-        req.user!.id,
-        weekStart,
-        content || "",
-      );
+      report = await upsertWeeklyReport(req.user!.id, weekStart, content || "");
     } else if (content !== undefined) {
-      report = await upsertWeeklyReport(
-        req.user!.id,
-        weekStart,
-        content,
-      );
+      report = await upsertWeeklyReport(req.user!.id, weekStart, content);
     }
 
     // Try to trigger n8n webhook
@@ -1246,7 +1245,7 @@ router.post("/weekly-report/send", async (req, res) => {
 router.get("/weekly-reports", async (req, res) => {
   try {
     const { from, to } = req.query;
-    if (!from || !to) return res.status(400).json({ message: "Parámetros 'from' y 'to' requeridos" });
+    if (!(from && to)) return res.status(400).json({ message: "Parámetros 'from' y 'to' requeridos" });
     const reports = await getWeeklyReportsInRange(req.user!.id, from as string, to as string);
     res.json(reports);
   } catch (error) {
@@ -1269,7 +1268,7 @@ router.get("/commitments/calendar", async (req, res) => {
   try {
     const from = req.query.from as string;
     const to = req.query.to as string;
-    if (!from || !to) return res.status(400).json({ message: "from y to requeridos" });
+    if (!(from && to)) return res.status(400).json({ message: "from y to requeridos" });
     const commitments = await getCommitmentsInRange(from, to);
     res.json(commitments);
   } catch (error) {

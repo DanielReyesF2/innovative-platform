@@ -1,20 +1,12 @@
+import type { Lead } from "@shared/schema/comercial";
+import { AlertCircle, Calendar, Mail, Phone, Plus, Search, UserCheck } from "lucide-react";
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import {
-  Plus,
-  Search,
-  Phone,
-  Mail,
-  Calendar,
-  UserCheck,
-  AlertCircle,
-} from "lucide-react";
 import { useLeads } from "../api";
 import { LeadForm } from "./LeadForm";
 import { QualifyLeadDialog } from "./QualifyLeadDialog";
-import type { Lead } from "@shared/schema/comercial";
 
 const SOURCE_LABELS: Record<string, string> = {
   referido: "Referido",
@@ -80,9 +72,7 @@ export function LeadsView() {
       {/* Lead list */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">
-            Leads ({filtered.length})
-          </CardTitle>
+          <CardTitle className="text-lg">Leads ({filtered.length})</CardTitle>
         </CardHeader>
         <CardContent>
           {filtered.length === 0 ? (
@@ -129,18 +119,9 @@ export function LeadsView() {
                         </span>
                       )}
                     </div>
-                    {lead.notes && (
-                      <div className="mt-1 text-xs text-muted-foreground truncate">
-                        {lead.notes}
-                      </div>
-                    )}
+                    {lead.notes && <div className="mt-1 text-xs text-muted-foreground truncate">{lead.notes}</div>}
                   </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="ml-3 shrink-0"
-                    onClick={() => setQualifyLead(lead)}
-                  >
+                  <Button variant="outline" size="sm" className="ml-3 shrink-0" onClick={() => setQualifyLead(lead)}>
                     <UserCheck className="mr-1 h-4 w-4" />
                     Calificar
                   </Button>

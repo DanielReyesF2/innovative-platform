@@ -135,6 +135,11 @@ client/src/features/[module]/     ←→     server/modules/[module]/
 - Don't use `catch (error: any)` — use `catch (error: unknown)` with error helpers
 - Don't use `as any` for Drizzle enum comparisons — use `Model["field"]` types
 
+## Health Stack
+
+- typecheck: npm run check
+- lint: npm run lint
+
 ## Production
 
 - **Deploy**: Railway auto-deploy from main

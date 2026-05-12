@@ -1,18 +1,18 @@
+import { Archive, Pencil } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Pencil, Archive } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import {
-  useKpi,
-  useKpiEntries,
-  useKpiTrend,
-  useKpiActionPlans,
-  useCreateKpi,
-  useUpdateKpi,
   useArchiveKpi,
   useCreateActionPlan,
+  useCreateKpi,
+  useKpi,
+  useKpiActionPlans,
+  useKpiEntries,
+  useKpiTrend,
+  useUpdateKpi,
 } from "../api";
 
 const FREQUENCY_LABELS: Record<string, string> = {
@@ -61,7 +61,9 @@ function ModalWrapper({ title, onClose, children }: { title: string; onClose: ()
       <div className="max-h-[80vh] w-full max-w-lg overflow-auto rounded-lg bg-background p-6 shadow-lg">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-bold">{title}</h2>
-          <Button variant="ghost" size="sm" onClick={onClose}>✕</Button>
+          <Button variant="ghost" size="sm" onClick={onClose}>
+            ✕
+          </Button>
         </div>
         {children}
       </div>
@@ -69,7 +71,19 @@ function ModalWrapper({ title, onClose, children }: { title: string; onClose: ()
   );
 }
 
-function FormField({ label, value, onChange, type = "text", placeholder }: { label: string; value: string; onChange: (v: string) => void; type?: string; placeholder?: string }) {
+function FormField({
+  label,
+  value,
+  onChange,
+  type = "text",
+  placeholder,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  type?: string;
+  placeholder?: string;
+}) {
   return (
     <div>
       <Label className="mb-1 block text-sm font-medium">{label}</Label>
@@ -118,19 +132,45 @@ export function KpiDetailModal({ kpiId, onClose }: { kpiId: number; onClose: () 
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" onClick={() => setShowEdit(true)}><Pencil className="h-4 w-4" /></Button>
-            <Button variant="ghost" size="sm" onClick={() => { if (window.confirm("Archivar este KPI?")) archiveKpi.mutate(kpiId, { onSuccess: () => onClose(), onError: () => { toast({ title: "Error al archivar", description: "Intenta de nuevo", variant: "destructive" }); } }); }}>
+            <Button variant="ghost" size="sm" onClick={() => setShowEdit(true)}>
+              <Pencil className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                if (window.confirm("Archivar este KPI?"))
+                  archiveKpi.mutate(kpiId, {
+                    onSuccess: () => onClose(),
+                    onError: () => {
+                      toast({ title: "Error al archivar", description: "Intenta de nuevo", variant: "destructive" });
+                    },
+                  });
+              }}
+            >
               <Archive className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="sm" onClick={onClose}>✕</Button>
+            <Button variant="ghost" size="sm" onClick={onClose}>
+              ✕
+            </Button>
           </div>
         </div>
 
         <div className="mb-4 grid grid-cols-4 gap-3">
-          <MiniCard label="Valor Actual" value={lastEntry ? Number(lastEntry.actualValue).toLocaleString("es-MX") : "—"} />
+          <MiniCard
+            label="Valor Actual"
+            value={lastEntry ? Number(lastEntry.actualValue).toLocaleString("es-MX") : "—"}
+          />
           <MiniCard label="Target" value={Number(kpi.targetValue || 0).toLocaleString("es-MX")} />
-          <MiniCard label="Cumplimiento" value={compliance !== null ? `${compliance.toFixed(1)}%` : "—"} className={getComplianceColor(compliance)} />
-          <MiniCard label="Tendencia" value={lastEntry?.trend === "up" ? "Subiendo" : lastEntry?.trend === "down" ? "Bajando" : "Estable"} />
+          <MiniCard
+            label="Cumplimiento"
+            value={compliance !== null ? `${compliance.toFixed(1)}%` : "—"}
+            className={getComplianceColor(compliance)}
+          />
+          <MiniCard
+            label="Tendencia"
+            value={lastEntry?.trend === "up" ? "Subiendo" : lastEntry?.trend === "down" ? "Bajando" : "Estable"}
+          />
         </div>
 
         {trend.length > 0 && (
@@ -144,7 +184,11 @@ export function KpiDetailModal({ kpiId, onClose }: { kpiId: number; onClose: () 
                 const c = Number(entry.compliance);
                 return (
                   <div key={i} className="flex flex-1 flex-col items-center gap-1">
-                    <div className={`w-full rounded-t ${getComplianceBg(c)}`} style={{ height: `${height}%`, minHeight: 4 }} title={`${entry.period}: ${val}`} />
+                    <div
+                      className={`w-full rounded-t ${getComplianceBg(c)}`}
+                      style={{ height: `${height}%`, minHeight: 4 }}
+                      title={`${entry.period}: ${val}`}
+                    />
                     <span className="text-[9px] text-muted-foreground">{entry.period.slice(-2)}</span>
                   </div>
                 );
@@ -171,7 +215,9 @@ export function KpiDetailModal({ kpiId, onClose }: { kpiId: number; onClose: () 
                     <tr key={e.id}>
                       <td className="p-2">{e.period}</td>
                       <td className="p-2 text-right">{Number(e.actualValue).toLocaleString("es-MX")}</td>
-                      <td className="p-2 text-right">{e.targetValue ? Number(e.targetValue).toLocaleString("es-MX") : "—"}</td>
+                      <td className="p-2 text-right">
+                        {e.targetValue ? Number(e.targetValue).toLocaleString("es-MX") : "—"}
+                      </td>
                       <td className={`p-2 text-right font-medium ${getComplianceColor(Number(e.compliance))}`}>
                         {e.compliance ? `${Number(e.compliance).toFixed(1)}%` : "—"}
                       </td>
@@ -191,11 +237,17 @@ export function KpiDetailModal({ kpiId, onClose }: { kpiId: number; onClose: () 
                 <div key={plan.id} className="flex items-center justify-between rounded border p-2">
                   <div>
                     <span className="text-sm font-medium">{plan.title}</span>
-                    <span className={`ml-2 inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${PLAN_STATUS_COLORS[plan.status] || ""}`}>
+                    <span
+                      className={`ml-2 inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${PLAN_STATUS_COLORS[plan.status] || ""}`}
+                    >
                       {PLAN_STATUS_LABELS[plan.status] || plan.status}
                     </span>
                   </div>
-                  {plan.dueDate && <span className="text-xs text-muted-foreground">{new Date(plan.dueDate).toLocaleDateString("es-MX")}</span>}
+                  {plan.dueDate && (
+                    <span className="text-xs text-muted-foreground">
+                      {new Date(plan.dueDate).toLocaleDateString("es-MX")}
+                    </span>
+                  )}
                 </div>
               ))}
             </div>
@@ -212,7 +264,15 @@ export function KpiDetailModal({ kpiId, onClose }: { kpiId: number; onClose: () 
 // Create KPI Modal
 // ========================
 
-export function CreateKpiModal({ categories, onClose, defaultAreaId }: { categories: any[]; onClose: () => void; defaultAreaId?: number }) {
+export function CreateKpiModal({
+  categories,
+  onClose,
+  defaultAreaId,
+}: {
+  categories: any[];
+  onClose: () => void;
+  defaultAreaId?: number;
+}) {
   const { toast } = useToast();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -224,8 +284,21 @@ export function CreateKpiModal({ categories, onClose, defaultAreaId }: { categor
 
   const handleSubmit = () => {
     createKpi.mutate(
-      { name, description: description || undefined, categoryId: categoryId ? Number(categoryId) : undefined, unit: unit || undefined, targetValue: targetValue || undefined, frequency, areaId: defaultAreaId || undefined },
-      { onSuccess: () => onClose(), onError: () => { toast({ title: "Error al crear KPI", description: "Intenta de nuevo", variant: "destructive" }); } }
+      {
+        name,
+        description: description || undefined,
+        categoryId: categoryId ? Number(categoryId) : undefined,
+        unit: unit || undefined,
+        targetValue: targetValue || undefined,
+        frequency,
+        areaId: defaultAreaId || undefined,
+      },
+      {
+        onSuccess: () => onClose(),
+        onError: () => {
+          toast({ title: "Error al crear KPI", description: "Intenta de nuevo", variant: "destructive" });
+        },
+      },
     );
   };
 
@@ -236,9 +309,17 @@ export function CreateKpiModal({ categories, onClose, defaultAreaId }: { categor
         <FormField label="Descripcion" value={description} onChange={setDescription} />
         <div>
           <Label className="mb-1 block text-sm font-medium">Categoria</Label>
-          <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
+          <select
+            value={categoryId}
+            onChange={(e) => setCategoryId(e.target.value)}
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+          >
             <option value="">Sin categoria</option>
-            {categories.map((c: any) => <option key={c.id} value={c.id}>{c.displayName}</option>)}
+            {categories.map((c: any) => (
+              <option key={c.id} value={c.id}>
+                {c.displayName}
+              </option>
+            ))}
           </select>
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
@@ -247,11 +328,21 @@ export function CreateKpiModal({ categories, onClose, defaultAreaId }: { categor
         </div>
         <div>
           <Label className="mb-1 block text-sm font-medium">Frecuencia</Label>
-          <select value={frequency} onChange={(e) => setFrequency(e.target.value)} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
-            {Object.entries(FREQUENCY_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+          <select
+            value={frequency}
+            onChange={(e) => setFrequency(e.target.value)}
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+          >
+            {Object.entries(FREQUENCY_LABELS).map(([k, v]) => (
+              <option key={k} value={k}>
+                {v}
+              </option>
+            ))}
           </select>
         </div>
-        <Button onClick={handleSubmit} disabled={!name || createKpi.isPending} className="w-full">Crear KPI</Button>
+        <Button onClick={handleSubmit} disabled={!name || createKpi.isPending} className="w-full">
+          Crear KPI
+        </Button>
       </div>
     </ModalWrapper>
   );
@@ -269,7 +360,15 @@ function EditKpiModal({ kpi, onClose }: { kpi: any; onClose: () => void }) {
   const updateKpi = useUpdateKpi();
 
   const handleSubmit = () => {
-    updateKpi.mutate({ id: kpi.id, name, description, targetValue }, { onSuccess: () => onClose(), onError: () => { toast({ title: "Error al guardar", description: "Intenta de nuevo", variant: "destructive" }); } });
+    updateKpi.mutate(
+      { id: kpi.id, name, description, targetValue },
+      {
+        onSuccess: () => onClose(),
+        onError: () => {
+          toast({ title: "Error al guardar", description: "Intenta de nuevo", variant: "destructive" });
+        },
+      },
+    );
   };
 
   return (
@@ -278,7 +377,9 @@ function EditKpiModal({ kpi, onClose }: { kpi: any; onClose: () => void }) {
         <FormField label="Nombre" value={name} onChange={setName} />
         <FormField label="Descripcion" value={description} onChange={setDescription} />
         <FormField label="Valor Objetivo" value={targetValue} onChange={setTargetValue} type="number" />
-        <Button onClick={handleSubmit} disabled={!name || updateKpi.isPending} className="w-full">Guardar Cambios</Button>
+        <Button onClick={handleSubmit} disabled={!name || updateKpi.isPending} className="w-full">
+          Guardar Cambios
+        </Button>
       </div>
     </ModalWrapper>
   );
@@ -288,7 +389,15 @@ function EditKpiModal({ kpi, onClose }: { kpi: any; onClose: () => void }) {
 // Create Action Plan Modal
 // ========================
 
-export function CreateActionPlanModal({ kpis, onClose, defaultAreaId }: { kpis: any[]; onClose: () => void; defaultAreaId?: number }) {
+export function CreateActionPlanModal({
+  kpis,
+  onClose,
+  defaultAreaId,
+}: {
+  kpis: any[];
+  onClose: () => void;
+  defaultAreaId?: number;
+}) {
   const { toast } = useToast();
   const [kpiId, setKpiId] = useState("");
   const [title, setTitle] = useState("");
@@ -300,7 +409,12 @@ export function CreateActionPlanModal({ kpis, onClose, defaultAreaId }: { kpis: 
   const handleSubmit = () => {
     createPlan.mutate(
       { kpiId: Number(kpiId), title, description: description || undefined, priority, dueDate: dueDate || undefined },
-      { onSuccess: () => onClose(), onError: () => { toast({ title: "Error al crear plan", description: "Intenta de nuevo", variant: "destructive" }); } }
+      {
+        onSuccess: () => onClose(),
+        onError: () => {
+          toast({ title: "Error al crear plan", description: "Intenta de nuevo", variant: "destructive" });
+        },
+      },
     );
   };
 
@@ -309,9 +423,17 @@ export function CreateActionPlanModal({ kpis, onClose, defaultAreaId }: { kpis: 
       <div className="space-y-4">
         <div>
           <Label className="mb-1 block text-sm font-medium">KPI</Label>
-          <select value={kpiId} onChange={(e) => setKpiId(e.target.value)} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
+          <select
+            value={kpiId}
+            onChange={(e) => setKpiId(e.target.value)}
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+          >
             <option value="">Seleccionar KPI...</option>
-            {kpis.map((k: any) => <option key={k.id} value={k.id}>{k.name}</option>)}
+            {kpis.map((k: any) => (
+              <option key={k.id} value={k.id}>
+                {k.name}
+              </option>
+            ))}
           </select>
         </div>
         <FormField label="Titulo" value={title} onChange={setTitle} />
@@ -319,7 +441,11 @@ export function CreateActionPlanModal({ kpis, onClose, defaultAreaId }: { kpis: 
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <Label className="mb-1 block text-sm font-medium">Prioridad</Label>
-            <select value={priority} onChange={(e) => setPriority(e.target.value)} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
+            <select
+              value={priority}
+              onChange={(e) => setPriority(e.target.value)}
+              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            >
               <option value="alta">Alta</option>
               <option value="media">Media</option>
               <option value="baja">Baja</option>
@@ -330,7 +456,9 @@ export function CreateActionPlanModal({ kpis, onClose, defaultAreaId }: { kpis: 
             <Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
           </div>
         </div>
-        <Button onClick={handleSubmit} disabled={!kpiId || !title || createPlan.isPending} className="w-full">Crear Plan</Button>
+        <Button onClick={handleSubmit} disabled={!(kpiId && title) || createPlan.isPending} className="w-full">
+          Crear Plan
+        </Button>
       </div>
     </ModalWrapper>
   );

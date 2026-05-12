@@ -1,4 +1,4 @@
-import { QueryClient, QueryFunction } from "@tanstack/react-query";
+import { QueryClient, type QueryFunction } from "@tanstack/react-query";
 
 // JWT token management
 export function getAuthToken(): string | null {
@@ -57,18 +57,12 @@ async function throwIfResNotOk(res: Response) {
 }
 
 // Main API request function — use this for ALL API calls
-export async function apiRequest(
-  method: string,
-  url: string,
-  data?: unknown
-): Promise<Response> {
-  const headers: Record<string, string> = data
-    ? { "Content-Type": "application/json" }
-    : {};
+export async function apiRequest(method: string, url: string, data?: unknown): Promise<Response> {
+  const headers: Record<string, string> = data ? { "Content-Type": "application/json" } : {};
 
   const token = getAuthToken();
   if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
+    headers.Authorization = `Bearer ${token}`;
   }
 
   // Evita pantalla infinita de carga si el servidor no responde o hay puerto incorrecto
@@ -92,9 +86,7 @@ export async function apiRequest(
 // Query function factory for React Query
 type UnauthorizedBehavior = "returnNull" | "throw";
 
-export const getQueryFn: <T>(options: {
-  on401: UnauthorizedBehavior;
-}) => QueryFunction<T> =
+export const getQueryFn: <T>(options: { on401: UnauthorizedBehavior }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
     const url = queryKey[0] as string;

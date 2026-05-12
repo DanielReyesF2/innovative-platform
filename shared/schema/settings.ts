@@ -1,7 +1,7 @@
-import { pgTable, serial, text, integer, timestamp, boolean, jsonb, index } from "drizzle-orm/pg-core";
+import { boolean, index, integer, jsonb, pgTable, serial, text, timestamp } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
-import { users, companies } from "./common";
+import { companies, users } from "./common";
 
 // --- Roles ---
 
@@ -17,38 +17,48 @@ export const roles = pgTable("roles", {
 
 // --- Company Settings ---
 
-export const companySettings = pgTable("company_settings", {
-  id: serial("id").primaryKey(),
-  companyId: integer("company_id").references(() => companies.id).notNull(),
-  logoUrl: text("logo_url"),
-  brandColor: text("brand_color"),
-  industry: text("industry"),
-  address: text("address"),
-  phone: text("phone"),
-  website: text("website"),
-  taxId: text("tax_id"),
-  timezone: text("timezone").default("America/Mexico_City"),
-  locale: text("locale").default("es-MX"),
-  updatedAt: timestamp("updated_at").defaultNow(),
-}, (table) => ({
-  companyIdIdx: index("company_settings_company_id_idx").on(table.companyId),
-}));
+export const companySettings = pgTable(
+  "company_settings",
+  {
+    id: serial("id").primaryKey(),
+    companyId: integer("company_id")
+      .references(() => companies.id)
+      .notNull(),
+    logoUrl: text("logo_url"),
+    brandColor: text("brand_color"),
+    industry: text("industry"),
+    address: text("address"),
+    phone: text("phone"),
+    website: text("website"),
+    taxId: text("tax_id"),
+    timezone: text("timezone").default("America/Mexico_City"),
+    locale: text("locale").default("es-MX"),
+    updatedAt: timestamp("updated_at").defaultNow(),
+  },
+  (table) => ({
+    companyIdIdx: index("company_settings_company_id_idx").on(table.companyId),
+  }),
+);
 
 // --- Audit Log ---
 
-export const auditLog = pgTable("audit_log", {
-  id: serial("id").primaryKey(),
-  action: text("action").notNull(),
-  entityType: text("entity_type").notNull(),
-  entityId: text("entity_id"),
-  performedById: integer("performed_by_id").references(() => users.id),
-  details: jsonb("details").$type<Record<string, unknown>>(),
-  ipAddress: text("ip_address"),
-  createdAt: timestamp("created_at").defaultNow(),
-}, (table) => ({
-  performedByIdx: index("audit_log_performed_by_id_idx").on(table.performedById),
-  entityTypeIdx: index("audit_log_entity_type_idx").on(table.entityType),
-}));
+export const auditLog = pgTable(
+  "audit_log",
+  {
+    id: serial("id").primaryKey(),
+    action: text("action").notNull(),
+    entityType: text("entity_type").notNull(),
+    entityId: text("entity_id"),
+    performedById: integer("performed_by_id").references(() => users.id),
+    details: jsonb("details").$type<Record<string, unknown>>(),
+    ipAddress: text("ip_address"),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (table) => ({
+    performedByIdx: index("audit_log_performed_by_id_idx").on(table.performedById),
+    entityTypeIdx: index("audit_log_entity_type_idx").on(table.entityType),
+  }),
+);
 
 // --- Module Config ---
 
@@ -64,7 +74,11 @@ export const moduleConfig = pgTable("module_config", {
 // --- Validators ---
 
 export const insertRoleSchema = createInsertSchema(roles, {
-  name: z.string().min(1).max(50).regex(/^[a-z_]+$/, "Solo minusculas y guion bajo"),
+  name: z
+    .string()
+    .min(1)
+    .max(50)
+    .regex(/^[a-z_]+$/, "Solo minusculas y guion bajo"),
   displayName: z.string().min(1).max(100),
   description: z.string().max(500).optional(),
   permissions: z.array(z.string()).optional(),

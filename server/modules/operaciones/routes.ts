@@ -1,84 +1,84 @@
 import { Router } from "express";
 import { z } from "zod";
-import { requireAuth, requireRole } from "../../middleware/auth";
 import {
-  getSurveys,
-  getSurveyById,
-  getSurveysByStatus,
+  insertDocumentSchema,
+  insertGateConfigSchema,
+  insertSurveyPhotoSchema,
+  insertSurveyProposalEquipmentSchema,
+  insertSurveyProposalPersonnelSchema,
+  insertSurveyProposalRentalsSchema,
+  insertSurveyProposalSuppliesSchema,
+  insertSurveySchema,
+  insertSurveyServiceSchema,
+  insertSurveySubproductSchema,
+  insertSurveyWasteTypeSchema,
+} from "../../../shared/schema/operaciones";
+import { requireAuth, requireRole } from "../../middleware/auth";
+import { getErrorMessage } from "../../utils/errors";
+import {
+  acceptSurvey,
+  addSurveyWasteType,
+  advanceSurveyStatus,
+  checkGateCompleteness,
+  createDocument,
+  createGateConfig,
+  createProposalEquipment,
+  createProposalPersonnel,
+  createProposalRentals,
+  createProposalSupplies,
   createSurvey,
   createSurveyFromProspect,
-  updateSurvey,
-  updateSurveySection,
-  checkGateCompleteness,
-  advanceSurveyStatus,
-  addSurveyWasteType,
-  // Photos
-  getSurveyPhotos,
   createSurveyPhoto,
-  updateSurveyPhoto,
-  deleteSurveyPhoto,
-  // Subproducts
-  getSurveySubproducts,
-  createSurveySubproduct,
-  updateSurveySubproduct,
-  deleteSurveySubproduct,
-  // Services
-  getSurveyServicesItems,
   createSurveyService,
-  updateSurveyService,
-  deleteSurveyService,
-  // Proposal Personnel
-  getSurveyProposalPersonnel,
-  createProposalPersonnel,
-  updateProposalPersonnel,
-  deleteProposalPersonnel,
-  // Proposal Equipment
-  getSurveyProposalEquipment,
-  createProposalEquipment,
-  updateProposalEquipment,
+  createSurveySubproduct,
+  deleteDocument,
   deleteProposalEquipment,
-  // Proposal Supplies
-  getSurveyProposalSupplies,
-  createProposalSupplies,
-  updateProposalSupplies,
-  deleteProposalSupplies,
-  // Proposal Rentals
-  getSurveyProposalRentals,
-  createProposalRentals,
-  updateProposalRentals,
+  deleteProposalPersonnel,
   deleteProposalRentals,
-  // Gate config
-  getGateConfigs,
-  createGateConfig,
-  updateGateConfig,
+  deleteProposalSupplies,
+  deleteSurveyPhoto,
+  deleteSurveyService,
+  deleteSurveySubproduct,
+  getDocumentById,
   // Documents
   getDocuments,
-  getDocumentById,
-  getExpiringDocuments,
   getExpiredDocuments,
-  createDocument,
-  updateDocument,
-  deleteDocument,
-  getSurveySummary,
-  getPendingReviewSurveys,
-  acceptSurvey,
-  rejectSurvey,
+  getExpiringDocuments,
+  // Gate config
+  getGateConfigs,
   getOpsTeamStats,
+  getPendingReviewSurveys,
+  getSurveyById,
+  // Photos
+  getSurveyPhotos,
+  // Proposal Equipment
+  getSurveyProposalEquipment,
+  // Proposal Personnel
+  getSurveyProposalPersonnel,
+  // Proposal Rentals
+  getSurveyProposalRentals,
+  // Proposal Supplies
+  getSurveyProposalSupplies,
+  // Services
+  getSurveyServicesItems,
+  // Subproducts
+  getSurveySubproducts,
+  getSurveySummary,
+  getSurveys,
+  getSurveysByStatus,
+  rejectSurvey,
+  updateDocument,
+  updateGateConfig,
+  updateProposalEquipment,
+  updateProposalPersonnel,
+  updateProposalRentals,
+  updateProposalSupplies,
+  updateSurvey,
+  updateSurveyPhoto,
+  updateSurveySection,
+  updateSurveyService,
+  updateSurveySubproduct,
 } from "./storage";
-import {
-  insertSurveySchema,
-  insertDocumentSchema,
-  insertSurveyWasteTypeSchema,
-  insertSurveyPhotoSchema,
-  insertSurveySubproductSchema,
-  insertSurveyServiceSchema,
-  insertSurveyProposalPersonnelSchema,
-  insertSurveyProposalEquipmentSchema,
-  insertSurveyProposalSuppliesSchema,
-  insertSurveyProposalRentalsSchema,
-  insertGateConfigSchema,
-} from "../../../shared/schema/operaciones";
-import { getErrorMessage } from "../../utils/errors";
 
 export const router = Router();
 
@@ -120,73 +120,57 @@ const rejectSurveySchema = z.object({
   rejectionReason: z.string().min(10, "Motivo debe tener al menos 10 caracteres").max(1000),
 });
 
-router.get(
-  "/surveys/pending-review",
-  requireRole("admin", "director", "operaciones"),
-  async (_req, res) => {
-    try {
-      const surveys = await getPendingReviewSurveys();
-      res.json(surveys);
-    } catch (error) {
-      console.error("[operaciones] Get pending review surveys error:", error);
-      res.status(500).json({ message: "Internal server error" });
-    }
+router.get("/surveys/pending-review", requireRole("admin", "director", "operaciones"), async (_req, res) => {
+  try {
+    const surveys = await getPendingReviewSurveys();
+    res.json(surveys);
+  } catch (error) {
+    console.error("[operaciones] Get pending review surveys error:", error);
+    res.status(500).json({ message: "Internal server error" });
   }
-);
+});
 
-router.post(
-  "/surveys/:id/accept",
-  requireRole("admin", "director", "operaciones"),
-  async (req, res) => {
-    try {
-      const parsed = acceptSurveySchema.parse(req.body);
-      const updated = await acceptSurvey(
-        Number(req.params.id),
-        {
-          scheduledDate: new Date(parsed.scheduledDate),
-          assignedToId: parsed.assignedToId,
-          schedulingNotes: parsed.schedulingNotes,
-        },
-        req.user!.id
-      );
-      res.json(updated);
-    } catch (error: unknown) {
-      console.error("[operaciones] Accept survey error:", error);
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: error.errors[0].message });
-      }
-      const msg = getErrorMessage(error);
-      if (msg.startsWith("NOT_FOUND")) return res.status(404).json({ message: "Levantamiento no encontrado" });
-      if (msg.startsWith("CONFLICT:")) return res.status(409).json({ message: msg.slice(9) });
-      res.status(500).json({ message: "Internal server error" });
+router.post("/surveys/:id/accept", requireRole("admin", "director", "operaciones"), async (req, res) => {
+  try {
+    const parsed = acceptSurveySchema.parse(req.body);
+    const updated = await acceptSurvey(
+      Number(req.params.id),
+      {
+        scheduledDate: new Date(parsed.scheduledDate),
+        assignedToId: parsed.assignedToId,
+        schedulingNotes: parsed.schedulingNotes,
+      },
+      req.user!.id,
+    );
+    res.json(updated);
+  } catch (error: unknown) {
+    console.error("[operaciones] Accept survey error:", error);
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ message: error.errors[0].message });
     }
+    const msg = getErrorMessage(error);
+    if (msg.startsWith("NOT_FOUND")) return res.status(404).json({ message: "Levantamiento no encontrado" });
+    if (msg.startsWith("CONFLICT:")) return res.status(409).json({ message: msg.slice(9) });
+    res.status(500).json({ message: "Internal server error" });
   }
-);
+});
 
-router.post(
-  "/surveys/:id/reject",
-  requireRole("admin", "director", "operaciones"),
-  async (req, res) => {
-    try {
-      const parsed = rejectSurveySchema.parse(req.body);
-      const result = await rejectSurvey(
-        Number(req.params.id),
-        parsed.rejectionReason,
-        req.user!.id
-      );
-      res.json(result);
-    } catch (error: unknown) {
-      console.error("[operaciones] Reject survey error:", error);
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: error.errors[0].message });
-      }
-      const msg = getErrorMessage(error);
-      if (msg.startsWith("NOT_FOUND")) return res.status(404).json({ message: "Levantamiento no encontrado" });
-      if (msg.startsWith("CONFLICT:")) return res.status(409).json({ message: msg.slice(9) });
-      res.status(500).json({ message: "Internal server error" });
+router.post("/surveys/:id/reject", requireRole("admin", "director", "operaciones"), async (req, res) => {
+  try {
+    const parsed = rejectSurveySchema.parse(req.body);
+    const result = await rejectSurvey(Number(req.params.id), parsed.rejectionReason, req.user!.id);
+    res.json(result);
+  } catch (error: unknown) {
+    console.error("[operaciones] Reject survey error:", error);
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ message: error.errors[0].message });
     }
+    const msg = getErrorMessage(error);
+    if (msg.startsWith("NOT_FOUND")) return res.status(404).json({ message: "Levantamiento no encontrado" });
+    if (msg.startsWith("CONFLICT:")) return res.status(409).json({ message: msg.slice(9) });
+    res.status(500).json({ message: "Internal server error" });
   }
-);
+});
 
 router.get("/surveys/summary", async (_req, res) => {
   try {
@@ -225,7 +209,7 @@ router.post("/surveys", async (req, res) => {
     const { prospectId, assignedCommercialId } = req.body;
 
     if (prospectId) {
-      const userId = assignedCommercialId || req.user!?.id;
+      const userId = assignedCommercialId || req.user?.id;
       const survey = await createSurveyFromProspect(prospectId, userId);
       return res.status(201).json(survey);
     }
@@ -272,13 +256,11 @@ router.patch("/surveys/:id/section/:name", async (req, res) => {
   try {
     const sectionName = req.params.name;
     if (!(validSectionNames as readonly string[]).includes(sectionName)) {
-      return res.status(400).json({ message: `Sección inválida: ${sectionName}. Secciones válidas: ${validSectionNames.join(", ")}` });
+      return res
+        .status(400)
+        .json({ message: `Sección inválida: ${sectionName}. Secciones válidas: ${validSectionNames.join(", ")}` });
     }
-    const updated = await updateSurveySection(
-      Number(req.params.id),
-      sectionName,
-      req.body
-    );
+    const updated = await updateSurveySection(Number(req.params.id), sectionName, req.body);
     res.json(updated);
   } catch (error: unknown) {
     console.error("[operaciones] Update section error:", error);
@@ -790,7 +772,8 @@ router.post("/documents", async (req, res) => {
   try {
     const body = { ...req.body };
     if (body.issueDate && typeof body.issueDate === "string") body.issueDate = new Date(body.issueDate);
-    if (body.expirationDate && typeof body.expirationDate === "string") body.expirationDate = new Date(body.expirationDate);
+    if (body.expirationDate && typeof body.expirationDate === "string")
+      body.expirationDate = new Date(body.expirationDate);
     const parsed = insertDocumentSchema.parse(body);
     const doc = await createDocument(parsed);
     res.status(201).json(doc);

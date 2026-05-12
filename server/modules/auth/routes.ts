@@ -1,12 +1,12 @@
+import bcrypt from "bcrypt";
+import { eq } from "drizzle-orm";
 import { Router } from "express";
 import rateLimit from "express-rate-limit";
-import bcrypt from "bcrypt";
 import { z } from "zod";
+import { areas, users } from "../../../shared/schema/common";
 import { db } from "../../db";
-import { users, areas } from "../../../shared/schema/common";
-import { generateToken, requireAuth, requireAdmin } from "../../middleware/auth";
+import { requireAdmin, requireAuth } from "../../middleware/auth";
 import { loginUser } from "./service";
-import { eq } from "drizzle-orm";
 
 // Zod schemas for auth routes
 const loginSchema = z.object({
@@ -150,7 +150,7 @@ router.get("/team", requireAuth, async (_req, res) => {
 });
 
 // GET /api/auth/users — List all users (admin only)
-router.get("/users", requireAuth, requireAdmin, async (req, res) => {
+router.get("/users", requireAuth, requireAdmin, async (_req, res) => {
   try {
     const allUsers = await db.query.users.findMany();
     const safeUsers = allUsers.map(({ password: _, ...u }) => u);

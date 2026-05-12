@@ -1,18 +1,18 @@
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { apiRequest, getAuthToken, invalidateByPrefix } from "@/lib/queryClient";
-import type { ApiProspect } from "@/lib/comercial-constants";
 import type {
+  ComercialWeeklyReport,
+  FollowUpAlert,
   Lead,
+  ProposalVersion,
+  ProspectActivity,
+  ProspectDocument,
+  ProspectMeeting,
+  ProspectNote,
   RejectionReason,
   SalesMetrics,
-  ProspectActivity,
-  ProspectNote,
-  ProspectMeeting,
-  ProspectDocument,
-  ProposalVersion,
-  FollowUpAlert,
-  ComercialWeeklyReport,
 } from "@shared/schema/comercial";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import type { ApiProspect } from "@/lib/comercial-constants";
+import { apiRequest, getAuthToken, invalidateByPrefix } from "@/lib/queryClient";
 
 // --- Prospects ---
 
@@ -131,7 +131,10 @@ export function useAssignLead() {
 
 export function useConvertLead() {
   return useMutation({
-    mutationFn: async ({ id, ...data }: {
+    mutationFn: async ({
+      id,
+      ...data
+    }: {
       id: number;
       industry?: string;
       location?: string;
@@ -315,7 +318,16 @@ export function useProspectMeetings(prospectId: number) {
 
 export function useCreateMeeting() {
   return useMutation({
-    mutationFn: async ({ prospectId, ...data }: { prospectId: number; title: string; scheduledAt: string; location?: string; [key: string]: unknown }) => {
+    mutationFn: async ({
+      prospectId,
+      ...data
+    }: {
+      prospectId: number;
+      title: string;
+      scheduledAt: string;
+      location?: string;
+      [key: string]: unknown;
+    }) => {
       const res = await apiRequest("POST", `/api/comercial/prospects/${prospectId}/meetings`, data);
       return res.json();
     },
@@ -327,8 +339,18 @@ export function useCreateMeeting() {
 
 export function useCompleteMeeting() {
   return useMutation({
-    mutationFn: async ({ prospectId, meetingId, outcome }: { prospectId: number; meetingId: number; outcome: string }) => {
-      const res = await apiRequest("POST", `/api/comercial/prospects/${prospectId}/meetings/${meetingId}/complete`, { outcome });
+    mutationFn: async ({
+      prospectId,
+      meetingId,
+      outcome,
+    }: {
+      prospectId: number;
+      meetingId: number;
+      outcome: string;
+    }) => {
+      const res = await apiRequest("POST", `/api/comercial/prospects/${prospectId}/meetings/${meetingId}/complete`, {
+        outcome,
+      });
       return res.json();
     },
     onSuccess: () => {
@@ -399,7 +421,16 @@ export function useProspectDocuments(prospectId: number) {
 
 export function useCreateDocument() {
   return useMutation({
-    mutationFn: async ({ prospectId, ...data }: { prospectId: number; name: string; type: string; url?: string; [key: string]: unknown }) => {
+    mutationFn: async ({
+      prospectId,
+      ...data
+    }: {
+      prospectId: number;
+      name: string;
+      type: string;
+      url?: string;
+      [key: string]: unknown;
+    }) => {
       const res = await apiRequest("POST", `/api/comercial/prospects/${prospectId}/documents`, data);
       return res.json();
     },
@@ -483,8 +514,18 @@ export function useSendProposal() {
 
 export function useChangeProposalStatus() {
   return useMutation({
-    mutationFn: async ({ prospectId, proposalId, status }: { prospectId: number; proposalId: number; status: string }) => {
-      const res = await apiRequest("POST", `/api/comercial/prospects/${prospectId}/proposals/${proposalId}/status`, { status });
+    mutationFn: async ({
+      prospectId,
+      proposalId,
+      status,
+    }: {
+      prospectId: number;
+      proposalId: number;
+      status: string;
+    }) => {
+      const res = await apiRequest("POST", `/api/comercial/prospects/${prospectId}/proposals/${proposalId}/status`, {
+        status,
+      });
       return res.json();
     },
     onSuccess: () => {
@@ -683,9 +724,7 @@ interface WeeklyCommitment {
 }
 
 export function useCommitments(weekStart?: string) {
-  const url = weekStart
-    ? `/api/comercial/commitments?week=${weekStart}`
-    : "/api/comercial/commitments";
+  const url = weekStart ? `/api/comercial/commitments?week=${weekStart}` : "/api/comercial/commitments";
   return useQuery<WeeklyCommitment[]>({
     queryKey: ["/api/comercial/commitments", weekStart || "pending"],
     queryFn: async () => {
@@ -697,7 +736,13 @@ export function useCommitments(weekStart?: string) {
 
 export function useCreateCommitment() {
   return useMutation({
-    mutationFn: async (data: { weekStart: string; description: string; responsible: string; responsibleUserId?: number; dueDate?: string | null }) => {
+    mutationFn: async (data: {
+      weekStart: string;
+      description: string;
+      responsible: string;
+      responsibleUserId?: number;
+      dueDate?: string | null;
+    }) => {
       const res = await apiRequest("POST", "/api/comercial/commitments", data);
       return res.json();
     },
@@ -721,7 +766,16 @@ export function useUpdateCommitmentStatus() {
 
 export function useUpdateCommitment() {
   return useMutation({
-    mutationFn: async ({ id, ...data }: { id: number; description?: string; responsible?: string; responsibleUserId?: number | null; dueDate?: string | null }) => {
+    mutationFn: async ({
+      id,
+      ...data
+    }: {
+      id: number;
+      description?: string;
+      responsible?: string;
+      responsibleUserId?: number | null;
+      dueDate?: string | null;
+    }) => {
       const res = await apiRequest("PATCH", `/api/comercial/commitments/${id}`, data);
       return res.json();
     },

@@ -1,18 +1,12 @@
-import { useEffect, useRef, useState } from "react";
+import type { ProspectNote } from "@shared/schema/comercial";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { Check, Loader2, Pin, StickyNote, Trash2 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { StickyNote, Pin, Trash2, Check, Loader2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import {
-  useProspectNotes,
-  useCreateNote,
-  useUpdateNote,
-  useDeleteNote,
-  useToggleNotePin,
-} from "../api";
-import type { ProspectNote } from "@shared/schema/comercial";
+import { useCreateNote, useDeleteNote, useProspectNotes, useToggleNotePin, useUpdateNote } from "../api";
 
 interface ProspectNotesProps {
   prospectId: number;
@@ -193,8 +187,14 @@ function InlineNoteItem({
             onChange={(e) => setDraft(e.target.value)}
             onBlur={save}
             onKeyDown={(e) => {
-              if (e.key === "Escape") { e.preventDefault(); cancelEdit(); }
-              if ((e.metaKey || e.ctrlKey) && e.key === "Enter") { e.preventDefault(); save(); }
+              if (e.key === "Escape") {
+                e.preventDefault();
+                cancelEdit();
+              }
+              if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+                e.preventDefault();
+                save();
+              }
             }}
             rows={Math.min(10, Math.max(3, draft.split("\n").length))}
             className="flex-1 resize-none border-[#00a8a8] focus-visible:ring-[#00a8a8]/30"
@@ -215,7 +215,10 @@ function InlineNoteItem({
           {editing && !saving && (
             <button
               type="button"
-              onMouseDown={(e) => { e.preventDefault(); save(); }}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                save();
+              }}
               className="text-[#00a8a8] hover:bg-[#00a8a8]/10 p-1.5 rounded-md transition-colors"
               title="Guardar (⌘/Ctrl + Enter)"
             >

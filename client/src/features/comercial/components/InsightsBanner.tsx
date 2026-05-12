@@ -1,14 +1,14 @@
-import { Clock, CalendarCheck, Flame, TrendingUp, AlertTriangle, CheckCircle } from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
-import { fmtM } from '@/lib/utils';
-import { KANBAN_STAGES } from '@/lib/comercial-constants';
-import type { KanbanProspecto } from '@shared/types/comercial';
+import type { KanbanProspecto } from "@shared/types/comercial";
+import type { LucideIcon } from "lucide-react";
+import { AlertTriangle, CalendarCheck, CheckCircle, Clock, Flame, TrendingUp } from "lucide-react";
+import { KANBAN_STAGES } from "@/lib/comercial-constants";
+import { fmtM } from "@/lib/utils";
 
 // ═══════ TYPES ═══════
 
 interface Insight {
   id: string;
-  icon: 'stagnant' | 'followup' | 'hot' | 'momentum' | 'warning' | 'ok';
+  icon: "stagnant" | "followup" | "hot" | "momentum" | "warning" | "ok";
   text: string;
   /** Lower = more urgent (shown first) */
   priority: number;
@@ -19,22 +19,20 @@ interface Insight {
 export function calcularInsights(prospectos: KanbanProspecto[]): Insight[] {
   const insights: Insight[] = [];
   const now = new Date();
-  const todayStr = now.toISOString().split('T')[0];
+  const todayStr = now.toISOString().split("T")[0];
 
   // Only active prospects (not cierre_ganado / cierre_perdido)
-  const activos = prospectos.filter(p =>
-    !['cierre_ganado', 'cierre_perdido'].includes(p.status)
-  );
+  const activos = prospectos.filter((p) => !["cierre_ganado", "cierre_perdido"].includes(p.status));
 
   // ── 1. STAGNANT: prospects stuck in same stage > 7 days ──
   const stagnant = activos
-    .filter(p => {
+    .filter((p) => {
       if (!p.updatedAt) return false;
       const updated = new Date(p.updatedAt);
       const diffDays = Math.floor((now.getTime() - updated.getTime()) / (1000 * 60 * 60 * 24));
       return diffDays > 7;
     })
-    .map(p => {
+    .map((p) => {
       const diffDays = Math.floor((now.getTime() - new Date(p.updatedAt ?? 0).getTime()) / (1000 * 60 * 60 * 24));
       return { ...p, stagnantDays: diffDays };
     })
@@ -42,50 +40,52 @@ export function calcularInsights(prospectos: KanbanProspecto[]): Insight[] {
 
   if (stagnant.length > 0) {
     const worst = stagnant[0];
-    const stageName = KANBAN_STAGES.find(s => s.id === worst.status)?.label || worst.status;
+    const stageName = KANBAN_STAGES.find((s) => s.id === worst.status)?.label || worst.status;
     insights.push({
-      id: 'stagnant',
-      icon: 'stagnant',
+      id: "stagnant",
+      icon: "stagnant",
       text: `${worst.empresa} — ${worst.stagnantDays}d en ${stageName}`,
       priority: 1,
     });
   }
 
   // ── 2. FOLLOW-UPS: due today or overdue ──
-  const followUpsDue = activos.filter(p => {
+  const followUpsDue = activos.filter((p) => {
     if (!p.fechaSeguimiento) return false;
     return p.fechaSeguimiento <= todayStr;
   });
 
-  const overdue = followUpsDue.filter(p => (p.fechaSeguimiento ?? '') < todayStr);
-  const dueToday = followUpsDue.filter(p => p.fechaSeguimiento === todayStr);
+  const overdue = followUpsDue.filter((p) => (p.fechaSeguimiento ?? "") < todayStr);
+  const dueToday = followUpsDue.filter((p) => p.fechaSeguimiento === todayStr);
 
   if (overdue.length > 0) {
     const worstOverdue = overdue[0];
     insights.push({
-      id: 'overdue',
-      icon: 'warning',
-      text: overdue.length === 1
-        ? `Seguimiento vencido: ${worstOverdue.empresa}`
-        : `${overdue.length} seguimientos vencidos`,
+      id: "overdue",
+      icon: "warning",
+      text:
+        overdue.length === 1
+          ? `Seguimiento vencido: ${worstOverdue.empresa}`
+          : `${overdue.length} seguimientos vencidos`,
       priority: 0, // Most urgent
     });
   } else if (dueToday.length > 0) {
     insights.push({
-      id: 'followup-today',
-      icon: 'followup',
-      text: dueToday.length === 1
-        ? `Seguimiento para hoy: ${dueToday[0].empresa}`
-        : `${dueToday.length} seguimientos para hoy`,
+      id: "followup-today",
+      icon: "followup",
+      text:
+        dueToday.length === 1
+          ? `Seguimiento para hoy: ${dueToday[0].empresa}`
+          : `${dueToday.length} seguimientos para hoy`,
       priority: 2,
     });
   }
 
   // ── 3. HOT DEAL: highest value in most advanced stage ──
-  const advancedStages = ['negociacion', 'propuesta'];
+  const advancedStages = ["negociacion", "propuesta"];
   const hotDeals = activos
-    .filter(p => advancedStages.includes(p.status))
-    .filter(p => (p.propuesta?.ventaTotal || p.facturacionEstimada || 0) > 0)
+    .filter((p) => advancedStages.includes(p.status))
+    .filter((p) => (p.propuesta?.ventaTotal || p.facturacionEstimada || 0) > 0)
     .sort((a, b) => {
       // Sort by stage advancement first, then by value
       const stageOrder = advancedStages.indexOf(a.status) - advancedStages.indexOf(b.status);
@@ -98,10 +98,10 @@ export function calcularInsights(prospectos: KanbanProspecto[]): Insight[] {
   if (hotDeals.length > 0) {
     const hot = hotDeals[0];
     const valor = hot.propuesta?.ventaTotal || hot.facturacionEstimada || 0;
-    const stageName = KANBAN_STAGES.find(s => s.id === hot.status)?.label || hot.status;
+    const stageName = KANBAN_STAGES.find((s) => s.id === hot.status)?.label || hot.status;
     insights.push({
-      id: 'hot-deal',
-      icon: 'hot',
+      id: "hot-deal",
+      icon: "hot",
       text: `${hot.empresa} — ${stageName}, ${fmtM(valor)}`,
       priority: 3,
     });
@@ -110,9 +110,9 @@ export function calcularInsights(prospectos: KanbanProspecto[]): Insight[] {
   // ── 4. ALL CLEAR ──
   if (insights.length === 0 && activos.length > 0) {
     insights.push({
-      id: 'all-clear',
-      icon: 'ok',
-      text: 'Tu pipeline se ve bien hoy',
+      id: "all-clear",
+      icon: "ok",
+      text: "Tu pipeline se ve bien hoy",
       priority: 10,
     });
   }
@@ -127,12 +127,12 @@ export function calcularInsights(prospectos: KanbanProspecto[]): Insight[] {
 // ═══════ ICON MAP ═══════
 
 const INSIGHT_ICONS: Record<string, { Icon: LucideIcon; color: string }> = {
-  stagnant: { Icon: Clock, color: '#F97316' },
-  followup: { Icon: CalendarCheck, color: '#3B82F6' },
-  hot:      { Icon: Flame, color: '#EF4444' },
-  momentum: { Icon: TrendingUp, color: '#22C55E' },
-  warning:  { Icon: AlertTriangle, color: '#EF4444' },
-  ok:       { Icon: CheckCircle, color: '#22C55E' },
+  stagnant: { Icon: Clock, color: "#F97316" },
+  followup: { Icon: CalendarCheck, color: "#3B82F6" },
+  hot: { Icon: Flame, color: "#EF4444" },
+  momentum: { Icon: TrendingUp, color: "#22C55E" },
+  warning: { Icon: AlertTriangle, color: "#EF4444" },
+  ok: { Icon: CheckCircle, color: "#22C55E" },
 };
 
 // ═══════ COMPONENT ═══════
@@ -146,14 +146,21 @@ interface InsightsBannerProps {
   cumplimiento?: number;
 }
 
-export function InsightsBanner({ greeting, memberName, prospectos, presupuestoMensual, ventasReales, cumplimiento }: InsightsBannerProps) {
+export function InsightsBanner({
+  greeting,
+  memberName,
+  prospectos,
+  presupuestoMensual,
+  ventasReales,
+  cumplimiento,
+}: InsightsBannerProps) {
   const insights = calcularInsights(prospectos);
-  const firstName = memberName.split(' ')[0];
+  const firstName = memberName.split(" ")[0];
 
   // Nothing to show if no prospects at all
   if (prospectos.length === 0) return null;
 
-  const presupColor = (cumplimiento ?? 0) >= 70 ? '#2E7D32' : (cumplimiento ?? 0) >= 40 ? '#F57C00' : '#DC2626';
+  const presupColor = (cumplimiento ?? 0) >= 70 ? "#2E7D32" : (cumplimiento ?? 0) >= 40 ? "#F57C00" : "#DC2626";
 
   return (
     <div className="mt-3 pt-3 border-t border-[#f0f0f0]">
@@ -161,13 +168,20 @@ export function InsightsBanner({ greeting, memberName, prospectos, presupuestoMe
       <p className="text-sm text-[#6b7280]">
         {greeting}, {firstName}
         {presupuestoMensual != null && presupuestoMensual > 0 && (
-          <span> · Tu meta este mes es <span className="font-semibold text-[#4b5563]">{fmtM(presupuestoMensual, 2)}</span>, llevas cerrado <span className="font-semibold" style={{ color: presupColor }}>{fmtM(ventasReales ?? 0, 2)}</span></span>
+          <span>
+            {" "}
+            · Tu meta este mes es <span className="font-semibold text-[#4b5563]">{fmtM(presupuestoMensual, 2)}</span>,
+            llevas cerrado{" "}
+            <span className="font-semibold" style={{ color: presupColor }}>
+              {fmtM(ventasReales ?? 0, 2)}
+            </span>
+          </span>
         )}
       </p>
       {/* Insights */}
       {insights.length > 0 && (
         <div className="flex flex-wrap items-center gap-x-5 gap-y-1 mt-1.5">
-          {insights.map(insight => {
+          {insights.map((insight) => {
             const { Icon, color } = INSIGHT_ICONS[insight.icon] || INSIGHT_ICONS.ok;
             return (
               <div key={insight.id} className="flex items-center gap-1.5">

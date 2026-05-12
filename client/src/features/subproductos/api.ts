@@ -1,4 +1,4 @@
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 
 // --- Service Clients ---
@@ -59,9 +59,7 @@ export function useCreateTraceability() {
 // --- Reports ---
 
 export function useClientReports(clientId?: number) {
-  const url = clientId
-    ? `/api/subproductos/reports?clientId=${clientId}`
-    : "/api/subproductos/reports";
+  const url = clientId ? `/api/subproductos/reports?clientId=${clientId}` : "/api/subproductos/reports";
   return useQuery<any[]>({ queryKey: [url] });
 }
 
@@ -98,9 +96,7 @@ export function useUpdateReportStatus() {
 // --- Economic Models ---
 
 export function useEconomicModels(clientId?: number) {
-  const url = clientId
-    ? `/api/subproductos/economic-models?clientId=${clientId}`
-    : "/api/subproductos/economic-models";
+  const url = clientId ? `/api/subproductos/economic-models?clientId=${clientId}` : "/api/subproductos/economic-models";
   return useQuery<any[]>({ queryKey: [url] });
 }
 
@@ -126,9 +122,7 @@ export function useCreateEconomicModel() {
 // --- Conciliation ---
 
 export function useConciliations(clientId?: number) {
-  const url = clientId
-    ? `/api/subproductos/conciliations?clientId=${clientId}`
-    : "/api/subproductos/conciliations";
+  const url = clientId ? `/api/subproductos/conciliations?clientId=${clientId}` : "/api/subproductos/conciliations";
   return useQuery<any[]>({ queryKey: [url] });
 }
 

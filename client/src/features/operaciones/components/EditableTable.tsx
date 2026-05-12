@@ -1,7 +1,7 @@
+import { Plus, Save, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Trash2, Save } from "lucide-react";
 
 export interface ColumnDef {
   key: string;
@@ -102,9 +102,7 @@ export default function EditableTable({
                       <Input
                         type={col.type === "number" ? "number" : "text"}
                         value={editData[col.key] ?? ""}
-                        onChange={(e) =>
-                          setEditData({ ...editData, [col.key]: e.target.value })
-                        }
+                        onChange={(e) => setEditData({ ...editData, [col.key]: e.target.value })}
                         className="h-8 text-sm"
                       />
                     ) : (
@@ -122,12 +120,7 @@ export default function EditableTable({
                     <div className="flex gap-1">
                       {editingId === item.id ? (
                         <>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={saveEdit}
-                            className="h-7 w-7 p-0"
-                          >
+                          <Button variant="ghost" size="sm" onClick={saveEdit} className="h-7 w-7 p-0">
                             <Save className="h-3 w-3" />
                           </Button>
                           <Button
@@ -143,7 +136,9 @@ export default function EditableTable({
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => { if (window.confirm("¿Seguro que deseas eliminar este registro?")) onDelete(item.id); }}
+                          onClick={() => {
+                            if (window.confirm("¿Seguro que deseas eliminar este registro?")) onDelete(item.id);
+                          }}
                           className="h-7 w-7 p-0 text-destructive hover:text-destructive"
                         >
                           <Trash2 className="h-3 w-3" />
@@ -162,9 +157,7 @@ export default function EditableTable({
                     <Input
                       type={col.type === "number" ? "number" : "text"}
                       value={newRow[col.key] ?? ""}
-                      onChange={(e) =>
-                        setNewRow({ ...newRow, [col.key]: e.target.value })
-                      }
+                      onChange={(e) => setNewRow({ ...newRow, [col.key]: e.target.value })}
                       placeholder={col.label}
                       className="h-8 text-sm"
                     />
@@ -172,12 +165,7 @@ export default function EditableTable({
                 ))}
                 <td className="p-2">
                   <div className="flex gap-1">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={saveNewRow}
-                      className="h-7 w-7 p-0"
-                    >
+                    <Button variant="ghost" size="sm" onClick={saveNewRow} className="h-7 w-7 p-0">
                       <Save className="h-3 w-3" />
                     </Button>
                     <Button
@@ -195,12 +183,8 @@ export default function EditableTable({
           </tbody>
         </table>
       </div>
-      {data.length === 0 && !newRow && (
-        <p className="text-center text-sm text-muted-foreground py-4">
-          {emptyText}
-        </p>
-      )}
-      {!disabled && !newRow && (
+      {data.length === 0 && !newRow && <p className="text-center text-sm text-muted-foreground py-4">{emptyText}</p>}
+      {!(disabled || newRow) && (
         <Button variant="outline" size="sm" onClick={startNewRow} className="gap-1">
           <Plus className="h-3 w-3" />
           Agregar

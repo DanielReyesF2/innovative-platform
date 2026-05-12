@@ -1,15 +1,15 @@
-import { useSortable } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
-import { MessageSquare, Paperclip } from 'lucide-react';
-import { fmtM } from '@/lib/utils';
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import type { CampoCompleto, KanbanProspecto } from "@shared/types/comercial";
+import { MessageSquare, Paperclip } from "lucide-react";
 import {
-  SERVICE_COLORS,
-  estimarFechaProspecto,
-  urgencyColor,
-  timeAgo,
   calcularCamposCompletos,
-} from '@/lib/comercial-constants';
-import type { KanbanProspecto, CampoCompleto } from '@shared/types/comercial';
+  estimarFechaProspecto,
+  SERVICE_COLORS,
+  timeAgo,
+  urgencyColor,
+} from "@/lib/comercial-constants";
+import { fmtM } from "@/lib/utils";
 
 interface Props {
   prospecto: KanbanProspecto;
@@ -21,18 +21,18 @@ interface Props {
 export function DraggableCard({ prospecto, onSelect, notesCount = 0, filesCount = 0 }: Props) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: prospecto.id,
-    data: { type: 'card', prospecto },
+    data: { type: "card", prospecto },
   });
 
   const valor = prospecto.propuesta?.ventaTotal || prospecto.facturacionEstimada || 0;
-  const primaryService = (prospecto.servicios || [])[0] || 'rme';
+  const primaryService = (prospecto.servicios || [])[0] || "rme";
   const svc = SERVICE_COLORS[primaryService] || SERVICE_COLORS.rme;
   const fechaRef = estimarFechaProspecto(prospecto);
   const campos = calcularCamposCompletos(prospecto);
   const completos = campos.filter((c: CampoCompleto) => c.ok).length;
   const total = campos.length;
   const pct = (completos / total) * 100;
-  const barColor = completos === total ? '#2E7D32' : pct >= 60 ? '#F57C00' : '#ef4444';
+  const barColor = completos === total ? "#2E7D32" : pct >= 60 ? "#F57C00" : "#ef4444";
 
   return (
     <div
@@ -47,14 +47,24 @@ export function DraggableCard({ prospecto, onSelect, notesCount = 0, filesCount 
       {...attributes}
       {...listeners}
       className="rounded-lg p-1.5 mb-1 cursor-grab active:cursor-grabbing hover:shadow-md transition-all group"
-      onClick={(e) => { if (!isDragging) { e.stopPropagation(); onSelect(prospecto); } }}
+      onClick={(e) => {
+        if (!isDragging) {
+          e.stopPropagation();
+          onSelect(prospecto);
+        }
+      }}
     >
       {/* Row 1: Company + value + badge */}
       <div className="flex items-center justify-between gap-1 mb-0.5">
-        <h4 className="text-[12px] font-semibold text-[#1c2c4a] truncate leading-tight flex-1 min-w-0">{prospecto.empresa}</h4>
+        <h4 className="text-[12px] font-semibold text-[#1c2c4a] truncate leading-tight flex-1 min-w-0">
+          {prospecto.empresa}
+        </h4>
         <div className="flex items-center gap-1 flex-shrink-0">
           {valor > 0 && <span className="text-[10px] font-bold text-[#0D47A1]">{fmtM(valor)}</span>}
-          <span className="text-[8px] font-bold px-1 py-px rounded-full whitespace-nowrap" style={{ backgroundColor: `${svc.border}18`, color: svc.text }}>
+          <span
+            className="text-[8px] font-bold px-1 py-px rounded-full whitespace-nowrap"
+            style={{ backgroundColor: `${svc.border}18`, color: svc.text }}
+          >
             {svc.label}
           </span>
         </div>
@@ -63,15 +73,28 @@ export function DraggableCard({ prospecto, onSelect, notesCount = 0, filesCount 
       <div className="flex items-center justify-between text-[10px] text-[#9ca3af]">
         <div className="flex items-center gap-1.5">
           <span className="font-medium">{prospecto.ejecutivo}</span>
-          <span className="font-semibold px-1 py-px rounded text-[8px]" style={{ color: urgencyColor(fechaRef), backgroundColor: `${urgencyColor(fechaRef)}12` }}>
+          <span
+            className="font-semibold px-1 py-px rounded text-[8px]"
+            style={{ color: urgencyColor(fechaRef), backgroundColor: `${urgencyColor(fechaRef)}12` }}
+          >
             {timeAgo(fechaRef)}
           </span>
         </div>
         <div className="flex items-center gap-1 flex-shrink-0">
-          {notesCount > 0 && <span className="flex items-center gap-0.5"><MessageSquare size={8} />{notesCount}</span>}
-          {filesCount > 0 && <span className="flex items-center gap-0.5"><Paperclip size={8} />{filesCount}</span>}
+          {notesCount > 0 && (
+            <span className="flex items-center gap-0.5">
+              <MessageSquare size={8} />
+              {notesCount}
+            </span>
+          )}
+          {filesCount > 0 && (
+            <span className="flex items-center gap-0.5">
+              <Paperclip size={8} />
+              {filesCount}
+            </span>
+          )}
         </div>
-        {prospecto.ciudad && <span className="truncate max-w-[80px]">{prospecto.ciudad.split(',')[0]}</span>}
+        {prospecto.ciudad && <span className="truncate max-w-[80px]">{prospecto.ciudad.split(",")[0]}</span>}
       </div>
       {/* Progress micro-bar */}
       <div className="mt-1">

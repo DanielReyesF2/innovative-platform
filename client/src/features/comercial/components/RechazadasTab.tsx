@@ -1,17 +1,17 @@
-import { useState } from 'react';
-import { CheckCircle, AlertCircle, Calendar } from 'lucide-react';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
-import { fmtM } from '@/lib/utils';
+import type { KanbanProspecto, SeguimientoData } from "@shared/types/comercial";
+import { AlertCircle, Calendar, CheckCircle } from "lucide-react";
+import { useState } from "react";
+import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
+import { useToast } from "@/components/ui/use-toast";
 import {
-  RECHAZO_CATEGORIES,
+  classifyRechazo,
   getRecoveryState,
   getSeguimientoUrgency,
-  classifyRechazo,
-} from '@/lib/comercial-constants';
-import { useComercialData } from '../hooks/useComercialData';
-import { useToast } from '@/components/ui/use-toast';
-import { ProspectoDrawer } from './ProspectoDrawer';
-import type { KanbanProspecto, SeguimientoData } from '@shared/types/comercial';
+  RECHAZO_CATEGORIES,
+} from "@/lib/comercial-constants";
+import { fmtM } from "@/lib/utils";
+import { useComercialData } from "../hooks/useComercialData";
+import { ProspectoDrawer } from "./ProspectoDrawer";
 
 interface Props {
   onSelectProspecto?: (p: KanbanProspecto) => void;
@@ -23,7 +23,7 @@ export function RechazadasTab({ onSelectProspecto }: Props) {
   // Store id only so the drawer always renders against live data after mutations.
   const [selectedProspectoId, setSelectedProspectoId] = useState<number | null>(null);
   const selectedProspecto = selectedProspectoId
-    ? kanbanProspectos.find((p) => p.id === selectedProspectoId) ?? null
+    ? (kanbanProspectos.find((p) => p.id === selectedProspectoId) ?? null)
     : null;
 
   const handleSelect = (p: KanbanProspecto) => {
@@ -37,14 +37,14 @@ export function RechazadasTab({ onSelectProspecto }: Props) {
     if (Object.keys(updates).length > 0) {
       try {
         await updateProspectMutation.mutateAsync({ id: prospectoId, ...updates });
-        toast({ title: 'Seguimiento guardado' });
+        toast({ title: "Seguimiento guardado" });
       } catch {
-        toast({ title: 'Error al guardar seguimiento', variant: 'destructive' });
+        toast({ title: "Error al guardar seguimiento", variant: "destructive" });
       }
     }
   };
 
-  const allRejected = kanbanProspectos.filter(p => p.status === 'cierre_perdido');
+  const allRejected = kanbanProspectos.filter((p) => p.status === "cierre_perdido");
 
   if (allRejected.length === 0) {
     return (
@@ -59,7 +59,10 @@ export function RechazadasTab({ onSelectProspecto }: Props) {
   const totalValue = allRejected.reduce((s, p) => s + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0);
 
   const byCat: Record<string, KanbanProspecto[]> = { pricing: [], proposal: [], operational: [] };
-  allRejected.forEach(p => { const cat = classifyRechazo(p.motivoRechazo, p.motivoRechazoCategory); if (byCat[cat.id]) byCat[cat.id].push(p); });
+  allRejected.forEach((p) => {
+    const cat = classifyRechazo(p.motivoRechazo, p.motivoRechazoCategory);
+    if (byCat[cat.id]) byCat[cat.id].push(p);
+  });
 
   const pieData = Object.entries(byCat)
     .filter(([, items]) => items.length > 0)
@@ -78,10 +81,12 @@ export function RechazadasTab({ onSelectProspecto }: Props) {
           <div className="text-3xl font-bold text-[#1c2c4a]">{allRejected.length}</div>
           <div className="text-xs text-[#6b7280] mt-1">{fmtM(totalValue)} en valor perdido</div>
           <div className="mt-4 flex items-center gap-3">
-            {pieData.map(d => (
+            {pieData.map((d) => (
               <div key={d.name} className="flex items-center gap-1.5">
                 <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: d.color }} />
-                <span className="text-[10px] text-[#6b7280]">{d.name}: <strong className="text-[#1c2c4a]">{d.value}</strong></span>
+                <span className="text-[10px] text-[#6b7280]">
+                  {d.name}: <strong className="text-[#1c2c4a]">{d.value}</strong>
+                </span>
               </div>
             ))}
           </div>
@@ -106,7 +111,7 @@ export function RechazadasTab({ onSelectProspecto }: Props) {
                   ))}
                 </Pie>
                 <Tooltip
-                  contentStyle={{ fontSize: 11, borderRadius: 8, border: '1px solid #e5e7eb' }}
+                  contentStyle={{ fontSize: 11, borderRadius: 8, border: "1px solid #e5e7eb" }}
                   formatter={(value: number, name: string) => [`${value} rechazadas`, name]}
                 />
               </PieChart>
@@ -124,34 +129,67 @@ export function RechazadasTab({ onSelectProspecto }: Props) {
           if (items.length === 0) return null;
           return (
             <div key={catId} className="bg-white rounded-xl border border-[#e5e7eb] overflow-hidden">
-              <div className="px-4 py-3 border-b border-[#e5e7eb] flex items-center justify-between" style={{ backgroundColor: `${cat.color}08` }}>
+              <div
+                className="px-4 py-3 border-b border-[#e5e7eb] flex items-center justify-between"
+                style={{ backgroundColor: `${cat.color}08` }}
+              >
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full" style={{ backgroundColor: cat.color }} />
-                  <span className="text-xs font-semibold" style={{ color: cat.color }}>{cat.label}</span>
+                  <span className="text-xs font-semibold" style={{ color: cat.color }}>
+                    {cat.label}
+                  </span>
                 </div>
-                <span className="text-xs font-bold" style={{ color: cat.color }}>{items.length}</span>
+                <span className="text-xs font-bold" style={{ color: cat.color }}>
+                  {items.length}
+                </span>
               </div>
               <div className="divide-y divide-[#f3f4f6]">
-                {items.map(p => {
-                  const seg = { fechaSeguimiento: p.fechaSeguimiento, accion: p.followUpAction, recoveryStatus: p.recoveryStatus, fechaVencimientoContrato: p.fechaVencimientoContrato };
+                {items.map((p) => {
+                  const seg = {
+                    fechaSeguimiento: p.fechaSeguimiento,
+                    accion: p.followUpAction,
+                    recoveryStatus: p.recoveryStatus,
+                    fechaVencimientoContrato: p.fechaVencimientoContrato,
+                  };
                   const urgency = getSeguimientoUrgency(seg);
                   const recovery = getRecoveryState(seg);
                   return (
-                    <div key={p.id} className="px-4 py-2.5 cursor-pointer hover:bg-[#f9fafb] transition-colors"
-                      onClick={() => handleSelect(p)}>
+                    <div
+                      key={p.id}
+                      className="px-4 py-2.5 cursor-pointer hover:bg-[#f9fafb] transition-colors"
+                      onClick={() => handleSelect(p)}
+                    >
                       <div className="flex items-center justify-between mb-0.5">
                         <span className="text-[11px] font-semibold text-[#1c2c4a] truncate">{p.empresa}</span>
-                        <span className="text-[9px] font-medium px-1.5 py-0.5 rounded-full flex-shrink-0" style={{ backgroundColor: recovery.bg, color: recovery.color }}>{recovery.label}</span>
+                        <span
+                          className="text-[9px] font-medium px-1.5 py-0.5 rounded-full flex-shrink-0"
+                          style={{ backgroundColor: recovery.bg, color: recovery.color }}
+                        >
+                          {recovery.label}
+                        </span>
                       </div>
-                      <div className="text-[10px] text-[#9ca3af] truncate mb-1">{p.motivoRechazo || 'Sin motivo'}</div>
+                      <div className="text-[10px] text-[#9ca3af] truncate mb-1">{p.motivoRechazo || "Sin motivo"}</div>
                       <div className="flex items-center justify-between">
-                        <span className="text-[10px] text-[#6b7280]">{p.ejecutivo} · {fmtM(p.propuesta?.ventaTotal || p.facturacionEstimada || 0)}</span>
-                        {urgency?.overdue && <span className="text-[9px] font-bold text-red-500"><AlertCircle size={8} className="inline" /> Vencido {urgency.days}d</span>}
+                        <span className="text-[10px] text-[#6b7280]">
+                          {p.ejecutivo} · {fmtM(p.propuesta?.ventaTotal || p.facturacionEstimada || 0)}
+                        </span>
+                        {urgency?.overdue && (
+                          <span className="text-[9px] font-bold text-red-500">
+                            <AlertCircle size={8} className="inline" /> Vencido {urgency.days}d
+                          </span>
+                        )}
                         {!seg?.fechaSeguimiento && cat.recoverable && (
-                          <button onClick={(e) => {
-                            e.stopPropagation();
-                            guardarSeguimiento(p.id, { fechaSeguimiento: new Date(Date.now() + cat.defaultFollowUpDays * 86400000).toISOString().split('T')[0] });
-                          }} className="text-[9px] font-semibold text-[#00a8a8] hover:underline flex items-center gap-0.5">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              guardarSeguimiento(p.id, {
+                                fechaSeguimiento: new Date(Date.now() + cat.defaultFollowUpDays * 86400000)
+                                  .toISOString()
+                                  .split("T")[0],
+                              });
+                            }}
+                            className="text-[9px] font-semibold text-[#00a8a8] hover:underline flex items-center gap-0.5"
+                          >
                             <Calendar size={8} /> Agendar
                           </button>
                         )}

@@ -1,14 +1,8 @@
-import { db } from "../../db";
-import { eq, desc, and, sql, ilike, or } from "drizzle-orm";
 import bcrypt from "bcrypt";
-import {
-  roles,
-  companySettings,
-  auditLog,
-  moduleConfig,
-  type Role,
-} from "../../../shared/schema/settings";
-import { users, areas, companies } from "../../../shared/schema/common";
+import { and, desc, eq, ilike, or, sql } from "drizzle-orm";
+import { areas, companies, users } from "../../../shared/schema/common";
+import { auditLog, companySettings, moduleConfig, roles } from "../../../shared/schema/settings";
+import { db } from "../../db";
 
 // --- User columns (always exclude password) ---
 
@@ -26,21 +20,11 @@ const safeUserColumns = {
 
 // --- Users ---
 
-export async function getUsers(filters?: {
-  search?: string;
-  role?: string;
-  areaId?: number;
-  isActive?: boolean;
-}) {
+export async function getUsers(filters?: { search?: string; role?: string; areaId?: number; isActive?: boolean }) {
   const conditions = [];
 
   if (filters?.search) {
-    conditions.push(
-      or(
-        ilike(users.name, `%${filters.search}%`),
-        ilike(users.email, `%${filters.search}%`)
-      )
-    );
+    conditions.push(or(ilike(users.name, `%${filters.search}%`), ilike(users.email, `%${filters.search}%`)));
   }
   if (filters?.role) {
     conditions.push(eq(users.role, filters.role));
@@ -126,7 +110,7 @@ export async function updateUser(
     companyId?: number | null;
     isActive?: boolean;
   },
-  currentUserId: number
+  currentUserId: number,
 ) {
   // Guard: cannot change own role or deactivate self
   if (id === currentUserId) {
@@ -146,11 +130,7 @@ export async function updateUser(
     data.email = email;
   }
 
-  const [updated] = await db
-    .update(users)
-    .set(data)
-    .where(eq(users.id, id))
-    .returning();
+  const [updated] = await db.update(users).set(data).where(eq(users.id, id)).returning();
 
   if (!updated) return null;
 
@@ -164,11 +144,7 @@ export async function toggleUserActive(id: number, currentUserId: number) {
   const user = await db.query.users.findFirst({ where: eq(users.id, id) });
   if (!user) return null;
 
-  const [updated] = await db
-    .update(users)
-    .set({ isActive: !user.isActive })
-    .where(eq(users.id, id))
-    .returning();
+  const [updated] = await db.update(users).set({ isActive: !user.isActive }).where(eq(users.id, id)).returning();
 
   const { password: _, ...safeUser } = updated;
   return safeUser;
@@ -176,11 +152,7 @@ export async function toggleUserActive(id: number, currentUserId: number) {
 
 export async function resetPassword(id: number, newPassword: string) {
   const hashedPassword = await bcrypt.hash(newPassword, 10);
-  const [updated] = await db
-    .update(users)
-    .set({ password: hashedPassword })
-    .where(eq(users.id, id))
-    .returning();
+  const [updated] = await db.update(users).set({ password: hashedPassword }).where(eq(users.id, id)).returning();
 
   if (!updated) return null;
   const { password: _, ...safeUser } = updated;
@@ -197,10 +169,7 @@ export async function getRoles() {
   // Count users per role
   const result = [];
   for (const role of allRoles) {
-    const [count] = await db
-      .select({ count: sql<number>`count(*)::int` })
-      .from(users)
-      .where(eq(users.role, role.name));
+    const [count] = await db.select({ count: sql<number>`count(*)::int` }).from(users).where(eq(users.role, role.name));
     result.push({ ...role, userCount: count.count });
   }
 
@@ -232,13 +201,9 @@ export async function createRole(data: {
 
 export async function updateRole(
   id: number,
-  data: { displayName?: string; description?: string; permissions?: string[] }
+  data: { displayName?: string; description?: string; permissions?: string[] },
 ) {
-  const [updated] = await db
-    .update(roles)
-    .set(data)
-    .where(eq(roles.id, id))
-    .returning();
+  const [updated] = await db.update(roles).set(data).where(eq(roles.id, id)).returning();
   return updated;
 }
 
@@ -248,10 +213,7 @@ export async function deleteRole(id: number) {
   if (role.isSystem) throw new Error("CANNOT_DELETE_SYSTEM_ROLE");
 
   // Check if any users are using this role
-  const [count] = await db
-    .select({ count: sql<number>`count(*)::int` })
-    .from(users)
-    .where(eq(users.role, role.name));
+  const [count] = await db.select({ count: sql<number>`count(*)::int` }).from(users).where(eq(users.role, role.name));
   if (count.count > 0) throw new Error("ROLE_IN_USE");
 
   const [deleted] = await db.delete(roles).where(eq(roles.id, id)).returning();
@@ -267,10 +229,7 @@ export async function getAreas() {
 
   const result = [];
   for (const area of allAreas) {
-    const [count] = await db
-      .select({ count: sql<number>`count(*)::int` })
-      .from(users)
-      .where(eq(users.areaId, area.id));
+    const [count] = await db.select({ count: sql<number>`count(*)::int` }).from(users).where(eq(users.areaId, area.id));
     result.push({ ...area, userCount: count.count });
   }
 
@@ -283,19 +242,12 @@ export async function createArea(data: { name: string; companyId?: number | null
 }
 
 export async function updateArea(id: number, data: { name?: string }) {
-  const [updated] = await db
-    .update(areas)
-    .set(data)
-    .where(eq(areas.id, id))
-    .returning();
+  const [updated] = await db.update(areas).set(data).where(eq(areas.id, id)).returning();
   return updated;
 }
 
 export async function deleteArea(id: number) {
-  const [count] = await db
-    .select({ count: sql<number>`count(*)::int` })
-    .from(users)
-    .where(eq(users.areaId, id));
+  const [count] = await db.select({ count: sql<number>`count(*)::int` }).from(users).where(eq(users.areaId, id));
   if (count.count > 0) throw new Error("AREA_IN_USE");
 
   const [deleted] = await db.delete(areas).where(eq(areas.id, id)).returning();
@@ -319,11 +271,7 @@ export async function updateCompany(data: { name?: string }) {
   const company = await db.query.companies.findFirst();
   if (!company) return null;
 
-  const [updated] = await db
-    .update(companies)
-    .set(data)
-    .where(eq(companies.id, company.id))
-    .returning();
+  const [updated] = await db.update(companies).set(data).where(eq(companies.id, company.id)).returning();
   return updated;
 }
 
@@ -361,13 +309,10 @@ export async function getModuleConfigs(moduleName: string) {
 
 export async function upsertModuleConfig(
   data: { moduleName: string; configKey: string; configValue?: unknown },
-  updatedById: number
+  updatedById: number,
 ) {
   const existing = await db.query.moduleConfig.findFirst({
-    where: and(
-      eq(moduleConfig.moduleName, data.moduleName),
-      eq(moduleConfig.configKey, data.configKey)
-    ),
+    where: and(eq(moduleConfig.moduleName, data.moduleName), eq(moduleConfig.configKey, data.configKey)),
   });
 
   if (existing) {
@@ -407,12 +352,7 @@ export async function logAction(data: {
 export async function getAuditLog(entityType?: string) {
   const conditions = entityType ? eq(auditLog.entityType, entityType) : undefined;
 
-  return db
-    .select()
-    .from(auditLog)
-    .where(conditions)
-    .orderBy(desc(auditLog.createdAt))
-    .limit(100);
+  return db.select().from(auditLog).where(conditions).orderBy(desc(auditLog.createdAt)).limit(100);
 }
 
 // --- Seed System Roles ---

@@ -1,6 +1,6 @@
-import { type ReactNode } from "react";
-import { useAuth } from "@/lib/auth";
+import type { ReactNode } from "react";
 import { Redirect, useLocation } from "wouter";
+import { useAuth } from "@/lib/auth";
 import { AppLayout } from "./AppLayout";
 
 interface ProtectedRouteProps {

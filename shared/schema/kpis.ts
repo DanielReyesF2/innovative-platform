@@ -1,43 +1,19 @@
-import { pgTable, serial, text, integer, timestamp, boolean, numeric, pgEnum, index } from "drizzle-orm/pg-core";
+import { boolean, index, integer, numeric, pgEnum, pgTable, serial, text, timestamp } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
-import { users, areas } from "./common";
+import { areas, users } from "./common";
 
 // --- Enums ---
 
-export const kpiFrequencyEnum = pgEnum("kpi_frequency", [
-  "diario",
-  "semanal",
-  "mensual",
-  "trimestral",
-  "anual",
-]);
+export const kpiFrequencyEnum = pgEnum("kpi_frequency", ["diario", "semanal", "mensual", "trimestral", "anual"]);
 
-export const kpiFormulaTypeEnum = pgEnum("kpi_formula_type", [
-  "manual",
-  "porcentaje",
-  "promedio",
-  "suma",
-  "conteo",
-]);
+export const kpiFormulaTypeEnum = pgEnum("kpi_formula_type", ["manual", "porcentaje", "promedio", "suma", "conteo"]);
 
-export const kpiStatusEnum = pgEnum("kpi_status", [
-  "activo",
-  "pausado",
-  "archivado",
-]);
+export const kpiStatusEnum = pgEnum("kpi_status", ["activo", "pausado", "archivado"]);
 
-export const kpiTrendEnum = pgEnum("kpi_trend", [
-  "up",
-  "down",
-  "stable",
-]);
+export const kpiTrendEnum = pgEnum("kpi_trend", ["up", "down", "stable"]);
 
-export const actionPlanPriorityEnum = pgEnum("action_plan_priority", [
-  "alta",
-  "media",
-  "baja",
-]);
+export const actionPlanPriorityEnum = pgEnum("action_plan_priority", ["alta", "media", "baja"]);
 
 export const actionPlanStatusEnum = pgEnum("action_plan_status", [
   "pendiente",
@@ -58,67 +34,83 @@ export const kpiCategories = pgTable("kpi_categories", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-export const kpis = pgTable("kpis", {
-  id: serial("id").primaryKey(),
-  name: text("name").notNull(),
-  description: text("description"),
-  categoryId: integer("category_id").references(() => kpiCategories.id),
-  unit: text("unit"),
-  targetValue: numeric("target_value", { precision: 12, scale: 2 }),
-  minValue: numeric("min_value", { precision: 12, scale: 2 }),
-  maxValue: numeric("max_value", { precision: 12, scale: 2 }),
-  frequency: kpiFrequencyEnum("frequency").notNull().default("mensual"),
-  formulaType: kpiFormulaTypeEnum("formula_type").notNull().default("manual"),
-  ownerId: integer("owner_id").references(() => users.id),
-  areaId: integer("area_id").references(() => areas.id),
-  dataSource: text("data_source"),
-  status: kpiStatusEnum("status").notNull().default("activo"),
-  displayOrder: integer("display_order").default(0),
-  color: text("color"),
-  createdById: integer("created_by_id").references(() => users.id),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-}, (table) => ({
-  categoryIdIdx: index("kpis_category_id_idx").on(table.categoryId),
-  ownerIdIdx: index("kpis_owner_id_idx").on(table.ownerId),
-  areaIdIdx: index("kpis_area_id_idx").on(table.areaId),
-}));
+export const kpis = pgTable(
+  "kpis",
+  {
+    id: serial("id").primaryKey(),
+    name: text("name").notNull(),
+    description: text("description"),
+    categoryId: integer("category_id").references(() => kpiCategories.id),
+    unit: text("unit"),
+    targetValue: numeric("target_value", { precision: 12, scale: 2 }),
+    minValue: numeric("min_value", { precision: 12, scale: 2 }),
+    maxValue: numeric("max_value", { precision: 12, scale: 2 }),
+    frequency: kpiFrequencyEnum("frequency").notNull().default("mensual"),
+    formulaType: kpiFormulaTypeEnum("formula_type").notNull().default("manual"),
+    ownerId: integer("owner_id").references(() => users.id),
+    areaId: integer("area_id").references(() => areas.id),
+    dataSource: text("data_source"),
+    status: kpiStatusEnum("status").notNull().default("activo"),
+    displayOrder: integer("display_order").default(0),
+    color: text("color"),
+    createdById: integer("created_by_id").references(() => users.id),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+  },
+  (table) => ({
+    categoryIdIdx: index("kpis_category_id_idx").on(table.categoryId),
+    ownerIdIdx: index("kpis_owner_id_idx").on(table.ownerId),
+    areaIdIdx: index("kpis_area_id_idx").on(table.areaId),
+  }),
+);
 
-export const kpiEntries = pgTable("kpi_entries", {
-  id: serial("id").primaryKey(),
-  kpiId: integer("kpi_id").references(() => kpis.id).notNull(),
-  period: text("period").notNull(), // YYYY-MM or YYYY-MM-DD
-  actualValue: numeric("actual_value", { precision: 12, scale: 2 }).notNull(),
-  targetValue: numeric("target_value", { precision: 12, scale: 2 }),
-  previousValue: numeric("previous_value", { precision: 12, scale: 2 }),
-  compliance: numeric("compliance", { precision: 7, scale: 2 }),
-  trend: kpiTrendEnum("trend"),
-  notes: text("notes"),
-  recordedById: integer("recorded_by_id").references(() => users.id),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-}, (table) => ({
-  kpiIdIdx: index("kpi_entries_kpi_id_idx").on(table.kpiId),
-}));
+export const kpiEntries = pgTable(
+  "kpi_entries",
+  {
+    id: serial("id").primaryKey(),
+    kpiId: integer("kpi_id")
+      .references(() => kpis.id)
+      .notNull(),
+    period: text("period").notNull(), // YYYY-MM or YYYY-MM-DD
+    actualValue: numeric("actual_value", { precision: 12, scale: 2 }).notNull(),
+    targetValue: numeric("target_value", { precision: 12, scale: 2 }),
+    previousValue: numeric("previous_value", { precision: 12, scale: 2 }),
+    compliance: numeric("compliance", { precision: 7, scale: 2 }),
+    trend: kpiTrendEnum("trend"),
+    notes: text("notes"),
+    recordedById: integer("recorded_by_id").references(() => users.id),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+  },
+  (table) => ({
+    kpiIdIdx: index("kpi_entries_kpi_id_idx").on(table.kpiId),
+  }),
+);
 
-export const kpiActionPlans = pgTable("kpi_action_plans", {
-  id: serial("id").primaryKey(),
-  kpiId: integer("kpi_id").references(() => kpis.id).notNull(),
-  kpiEntryId: integer("kpi_entry_id").references(() => kpiEntries.id),
-  title: text("title").notNull(),
-  description: text("description"),
-  responsibleId: integer("responsible_id").references(() => users.id),
-  dueDate: timestamp("due_date"),
-  priority: actionPlanPriorityEnum("priority").notNull().default("media"),
-  status: actionPlanStatusEnum("status").notNull().default("pendiente"),
-  completedDate: timestamp("completed_date"),
-  createdById: integer("created_by_id").references(() => users.id),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-}, (table) => ({
-  kpiIdIdx: index("kpi_action_plans_kpi_id_idx").on(table.kpiId),
-  responsibleIdIdx: index("kpi_action_plans_responsible_id_idx").on(table.responsibleId),
-}));
+export const kpiActionPlans = pgTable(
+  "kpi_action_plans",
+  {
+    id: serial("id").primaryKey(),
+    kpiId: integer("kpi_id")
+      .references(() => kpis.id)
+      .notNull(),
+    kpiEntryId: integer("kpi_entry_id").references(() => kpiEntries.id),
+    title: text("title").notNull(),
+    description: text("description"),
+    responsibleId: integer("responsible_id").references(() => users.id),
+    dueDate: timestamp("due_date"),
+    priority: actionPlanPriorityEnum("priority").notNull().default("media"),
+    status: actionPlanStatusEnum("status").notNull().default("pendiente"),
+    completedDate: timestamp("completed_date"),
+    createdById: integer("created_by_id").references(() => users.id),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+  },
+  (table) => ({
+    kpiIdIdx: index("kpi_action_plans_kpi_id_idx").on(table.kpiId),
+    responsibleIdIdx: index("kpi_action_plans_responsible_id_idx").on(table.responsibleId),
+  }),
+);
 
 // --- Validators ---
 

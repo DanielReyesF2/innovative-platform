@@ -1,12 +1,12 @@
+import { STAGE } from "@shared/schema/comercial-stages";
+import type { TeamMember } from "@shared/types/comercial";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useCreateProspect } from "../api";
 import { useToast } from "@/components/ui/use-toast";
 import { SERVICIOS_INNOVATIVE } from "@/lib/comercial-constants";
-import { STAGE } from "@shared/schema/comercial-stages";
-import type { TeamMember } from "@shared/types/comercial";
+import { useCreateProspect } from "../api";
 
 const SOURCE_LABELS: Record<string, string> = {
   referido: "Referido",
@@ -43,16 +43,14 @@ export function LeadForm({ onClose, salesTeam, defaultAssignee }: LeadFormProps)
   const set = (key: string, val: string) => setForm({ ...form, [key]: val });
 
   const toggleService = (svcId: string) => {
-    setForm(prev => ({
+    setForm((prev) => ({
       ...prev,
-      services: prev.services.includes(svcId)
-        ? prev.services.filter(s => s !== svcId)
-        : [...prev.services, svcId],
+      services: prev.services.includes(svcId) ? prev.services.filter((s) => s !== svcId) : [...prev.services, svcId],
     }));
   };
 
   const handleSubmit = async () => {
-    if (!form.companyName.trim() || !form.contactName.trim()) {
+    if (!(form.companyName.trim() && form.contactName.trim())) {
       toast({ title: "Empresa y nombre de contacto son requeridos", variant: "destructive" });
       return;
     }
@@ -122,16 +120,18 @@ export function LeadForm({ onClose, salesTeam, defaultAssignee }: LeadFormProps)
             Ingresa la informacion de contacto inicial. Los datos de negocio se agregan al calificar como prospecto.
           </p>
 
-          {defaultAssignee && salesTeam && (() => {
-            const registrant = salesTeam.find((m: TeamMember) => m.dbUserId === defaultAssignee);
-            if (!registrant) return null;
-            return (
-              <div className="flex items-center gap-2 rounded-lg bg-muted/50 px-3 py-2">
-                <span className="text-xs text-muted-foreground">Registrado por:</span>
-                <span className="text-xs font-medium">{registrant.name}</span>
-              </div>
-            );
-          })()}
+          {defaultAssignee &&
+            salesTeam &&
+            (() => {
+              const registrant = salesTeam.find((m: TeamMember) => m.dbUserId === defaultAssignee);
+              if (!registrant) return null;
+              return (
+                <div className="flex items-center gap-2 rounded-lg bg-muted/50 px-3 py-2">
+                  <span className="text-xs text-muted-foreground">Registrado por:</span>
+                  <span className="text-xs font-medium">{registrant.name}</span>
+                </div>
+              );
+            })()}
 
           <div>
             <Label>Empresa *</Label>
@@ -231,7 +231,7 @@ export function LeadForm({ onClose, salesTeam, defaultAssignee }: LeadFormProps)
           <div>
             <Label>Servicios de interés</Label>
             <div className="mt-2 flex flex-wrap gap-1.5">
-              {SERVICIOS_INNOVATIVE.map(svc => (
+              {SERVICIOS_INNOVATIVE.map((svc) => (
                 <button
                   key={svc.id}
                   type="button"

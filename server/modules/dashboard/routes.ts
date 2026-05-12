@@ -7,7 +7,7 @@ export const router = Router();
 router.use(requireAuth);
 
 // GET /api/dashboard/summary — Get dashboard summary metrics
-router.get("/summary", async (req, res) => {
+router.get("/summary", async (_req, res) => {
   try {
     // This is a base implementation. Each project customizes with their own metrics.
     res.json({

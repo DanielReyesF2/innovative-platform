@@ -1,25 +1,15 @@
-import { useState, useCallback, useRef } from "react";
-import { useMutation as useRQMutation } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+import type { ProposalVersion } from "@shared/schema/comercial";
+import { useMutation, useMutation as useRQMutation } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { CheckCircle, Clock, DollarSign, ExternalLink, Eye, FileText, Send, Upload, XCircle } from "lucide-react";
+import { useCallback, useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
-import { useMutation } from "@tanstack/react-query";
-import {
-  Send, FileText, Clock, DollarSign, ExternalLink,
-  CheckCircle, XCircle, Eye, Upload, Trash2,
-} from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import { getAuthToken, invalidateByPrefix } from "@/lib/queryClient";
+import { apiRequest, getAuthToken, invalidateByPrefix } from "@/lib/queryClient";
 import { fmtCurrency } from "@/lib/utils";
-import {
-  useProposalVersions,
-  useSendProposal,
-  useChangeProposalStatus,
-  useUpdateProposal,
-} from "../api";
-import { InlineText, InlineNumber } from "./InlineEdit";
-import type { ProposalVersion } from "@shared/schema/comercial";
+import { useChangeProposalStatus, useProposalVersions, useSendProposal, useUpdateProposal } from "../api";
+import { InlineNumber, InlineText } from "./InlineEdit";
 
 interface ProspectProposalsProps {
   prospectId: number;
@@ -55,7 +45,9 @@ function ProposalDetails({ prospectId, proposal }: { prospectId: number; proposa
   return (
     <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-3 pt-3 border-t border-[#f3f4f6]">
       <div>
-        <div className="text-[10px] font-semibold uppercase tracking-widest text-[#9ca3af] mb-0.5">Margen de utilidad</div>
+        <div className="text-[10px] font-semibold uppercase tracking-widest text-[#9ca3af] mb-0.5">
+          Margen de utilidad
+        </div>
         <InlineNumber
           value={utilidad}
           onSave={(v) => saveField({ utilidad: v })}
@@ -95,7 +87,9 @@ function ProposalAmountInput({ prospectId: pid, proposal }: { prospectId: number
 
   const saveMutation = useRQMutation({
     mutationFn: async (amount: string) => {
-      const res = await apiRequest("PATCH", `/api/comercial/prospects/${pid}/proposals/${proposal.id}/amount`, { amount });
+      const res = await apiRequest("PATCH", `/api/comercial/prospects/${pid}/proposals/${proposal.id}/amount`, {
+        amount,
+      });
       return res.json();
     },
     onSuccess: () => {
@@ -110,12 +104,17 @@ function ProposalAmountInput({ prospectId: pid, proposal }: { prospectId: number
       <span className="flex items-center gap-1">
         <DollarSign className="h-3.5 w-3.5" />
         <input
-          autoFocus
           type="number"
           value={value}
-          onChange={e => setValue(e.target.value)}
-          onBlur={() => { if (value.trim()) saveMutation.mutate(value); else setEditing(false); }}
-          onKeyDown={e => { if (e.key === "Enter" && value.trim()) saveMutation.mutate(value); if (e.key === "Escape") setEditing(false); }}
+          onChange={(e) => setValue(e.target.value)}
+          onBlur={() => {
+            if (value.trim()) saveMutation.mutate(value);
+            else setEditing(false);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && value.trim()) saveMutation.mutate(value);
+            if (e.key === "Escape") setEditing(false);
+          }}
           className="w-28 px-1.5 py-0.5 text-sm border border-[#00a8a8] rounded focus:outline-none focus:ring-1 focus:ring-[#00a8a8]"
           placeholder="0.00"
         />
@@ -130,7 +129,11 @@ function ProposalAmountInput({ prospectId: pid, proposal }: { prospectId: number
       title="Click para editar monto"
     >
       <DollarSign className="h-3.5 w-3.5" />
-      {proposal.amount ? fmtCurrency(proposal.amount) : <span className="text-[#F57C00] text-xs font-medium">+ Agregar monto</span>}
+      {proposal.amount ? (
+        fmtCurrency(proposal.amount)
+      ) : (
+        <span className="text-[#F57C00] text-xs font-medium">+ Agregar monto</span>
+      )}
     </button>
   );
 }
@@ -153,7 +156,7 @@ export function ProspectProposals({ prospectId }: ProspectProposalsProps) {
 
       const headers: Record<string, string> = {};
       const token = getAuthToken();
-      if (token) headers["Authorization"] = `Bearer ${token}`;
+      if (token) headers.Authorization = `Bearer ${token}`;
 
       const response = await fetch(`/api/comercial/prospects/${prospectId}/proposals/upload`, {
         method: "POST",
@@ -177,31 +180,50 @@ export function ProspectProposals({ prospectId }: ProspectProposalsProps) {
     },
   });
 
-  const handleFileUpload = useCallback(async (files: FileList | null) => {
-    if (!files || files.length === 0) return;
-    setUploading(true);
-    for (const file of Array.from(files)) {
-      if (file.size > 20 * 1024 * 1024) {
-        toast({ title: `${file.name} excede 20MB`, variant: "destructive" });
-        continue;
+  const handleFileUpload = useCallback(
+    async (files: FileList | null) => {
+      if (!files || files.length === 0) return;
+      setUploading(true);
+      for (const file of Array.from(files)) {
+        if (file.size > 20 * 1024 * 1024) {
+          toast({ title: `${file.name} excede 20MB`, variant: "destructive" });
+          continue;
+        }
+        try {
+          await uploadMutation.mutateAsync(file);
+        } catch {
+          // Error handled by mutation
+        }
       }
-      try {
-        await uploadMutation.mutateAsync(file);
-      } catch {
-        // Error handled by mutation
-      }
-    }
-    setUploading(false);
-  }, [uploadMutation, toast]);
+      setUploading(false);
+    },
+    [uploadMutation, toast],
+  );
 
   // Drag & drop
-  const handleDragEnter = useCallback((e: React.DragEvent) => { e.preventDefault(); e.stopPropagation(); setIsDragging(true); }, []);
-  const handleDragLeave = useCallback((e: React.DragEvent) => { e.preventDefault(); e.stopPropagation(); setIsDragging(false); }, []);
-  const handleDragOver = useCallback((e: React.DragEvent) => { e.preventDefault(); e.stopPropagation(); }, []);
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault(); e.stopPropagation(); setIsDragging(false);
-    handleFileUpload(e.dataTransfer.files);
-  }, [handleFileUpload]);
+  const handleDragEnter = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  }, []);
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  }, []);
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  }, []);
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsDragging(false);
+      handleFileUpload(e.dataTransfer.files);
+    },
+    [handleFileUpload],
+  );
 
   const handleSendProposal = async (proposalId: number) => {
     try {
@@ -225,9 +247,7 @@ export function ProspectProposals({ prospectId }: ProspectProposalsProps) {
     <div className="flex flex-col h-full">
       <div className="mb-4">
         <h4 className="font-medium">Propuestas</h4>
-        <p className="text-xs text-muted-foreground">
-          Arrastra archivos o haz click para subir propuestas (max 20MB)
-        </p>
+        <p className="text-xs text-muted-foreground">Arrastra archivos o haz click para subir propuestas (max 20MB)</p>
       </div>
 
       {/* Drop zone */}
@@ -262,9 +282,7 @@ export function ProspectProposals({ prospectId }: ProspectProposalsProps) {
             <span className="text-sm font-medium text-[#6b7280]">
               {isDragging ? "Suelta tu propuesta aquí" : "Arrastra tu propuesta o haz click para seleccionar"}
             </span>
-            <span className="text-[10px] text-[#9ca3af]">
-              PDF, Word, Excel, PowerPoint o imágenes · Max 20MB
-            </span>
+            <span className="text-[10px] text-[#9ca3af]">PDF, Word, Excel, PowerPoint o imágenes · Max 20MB</span>
           </div>
         )}
       </div>
@@ -287,16 +305,12 @@ export function ProspectProposals({ prospectId }: ProspectProposalsProps) {
             .map((proposal: ProposalVersion) => (
               <div
                 key={proposal.id}
-                className={`bg-card border rounded-lg p-4 ${
-                  proposal.status === "aceptada" ? "border-green-400" : ""
-                }`}
+                className={`bg-card border rounded-lg p-4 ${proposal.status === "aceptada" ? "border-green-400" : ""}`}
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-xs font-medium bg-muted px-2 py-0.5 rounded">
-                        v{proposal.version || 1}
-                      </span>
+                      <span className="text-xs font-medium bg-muted px-2 py-0.5 rounded">v{proposal.version || 1}</span>
                       <p className="font-medium text-sm">{proposal.name}</p>
                       <Badge className={statusColors[proposal.status ?? ""]}>
                         {statusLabels[proposal.status ?? ""]}

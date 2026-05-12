@@ -1,7 +1,7 @@
-import { X, TrendingUp, DollarSign, Target, ArrowRight } from 'lucide-react';
-import { fmtK, fmtCurrency } from '@/lib/utils';
-import { ExecutiveAvatar } from '@/lib/comercial-constants';
-import type { TeamMember } from '@shared/types/comercial';
+import type { TeamMember } from "@shared/types/comercial";
+import { ArrowRight, DollarSign, Target, TrendingUp, X } from "lucide-react";
+import { ExecutiveAvatar } from "@/lib/comercial-constants";
+import { fmtCurrency } from "@/lib/utils";
 
 interface Props {
   member: TeamMember;
@@ -12,11 +12,19 @@ interface Props {
 export function TeamMemberModal({ member, onClose, onViewHub }: Props) {
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={onClose}>
-      <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-lg border border-[#e5e7eb]" onClick={e => e.stopPropagation()}>
+      <div
+        className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-lg border border-[#e5e7eb]"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="bg-[#00a8a8] p-6 text-white rounded-t-lg">
           <div className="flex justify-between items-start">
             <div className="flex items-center gap-4">
-              <ExecutiveAvatar codigo={member.codigo} name={member.name} size="2xl" className="border-2 border-white/30" />
+              <ExecutiveAvatar
+                codigo={member.codigo}
+                name={member.name}
+                size="2xl"
+                className="border-2 border-white/30"
+              />
               <div>
                 <h2 className="text-2xl font-semibold">{member.name}</h2>
                 <p className="text-[#00b3b3] font-medium text-sm mt-1">{member.role}</p>
@@ -83,21 +91,19 @@ export function TeamMemberModal({ member, onClose, onViewHub }: Props) {
             <div className="grid grid-cols-2 gap-6">
               <div>
                 <div className="text-sm text-[#6b7280] font-medium mb-2">Presupuesto Mensual</div>
-                <div className="text-2xl font-semibold text-[#1c2c4a]">
-                  {fmtCurrency(member.presupuestoMensual)}
-                </div>
+                <div className="text-2xl font-semibold text-[#1c2c4a]">{fmtCurrency(member.presupuestoMensual)}</div>
               </div>
               <div>
                 <div className="text-sm text-[#6b7280] font-medium mb-2">Ventas Cerradas</div>
-                <div className="text-2xl font-semibold text-[#1c2c4a]">
-                  {fmtCurrency(member.ventasReales)}
-                </div>
+                <div className="text-2xl font-semibold text-[#1c2c4a]">{fmtCurrency(member.ventasReales)}</div>
               </div>
             </div>
             <div className="mt-4 p-4 bg-white rounded-lg border border-[#e5e7eb]">
               <div className="flex justify-between items-center">
                 <span className="font-medium text-[#1c2c4a]">Cumplimiento:</span>
-                <span className={`text-xl font-semibold ${member.cumplimientoPresupuesto >= 100 ? 'text-[#00a8a8]' : 'text-orange-600'}`}>
+                <span
+                  className={`text-xl font-semibold ${member.cumplimientoPresupuesto >= 100 ? "text-[#00a8a8]" : "text-orange-600"}`}
+                >
                   {member.cumplimientoPresupuesto}%
                 </span>
               </div>

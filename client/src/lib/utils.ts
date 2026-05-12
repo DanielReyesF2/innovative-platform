@@ -1,4 +1,4 @@
-import { clsx, type ClassValue } from "clsx";
+import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
@@ -20,5 +20,10 @@ export function fmtK(value: number, decimals = 0): string {
 /** Format number as full currency with commas and 2 fixed decimals: 3928000 → "$3,928,000.00" */
 export function fmtCurrency(value: number | string | null): string {
   const v = Number(value) || 0;
-  return v.toLocaleString("es-MX", { style: "currency", currency: "MXN", minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return v.toLocaleString("es-MX", {
+    style: "currency",
+    currency: "MXN",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 }

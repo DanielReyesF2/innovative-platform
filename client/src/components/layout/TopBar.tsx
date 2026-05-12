@@ -1,6 +1,5 @@
-import { useAuth } from "@/lib/auth";
-import { useLocation } from "wouter";
 import { ChevronDown, LogOut, Settings, User } from "lucide-react";
+import { useLocation } from "wouter";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,6 +8,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useAuth } from "@/lib/auth";
 
 export function TopBar() {
   const { user, isAdmin, logout } = useAuth();
@@ -27,18 +27,14 @@ export function TopBar() {
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground">
                 <User className="h-4 w-4" />
               </div>
-              <span className="hidden md:inline text-foreground">
-                {user.name}
-              </span>
+              <span className="hidden md:inline text-foreground">{user.name}</span>
               <ChevronDown className="hidden md:inline h-4 w-4 text-muted-foreground" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
                   <p className="text-sm font-medium leading-none">{user.name}</p>
-                  <p className="text-xs leading-none text-muted-foreground">
-                    {user.role}
-                  </p>
+                  <p className="text-xs leading-none text-muted-foreground">{user.role}</p>
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />

@@ -1,5 +1,4 @@
-import { useState, useRef, useCallback } from "react";
-import { ChevronDown, Check, AlertCircle, Lock } from "lucide-react";
+import { AlertCircle, Check, ChevronDown, Lock } from "lucide-react";
 
 interface SurveySectionProps {
   title: string;
@@ -51,11 +50,7 @@ export default function SurveySection({
       <button
         onClick={locked ? undefined : onToggle}
         className={`flex w-full items-center justify-between p-4 text-left transition-colors ${
-          locked
-            ? "bg-muted/50 cursor-not-allowed"
-            : isOpen
-            ? "bg-accent/50"
-            : "hover:bg-accent/30"
+          locked ? "bg-muted/50 cursor-not-allowed" : isOpen ? "bg-accent/50" : "hover:bg-accent/30"
         }`}
         disabled={locked}
       >
@@ -74,9 +69,7 @@ export default function SurveySection({
           {statusIcon()}
         </div>
       </button>
-      {isOpen && !locked && (
-        <div className="border-t p-4 space-y-4">{children}</div>
-      )}
+      {isOpen && !locked && <div className="border-t p-4 space-y-4">{children}</div>}
     </div>
   );
 }

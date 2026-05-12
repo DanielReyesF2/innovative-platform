@@ -1,8 +1,8 @@
 import "dotenv/config";
-import express from "express";
 import compression from "compression";
-import helmet from "helmet";
+import express from "express";
 import rateLimit from "express-rate-limit";
+import helmet from "helmet";
 import { createServer } from "http";
 import { loadModules } from "./module-loader";
 
@@ -21,18 +21,21 @@ app.use(
         connectSrc: ["'self'", "https:", "wss:"],
       },
     },
-  })
+  }),
 );
 
 // Global rate limiting for API endpoints (100 req/min per IP)
-app.use("/api", rateLimit({
-  windowMs: 60 * 1000,
-  max: 100,
-  message: { message: "Demasiadas solicitudes. Intenta de nuevo en un minuto." },
-  standardHeaders: true,
-  legacyHeaders: false,
-  skip: (req) => req.path === "/health",
-}));
+app.use(
+  "/api",
+  rateLimit({
+    windowMs: 60 * 1000,
+    max: 100,
+    message: { message: "Demasiadas solicitudes. Intenta de nuevo en un minuto." },
+    standardHeaders: true,
+    legacyHeaders: false,
+    skip: (req) => req.path === "/health",
+  }),
+);
 
 // Compression (skip SSE streams)
 app.use(
@@ -41,7 +44,7 @@ app.use(
       if (req.headers.accept === "text/event-stream") return false;
       return true;
     },
-  })
+  }),
 );
 
 // Body parsing
@@ -62,19 +65,24 @@ if (process.env.NODE_ENV === "production") {
   const path = await import("path");
   const publicDir = path.resolve(import.meta.dirname, "public");
   // Hashed assets (JS/CSS) — cache forever (hash changes on content change)
-  app.use("/assets", express.static(path.join(publicDir, "assets"), {
-    maxAge: "1y",
-    immutable: true,
-  }));
+  app.use(
+    "/assets",
+    express.static(path.join(publicDir, "assets"), {
+      maxAge: "1y",
+      immutable: true,
+    }),
+  );
 
   // Everything else (HTML, favicon, etc.) — no cache so deploys take effect immediately
-  app.use(express.static(publicDir, {
-    setHeaders: (res, filePath) => {
-      if (filePath.endsWith(".html")) {
-        res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-      }
-    },
-  }));
+  app.use(
+    express.static(publicDir, {
+      setHeaders: (res, filePath) => {
+        if (filePath.endsWith(".html")) {
+          res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+        }
+      },
+    }),
+  );
 
   // SPA fallback — serve index.html for non-API routes (always fresh)
   app.get("*", (_req, res) => {

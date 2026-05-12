@@ -1,29 +1,27 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent } from "@/components/ui/card";
 import {
-  CheckCircle,
-  XCircle,
   Building2,
-  Recycle,
-  Truck,
-  Warehouse,
-  Target,
   Calendar,
-  User,
+  Car,
+  CheckCircle,
+  HardHat,
   MapPin,
   Phone,
-  Users,
-  HardHat,
+  Recycle,
   ShieldCheck,
-  Car,
-  Clock,
+  Target,
+  Truck,
+  Users,
+  Warehouse,
+  XCircle,
 } from "lucide-react";
-import { useAcceptSurvey, useRejectSurvey, useSurvey } from "../api";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
-import { EPP_OPTIONS, ACCESS_REQUIREMENTS_OPTIONS } from "@/lib/comercial-constants";
+import { ACCESS_REQUIREMENTS_OPTIONS, EPP_OPTIONS } from "@/lib/comercial-constants";
+import { useAcceptSurvey, useRejectSurvey, useSurvey } from "../api";
 
 interface ReviewSurveyModalProps {
   survey: any;
@@ -48,7 +46,7 @@ export function ReviewSurveyModal({ survey, onClose, users = [] }: ReviewSurveyM
   const scheduling = generalInfo.proposedScheduling as Record<string, any> | null;
 
   const handleAccept = async () => {
-    if (!scheduledDate || !assignedToId) {
+    if (!(scheduledDate && assignedToId)) {
       toast({ title: "Fecha y operador son requeridos", variant: "destructive" });
       return;
     }
@@ -84,12 +82,13 @@ export function ReviewSurveyModal({ survey, onClose, users = [] }: ReviewSurveyM
   };
 
   // Resolve EPP / access requirement IDs to labels
-  const eppLabels = (scheduling?.epp as string[] | undefined)
-    ?.map((id: string) => EPP_OPTIONS.find((e) => e.id === id)?.label || id)
-    ?? [];
-  const accessLabels = (scheduling?.accessRequirements as string[] | undefined)
-    ?.map((id: string) => ACCESS_REQUIREMENTS_OPTIONS.find((r) => r.id === id)?.label || id)
-    ?? [];
+  const eppLabels =
+    (scheduling?.epp as string[] | undefined)?.map((id: string) => EPP_OPTIONS.find((e) => e.id === id)?.label || id) ??
+    [];
+  const accessLabels =
+    (scheduling?.accessRequirements as string[] | undefined)?.map(
+      (id: string) => ACCESS_REQUIREMENTS_OPTIONS.find((r) => r.id === id)?.label || id,
+    ) ?? [];
 
   // Waste types from scheduling (what comercial captured)
   const schedulingWaste = (generalInfo.wasteTypes as any[] | undefined) || [];
@@ -130,7 +129,12 @@ export function ReviewSurveyModal({ survey, onClose, users = [] }: ReviewSurveyM
                   <div>
                     <span className="text-xs text-cyan-600">Fecha propuesta</span>
                     <div className="font-medium text-cyan-900">
-                      {new Date(scheduling.proposedDate + "T12:00:00").toLocaleDateString("es-MX", { weekday: "short", year: "numeric", month: "short", day: "numeric" })}
+                      {new Date(`${scheduling.proposedDate}T12:00:00`).toLocaleDateString("es-MX", {
+                        weekday: "short",
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                      })}
                     </div>
                   </div>
                 )}
@@ -213,7 +217,10 @@ export function ReviewSurveyModal({ survey, onClose, users = [] }: ReviewSurveyM
                 {!scheduling.participantsByArea && (
                   <div className="flex flex-wrap gap-1.5">
                     {scheduling.responsibleNames.map((name: string, i: number) => (
-                      <span key={i} className="rounded-full bg-[#f3f4f6] px-2.5 py-1 text-xs font-medium text-[#1c2c4a]">
+                      <span
+                        key={i}
+                        className="rounded-full bg-[#f3f4f6] px-2.5 py-1 text-xs font-medium text-[#1c2c4a]"
+                      >
                         {name}
                       </span>
                     ))}
@@ -235,7 +242,10 @@ export function ReviewSurveyModal({ survey, onClose, users = [] }: ReviewSurveyM
                     </div>
                     <div className="flex flex-wrap gap-1.5">
                       {eppLabels.map((label: string, i: number) => (
-                        <span key={i} className="rounded-full bg-[#F57C00]/10 px-2.5 py-1 text-xs font-medium text-[#F57C00]">
+                        <span
+                          key={i}
+                          className="rounded-full bg-[#F57C00]/10 px-2.5 py-1 text-xs font-medium text-[#F57C00]"
+                        >
                           {label}
                         </span>
                       ))}
@@ -250,7 +260,10 @@ export function ReviewSurveyModal({ survey, onClose, users = [] }: ReviewSurveyM
                     </div>
                     <div className="flex flex-wrap gap-1.5">
                       {accessLabels.map((label: string, i: number) => (
-                        <span key={i} className="rounded-full bg-[#7C3AED]/10 px-2.5 py-1 text-xs font-medium text-[#7C3AED]">
+                        <span
+                          key={i}
+                          className="rounded-full bg-[#7C3AED]/10 px-2.5 py-1 text-xs font-medium text-[#7C3AED]"
+                        >
                           {label}
                         </span>
                       ))}
@@ -302,10 +315,24 @@ export function ReviewSurveyModal({ survey, onClose, users = [] }: ReviewSurveyM
               <div className="grid gap-3 sm:grid-cols-2">
                 <InfoRow label="Proveedor" value={surveyData.currentServices.providerName} />
                 <InfoRow label="Contrato Activo" value={surveyData.currentServices.contractActive ? "Sí" : "No"} />
-                <InfoRow label="Costo Mensual" value={surveyData.currentServices.monthlyCost ? `$${Number(surveyData.currentServices.monthlyCost).toLocaleString("es-MX")}` : undefined} />
+                <InfoRow
+                  label="Costo Mensual"
+                  value={
+                    surveyData.currentServices.monthlyCost
+                      ? `$${Number(surveyData.currentServices.monthlyCost).toLocaleString("es-MX")}`
+                      : undefined
+                  }
+                />
                 <InfoRow label="Frecuencia" value={surveyData.currentServices.collectionFrequency} />
                 <InfoRow label="Tipo Servicio" value={surveyData.currentServices.serviceType} />
-                <InfoRow label="Satisfacción" value={surveyData.currentServices.satisfactionLevel ? `${surveyData.currentServices.satisfactionLevel}/10` : undefined} />
+                <InfoRow
+                  label="Satisfacción"
+                  value={
+                    surveyData.currentServices.satisfactionLevel
+                      ? `${surveyData.currentServices.satisfactionLevel}/10`
+                      : undefined
+                  }
+                />
                 <InfoRow label="Razón de Cambio" value={surveyData.currentServices.reasonForChange} />
               </div>
             </SectionCard>
@@ -336,8 +363,22 @@ export function ReviewSurveyModal({ survey, onClose, users = [] }: ReviewSurveyM
                 <InfoRow label="Valorización" value={surveyData.needs.needsValorization ? "Sí" : "No"} />
                 <InfoRow label="Trazabilidad" value={surveyData.needs.needsTraceability ? "Sí" : "No"} />
                 <InfoRow label="Reportes Mensuales" value={surveyData.needs.needsMonthlyReporting ? "Sí" : "No"} />
-                <InfoRow label="Certificaciones" value={Array.isArray(surveyData.needs.certifications) ? surveyData.needs.certifications.join(", ") : surveyData.needs.certifications} />
-                <InfoRow label="Presupuesto" value={surveyData.needs.availableBudget ? `$${Number(surveyData.needs.availableBudget).toLocaleString("es-MX")}` : undefined} />
+                <InfoRow
+                  label="Certificaciones"
+                  value={
+                    Array.isArray(surveyData.needs.certifications)
+                      ? surveyData.needs.certifications.join(", ")
+                      : surveyData.needs.certifications
+                  }
+                />
+                <InfoRow
+                  label="Presupuesto"
+                  value={
+                    surveyData.needs.availableBudget
+                      ? `$${Number(surveyData.needs.availableBudget).toLocaleString("es-MX")}`
+                      : undefined
+                  }
+                />
                 <InfoRow label="Urgencia" value={surveyData.needs.urgency} />
                 <InfoRow label="Tomador de Decisión" value={surveyData.needs.decisionMaker} />
                 <InfoRow label="Metas Ambientales" value={surveyData.needs.environmentalGoals} />
@@ -348,7 +389,10 @@ export function ReviewSurveyModal({ survey, onClose, users = [] }: ReviewSurveyM
           {/* ═══ Estimated values ═══ */}
           <div className="grid gap-3 sm:grid-cols-2">
             <InfoRow label="Volumen Estimado" value={survey.estimatedVolume} />
-            <InfoRow label="Valor Estimado" value={survey.estimatedValue ? `$${Number(survey.estimatedValue).toLocaleString("es-MX")}` : undefined} />
+            <InfoRow
+              label="Valor Estimado"
+              value={survey.estimatedValue ? `$${Number(survey.estimatedValue).toLocaleString("es-MX")}` : undefined}
+            />
           </div>
         </div>
 
@@ -364,12 +408,14 @@ export function ReviewSurveyModal({ survey, onClose, users = [] }: ReviewSurveyM
                 <XCircle className="mr-2 h-4 w-4" />
                 Rechazar
               </Button>
-              <Button onClick={() => {
-                if (scheduling?.proposedDate && !scheduledDate) {
-                  setScheduledDate(scheduling.proposedDate);
-                }
-                setAction("accept");
-              }}>
+              <Button
+                onClick={() => {
+                  if (scheduling?.proposedDate && !scheduledDate) {
+                    setScheduledDate(scheduling.proposedDate);
+                  }
+                  setAction("accept");
+                }}
+              >
                 <CheckCircle className="mr-2 h-4 w-4" />
                 Aceptar y Agendar
               </Button>
@@ -453,11 +499,7 @@ export function ReviewSurveyModal({ survey, onClose, users = [] }: ReviewSurveyM
                 <Button variant="outline" onClick={() => setAction("none")}>
                   Cancelar
                 </Button>
-                <Button
-                  variant="destructive"
-                  onClick={handleReject}
-                  disabled={rejectMutation.isPending}
-                >
+                <Button variant="destructive" onClick={handleReject} disabled={rejectMutation.isPending}>
                   {rejectMutation.isPending ? "Rechazando..." : "Confirmar Rechazo"}
                 </Button>
               </div>
@@ -491,7 +533,9 @@ function ParticipantArea({
   });
   return (
     <div>
-      <span className="text-[11px] font-semibold" style={{ color }}>{label}</span>
+      <span className="text-[11px] font-semibold" style={{ color }}>
+        {label}
+      </span>
       <div className="mt-1 flex flex-wrap gap-1">
         {areaNames.map((name: string, i: number) => (
           <span
@@ -509,15 +553,7 @@ function ParticipantArea({
 
 // ─── Helper: section card ────────────────────────────────
 
-function SectionCard({
-  title,
-  icon,
-  children,
-}: {
-  title: string;
-  icon: React.ReactNode;
-  children: React.ReactNode;
-}) {
+function SectionCard({ title, icon, children }: { title: string; icon: React.ReactNode; children: React.ReactNode }) {
   return (
     <Card>
       <div className="flex items-center gap-2 px-4 py-3 text-sm font-semibold">

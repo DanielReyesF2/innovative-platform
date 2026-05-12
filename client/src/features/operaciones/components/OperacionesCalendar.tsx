@@ -1,7 +1,5 @@
+import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
 import { useState } from "react";
-import {
-  ChevronLeft, ChevronRight, CalendarDays, MapPin, Clock,
-} from "lucide-react";
 
 interface CalendarSurvey {
   id: number;
@@ -19,19 +17,29 @@ interface Props {
 }
 
 const MONTH_NAMES = [
-  "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-  "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre",
+  "Enero",
+  "Febrero",
+  "Marzo",
+  "Abril",
+  "Mayo",
+  "Junio",
+  "Julio",
+  "Agosto",
+  "Septiembre",
+  "Octubre",
+  "Noviembre",
+  "Diciembre",
 ];
 
 const DAY_HEADERS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
 
 const STATUS_COLORS: Record<string, { bg: string; text: string; dot: string }> = {
   pendiente_operaciones: { bg: "bg-amber-50", text: "text-amber-800", dot: "#F59E0B" },
-  agendado:              { bg: "bg-blue-50", text: "text-blue-800", dot: "#3B82F6" },
-  en_sitio:              { bg: "bg-orange-50", text: "text-orange-800", dot: "#F97316" },
-  completado:            { bg: "bg-green-50", text: "text-green-800", dot: "#22C55E" },
-  rechazado:             { bg: "bg-red-50", text: "text-red-800", dot: "#EF4444" },
-  cancelado:             { bg: "bg-gray-50", text: "text-gray-500", dot: "#9CA3AF" },
+  agendado: { bg: "bg-blue-50", text: "text-blue-800", dot: "#3B82F6" },
+  en_sitio: { bg: "bg-orange-50", text: "text-orange-800", dot: "#F97316" },
+  completado: { bg: "bg-green-50", text: "text-green-800", dot: "#22C55E" },
+  rechazado: { bg: "bg-red-50", text: "text-red-800", dot: "#EF4444" },
+  cancelado: { bg: "bg-gray-50", text: "text-gray-500", dot: "#9CA3AF" },
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -86,12 +94,16 @@ export function OperacionesCalendar({ surveys, opsTeam, onSurveyClick }: Props) 
   });
 
   const prevMonth = () => {
-    if (viewMonth === 0) { setViewMonth(11); setViewYear((y) => y - 1); }
-    else setViewMonth((m) => m - 1);
+    if (viewMonth === 0) {
+      setViewMonth(11);
+      setViewYear((y) => y - 1);
+    } else setViewMonth((m) => m - 1);
   };
   const nextMonth = () => {
-    if (viewMonth === 11) { setViewMonth(0); setViewYear((y) => y + 1); }
-    else setViewMonth((m) => m + 1);
+    if (viewMonth === 11) {
+      setViewMonth(0);
+      setViewYear((y) => y + 1);
+    } else setViewMonth((m) => m + 1);
   };
 
   // Counts for legend
@@ -105,9 +117,7 @@ export function OperacionesCalendar({ surveys, opsTeam, onSurveyClick }: Props) 
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
           <CalendarDays className="text-[#00a8a8]" size={20} />
-          <h3 className="text-sm font-semibold text-[#1c2c4a]">
-            Calendario de Levantamientos
-          </h3>
+          <h3 className="text-sm font-semibold text-[#1c2c4a]">Calendario de Levantamientos</h3>
         </div>
         <div className="flex items-center gap-2">
           <button onClick={prevMonth} className="p-1.5 hover:bg-[#f3f4f6] rounded-lg transition-colors">
@@ -170,7 +180,7 @@ export function OperacionesCalendar({ surveys, opsTeam, onSurveyClick }: Props) 
                           className="w-1.5 h-1.5 rounded-full flex-shrink-0"
                           style={{ backgroundColor: colors.dot }}
                         />
-                        {s.clientName.length > 14 ? s.clientName.substring(0, 14) + "…" : s.clientName}
+                        {s.clientName.length > 14 ? `${s.clientName.substring(0, 14)}…` : s.clientName}
                       </div>
                     );
                   })}

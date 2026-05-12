@@ -1,37 +1,15 @@
-import { useState } from "react";
+import type { ProspectActivity } from "@shared/schema/comercial";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { ArrowRightLeft, File, FileText, Mail, MessageSquare, Phone, Plus, Send, Users } from "lucide-react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  Phone,
-  Mail,
-  Users,
-  FileText,
-  ArrowRightLeft,
-  File,
-  Send,
-  Plus,
-  MessageSquare,
-} from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import { useProspectActivities, useCreateActivity } from "../api";
-import type { ProspectActivity } from "@shared/schema/comercial";
+import { useCreateActivity, useProspectActivities } from "../api";
 
 interface ProspectTimelineProps {
   prospectId: number;
@@ -99,7 +77,7 @@ export function ProspectTimeline({ prospectId }: ProspectTimelineProps) {
         type: newActivity.type,
         title: newActivity.title,
         description: newActivity.description || undefined,
-        activityDate: new Date(newActivity.date + "T12:00:00").toISOString(),
+        activityDate: new Date(`${newActivity.date}T12:00:00`).toISOString(),
       });
       toast({ title: "Actividad registrada" });
       setIsDialogOpen(false);
@@ -152,7 +130,9 @@ export function ProspectTimeline({ prospectId }: ProspectTimelineProps) {
                   type="date"
                   className="mt-1"
                   value={newActivity.date}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewActivity({ ...newActivity, date: e.target.value })}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setNewActivity({ ...newActivity, date: e.target.value })
+                  }
                 />
               </div>
               <div>
@@ -161,7 +141,9 @@ export function ProspectTimeline({ prospectId }: ProspectTimelineProps) {
                   className="mt-1"
                   placeholder="Ej: Llamada de seguimiento"
                   value={newActivity.title}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewActivity({ ...newActivity, title: e.target.value })}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setNewActivity({ ...newActivity, title: e.target.value })
+                  }
                 />
               </div>
               <div>
@@ -170,7 +152,9 @@ export function ProspectTimeline({ prospectId }: ProspectTimelineProps) {
                   className="mt-1"
                   placeholder="Detalles adicionales..."
                   value={newActivity.description}
-                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setNewActivity({ ...newActivity, description: e.target.value })}
+                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                    setNewActivity({ ...newActivity, description: e.target.value })
+                  }
                   rows={3}
                 />
               </div>
@@ -212,21 +196,13 @@ export function ProspectTimeline({ prospectId }: ProspectTimelineProps) {
                 <div className="flex items-start justify-between">
                   <div>
                     <p className="font-medium text-sm">{activity.title}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {activityLabels[activity.type || "otro"]}
-                    </p>
+                    <p className="text-xs text-muted-foreground">{activityLabels[activity.type || "otro"]}</p>
                   </div>
                   <span className="text-xs text-muted-foreground">
-                    {activity.createdAt
-                      ? format(new Date(activity.createdAt), "PP", { locale: es })
-                      : ""}
+                    {activity.createdAt ? format(new Date(activity.createdAt), "PP", { locale: es }) : ""}
                   </span>
                 </div>
-                {activity.description && (
-                  <p className="text-sm text-muted-foreground mt-2">
-                    {activity.description}
-                  </p>
-                )}
+                {activity.description && <p className="text-sm text-muted-foreground mt-2">{activity.description}</p>}
               </div>
             </div>
           ))}

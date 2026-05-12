@@ -1,36 +1,33 @@
+import {
+  AlertCircle,
+  BarChart3,
+  Calendar,
+  CheckCircle,
+  ChevronRight,
+  ClipboardList,
+  Clock,
+  FileText,
+  Inbox,
+  MapPin,
+  Search,
+  Users,
+} from "lucide-react";
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { KpiSection } from "@/features/kpis/components/KpiSection";
+import { ExecutiveAvatar } from "@/lib/comercial-constants";
 import {
-  ClipboardList,
-  FileText,
-  Calendar,
-  CheckCircle,
-  Clock,
-  AlertTriangle,
-  Search,
-  ChevronRight,
-  AlertCircle,
-  Plus,
-  Inbox,
-  BarChart3,
-  Users,
-  MapPin,
-} from "lucide-react";
-import {
-  useSurveys,
-  useSurveySummary,
   useDocuments,
   useExpiredDocuments,
-  usePendingReviewSurveys,
   useOpsTeam,
+  usePendingReviewSurveys,
+  useSurveySummary,
+  useSurveys,
 } from "./api";
-import { ExecutiveAvatar } from "@/lib/comercial-constants";
-import { KpiSection } from "@/features/kpis/components/KpiSection";
-import { ReviewSurveyModal } from "./components/ReviewSurveyModal";
 import { OperacionesCalendar } from "./components/OperacionesCalendar";
+import { ReviewSurveyModal } from "./components/ReviewSurveyModal";
 
 const STATUS_LABELS: Record<string, string> = {
   borrador_comercial: "Borrador Comercial",
@@ -69,9 +66,7 @@ export default function OperacionesPage() {
 
   const isError = surveysError || docsError;
 
-  const [activeTab, setActiveTab] = useState<"solicitudes" | "surveys" | "documents" | "kpis">(
-    "solicitudes"
-  );
+  const [activeTab, setActiveTab] = useState<"solicitudes" | "surveys" | "documents" | "kpis">("solicitudes");
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [reviewSurvey, setReviewSurvey] = useState<any>(null);
@@ -84,9 +79,7 @@ export default function OperacionesPage() {
   const filteredSurveys = surveys
     .filter((s: any) => s.status !== "pendiente_operaciones")
     .filter((s: any) => {
-      const matchesSearch =
-        !searchTerm ||
-        s.clientName?.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesSearch = !searchTerm || s.clientName?.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesStatus = statusFilter === "all" || s.status === statusFilter;
       return matchesSearch && matchesStatus;
     });
@@ -107,19 +100,22 @@ export default function OperacionesPage() {
       s.status === "borrador_comercial" ||
       s.status === "pendiente_operaciones" ||
       s.status === "agendado" ||
-      s.status === "en_sitio"
+      s.status === "en_sitio",
   ).length;
-  const withoutReport = surveys.filter(
-    (s: any) => s.status === "completado" && !s.hasReport
-  ).length;
+  const _withoutReport = surveys.filter((s: any) => s.status === "completado" && !s.hasReport).length;
 
   if (isError) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-3">
         <div className="text-red-500 text-4xl">⚠</div>
         <h2 className="text-lg font-semibold text-[#1c2c4a]">Error al cargar operaciones</h2>
-        <p className="text-sm text-[#6b7280]">Hubo un problema al conectar con el servidor. Intenta recargar la página.</p>
-        <button onClick={() => window.location.reload()} className="mt-2 px-4 py-2 text-sm font-medium text-white bg-[#00a8a8] rounded-lg hover:bg-[#008f8f]">
+        <p className="text-sm text-[#6b7280]">
+          Hubo un problema al conectar con el servidor. Intenta recargar la página.
+        </p>
+        <button
+          onClick={() => window.location.reload()}
+          className="mt-2 px-4 py-2 text-sm font-medium text-white bg-[#00a8a8] rounded-lg hover:bg-[#008f8f]"
+        >
           Recargar
         </button>
       </div>
@@ -132,9 +128,7 @@ export default function OperacionesPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Operaciones</h1>
-          <p className="text-muted-foreground">
-            Levantamientos de campo, documentos operativos y seguimiento
-          </p>
+          <p className="text-muted-foreground">Levantamientos de campo, documentos operativos y seguimiento</p>
         </div>
       </div>
 
@@ -148,10 +142,8 @@ export default function OperacionesPage() {
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
             {opsTeam.map((member) => {
-              const completionPct = member.total > 0
-                ? Math.round((member.completed / member.total) * 100)
-                : 0;
-              const barColor = completionPct >= 80 ? '#2E7D32' : completionPct >= 40 ? '#F57C00' : '#ef4444';
+              const completionPct = member.total > 0 ? Math.round((member.completed / member.total) * 100) : 0;
+              const barColor = completionPct >= 80 ? "#2E7D32" : completionPct >= 40 ? "#F57C00" : "#ef4444";
 
               return (
                 <div
@@ -165,7 +157,7 @@ export default function OperacionesPage() {
                     <ExecutiveAvatar codigo={member.codigo || "??"} name={member.name} size="lg" />
                     <div className="min-w-0">
                       <div className="text-sm font-semibold text-[#1c2c4a] truncate">
-                        {member.name.split(' ').slice(0, 2).join(' ')}
+                        {member.name.split(" ").slice(0, 2).join(" ")}
                       </div>
                       <div className="text-[10px] text-[#6b7280] flex items-center gap-1">
                         <MapPin size={9} /> Campo
@@ -210,7 +202,7 @@ export default function OperacionesPage() {
       {/* Calendario de levantamientos — siempre visible */}
       <OperacionesCalendar
         surveys={surveys}
-        opsTeam={opsTeam.map(m => ({ id: m.id, name: m.name, codigo: m.codigo }))}
+        opsTeam={opsTeam.map((m) => ({ id: m.id, name: m.name, codigo: m.codigo }))}
         onSurveyClick={(id) => {
           const found = surveys.find((s: any) => s.id === id);
           if (found) setReviewSurvey(found);
@@ -333,9 +325,7 @@ export default function OperacionesPage() {
       ) : activeTab === "solicitudes" ? (
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">
-              Solicitudes Pendientes ({pendingReview.length})
-            </CardTitle>
+            <CardTitle className="text-lg">Solicitudes Pendientes ({pendingReview.length})</CardTitle>
           </CardHeader>
           <CardContent>
             {pendingReview.length === 0 ? (
@@ -361,9 +351,7 @@ export default function OperacionesPage() {
                           {new Date(survey.createdAt).toLocaleDateString("es-MX")}
                         </span>
                         {survey.estimatedVolume && <span>{survey.estimatedVolume}</span>}
-                        {survey.estimatedValue && (
-                          <span>${Number(survey.estimatedValue).toLocaleString("es-MX")}</span>
-                        )}
+                        {survey.estimatedValue && <span>${Number(survey.estimatedValue).toLocaleString("es-MX")}</span>}
                       </div>
                     </div>
                     <ChevronRight className="h-4 w-4 text-muted-foreground" />
@@ -376,9 +364,7 @@ export default function OperacionesPage() {
       ) : activeTab === "surveys" ? (
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">
-              Levantamientos ({filteredSurveys.length})
-            </CardTitle>
+            <CardTitle className="text-lg">Levantamientos ({filteredSurveys.length})</CardTitle>
           </CardHeader>
           <CardContent>
             {filteredSurveys.length === 0 ? (
@@ -411,14 +397,10 @@ export default function OperacionesPage() {
                           </span>
                         )}
                         {survey.estimatedVolume && <span>{survey.estimatedVolume}</span>}
-                        {survey.estimatedValue && (
-                          <span>${Number(survey.estimatedValue).toLocaleString("es-MX")}</span>
-                        )}
+                        {survey.estimatedValue && <span>${Number(survey.estimatedValue).toLocaleString("es-MX")}</span>}
                       </div>
                       {survey.address && (
-                        <div className="mt-1 text-xs text-muted-foreground truncate max-w-md">
-                          {survey.address}
-                        </div>
+                        <div className="mt-1 text-xs text-muted-foreground truncate max-w-md">{survey.address}</div>
                       )}
                     </div>
                     <ChevronRight className="h-4 w-4 text-muted-foreground" />
@@ -431,9 +413,7 @@ export default function OperacionesPage() {
       ) : (
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">
-              Documentos Operativos ({filteredDocs.length})
-            </CardTitle>
+            <CardTitle className="text-lg">Documentos Operativos ({filteredDocs.length})</CardTitle>
           </CardHeader>
           <CardContent>
             {filteredDocs.length === 0 ? (
@@ -441,10 +421,7 @@ export default function OperacionesPage() {
             ) : (
               <div className="space-y-3">
                 {filteredDocs.map((doc: any) => (
-                  <div
-                    key={doc.id}
-                    className="flex items-center justify-between rounded-lg border p-4"
-                  >
+                  <div key={doc.id} className="flex items-center justify-between rounded-lg border p-4">
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
                         <FileText className="h-4 w-4 text-muted-foreground" />
@@ -461,14 +438,10 @@ export default function OperacionesPage() {
                         <span>{doc.type}</span>
                         <span>{doc.category}</span>
                         {doc.expirationDate && (
-                          <span>
-                            Vence: {new Date(doc.expirationDate).toLocaleDateString("es-MX")}
-                          </span>
+                          <span>Vence: {new Date(doc.expirationDate).toLocaleDateString("es-MX")}</span>
                         )}
                       </div>
-                      {doc.notes && (
-                        <div className="mt-1 text-xs text-muted-foreground">{doc.notes}</div>
-                      )}
+                      {doc.notes && <div className="mt-1 text-xs text-muted-foreground">{doc.notes}</div>}
                     </div>
                   </div>
                 ))}
@@ -483,7 +456,7 @@ export default function OperacionesPage() {
         <ReviewSurveyModal
           survey={reviewSurvey}
           onClose={() => setReviewSurvey(null)}
-          users={opsTeam.map(m => ({ id: m.id, name: m.name }))}
+          users={opsTeam.map((m) => ({ id: m.id, name: m.name }))}
         />
       )}
 
@@ -498,9 +471,7 @@ export default function OperacionesPage() {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
               <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500" />
             </span>
-            <span className="text-sm font-semibold">
-              {liveSurveys.length} en sitio
-            </span>
+            <span className="text-sm font-semibold">{liveSurveys.length} en sitio</span>
             <MapPin size={16} />
           </button>
 
@@ -524,9 +495,7 @@ export default function OperacionesPage() {
               </div>
               <div className="max-h-64 overflow-y-auto divide-y divide-[#f3f4f6]">
                 {liveSurveys.map((s: any) => {
-                  const operator = s.assignedOperationsId
-                    ? opsTeam.find(m => m.id === s.assignedOperationsId)
-                    : null;
+                  const operator = s.assignedOperationsId ? opsTeam.find((m) => m.id === s.assignedOperationsId) : null;
                   return (
                     <button
                       key={s.id}
@@ -546,11 +515,7 @@ export default function OperacionesPage() {
                           <span className="truncate">{s.address}</span>
                         </div>
                       )}
-                      {operator && (
-                        <div className="mt-0.5 text-[11px] text-[#00a8a8] font-medium">
-                          {operator.name}
-                        </div>
-                      )}
+                      {operator && <div className="mt-0.5 text-[11px] text-[#00a8a8] font-medium">{operator.name}</div>}
                     </button>
                   );
                 })}

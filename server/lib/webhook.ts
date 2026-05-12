@@ -3,10 +3,7 @@
  * Sends a POST with JSON payload to the given URL.
  * Returns true if the webhook responded 2xx, false otherwise.
  */
-export async function triggerWebhook(
-  url: string,
-  payload: Record<string, unknown>,
-): Promise<boolean> {
+export async function triggerWebhook(url: string, payload: Record<string, unknown>): Promise<boolean> {
   try {
     const res = await fetch(url, {
       method: "POST",

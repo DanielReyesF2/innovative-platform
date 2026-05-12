@@ -1,20 +1,37 @@
-import { useState, useEffect } from "react";
+import type { User } from "@shared/schema/common";
 import { useQuery } from "@tanstack/react-query";
 import {
-  ChevronLeft, ChevronRight, FileText, Save, Send, Clock,
-  CheckCircle2, Plus, Trash2, Check, X, CalendarDays, AlertCircle,
+  CalendarDays,
+  Check,
+  CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  FileText,
+  Plus,
+  Save,
+  Send,
+  Trash2,
+  X,
 } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import {
-  useWeeklyReport, useSaveWeeklyReport, useSendWeeklyReport,
-  useWeeklyReportsRange, useCommitments, useCreateCommitment,
-  useUpdateCommitmentStatus, useUpdateCommitment, useDeleteCommitment, useCommitmentsRange,
+  useCommitments,
+  useCommitmentsRange,
+  useCreateCommitment,
+  useDeleteCommitment,
+  useSaveWeeklyReport,
+  useSendWeeklyReport,
+  useUpdateCommitment,
+  useUpdateCommitmentStatus,
+  useWeeklyReport,
+  useWeeklyReportsRange,
 } from "../api";
-import type { User } from "@shared/schema/common";
 
 // ─── Helpers ───
 
-function getMonday(d: Date): string {
+function _getMonday(d: Date): string {
   const date = new Date(d);
   const day = date.getDay();
   const diff = date.getDate() - day + (day === 0 ? -6 : 1);
@@ -24,8 +41,9 @@ function getMonday(d: Date): string {
 
 function formatDateShort(dateStr: string | null | undefined): string {
   if (!dateStr) return "";
-  return new Date(dateStr + "T12:00:00").toLocaleString("es-MX", {
-    day: "numeric", month: "short",
+  return new Date(`${dateStr}T12:00:00`).toLocaleString("es-MX", {
+    day: "numeric",
+    month: "short",
   });
 }
 
@@ -57,8 +75,18 @@ function getCalendarDays(year: number, month: number): { date: Date; isCurrentMo
 }
 
 const MONTH_NAMES = [
-  "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-  "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre",
+  "Enero",
+  "Febrero",
+  "Marzo",
+  "Abril",
+  "Mayo",
+  "Junio",
+  "Julio",
+  "Agosto",
+  "Septiembre",
+  "Octubre",
+  "Noviembre",
+  "Diciembre",
 ];
 
 const DAY_HEADERS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
@@ -78,12 +106,12 @@ export function ResumenSemanal() {
   const rangeTo = `${viewYear}-${String(viewMonth + 1).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
 
   const { data: monthReports = [] } = useWeeklyReportsRange(rangeFrom, rangeTo);
-  const reportsMap = new Map(monthReports.map(r => [r.weekStart, r]));
+  const reportsMap = new Map(monthReports.map((r) => [r.weekStart, r]));
 
   // Commitments in range for calendar cards
   const { data: rangeCommitments = [] } = useCommitmentsRange(rangeFrom, rangeTo);
   const commitmentsByDate = new Map<string, typeof rangeCommitments>();
-  rangeCommitments.forEach(c => {
+  rangeCommitments.forEach((c) => {
     const dateKey = c.dueDate || c.weekStart;
     if (!dateKey) return;
     const list = commitmentsByDate.get(dateKey) || [];
@@ -95,12 +123,16 @@ export function ResumenSemanal() {
   const todayStr = now.toISOString().split("T")[0];
 
   const prevMonth = () => {
-    if (viewMonth === 0) { setViewMonth(11); setViewYear(y => y - 1); }
-    else setViewMonth(m => m - 1);
+    if (viewMonth === 0) {
+      setViewMonth(11);
+      setViewYear((y) => y - 1);
+    } else setViewMonth((m) => m - 1);
   };
   const nextMonth = () => {
-    if (viewMonth === 11) { setViewMonth(0); setViewYear(y => y + 1); }
-    else setViewMonth(m => m + 1);
+    if (viewMonth === 11) {
+      setViewMonth(0);
+      setViewYear((y) => y + 1);
+    } else setViewMonth((m) => m + 1);
   };
 
   return (
@@ -111,9 +143,7 @@ export function ResumenSemanal() {
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
             <CalendarDays className="text-[#00a8a8]" size={20} />
-            <h3 className="text-sm font-semibold text-[#1c2c4a]">
-              Resumen Semanal — Vista Calendario
-            </h3>
+            <h3 className="text-sm font-semibold text-[#1c2c4a]">Resumen Semanal — Vista Calendario</h3>
           </div>
           <div className="flex items-center gap-2">
             <button onClick={prevMonth} className="p-1.5 hover:bg-[#f3f4f6] rounded-lg transition-colors">
@@ -130,7 +160,7 @@ export function ResumenSemanal() {
 
         {/* Day headers */}
         <div className="grid grid-cols-7 gap-px mb-1">
-          {DAY_HEADERS.map(d => (
+          {DAY_HEADERS.map((d) => (
             <div key={d} className="text-center text-[10px] font-semibold text-[#6b7280] uppercase py-1.5">
               {d}
             </div>
@@ -178,61 +208,69 @@ export function ResumenSemanal() {
                   </div>
                 )}
                 {/* Commitment cards — click opens the week modal */}
-                {isCurrentMonth && (() => {
-                  const items = commitmentsByDate.get(dateStr);
-                  if (!items || items.length === 0) return null;
-                  return (
-                    <div className="mt-0.5 space-y-0.5">
-                      {items.slice(0, 2).map(c => {
-                        const isOverdue = c.status === "pendiente" && c.dueDate && new Date(c.dueDate) < now;
-                        return (
+                {isCurrentMonth &&
+                  (() => {
+                    const items = commitmentsByDate.get(dateStr);
+                    if (!items || items.length === 0) return null;
+                    return (
+                      <div className="mt-0.5 space-y-0.5">
+                        {items.slice(0, 2).map((c) => {
+                          const isOverdue = c.status === "pendiente" && c.dueDate && new Date(c.dueDate) < now;
+                          return (
+                            <div
+                              key={c.id}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedWeek(c.weekStart);
+                              }}
+                              className={`text-[8px] font-medium rounded px-1 py-0.5 truncate cursor-pointer hover:opacity-80 transition-opacity ${
+                                c.status === "cumplido"
+                                  ? "text-[#2E7D32] bg-[#2E7D32]/10 line-through"
+                                  : isOverdue
+                                    ? "text-white bg-[#EF4444]"
+                                    : "text-white bg-[#0067B0]"
+                              }`}
+                              title={`${c.responsible}: ${c.description}`}
+                            >
+                              {c.description.length > 18 ? `${c.description.substring(0, 18)}…` : c.description}
+                            </div>
+                          );
+                        })}
+                        {items.length > 2 && (
                           <div
-                            key={c.id}
-                            onClick={(e) => { e.stopPropagation(); setSelectedWeek(c.weekStart); }}
-                            className={`text-[8px] font-medium rounded px-1 py-0.5 truncate cursor-pointer hover:opacity-80 transition-opacity ${
-                              c.status === "cumplido"
-                                ? "text-[#2E7D32] bg-[#2E7D32]/10 line-through"
-                                : isOverdue
-                                  ? "text-white bg-[#EF4444]"
-                                  : "text-white bg-[#0067B0]"
-                            }`}
-                            title={`${c.responsible}: ${c.description}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedWeek(items[0].weekStart);
+                            }}
+                            className="text-[7px] text-[#0067B0] font-semibold px-1 cursor-pointer hover:underline"
                           >
-                            {c.description.length > 18 ? c.description.substring(0, 18) + "…" : c.description}
+                            +{items.length - 2} más
                           </div>
-                        );
-                      })}
-                      {items.length > 2 && (
-                        <div
-                          onClick={(e) => { e.stopPropagation(); setSelectedWeek(items[0].weekStart); }}
-                          className="text-[7px] text-[#0067B0] font-semibold px-1 cursor-pointer hover:underline"
-                        >
-                          +{items.length - 2} más
-                        </div>
-                      )}
-                    </div>
-                  );
-                })()}
+                        )}
+                      </div>
+                    );
+                  })()}
               </div>
             );
           })}
         </div>
 
         <div className="mt-3 flex items-center gap-4 text-[10px] text-[#6b7280]">
-          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-[#2E7D32]" /> Enviado</span>
-          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-[#F57C00]" /> Borrador</span>
-          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-[#e5e7eb]" /> Sin reporte</span>
+          <span className="flex items-center gap-1">
+            <span className="w-2 h-2 rounded-full bg-[#2E7D32]" /> Enviado
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="w-2 h-2 rounded-full bg-[#F57C00]" /> Borrador
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="w-2 h-2 rounded-full bg-[#e5e7eb]" /> Sin reporte
+          </span>
           <span className="ml-auto">Click en un lunes para abrir el reporte</span>
         </div>
       </div>
 
       {/* Modal */}
-      {selectedWeek && (
-        <WeekReportModal
-          weekStart={selectedWeek}
-          onClose={() => setSelectedWeek(null)}
-        />
-      )}
+      {selectedWeek && <WeekReportModal weekStart={selectedWeek} onClose={() => setSelectedWeek(null)} />}
     </div>
   );
 }
@@ -263,12 +301,12 @@ function WeekReportModal({ weekStart, onClose }: { weekStart: string; onClose: (
   });
 
   // New commitment form
-  const [showNewCommitment, setShowNewCommitment] = useState(false);
+  const [_showNewCommitment, setShowNewCommitment] = useState(false);
   const [newDesc, setNewDesc] = useState("");
   const [newResponsible, setNewResponsible] = useState("");
   const [newResponsibleUserId, setNewResponsibleUserId] = useState<number | null>(null);
   const [newDueDate, setNewDueDate] = useState("");
-  const [assignToMember, setAssignToMember] = useState<{ id: number; name: string } | null>(null);
+  const [_assignToMember, setAssignToMember] = useState<{ id: number; name: string } | null>(null);
 
   // Edit commitment
   const updateCommitmentMutation = useUpdateCommitment();
@@ -288,11 +326,13 @@ function WeekReportModal({ weekStart, onClose }: { weekStart: string; onClose: (
   }, [report, initialized]);
 
   // Inherited pending commitments from OTHER weeks
-  const inheritedPending = allPending.filter(c => c.weekStart !== weekStart);
+  const inheritedPending = allPending.filter((c) => c.weekStart !== weekStart);
 
-  const mondayDate = new Date(weekStart + "T12:00:00");
+  const mondayDate = new Date(`${weekStart}T12:00:00`);
   const weekLabel = mondayDate.toLocaleDateString("es-MX", {
-    day: "numeric", month: "long", year: "numeric",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
   });
   const isSent = report?.status === "sent";
 
@@ -306,7 +346,10 @@ function WeekReportModal({ weekStart, onClose }: { weekStart: string; onClose: (
   };
 
   const handleSend = async () => {
-    const recipientList = recipients.split(",").map(e => e.trim()).filter(Boolean);
+    const recipientList = recipients
+      .split(",")
+      .map((e) => e.trim())
+      .filter(Boolean);
     if (recipientList.length === 0) {
       toast({ title: "Agrega al menos un destinatario", variant: "destructive" });
       return;
@@ -326,7 +369,7 @@ function WeekReportModal({ weekStart, onClose }: { weekStart: string; onClose: (
   };
 
   const handleAddCommitment = async () => {
-    if (!newDesc.trim() || !newResponsible.trim()) {
+    if (!(newDesc.trim() && newResponsible.trim())) {
       toast({ title: "Descripción y responsable requeridos", variant: "destructive" });
       return;
     }
@@ -360,14 +403,14 @@ function WeekReportModal({ weekStart, onClose }: { weekStart: string; onClose: (
   }
 
   const allCommitments = [...weekCommitments, ...inheritedPending];
-  const pendingCount = allCommitments.filter(c => c.status === "pendiente").length;
-  const doneCount = allCommitments.filter(c => c.status === "cumplido").length;
+  const pendingCount = allCommitments.filter((c) => c.status === "pendiente").length;
+  const doneCount = allCommitments.filter((c) => c.status === "cumplido").length;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
       <div
         className="bg-[#faf7f2] rounded-2xl shadow-2xl w-full max-w-5xl h-[85vh] flex flex-col relative"
-        onClick={e => e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
       >
         {/* ═══ HEADER ═══ */}
         <div className="flex items-center justify-between px-6 py-3.5 bg-white rounded-t-2xl border-b border-[#e5e7eb]/60">
@@ -395,11 +438,14 @@ function WeekReportModal({ weekStart, onClose }: { weekStart: string; onClose: (
             <input
               type="text"
               value={recipients}
-              onChange={e => setRecipients(e.target.value)}
+              onChange={(e) => setRecipients(e.target.value)}
               placeholder="Destinatarios: luz@empresa.com, ..."
               className="w-[260px] px-3 py-1.5 rounded-lg border border-[#e5e7eb] bg-[#f9fafb] text-xs text-[#1c2c4a] placeholder:text-[#bbb] focus:outline-none focus:ring-2 focus:ring-[#00a8a8]/20 focus:border-[#00a8a8]"
             />
-            <button onClick={onClose} className="w-8 h-8 rounded-lg hover:bg-[#f3f4f6] flex items-center justify-center text-[#6b7280] hover:text-[#1c2c4a] transition-colors">
+            <button
+              onClick={onClose}
+              className="w-8 h-8 rounded-lg hover:bg-[#f3f4f6] flex items-center justify-center text-[#6b7280] hover:text-[#1c2c4a] transition-colors"
+            >
               <X size={18} />
             </button>
           </div>
@@ -407,7 +453,6 @@ function WeekReportModal({ weekStart, onClose }: { weekStart: string; onClose: (
 
         {/* ═══ BODY ═══ */}
         <div className="flex-1 overflow-hidden flex flex-col">
-
           {/* ── TOP: Resumen de la Semana (full width, bigger) ── */}
           <div className="px-5 pt-4 pb-2">
             <label className="text-[11px] font-bold text-[#1c2c4a] uppercase tracking-wider flex items-center gap-1.5 mb-2">
@@ -415,7 +460,7 @@ function WeekReportModal({ weekStart, onClose }: { weekStart: string; onClose: (
             </label>
             <textarea
               value={content}
-              onChange={e => setContent(e.target.value)}
+              onChange={(e) => setContent(e.target.value)}
               placeholder="Seguimiento semanal: logros, avances, pipeline, cierres, pendientes..."
               className="w-full h-[200px] p-4 rounded-xl border border-[#e5e7eb] bg-white text-sm text-[#1c2c4a] placeholder:text-[#bbb] focus:outline-none focus:ring-2 focus:ring-[#00a8a8]/20 focus:border-[#00a8a8] resize-none shadow-sm"
             />
@@ -423,7 +468,6 @@ function WeekReportModal({ weekStart, onClose }: { weekStart: string; onClose: (
 
           {/* ── BOTTOM: 2 columns (Compromisos | Notas) ── */}
           <div className="flex-1 overflow-hidden grid grid-cols-1 lg:grid-cols-2 gap-0 mx-5 mb-3 rounded-xl border border-[#e5e7eb] bg-white shadow-sm">
-
             {/* ═══ LEFT: Compromisos (tabla 2 columnas) ═══ */}
             <div className="flex flex-col overflow-hidden border-r border-[#e5e7eb]/60">
               {/* Header */}
@@ -433,10 +477,14 @@ function WeekReportModal({ weekStart, onClose }: { weekStart: string; onClose: (
                 </label>
                 <div className="flex items-center gap-1.5">
                   {pendingCount > 0 && (
-                    <span className="text-[9px] font-bold text-[#F57C00] bg-[#F57C00]/10 px-1.5 py-0.5 rounded-full">{pendingCount}</span>
+                    <span className="text-[9px] font-bold text-[#F57C00] bg-[#F57C00]/10 px-1.5 py-0.5 rounded-full">
+                      {pendingCount}
+                    </span>
                   )}
                   {doneCount > 0 && (
-                    <span className="text-[9px] font-bold text-[#2E7D32] bg-[#2E7D32]/10 px-1.5 py-0.5 rounded-full">{doneCount} ✓</span>
+                    <span className="text-[9px] font-bold text-[#2E7D32] bg-[#2E7D32]/10 px-1.5 py-0.5 rounded-full">
+                      {doneCount} ✓
+                    </span>
                   )}
                 </div>
               </div>
@@ -451,8 +499,11 @@ function WeekReportModal({ weekStart, onClose }: { weekStart: string; onClose: (
               {/* Commitment rows */}
               <div className="flex-1 overflow-y-auto">
                 {/* Inherited */}
-                {inheritedPending.map(c => (
-                  <div key={c.id} className="grid grid-cols-[100px_1fr_70px] gap-0 items-center px-3 py-1.5 border-b border-[#F57C00]/10 bg-[#FFF7ED] hover:bg-[#FFF0E0] group text-[11px]">
+                {inheritedPending.map((c) => (
+                  <div
+                    key={c.id}
+                    className="grid grid-cols-[100px_1fr_70px] gap-0 items-center px-3 py-1.5 border-b border-[#F57C00]/10 bg-[#FFF7ED] hover:bg-[#FFF0E0] group text-[11px]"
+                  >
                     <div className="flex items-center gap-1.5">
                       <button
                         onClick={() => updateStatus.mutateAsync({ id: c.id, status: "cumplido" })}
@@ -461,100 +512,139 @@ function WeekReportModal({ weekStart, onClose }: { weekStart: string; onClose: (
                       <span className="text-[#1c2c4a] font-medium truncate">{c.responsible.split(" ")[0]}</span>
                     </div>
                     <div className="text-[#1c2c4a] truncate pr-2">{c.description}</div>
-                    <div className={`text-right text-[10px] ${new Date(c.dueDate || c.weekStart) < new Date() ? "text-[#EF4444] font-bold" : "text-[#6b7280]"}`}>
+                    <div
+                      className={`text-right text-[10px] ${new Date(c.dueDate || c.weekStart) < new Date() ? "text-[#EF4444] font-bold" : "text-[#6b7280]"}`}
+                    >
                       {formatDateShort(c.dueDate || c.weekStart)}
                     </div>
                   </div>
                 ))}
 
                 {/* This week */}
-                {weekCommitments.map(c => editingId === c.id ? (
-                  /* ── Edit mode ── */
-                  <div key={c.id} className="grid grid-cols-[100px_1fr_70px_32px] gap-1 items-center px-3 py-1 border-b border-[#00a8a8]/20 bg-[#00a8a8]/5 text-[11px]">
-                    <select
-                      value={editResponsibleUserId || ""}
-                      onChange={e => {
-                        const id = Number(e.target.value);
-                        const m = teamMembers.find(t => t.id === id);
-                        if (m) { setEditResponsible(m.name); setEditResponsibleUserId(m.id); }
-                      }}
-                      className="px-1 py-1 rounded border border-[#e5e7eb] bg-white text-[10px] focus:outline-none focus:ring-1 focus:ring-[#00a8a8] truncate"
+                {weekCommitments.map((c) =>
+                  editingId === c.id ? (
+                    /* ── Edit mode ── */
+                    <div
+                      key={c.id}
+                      className="grid grid-cols-[100px_1fr_70px_32px] gap-1 items-center px-3 py-1 border-b border-[#00a8a8]/20 bg-[#00a8a8]/5 text-[11px]"
                     >
-                      <option value="">{editResponsible.split(" ")[0]}</option>
-                      {teamMembers.map(m => (
-                        <option key={m.id} value={m.id}>{m.name.split(" ").slice(0, 2).join(" ")}</option>
-                      ))}
-                    </select>
-                    <input
-                      autoFocus
-                      value={editDesc}
-                      onChange={e => setEditDesc(e.target.value)}
-                      className="px-1.5 py-1 rounded border border-[#e5e7eb] bg-white text-[11px] focus:outline-none focus:ring-1 focus:ring-[#00a8a8]"
-                      onKeyDown={e => {
-                        if (e.key === "Enter" && editDesc.trim()) {
-                          updateCommitmentMutation.mutateAsync({ id: c.id, description: editDesc, responsible: editResponsible, responsibleUserId: editResponsibleUserId, dueDate: editDueDate || null });
+                      <select
+                        value={editResponsibleUserId || ""}
+                        onChange={(e) => {
+                          const id = Number(e.target.value);
+                          const m = teamMembers.find((t) => t.id === id);
+                          if (m) {
+                            setEditResponsible(m.name);
+                            setEditResponsibleUserId(m.id);
+                          }
+                        }}
+                        className="px-1 py-1 rounded border border-[#e5e7eb] bg-white text-[10px] focus:outline-none focus:ring-1 focus:ring-[#00a8a8] truncate"
+                      >
+                        <option value="">{editResponsible.split(" ")[0]}</option>
+                        {teamMembers.map((m) => (
+                          <option key={m.id} value={m.id}>
+                            {m.name.split(" ").slice(0, 2).join(" ")}
+                          </option>
+                        ))}
+                      </select>
+                      <input
+                        value={editDesc}
+                        onChange={(e) => setEditDesc(e.target.value)}
+                        className="px-1.5 py-1 rounded border border-[#e5e7eb] bg-white text-[11px] focus:outline-none focus:ring-1 focus:ring-[#00a8a8]"
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && editDesc.trim()) {
+                            updateCommitmentMutation.mutateAsync({
+                              id: c.id,
+                              description: editDesc,
+                              responsible: editResponsible,
+                              responsibleUserId: editResponsibleUserId,
+                              dueDate: editDueDate || null,
+                            });
+                            setEditingId(null);
+                          }
+                          if (e.key === "Escape") setEditingId(null);
+                        }}
+                      />
+                      <input
+                        type="date"
+                        value={editDueDate}
+                        onChange={(e) => setEditDueDate(e.target.value)}
+                        className="px-0.5 py-1 rounded border border-[#e5e7eb] bg-white text-[9px] focus:outline-none focus:ring-1 focus:ring-[#00a8a8]"
+                      />
+                      <button
+                        onClick={() => {
+                          if (editDesc.trim()) {
+                            updateCommitmentMutation.mutateAsync({
+                              id: c.id,
+                              description: editDesc,
+                              responsible: editResponsible,
+                              responsibleUserId: editResponsibleUserId,
+                              dueDate: editDueDate || null,
+                            });
+                          }
                           setEditingId(null);
-                        }
-                        if (e.key === "Escape") setEditingId(null);
+                        }}
+                        className="w-7 h-7 rounded-lg bg-[#00a8a8] text-white flex items-center justify-center hover:bg-[#008b8b]"
+                      >
+                        <Check size={12} />
+                      </button>
+                    </div>
+                  ) : (
+                    /* ── View mode ── */
+                    <div
+                      key={c.id}
+                      className="grid grid-cols-[100px_1fr_70px] gap-0 items-center px-3 py-1.5 border-b border-[#e5e7eb]/30 hover:bg-[#f9fafb] group text-[11px] cursor-pointer"
+                      onDoubleClick={() => {
+                        setEditingId(c.id);
+                        setEditDesc(c.description);
+                        setEditResponsible(c.responsible);
+                        setEditResponsibleUserId(c.responsibleUserId || null);
+                        setEditDueDate(c.dueDate || "");
                       }}
-                    />
-                    <input type="date" value={editDueDate} onChange={e => setEditDueDate(e.target.value)}
-                      className="px-0.5 py-1 rounded border border-[#e5e7eb] bg-white text-[9px] focus:outline-none focus:ring-1 focus:ring-[#00a8a8]"
-                    />
-                    <button
-                      onClick={() => {
-                        if (editDesc.trim()) {
-                          updateCommitmentMutation.mutateAsync({ id: c.id, description: editDesc, responsible: editResponsible, responsibleUserId: editResponsibleUserId, dueDate: editDueDate || null });
-                        }
-                        setEditingId(null);
-                      }}
-                      className="w-7 h-7 rounded-lg bg-[#00a8a8] text-white flex items-center justify-center hover:bg-[#008b8b]"
                     >
-                      <Check size={12} />
-                    </button>
-                  </div>
-                ) : (
-                  /* ── View mode ── */
-                  <div
-                    key={c.id}
-                    className="grid grid-cols-[100px_1fr_70px] gap-0 items-center px-3 py-1.5 border-b border-[#e5e7eb]/30 hover:bg-[#f9fafb] group text-[11px] cursor-pointer"
-                    onDoubleClick={() => {
-                      setEditingId(c.id);
-                      setEditDesc(c.description);
-                      setEditResponsible(c.responsible);
-                      setEditResponsibleUserId(c.responsibleUserId || null);
-                      setEditDueDate(c.dueDate || "");
-                    }}
-                  >
-                    <div className="flex items-center gap-1.5">
-                      <button
-                        onClick={() => updateStatus.mutateAsync({ id: c.id, status: c.status === "cumplido" ? "pendiente" : "cumplido" })}
-                        className={`w-3.5 h-3.5 rounded border-[1.5px] flex items-center justify-center flex-shrink-0 transition-all ${
-                          c.status === "cumplido"
-                            ? "bg-[#2E7D32] border-[#2E7D32] text-white"
-                            : "border-[#d1d5db] hover:border-[#00a8a8]"
-                        }`}
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          onClick={() =>
+                            updateStatus.mutateAsync({
+                              id: c.id,
+                              status: c.status === "cumplido" ? "pendiente" : "cumplido",
+                            })
+                          }
+                          className={`w-3.5 h-3.5 rounded border-[1.5px] flex items-center justify-center flex-shrink-0 transition-all ${
+                            c.status === "cumplido"
+                              ? "bg-[#2E7D32] border-[#2E7D32] text-white"
+                              : "border-[#d1d5db] hover:border-[#00a8a8]"
+                          }`}
+                        >
+                          {c.status === "cumplido" && <Check size={8} />}
+                        </button>
+                        <span
+                          className={`font-medium truncate ${c.status === "cumplido" ? "text-[#9ca3af]" : "text-[#1c2c4a]"}`}
+                        >
+                          {c.responsible.split(" ")[0]}
+                        </span>
+                      </div>
+                      <div
+                        className={`truncate pr-2 ${c.status === "cumplido" ? "line-through text-[#9ca3af]" : "text-[#1c2c4a]"}`}
                       >
-                        {c.status === "cumplido" && <Check size={8} />}
-                      </button>
-                      <span className={`font-medium truncate ${c.status === "cumplido" ? "text-[#9ca3af]" : "text-[#1c2c4a]"}`}>{c.responsible.split(" ")[0]}</span>
+                        {c.description}
+                      </div>
+                      <div className="flex items-center justify-end gap-1">
+                        <span
+                          className={`text-[10px] ${c.status !== "cumplido" && c.dueDate && new Date(c.dueDate) < new Date() ? "text-[#EF4444] font-bold" : "text-[#6b7280]"}`}
+                        >
+                          {c.dueDate ? formatDateShort(c.dueDate) : "—"}
+                        </span>
+                        <button
+                          onClick={() => deleteCommitment.mutateAsync(c.id)}
+                          className="opacity-0 group-hover:opacity-100 text-[#9ca3af] hover:text-[#EF4444] transition-all p-0.5"
+                        >
+                          <Trash2 size={10} />
+                        </button>
+                      </div>
                     </div>
-                    <div className={`truncate pr-2 ${c.status === "cumplido" ? "line-through text-[#9ca3af]" : "text-[#1c2c4a]"}`}>
-                      {c.description}
-                    </div>
-                    <div className="flex items-center justify-end gap-1">
-                      <span className={`text-[10px] ${c.status !== "cumplido" && c.dueDate && new Date(c.dueDate) < new Date() ? "text-[#EF4444] font-bold" : "text-[#6b7280]"}`}>
-                        {c.dueDate ? formatDateShort(c.dueDate) : "—"}
-                      </span>
-                      <button
-                        onClick={() => deleteCommitment.mutateAsync(c.id)}
-                        className="opacity-0 group-hover:opacity-100 text-[#9ca3af] hover:text-[#EF4444] transition-all p-0.5"
-                      >
-                        <Trash2 size={10} />
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                  ),
+                )}
                 {weekCommitments.length === 0 && inheritedPending.length === 0 && (
                   <div className="text-[11px] text-[#9ca3af] text-center py-4">Sin compromisos</div>
                 )}
@@ -566,29 +656,37 @@ function WeekReportModal({ weekStart, onClose }: { weekStart: string; onClose: (
                   {/* Responsible dropdown-like */}
                   <select
                     value={newResponsibleUserId || ""}
-                    onChange={e => {
+                    onChange={(e) => {
                       const id = Number(e.target.value);
-                      const m = teamMembers.find(t => t.id === id);
-                      if (m) { setNewResponsible(m.name); setNewResponsibleUserId(m.id); setAssignToMember({ id: m.id, name: m.name }); }
+                      const m = teamMembers.find((t) => t.id === id);
+                      if (m) {
+                        setNewResponsible(m.name);
+                        setNewResponsibleUserId(m.id);
+                        setAssignToMember({ id: m.id, name: m.name });
+                      }
                     }}
                     className="px-1.5 py-1.5 rounded-lg border border-[#e5e7eb] bg-white text-[11px] text-[#1c2c4a] focus:outline-none focus:ring-1 focus:ring-[#00a8a8] appearance-none truncate"
                   >
                     <option value="">Persona...</option>
-                    {teamMembers.map(m => (
-                      <option key={m.id} value={m.id}>{m.name.split(" ").slice(0, 2).join(" ")}</option>
+                    {teamMembers.map((m) => (
+                      <option key={m.id} value={m.id}>
+                        {m.name.split(" ").slice(0, 2).join(" ")}
+                      </option>
                     ))}
                   </select>
                   <input
                     value={newDesc}
-                    onChange={e => setNewDesc(e.target.value)}
+                    onChange={(e) => setNewDesc(e.target.value)}
                     placeholder="Compromiso..."
                     className="px-2 py-1.5 rounded-lg border border-[#e5e7eb] bg-white text-[11px] focus:outline-none focus:ring-1 focus:ring-[#00a8a8]"
-                    onKeyDown={e => e.key === "Enter" && newDesc.trim() && newResponsible.trim() && handleAddCommitment()}
+                    onKeyDown={(e) =>
+                      e.key === "Enter" && newDesc.trim() && newResponsible.trim() && handleAddCommitment()
+                    }
                   />
                   <input
                     type="date"
                     value={newDueDate}
-                    onChange={e => setNewDueDate(e.target.value)}
+                    onChange={(e) => setNewDueDate(e.target.value)}
                     className="px-1 py-1.5 rounded-lg border border-[#e5e7eb] bg-white text-[10px] focus:outline-none focus:ring-1 focus:ring-[#00a8a8]"
                   />
                   <button
@@ -612,7 +710,7 @@ function WeekReportModal({ weekStart, onClose }: { weekStart: string; onClose: (
               <div className="flex-1 p-3">
                 <textarea
                   value={meetingNotes}
-                  onChange={e => setMeetingNotes(e.target.value)}
+                  onChange={(e) => setMeetingNotes(e.target.value)}
                   placeholder="Decisiones, acuerdos, feedback de dirección..."
                   className="w-full h-full p-3 rounded-lg border-0 bg-transparent text-sm text-[#1c2c4a] placeholder:text-[#bbb] focus:outline-none resize-none"
                 />
@@ -646,14 +744,18 @@ function WeekReportModal({ weekStart, onClose }: { weekStart: string; onClose: (
           <div className="absolute inset-0 flex items-center justify-center bg-black/30 rounded-2xl z-10">
             <div className="bg-white rounded-xl p-6 w-full max-w-md shadow-2xl m-4">
               <h4 className="text-base font-bold text-[#1c2c4a] mb-1">Enviar compromisos</h4>
-              <p className="text-sm text-[#6b7280] mb-4">Se notificará a los destinatarios con el resumen y compromisos de esta semana.</p>
+              <p className="text-sm text-[#6b7280] mb-4">
+                Se notificará a los destinatarios con el resumen y compromisos de esta semana.
+              </p>
 
               <div className="mb-4">
-                <label className="text-[11px] font-bold text-[#6b7280] uppercase tracking-wider mb-1.5 block">Destinatarios</label>
+                <label className="text-[11px] font-bold text-[#6b7280] uppercase tracking-wider mb-1.5 block">
+                  Destinatarios
+                </label>
                 <input
                   type="text"
                   value={recipients}
-                  onChange={e => setRecipients(e.target.value)}
+                  onChange={(e) => setRecipients(e.target.value)}
                   placeholder="luz@empresa.com, roger@empresa.com"
                   className="w-full px-3 py-2 rounded-lg border border-[#e5e7eb] text-sm focus:outline-none focus:ring-2 focus:ring-[#00a8a8]/20 focus:border-[#00a8a8]"
                 />
@@ -661,17 +763,27 @@ function WeekReportModal({ weekStart, onClose }: { weekStart: string; onClose: (
 
               {recipients.trim() && (
                 <div className="flex flex-wrap gap-1.5 mb-4">
-                  {recipients.split(",").map(e => e.trim()).filter(Boolean).map(email => (
-                    <span key={email} className="text-xs text-[#1c2c4a] bg-[#f3f4f6] px-2.5 py-1 rounded-full">{email}</span>
-                  ))}
+                  {recipients
+                    .split(",")
+                    .map((e) => e.trim())
+                    .filter(Boolean)
+                    .map((email) => (
+                      <span key={email} className="text-xs text-[#1c2c4a] bg-[#f3f4f6] px-2.5 py-1 rounded-full">
+                        {email}
+                      </span>
+                    ))}
                 </div>
               )}
 
               {allCommitments.length > 0 && (
                 <div className="mb-4 p-3 bg-[#f9fafb] rounded-lg">
-                  <div className="text-[10px] font-bold text-[#6b7280] uppercase mb-1.5">{allCommitments.length} compromisos incluidos</div>
-                  {allCommitments.slice(0, 4).map(c => (
-                    <div key={c.id} className="text-[11px] text-[#1c2c4a] truncate">• {c.description} — {c.responsible}</div>
+                  <div className="text-[10px] font-bold text-[#6b7280] uppercase mb-1.5">
+                    {allCommitments.length} compromisos incluidos
+                  </div>
+                  {allCommitments.slice(0, 4).map((c) => (
+                    <div key={c.id} className="text-[11px] text-[#1c2c4a] truncate">
+                      • {c.description} — {c.responsible}
+                    </div>
                   ))}
                   {allCommitments.length > 4 && (
                     <div className="text-[10px] text-[#6b7280] mt-1">+{allCommitments.length - 4} más</div>
@@ -680,7 +792,12 @@ function WeekReportModal({ weekStart, onClose }: { weekStart: string; onClose: (
               )}
 
               <div className="flex justify-end gap-2">
-                <button onClick={() => setShowSendConfirm(false)} className="px-4 py-2 text-sm text-[#6b7280] hover:bg-[#f3f4f6] rounded-lg transition-colors">Cancelar</button>
+                <button
+                  onClick={() => setShowSendConfirm(false)}
+                  className="px-4 py-2 text-sm text-[#6b7280] hover:bg-[#f3f4f6] rounded-lg transition-colors"
+                >
+                  Cancelar
+                </button>
                 <button
                   onClick={handleSend}
                   disabled={sendMutation.isPending || !recipients.trim()}

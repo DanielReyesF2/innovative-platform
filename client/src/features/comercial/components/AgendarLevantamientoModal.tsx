@@ -1,21 +1,35 @@
-import { useState } from "react";
+import { STAGE } from "@shared/schema/comercial-stages";
+import type { User } from "@shared/schema/common";
+import type { KanbanProspecto } from "@shared/types/comercial";
 import { useQuery } from "@tanstack/react-query";
 import {
-  X, Calendar as CalendarIcon, ChevronRight, Trash2, Plus,
-  MapPin, Phone, Users, HardHat, ShieldCheck, Car, Recycle, Save,
+  Calendar as CalendarIcon,
+  Car,
+  ChevronRight,
+  HardHat,
+  MapPin,
+  Phone,
+  Plus,
+  Recycle,
+  Save,
+  ShieldCheck,
+  Trash2,
+  Users,
+  X,
 } from "lucide-react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
-import { useUpdateProspect } from "../api";
 import {
-  KANBAN_STAGES, EPP_OPTIONS, WASTE_TYPES_CATALOG, ACCESS_REQUIREMENTS_OPTIONS,
+  ACCESS_REQUIREMENTS_OPTIONS,
+  EPP_OPTIONS,
+  KANBAN_STAGES,
+  WASTE_TYPES_CATALOG,
 } from "@/lib/comercial-constants";
-import { STAGE } from "@shared/schema/comercial-stages";
-import type { KanbanProspecto } from "@shared/types/comercial";
-import type { User } from "@shared/schema/common";
+import { useUpdateProspect } from "../api";
 
 // Modal de agendamiento de levantamiento: captura TODOS los campos de la etapa
 // al avanzar de Reunión → Agendar Levantamiento (DB: levantamiento → propuesta).
@@ -70,7 +84,7 @@ export function AgendarLevantamientoModal({ prospecto, onClose, onAdvanced }: Pr
   const [accessReqs, setAccessReqs] = useState<string[]>((seed.accessRequirements as string[]) || []);
   const [accessReqsOther, setAccessReqsOther] = useState<string>((seed.accessRequirementsOther as string) || "");
   const [vehiclePlates, setVehiclePlates] = useState<string>((seed.vehiclePlates as string) || "");
-  const [deliveryDate, setDeliveryDate] = useState<string>((seed.deliveryDate as string) || "");
+  const [deliveryDate, _setDeliveryDate] = useState<string>((seed.deliveryDate as string) || "");
   const [notes, setNotes] = useState<string>((seed.notes as string) || "");
   const [wasteTypes, setWasteTypes] = useState<WasteRow[]>(seedWaste);
 
@@ -99,7 +113,10 @@ export function AgendarLevantamientoModal({ prospecto, onClose, onAdvanced }: Pr
 
   // Waste rows ops
   const addWasteRow = () =>
-    setWasteTypes([...wasteTypes, { wasteType: "", quantityValue: "", quantityUnit: "ton", quantity: "", currentDestination: "" }]);
+    setWasteTypes([
+      ...wasteTypes,
+      { wasteType: "", quantityValue: "", quantityUnit: "ton", quantity: "", currentDestination: "" },
+    ]);
   const removeWasteRow = (i: number) => setWasteTypes(wasteTypes.filter((_, idx) => idx !== i));
   const updateWaste = (i: number, patch: Partial<WasteRow>) => {
     const next = [...wasteTypes];
@@ -191,7 +208,9 @@ export function AgendarLevantamientoModal({ prospecto, onClose, onAdvanced }: Pr
     emptyLabel: string,
   ) => (
     <div>
-      <Label className="text-[11px] font-semibold" style={{ color }}>{label}</Label>
+      <Label className="text-[11px] font-semibold" style={{ color }}>
+        {label}
+      </Label>
       {members.length === 0 ? (
         <p className="mt-1 text-[11px] italic text-[#9ca3af]">{emptyLabel}</p>
       ) : (
@@ -204,10 +223,17 @@ export function AgendarLevantamientoModal({ prospecto, onClose, onAdvanced }: Pr
                 type="button"
                 onClick={() => toggleId(setter)(m.id)}
                 className="rounded-full px-2.5 py-1 text-xs font-medium transition-colors flex items-center gap-1.5"
-                style={active ? { backgroundColor: color, color: "white" } : { backgroundColor: "#f3f4f6", color: "#6b7280" }}
+                style={
+                  active ? { backgroundColor: color, color: "white" } : { backgroundColor: "#f3f4f6", color: "#6b7280" }
+                }
               >
                 <span className="w-4 h-4 rounded-full bg-white/25 flex items-center justify-center text-[9px] font-bold">
-                  {m.codigo || m.name.split(" ").map((n) => n[0]).join("").substring(0, 2)}
+                  {m.codigo ||
+                    m.name
+                      .split(" ")
+                      .map((n) => n[0])
+                      .join("")
+                      .substring(0, 2)}
                 </span>
                 {m.name.split(" ").slice(0, 2).join(" ")}
               </button>
@@ -239,7 +265,9 @@ export function AgendarLevantamientoModal({ prospecto, onClose, onAdvanced }: Pr
         <div className="px-6 pt-4">
           <div className="rounded-lg bg-[#f9fafb] px-3 py-2">
             <div className="text-sm font-semibold text-[#1c2c4a]">{prospecto.empresa}</div>
-            <div className="text-xs text-[#6b7280]">{prospecto.ciudad} · {prospecto.industria}</div>
+            <div className="text-xs text-[#6b7280]">
+              {prospecto.ciudad} · {prospecto.industria}
+            </div>
           </div>
           <div className="flex items-center gap-2 text-sm mt-3">
             <span className="rounded bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-700">{fromLabel}</span>
@@ -294,19 +322,41 @@ export function AgendarLevantamientoModal({ prospecto, onClose, onAdvanced }: Pr
             <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
               <div>
                 <Label className="text-[11px]">Nombre *</Label>
-                <Input value={contactName} onChange={(e) => setContactName(e.target.value)} placeholder="Quien recibe" className="mt-1 h-9 text-sm" />
+                <Input
+                  value={contactName}
+                  onChange={(e) => setContactName(e.target.value)}
+                  placeholder="Quien recibe"
+                  className="mt-1 h-9 text-sm"
+                />
               </div>
               <div>
                 <Label className="text-[11px]">Puesto</Label>
-                <Input value={contactRole} onChange={(e) => setContactRole(e.target.value)} placeholder="Ej: Gerente de Planta" className="mt-1 h-9 text-sm" />
+                <Input
+                  value={contactRole}
+                  onChange={(e) => setContactRole(e.target.value)}
+                  placeholder="Ej: Gerente de Planta"
+                  className="mt-1 h-9 text-sm"
+                />
               </div>
               <div>
                 <Label className="text-[11px]">Teléfono</Label>
-                <Input type="tel" value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} placeholder="55 1234 5678" className="mt-1 h-9 text-sm" />
+                <Input
+                  type="tel"
+                  value={contactPhone}
+                  onChange={(e) => setContactPhone(e.target.value)}
+                  placeholder="55 1234 5678"
+                  className="mt-1 h-9 text-sm"
+                />
               </div>
               <div>
                 <Label className="text-[11px]">Correo</Label>
-                <Input type="email" value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} placeholder="contacto@empresa.com" className="mt-1 h-9 text-sm" />
+                <Input
+                  type="email"
+                  value={contactEmail}
+                  onChange={(e) => setContactEmail(e.target.value)}
+                  placeholder="contacto@empresa.com"
+                  className="mt-1 h-9 text-sm"
+                />
               </div>
             </div>
           </div>
@@ -359,9 +409,7 @@ export function AgendarLevantamientoModal({ prospecto, onClose, onAdvanced }: Pr
                   type="button"
                   onClick={() => toggleInList(epp, e.id, setEpp)}
                   className={`rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
-                    epp.includes(e.id)
-                      ? "bg-[#F57C00] text-white"
-                      : "bg-[#f3f4f6] text-[#6b7280] hover:bg-[#e5e7eb]"
+                    epp.includes(e.id) ? "bg-[#F57C00] text-white" : "bg-[#f3f4f6] text-[#6b7280] hover:bg-[#e5e7eb]"
                   }`}
                 >
                   {e.label}
@@ -410,9 +458,7 @@ export function AgendarLevantamientoModal({ prospecto, onClose, onAdvanced }: Pr
               placeholder="Ej: ABC-123-A, XYZ-987-B"
               className="mt-1"
             />
-            <p className="text-[10px] text-muted-foreground mt-0.5">
-              Separa con coma si son varios.
-            </p>
+            <p className="text-[10px] text-muted-foreground mt-0.5">Separa con coma si son varios.</p>
           </div>
 
           {/* Residuos con unidad kg/ton */}
@@ -443,7 +489,9 @@ export function AgendarLevantamientoModal({ prospecto, onClose, onAdvanced }: Pr
                       {wasteCategories.map((cat) => (
                         <optgroup key={cat} label={cat}>
                           {WASTE_TYPES_CATALOG.filter((w) => w.category === cat).map((w) => (
-                            <option key={w.id} value={w.id}>{w.label}</option>
+                            <option key={w.id} value={w.id}>
+                              {w.label}
+                            </option>
                           ))}
                         </optgroup>
                       ))}
@@ -469,14 +517,18 @@ export function AgendarLevantamientoModal({ prospecto, onClose, onAdvanced }: Pr
                           className={`px-2 text-[11px] font-medium ${
                             row.quantityUnit === "kg" ? "bg-[#00a8a8] text-white" : "bg-background text-[#6b7280]"
                           }`}
-                        >kg</button>
+                        >
+                          kg
+                        </button>
                         <button
                           type="button"
                           onClick={() => updateWaste(i, { quantityUnit: "ton" })}
                           className={`px-2 text-[11px] font-medium ${
                             row.quantityUnit === "ton" ? "bg-[#00a8a8] text-white" : "bg-background text-[#6b7280]"
                           }`}
-                        >ton</button>
+                        >
+                          ton
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -513,12 +565,12 @@ export function AgendarLevantamientoModal({ prospecto, onClose, onAdvanced }: Pr
         {/* Footer */}
         <div className="flex items-center justify-between border-t px-6 py-3 gap-3">
           <div className="text-[11px] text-muted-foreground">
-            {canAdvance
-              ? "Listo para agendar y avanzar."
-              : `Para avanzar faltan: ${missing.join(", ")}.`}
+            {canAdvance ? "Listo para agendar y avanzar." : `Para avanzar faltan: ${missing.join(", ")}.`}
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={onClose}>Cancelar</Button>
+            <Button variant="outline" onClick={onClose}>
+              Cancelar
+            </Button>
             <Button
               variant="outline"
               onClick={handleDraft}

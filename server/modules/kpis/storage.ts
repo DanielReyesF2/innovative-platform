@@ -1,13 +1,7 @@
-import { db } from "../../db";
-import { eq, desc, and, sql, inArray } from "drizzle-orm";
-import {
-  kpiCategories,
-  kpis,
-  kpiEntries,
-  kpiActionPlans,
-  type Kpi,
-} from "../../../shared/schema/kpis";
+import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import { areas } from "../../../shared/schema/common";
+import { type Kpi, kpiActionPlans, kpiCategories, kpiEntries, kpis } from "../../../shared/schema/kpis";
+import { db } from "../../db";
 
 // --- Categories ---
 
@@ -73,16 +67,12 @@ export async function getKpis(filters?: {
     categoryIds.length > 0
       ? db.select().from(kpiCategories).where(inArray(kpiCategories.id, categoryIds))
       : Promise.resolve([]),
-    db
-      .select()
-      .from(kpiEntries)
-      .where(inArray(kpiEntries.kpiId, kpiIds))
-      .orderBy(desc(kpiEntries.createdAt)),
+    db.select().from(kpiEntries).where(inArray(kpiEntries.kpiId, kpiIds)).orderBy(desc(kpiEntries.createdAt)),
   ]);
 
   const categoryMap = new Map(allCategories.map((c) => [c.id, c]));
   // Build map of kpiId → most recent entry
-  const lastEntryMap = new Map<number, typeof allEntries[number]>();
+  const lastEntryMap = new Map<number, (typeof allEntries)[number]>();
   for (const entry of allEntries) {
     if (!lastEntryMap.has(entry.kpiId)) {
       lastEntryMap.set(entry.kpiId, entry);
@@ -166,7 +156,7 @@ export async function getKpiSummary(areaId?: number) {
     .where(inArray(kpiEntries.kpiId, kpiIds))
     .orderBy(desc(kpiEntries.createdAt));
 
-  const lastEntryMap = new Map<number, typeof allEntries[number]>();
+  const lastEntryMap = new Map<number, (typeof allEntries)[number]>();
   for (const entry of allEntries) {
     if (!lastEntryMap.has(entry.kpiId)) {
       lastEntryMap.set(entry.kpiId, entry);
@@ -179,7 +169,7 @@ export async function getKpiSummary(areaId?: number) {
 
   for (const kpi of activeKpis) {
     const lastEntry = lastEntryMap.get(kpi.id);
-    if (!lastEntry || !lastEntry.compliance) continue;
+    if (!lastEntry?.compliance) continue;
 
     const compliance = Number(lastEntry.compliance);
     if (compliance >= 90) {
@@ -244,9 +234,8 @@ export async function createKpiEntry(data: {
   // Auto-calculate trend
   let trend: "up" | "down" | "stable" = "stable";
   if (previousValue !== null) {
-    const changePercent = previousValue !== 0
-      ? ((actualValue - previousValue) / Math.abs(previousValue)) * 100
-      : actualValue > 0 ? 100 : 0;
+    const changePercent =
+      previousValue !== 0 ? ((actualValue - previousValue) / Math.abs(previousValue)) * 100 : actualValue > 0 ? 100 : 0;
 
     if (changePercent > 1) trend = "up";
     else if (changePercent < -1) trend = "down";
@@ -270,10 +259,7 @@ export async function createKpiEntry(data: {
   return entry;
 }
 
-export async function updateKpiEntry(
-  entryId: number,
-  data: { actualValue?: string; notes?: string }
-) {
+export async function updateKpiEntry(entryId: number, data: { actualValue?: string; notes?: string }) {
   const [updated] = await db
     .update(kpiEntries)
     .set({ ...data, updatedAt: new Date() })
@@ -285,12 +271,7 @@ export async function updateKpiEntry(
 // --- KPI Trend ---
 
 export async function getKpiTrend(kpiId: number, limit: number = 12) {
-  return db
-    .select()
-    .from(kpiEntries)
-    .where(eq(kpiEntries.kpiId, kpiId))
-    .orderBy(kpiEntries.period)
-    .limit(limit);
+  return db.select().from(kpiEntries).where(eq(kpiEntries.kpiId, kpiId)).orderBy(kpiEntries.period).limit(limit);
 }
 
 // --- Action Plans ---
@@ -310,10 +291,7 @@ export async function getActionPlans(kpiId?: number) {
 export async function getPendingActionPlans(areaId?: number) {
   if (areaId) {
     // Get KPI IDs that belong to this area, then filter action plans
-    const areaKpis = await db
-      .select({ id: kpis.id })
-      .from(kpis)
-      .where(eq(kpis.areaId, areaId));
+    const areaKpis = await db.select({ id: kpis.id }).from(kpis).where(eq(kpis.areaId, areaId));
     const kpiIds = areaKpis.map((k) => k.id);
 
     if (kpiIds.length === 0) return [];
@@ -321,28 +299,18 @@ export async function getPendingActionPlans(areaId?: number) {
     return db
       .select()
       .from(kpiActionPlans)
-      .where(
-        and(
-          sql`${kpiActionPlans.status} in ('pendiente', 'en_proceso')`,
-          inArray(kpiActionPlans.kpiId, kpiIds)
-        )
-      )
+      .where(and(sql`${kpiActionPlans.status} in ('pendiente', 'en_proceso')`, inArray(kpiActionPlans.kpiId, kpiIds)))
       .orderBy(kpiActionPlans.dueDate);
   }
 
   return db
     .select()
     .from(kpiActionPlans)
-    .where(
-      sql`${kpiActionPlans.status} in ('pendiente', 'en_proceso')`
-    )
+    .where(sql`${kpiActionPlans.status} in ('pendiente', 'en_proceso')`)
     .orderBy(kpiActionPlans.dueDate);
 }
 
-export async function createActionPlan(
-  data: Record<string, unknown>,
-  createdById: number
-) {
+export async function createActionPlan(data: Record<string, unknown>, createdById: number) {
   const values: Record<string, unknown> = { ...data, createdById };
   if (data.dueDate) {
     values.dueDate = new Date(data.dueDate as string);
@@ -365,11 +333,7 @@ export async function updateActionPlan(id: number, data: Record<string, unknown>
     values.dueDate = new Date(data.dueDate as string);
   }
 
-  const [updated] = await db
-    .update(kpiActionPlans)
-    .set(values)
-    .where(eq(kpiActionPlans.id, id))
-    .returning();
+  const [updated] = await db.update(kpiActionPlans).set(values).where(eq(kpiActionPlans.id, id)).returning();
   return updated;
 }
 

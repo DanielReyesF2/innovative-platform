@@ -1,47 +1,35 @@
-import { useState, useRef, useCallback } from "react";
+import type { ProspectDocument } from "@shared/schema/comercial";
+import { useMutation } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import {
+  Download,
+  File,
+  FileImage,
+  FileSpreadsheet,
+  FileText,
+  MoreVertical,
+  Plus,
+  Presentation,
+  Trash2,
+  Upload,
+} from "lucide-react";
+import { useCallback, useRef, useState } from "react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Badge } from "@/components/ui/badge";
-import {
-  FileText,
-  Plus,
-  Download,
-  Trash2,
-  MoreVertical,
-  File,
-  FileSpreadsheet,
-  FileImage,
-  Presentation,
-  Upload,
-} from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
-import { useProspectDocuments, useCreateDocument, useDeleteDocument } from "../api";
-import type { ProspectDocument } from "@shared/schema/comercial";
-import { useMutation } from "@tanstack/react-query";
 import { getAuthToken, invalidateByPrefix } from "@/lib/queryClient";
+import { useCreateDocument, useDeleteDocument, useProspectDocuments } from "../api";
 
 interface ProspectDocumentsProps {
   prospectId: number;
@@ -119,7 +107,7 @@ export function ProspectDocuments({ prospectId }: ProspectDocumentsProps) {
       const headers: Record<string, string> = {};
       const token = getAuthToken();
       if (token) {
-        headers["Authorization"] = `Bearer ${token}`;
+        headers.Authorization = `Bearer ${token}`;
       }
 
       const response = await fetch(`/api/comercial/prospects/${prospectId}/documents/upload`, {
@@ -152,19 +140,22 @@ export function ProspectDocuments({ prospectId }: ProspectDocumentsProps) {
   });
 
   // Handle file upload
-  const handleFileUpload = useCallback(async (files: FileList | null) => {
-    if (!files || files.length === 0) return;
+  const handleFileUpload = useCallback(
+    async (files: FileList | null) => {
+      if (!files || files.length === 0) return;
 
-    setUploading(true);
-    for (const file of Array.from(files)) {
-      try {
-        await uploadMutation.mutateAsync({ file, tipo: uploadType, markAsClosed });
-      } catch {
-        // Error handled by mutation
+      setUploading(true);
+      for (const file of Array.from(files)) {
+        try {
+          await uploadMutation.mutateAsync({ file, tipo: uploadType, markAsClosed });
+        } catch {
+          // Error handled by mutation
+        }
       }
-    }
-    setUploading(false);
-  }, [uploadMutation, uploadType, markAsClosed]);
+      setUploading(false);
+    },
+    [uploadMutation, uploadType, markAsClosed],
+  );
 
   // Drag and drop handlers
   const handleDragEnter = useCallback((e: React.DragEvent) => {
@@ -184,15 +175,18 @@ export function ProspectDocuments({ prospectId }: ProspectDocumentsProps) {
     e.stopPropagation();
   }, []);
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
-    handleFileUpload(e.dataTransfer.files);
-  }, [handleFileUpload]);
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsDragging(false);
+      handleFileUpload(e.dataTransfer.files);
+    },
+    [handleFileUpload],
+  );
 
   const handleCreateDocument = async () => {
-    if (!newDoc.name.trim() || !newDoc.url.trim()) {
+    if (!(newDoc.name.trim() && newDoc.url.trim())) {
       toast({
         title: "Error",
         description: "Nombre y URL son requeridos",
@@ -274,10 +268,7 @@ export function ProspectDocuments({ prospectId }: ProspectDocumentsProps) {
               </div>
               <div>
                 <label className="text-sm font-medium">Tipo</label>
-                <Select
-                  value={newDoc.type}
-                  onValueChange={(v: string) => setNewDoc({ ...newDoc, type: v })}
-                >
+                <Select value={newDoc.type} onValueChange={(v: string) => setNewDoc({ ...newDoc, type: v })}>
                   <SelectTrigger className="mt-1">
                     <SelectValue />
                   </SelectTrigger>
@@ -299,9 +290,7 @@ export function ProspectDocuments({ prospectId }: ProspectDocumentsProps) {
                   value={newDoc.url}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewDoc({ ...newDoc, url: e.target.value })}
                 />
-                <p className="text-xs text-muted-foreground mt-1">
-                  Link de Google Drive, Dropbox, OneDrive, etc.
-                </p>
+                <p className="text-xs text-muted-foreground mt-1">Link de Google Drive, Dropbox, OneDrive, etc.</p>
               </div>
               <div>
                 <label className="text-sm font-medium">Descripcion (opcional)</label>
@@ -309,7 +298,9 @@ export function ProspectDocuments({ prospectId }: ProspectDocumentsProps) {
                   className="mt-1"
                   placeholder="Notas sobre el documento..."
                   value={newDoc.description}
-                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setNewDoc({ ...newDoc, description: e.target.value })}
+                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                    setNewDoc({ ...newDoc, description: e.target.value })
+                  }
                   rows={2}
                 />
               </div>
@@ -329,9 +320,7 @@ export function ProspectDocuments({ prospectId }: ProspectDocumentsProps) {
       {/* Drag & Drop Upload Zone */}
       <div
         className={`border-2 border-dashed rounded-lg p-6 mb-4 transition-all ${
-          isDragging
-            ? "border-primary bg-primary/5"
-            : "border-muted-foreground/25 hover:border-primary/50"
+          isDragging ? "border-primary bg-primary/5" : "border-muted-foreground/25 hover:border-primary/50"
         }`}
         onDragEnter={handleDragEnter}
         onDragLeave={handleDragLeave}
@@ -358,16 +347,11 @@ export function ProspectDocuments({ prospectId }: ProspectDocumentsProps) {
               <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
               <p className="text-sm font-medium mb-1">
                 Arrastra archivos aqui o{" "}
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  className="text-primary hover:underline"
-                >
+                <button onClick={() => fileInputRef.current?.click()} className="text-primary hover:underline">
                   selecciona
                 </button>
               </p>
-              <p className="text-xs text-muted-foreground">
-                PDF, Word, Excel, imagenes (max 10MB)
-              </p>
+              <p className="text-xs text-muted-foreground">PDF, Word, Excel, imagenes (max 10MB)</p>
             </>
           )}
         </div>
@@ -421,45 +405,26 @@ export function ProspectDocuments({ prospectId }: ProspectDocumentsProps) {
         <div className="space-y-6">
           {Object.entries(groupedDocs).map(([type, docs]) => (
             <div key={type}>
-              <h5 className="text-sm font-medium text-muted-foreground mb-3">
-                {documentTypeLabels[type] || type}
-              </h5>
+              <h5 className="text-sm font-medium text-muted-foreground mb-3">{documentTypeLabels[type] || type}</h5>
               <div className="grid gap-3">
                 {docs.map((doc: ProspectDocument) => (
-                  <div
-                    key={doc.id}
-                    className="bg-card border rounded-lg p-4 flex items-center gap-4"
-                  >
-                    <div className="flex-shrink-0">
-                      {getFileIcon(doc.mimeType ?? undefined)}
-                    </div>
+                  <div key={doc.id} className="bg-card border rounded-lg p-4 flex items-center gap-4">
+                    <div className="flex-shrink-0">{getFileIcon(doc.mimeType ?? undefined)}</div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <p className="font-medium truncate">{doc.name}</p>
-                        <Badge className={documentTypeColors[doc.type]}>
-                          {documentTypeLabels[doc.type]}
-                        </Badge>
+                        <Badge className={documentTypeColors[doc.type]}>{documentTypeLabels[doc.type]}</Badge>
                       </div>
                       {doc.description && (
-                        <p className="text-sm text-muted-foreground truncate mt-1">
-                          {doc.description}
-                        </p>
+                        <p className="text-sm text-muted-foreground truncate mt-1">{doc.description}</p>
                       )}
                       <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
                         {doc.fileSize && <span>{formatFileSize(doc.fileSize)}</span>}
-                        <span>
-                          {doc.createdAt
-                            ? format(new Date(doc.createdAt), "PP", { locale: es })
-                            : ""}
-                        </span>
+                        <span>{doc.createdAt ? format(new Date(doc.createdAt), "PP", { locale: es }) : ""}</span>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        asChild
-                      >
+                      <Button size="icon" variant="ghost" asChild>
                         <a href={doc.url} target="_blank" rel="noopener noreferrer">
                           <Download className="h-4 w-4" />
                         </a>
@@ -471,10 +436,7 @@ export function ProspectDocuments({ prospectId }: ProspectDocumentsProps) {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem
-                            onClick={() => handleDeleteDocument(doc.id)}
-                            className="text-destructive"
-                          >
+                          <DropdownMenuItem onClick={() => handleDeleteDocument(doc.id)} className="text-destructive">
                             <Trash2 className="h-4 w-4 mr-2" />
                             Eliminar
                           </DropdownMenuItem>

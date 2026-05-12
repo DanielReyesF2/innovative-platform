@@ -1,12 +1,12 @@
+import { STAGE } from "@shared/schema/comercial-stages";
+import { ArrowRight, UserCheck } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useUpdateProspect, useConvertLead } from "../api";
 import { useToast } from "@/components/ui/use-toast";
-import { ArrowRight, UserCheck } from "lucide-react";
 import { KANBAN_STAGES } from "@/lib/comercial-constants";
-import { STAGE } from "@shared/schema/comercial-stages";
+import { useConvertLead, useUpdateProspect } from "../api";
 
 interface QualifyProspect {
   id: number;
@@ -87,8 +87,8 @@ export function QualifyLeadDialog({ prospect, isLead, onClose, onQualified }: Qu
     }
   };
 
-  const fromLabel = KANBAN_STAGES.find(s => s.id === prospect.status)?.label || "Lead";
-  const toLabel = KANBAN_STAGES.find(s => s.id === STAGE.PRESENTACION)?.label || "Prospecto";
+  const fromLabel = KANBAN_STAGES.find((s) => s.id === prospect.status)?.label || "Lead";
+  const toLabel = KANBAN_STAGES.find((s) => s.id === STAGE.PRESENTACION)?.label || "Prospecto";
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4">
@@ -99,7 +99,9 @@ export function QualifyLeadDialog({ prospect, isLead, onClose, onQualified }: Qu
             <UserCheck className="h-5 w-5 text-primary" />
             <h2 className="text-lg font-bold">Calificar Lead</h2>
           </div>
-          <Button variant="ghost" size="sm" onClick={onClose}>✕</Button>
+          <Button variant="ghost" size="sm" onClick={onClose}>
+            ✕
+          </Button>
         </div>
 
         {/* Context */}
@@ -107,19 +109,13 @@ export function QualifyLeadDialog({ prospect, isLead, onClose, onQualified }: Qu
           <div className="rounded-lg bg-muted/50 p-3">
             <div className="text-sm font-medium">{prospect.empresa || prospect.name}</div>
             {(prospect.contacto?.nombre || prospect.contactName) && (
-              <div className="text-xs text-muted-foreground">
-                {prospect.contacto?.nombre || prospect.contactName}
-              </div>
+              <div className="text-xs text-muted-foreground">{prospect.contacto?.nombre || prospect.contactName}</div>
             )}
           </div>
           <div className="flex items-center gap-2 text-sm">
-            <span className="rounded bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700">
-              {fromLabel}
-            </span>
+            <span className="rounded bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700">{fromLabel}</span>
             <ArrowRight className="h-4 w-4 text-muted-foreground" />
-            <span className="rounded bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800">
-              {toLabel}
-            </span>
+            <span className="rounded bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800">{toLabel}</span>
           </div>
         </div>
 
@@ -183,16 +179,13 @@ export function QualifyLeadDialog({ prospect, isLead, onClose, onQualified }: Qu
 
         {/* Footer */}
         <div className="flex items-center justify-between border-t px-6 py-3">
-          <div className="text-[11px] text-muted-foreground">
-            * Requerido
-          </div>
+          <div className="text-[11px] text-muted-foreground">* Requerido</div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={onClose}>Cancelar</Button>
-            <Button
-              onClick={handleSubmit}
-              disabled={!canSubmit || updateProspect.isPending || convertLead.isPending}
-            >
-              {(updateProspect.isPending || convertLead.isPending) ? "Calificando..." : "Calificar Lead"}
+            <Button variant="outline" onClick={onClose}>
+              Cancelar
+            </Button>
+            <Button onClick={handleSubmit} disabled={!canSubmit || updateProspect.isPending || convertLead.isPending}>
+              {updateProspect.isPending || convertLead.isPending ? "Calificando..." : "Calificar Lead"}
             </Button>
           </div>
         </div>

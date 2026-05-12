@@ -49,14 +49,10 @@ export const HANDOFF_ALLOWED_STAGE_IDS = [
   STAGE.LEVANTAMIENTO,
 ] as const;
 
-export const isWonStage = (s: string): boolean =>
-  (WON_STAGE_IDS as readonly string[]).includes(s);
+export const isWonStage = (s: string): boolean => (WON_STAGE_IDS as readonly string[]).includes(s);
 
-export const isLostStage = (s: string): boolean =>
-  (LOST_STAGE_IDS as readonly string[]).includes(s);
+export const isLostStage = (s: string): boolean => (LOST_STAGE_IDS as readonly string[]).includes(s);
 
-export const isActiveStage = (s: string): boolean =>
-  (ACTIVE_STAGE_IDS as readonly string[]).includes(s);
+export const isActiveStage = (s: string): boolean => (ACTIVE_STAGE_IDS as readonly string[]).includes(s);
 
-export const canHandoffStage = (s: string): boolean =>
-  (HANDOFF_ALLOWED_STAGE_IDS as readonly string[]).includes(s);
+export const canHandoffStage = (s: string): boolean => (HANDOFF_ALLOWED_STAGE_IDS as readonly string[]).includes(s);

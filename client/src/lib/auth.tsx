@@ -1,7 +1,7 @@
-import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react";
+import { createContext, type ReactNode, useCallback, useContext, useEffect, useState } from "react";
 import { flushSync } from "react-dom";
-import { apiRequest, getAuthToken, setAuthToken, removeAuthToken, queryClient } from "./queryClient";
 import { useLocation } from "wouter";
+import { apiRequest, getAuthToken, queryClient, removeAuthToken, setAuthToken } from "./queryClient";
 
 interface User {
   id: number;
@@ -79,7 +79,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       sessionStorage.removeItem("redirectAfterLogin");
       setLocation(redirectPath);
     },
-    [setLocation]
+    [setLocation],
   );
 
   const logout = useCallback(async () => {
@@ -92,9 +92,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isAdmin = user?.role === "admin";
 
   return (
-    <AuthContext.Provider
-      value={{ user, isLoading, authReady, isAdmin, login, logout, refreshUser }}
-    >
+    <AuthContext.Provider value={{ user, isLoading, authReady, isAdmin, login, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

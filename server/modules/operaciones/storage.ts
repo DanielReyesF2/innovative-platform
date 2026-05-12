@@ -1,30 +1,30 @@
-import { db } from "../../db";
-import { eq, desc, and, lte, gte, sql } from "drizzle-orm";
-import {
-  surveys,
-  surveyWasteTypes,
-  surveyCurrentServices,
-  surveyPhotos,
-  surveyProposalPersonnel,
-  surveyProposalEquipment,
-  surveyProposalSupplies,
-  surveyProposalRentals,
-  surveySubproducts,
-  surveyServices,
-  surveyGateConfigs,
-  operationalDocuments,
-  installationsSchema,
-  personnelPoliciesSchema,
-  transportPoliciesSchema,
-  allowedEquipmentSchema,
-  legalRequirementsSchema,
-  operationAreaSchema,
-  type InsertSurvey,
-  type InsertDocument,
-  type Survey,
-} from "../../../shared/schema/operaciones";
+import { and, desc, eq, gte, lte, sql } from "drizzle-orm";
 import { prospects } from "../../../shared/schema/comercial";
 import { users } from "../../../shared/schema/common";
+import {
+  allowedEquipmentSchema,
+  type InsertDocument,
+  type InsertSurvey,
+  installationsSchema,
+  legalRequirementsSchema,
+  operationAreaSchema,
+  operationalDocuments,
+  personnelPoliciesSchema,
+  type Survey,
+  surveyCurrentServices,
+  surveyGateConfigs,
+  surveyPhotos,
+  surveyProposalEquipment,
+  surveyProposalPersonnel,
+  surveyProposalRentals,
+  surveyProposalSupplies,
+  surveyServices,
+  surveySubproducts,
+  surveys,
+  surveyWasteTypes,
+  transportPoliciesSchema,
+} from "../../../shared/schema/operaciones";
+import { db } from "../../db";
 
 // ─── JSONB section name → column + zod schema mapping ───
 
@@ -62,7 +62,17 @@ export async function getSurveyById(id: number) {
   });
   if (!survey) return null;
 
-  const [wasteTypes, currentServices, photos, subproducts, services, proposalPersonnel, proposalEquipment, proposalSupplies, proposalRentals] = await Promise.all([
+  const [
+    wasteTypes,
+    currentServices,
+    photos,
+    subproducts,
+    services,
+    proposalPersonnel,
+    proposalEquipment,
+    proposalSupplies,
+    proposalRentals,
+  ] = await Promise.all([
     db.query.surveyWasteTypes.findMany({ where: eq(surveyWasteTypes.surveyId, id) }),
     db.query.surveyCurrentServices.findMany({ where: eq(surveyCurrentServices.surveyId, id) }),
     db.query.surveyPhotos.findMany({ where: eq(surveyPhotos.surveyId, id) }),
@@ -106,16 +116,19 @@ export async function createSurveyFromProspect(prospectId: number, assignedComme
   });
   if (!prospect) throw new Error("Prospecto no encontrado");
 
-  const [survey] = await db.insert(surveys).values({
-    prospectId,
-    clientName: prospect.name,
-    address: prospect.location,
-    estimatedVolume: prospect.estimatedVolume,
-    estimatedValue: prospect.estimatedValue,
-    assignedCommercialId: assignedCommercialId,
-    status: "borrador_comercial",
-    type: "Levantamiento",
-  }).returning();
+  const [survey] = await db
+    .insert(surveys)
+    .values({
+      prospectId,
+      clientName: prospect.name,
+      address: prospect.location,
+      estimatedVolume: prospect.estimatedVolume,
+      estimatedValue: prospect.estimatedValue,
+      assignedCommercialId: assignedCommercialId,
+      status: "borrador_comercial",
+      type: "Levantamiento",
+    })
+    .returning();
 
   return survey;
 }
@@ -163,10 +176,7 @@ export async function checkGateCompleteness(surveyId: number, gateName: string) 
   if (!survey) throw new Error("Levantamiento no encontrado");
 
   const configs = await db.query.surveyGateConfigs.findMany({
-    where: and(
-      eq(surveyGateConfigs.gate, gateName),
-      eq(surveyGateConfigs.isRequired, true)
-    ),
+    where: and(eq(surveyGateConfigs.gate, gateName), eq(surveyGateConfigs.isRequired, true)),
   });
 
   if (configs.length === 0) {
@@ -201,8 +211,12 @@ export async function checkGateCompleteness(surveyId: number, gateName: string) 
 }
 
 const JSONB_SECTIONS = new Set([
-  "installations", "personnelPolicies", "transportPolicies",
-  "allowedEquipment", "legalRequirements", "operationArea",
+  "installations",
+  "personnelPolicies",
+  "transportPolicies",
+  "allowedEquipment",
+  "legalRequirements",
+  "operationArea",
 ]);
 
 function resolveFieldValue(survey: any, section: string, fieldPath: string): any {
@@ -244,7 +258,7 @@ export async function advanceSurveyStatus(id: number, targetStatus: string) {
   if (!survey) throw new Error("Levantamiento no encontrado");
 
   const allowed = VALID_TRANSITIONS[survey.status];
-  if (!allowed || !allowed.includes(targetStatus)) {
+  if (!allowed?.includes(targetStatus)) {
     throw new Error(`Transición no permitida: ${survey.status} → ${targetStatus}`);
   }
 
@@ -285,11 +299,7 @@ export async function advanceSurveyStatus(id: number, targetStatus: string) {
     updateData.completedDate = new Date();
   }
 
-  const [updated] = await db
-    .update(surveys)
-    .set(updateData)
-    .where(eq(surveys.id, id))
-    .returning();
+  const [updated] = await db.update(surveys).set(updateData).where(eq(surveys.id, id)).returning();
 
   return { success: true, survey: updated };
 }
@@ -388,7 +398,11 @@ export async function createProposalPersonnel(data: any) {
 }
 
 export async function updateProposalPersonnel(id: number, data: any) {
-  const [updated] = await db.update(surveyProposalPersonnel).set(data).where(eq(surveyProposalPersonnel.id, id)).returning();
+  const [updated] = await db
+    .update(surveyProposalPersonnel)
+    .set(data)
+    .where(eq(surveyProposalPersonnel.id, id))
+    .returning();
   return updated;
 }
 
@@ -410,7 +424,11 @@ export async function createProposalEquipment(data: any) {
 }
 
 export async function updateProposalEquipment(id: number, data: any) {
-  const [updated] = await db.update(surveyProposalEquipment).set(data).where(eq(surveyProposalEquipment.id, id)).returning();
+  const [updated] = await db
+    .update(surveyProposalEquipment)
+    .set(data)
+    .where(eq(surveyProposalEquipment.id, id))
+    .returning();
   return updated;
 }
 
@@ -432,7 +450,11 @@ export async function createProposalSupplies(data: any) {
 }
 
 export async function updateProposalSupplies(id: number, data: any) {
-  const [updated] = await db.update(surveyProposalSupplies).set(data).where(eq(surveyProposalSupplies.id, id)).returning();
+  const [updated] = await db
+    .update(surveyProposalSupplies)
+    .set(data)
+    .where(eq(surveyProposalSupplies.id, id))
+    .returning();
   return updated;
 }
 
@@ -454,7 +476,11 @@ export async function createProposalRentals(data: any) {
 }
 
 export async function updateProposalRentals(id: number, data: any) {
-  const [updated] = await db.update(surveyProposalRentals).set(data).where(eq(surveyProposalRentals.id, id)).returning();
+  const [updated] = await db
+    .update(surveyProposalRentals)
+    .set(data)
+    .where(eq(surveyProposalRentals.id, id))
+    .returning();
   return updated;
 }
 
@@ -500,19 +526,11 @@ export async function getExpiringDocuments(daysAhead: number = 30) {
   return db
     .select()
     .from(operationalDocuments)
-    .where(
-      and(
-        lte(operationalDocuments.expirationDate, futureDate),
-        gte(operationalDocuments.expirationDate, now)
-      )
-    );
+    .where(and(lte(operationalDocuments.expirationDate, futureDate), gte(operationalDocuments.expirationDate, now)));
 }
 
 export async function getExpiredDocuments() {
-  return db
-    .select()
-    .from(operationalDocuments)
-    .where(lte(operationalDocuments.expirationDate, new Date()));
+  return db.select().from(operationalDocuments).where(lte(operationalDocuments.expirationDate, new Date()));
 }
 
 export async function createDocument(data: InsertDocument) {
@@ -545,7 +563,7 @@ export async function getPendingReviewSurveys() {
 export async function acceptSurvey(
   id: number,
   data: { scheduledDate: Date; assignedToId: number; schedulingNotes?: string },
-  acceptedById: number
+  acceptedById: number,
 ) {
   const survey = await db.query.surveys.findFirst({ where: eq(surveys.id, id) });
   if (!survey) throw new Error("NOT_FOUND");
@@ -569,11 +587,7 @@ export async function acceptSurvey(
   return updated;
 }
 
-export async function rejectSurvey(
-  id: number,
-  rejectionReason: string,
-  rejectedById: number
-) {
+export async function rejectSurvey(id: number, rejectionReason: string, rejectedById: number) {
   const survey = await db.query.surveys.findFirst({ where: eq(surveys.id, id) });
   if (!survey) throw new Error("NOT_FOUND");
   if (survey.status !== "pendiente_operaciones") {
@@ -658,9 +672,8 @@ export async function getOpsTeamStats() {
     const responseTimes = mySurveys
       .filter((s) => s.acceptedAt && s.createdAt)
       .map((s) => (new Date(s.acceptedAt!).getTime() - new Date(s.createdAt!).getTime()) / (1000 * 60 * 60));
-    const avgResponseHours = responseTimes.length > 0
-      ? Math.round(responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length)
-      : null;
+    const avgResponseHours =
+      responseTimes.length > 0 ? Math.round(responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length) : null;
 
     return {
       id: user.id,

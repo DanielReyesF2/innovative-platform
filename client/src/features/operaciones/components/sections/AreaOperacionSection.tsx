@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -11,7 +11,9 @@ interface Props {
 export default function AreaOperacionSection({ data, onSave, disabled }: Props) {
   const [form, setForm] = useState<any>(data || {});
 
-  useEffect(() => { setForm(data || {}); }, [data]);
+  useEffect(() => {
+    setForm(data || {});
+  }, [data]);
 
   const update = (key: string, value: any) => {
     const updated = { ...form, [key]: value };

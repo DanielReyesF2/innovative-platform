@@ -4,13 +4,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import {
-  useCreateUser,
-  useUpdateUser,
-  useResetPassword,
-  useCreateRole,
-  useUpdateRole,
   useCreateArea,
+  useCreateRole,
+  useCreateUser,
+  useResetPassword,
   useUpdateArea,
+  useUpdateRole,
+  useUpdateUser,
 } from "../api";
 
 // ========================
@@ -70,9 +70,12 @@ export function CreateUserModal({ onClose, roles }: { onClose: () => void; roles
     createUser.mutate(
       { name, email, password, role },
       {
-        onSuccess: () => { toast({ title: "Usuario creado" }); onClose(); },
+        onSuccess: () => {
+          toast({ title: "Usuario creado" });
+          onClose();
+        },
         onError: () => toast({ title: "Error al crear usuario", variant: "destructive" }),
-      }
+      },
     );
   };
 
@@ -84,13 +87,23 @@ export function CreateUserModal({ onClose, roles }: { onClose: () => void; roles
         <FormField label="Contrasena" value={password} onChange={setPassword} type="password" />
         <div>
           <Label className="mb-1 block text-sm font-medium">Rol</Label>
-          <select value={role} onChange={(e) => setRole(e.target.value)} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
+          <select
+            value={role}
+            onChange={(e) => setRole(e.target.value)}
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+          >
             {roles.map((r: any) => (
-              <option key={r.name} value={r.name}>{r.displayName}</option>
+              <option key={r.name} value={r.name}>
+                {r.displayName}
+              </option>
             ))}
           </select>
         </div>
-        <Button onClick={handleSubmit} disabled={!name || !email || !password || createUser.isPending} className="w-full">
+        <Button
+          onClick={handleSubmit}
+          disabled={!(name && email && password) || createUser.isPending}
+          className="w-full"
+        >
           Crear Usuario
         </Button>
       </div>
@@ -98,7 +111,17 @@ export function CreateUserModal({ onClose, roles }: { onClose: () => void; roles
   );
 }
 
-export function EditUserModal({ user, onClose, roles, currentUserId }: { user: any; onClose: () => void; roles: any[]; currentUserId?: number }) {
+export function EditUserModal({
+  user,
+  onClose,
+  roles,
+  currentUserId,
+}: {
+  user: any;
+  onClose: () => void;
+  roles: any[];
+  currentUserId?: number;
+}) {
   const [name, setName] = useState(user.name);
   const [email, setEmail] = useState(user.email);
   const [role, setRole] = useState(user.role);
@@ -109,9 +132,12 @@ export function EditUserModal({ user, onClose, roles, currentUserId }: { user: a
     updateUser.mutate(
       { id: user.id, name, email, role },
       {
-        onSuccess: () => { toast({ title: "Usuario actualizado" }); onClose(); },
+        onSuccess: () => {
+          toast({ title: "Usuario actualizado" });
+          onClose();
+        },
         onError: () => toast({ title: "Error al actualizar usuario", variant: "destructive" }),
-      }
+      },
     );
   };
 
@@ -129,11 +155,13 @@ export function EditUserModal({ user, onClose, roles, currentUserId }: { user: a
             className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm disabled:opacity-50"
           >
             {roles.map((r: any) => (
-              <option key={r.name} value={r.name}>{r.displayName}</option>
+              <option key={r.name} value={r.name}>
+                {r.displayName}
+              </option>
             ))}
           </select>
         </div>
-        <Button onClick={handleSubmit} disabled={!name || !email || updateUser.isPending} className="w-full">
+        <Button onClick={handleSubmit} disabled={!(name && email) || updateUser.isPending} className="w-full">
           Guardar Cambios
         </Button>
       </div>
@@ -150,9 +178,12 @@ export function ResetPasswordModal({ user, onClose }: { user: any; onClose: () =
     resetPassword.mutate(
       { id: user.id, newPassword },
       {
-        onSuccess: () => { toast({ title: "Contraseña actualizada" }); onClose(); },
+        onSuccess: () => {
+          toast({ title: "Contraseña actualizada" });
+          onClose();
+        },
         onError: () => toast({ title: "Error al cambiar contraseña", variant: "destructive" }),
-      }
+      },
     );
   };
 
@@ -183,9 +214,12 @@ export function CreateRoleModal({ onClose }: { onClose: () => void }) {
     createRole.mutate(
       { name, displayName, description, permissions: [] },
       {
-        onSuccess: () => { toast({ title: "Rol creado" }); onClose(); },
+        onSuccess: () => {
+          toast({ title: "Rol creado" });
+          onClose();
+        },
         onError: () => toast({ title: "Error al crear rol", variant: "destructive" }),
-      }
+      },
     );
   };
 
@@ -195,7 +229,7 @@ export function CreateRoleModal({ onClose }: { onClose: () => void }) {
         <FormField label="Identificador (snake_case)" value={name} onChange={setName} placeholder="mi_rol" />
         <FormField label="Nombre a Mostrar" value={displayName} onChange={setDisplayName} />
         <FormField label="Descripcion" value={description} onChange={setDescription} />
-        <Button onClick={handleSubmit} disabled={!name || !displayName || createRole.isPending} className="w-full">
+        <Button onClick={handleSubmit} disabled={!(name && displayName) || createRole.isPending} className="w-full">
           Crear Rol
         </Button>
       </div>
@@ -213,9 +247,12 @@ export function EditRoleModal({ role, onClose }: { role: any; onClose: () => voi
     updateRole.mutate(
       { id: role.id, displayName, description },
       {
-        onSuccess: () => { toast({ title: "Rol actualizado" }); onClose(); },
+        onSuccess: () => {
+          toast({ title: "Rol actualizado" });
+          onClose();
+        },
         onError: () => toast({ title: "Error al actualizar rol", variant: "destructive" }),
-      }
+      },
     );
   };
 
@@ -242,10 +279,16 @@ export function CreateAreaModal({ onClose }: { onClose: () => void }) {
   const { toast } = useToast();
 
   const handleSubmit = () => {
-    createArea.mutate({ name }, {
-      onSuccess: () => { toast({ title: "Área creada" }); onClose(); },
-      onError: () => toast({ title: "Error al crear área", variant: "destructive" }),
-    });
+    createArea.mutate(
+      { name },
+      {
+        onSuccess: () => {
+          toast({ title: "Área creada" });
+          onClose();
+        },
+        onError: () => toast({ title: "Error al crear área", variant: "destructive" }),
+      },
+    );
   };
 
   return (
@@ -266,10 +309,16 @@ export function EditAreaModal({ area, onClose }: { area: any; onClose: () => voi
   const { toast } = useToast();
 
   const handleSubmit = () => {
-    updateArea.mutate({ id: area.id, name }, {
-      onSuccess: () => { toast({ title: "Área actualizada" }); onClose(); },
-      onError: () => toast({ title: "Error al actualizar área", variant: "destructive" }),
-    });
+    updateArea.mutate(
+      { id: area.id, name },
+      {
+        onSuccess: () => {
+          toast({ title: "Área actualizada" });
+          onClose();
+        },
+        onError: () => toast({ title: "Error al actualizar área", variant: "destructive" }),
+      },
+    );
   };
 
   return (

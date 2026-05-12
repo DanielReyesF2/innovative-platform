@@ -1,32 +1,22 @@
-import { useState } from "react";
+import type { ProspectMeeting } from "@shared/schema/comercial";
 import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
+import { Calendar, CheckCircle, Clock, MapPin, Plus, Trash2, Users, Video, XCircle } from "lucide-react";
+import { useState } from "react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import {
-  Calendar,
-  Clock,
-  MapPin,
-  Video,
-  CheckCircle,
-  XCircle,
-  Users,
-  Trash2,
-  Plus,
-} from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import {
-  useProspectMeetings,
-  useCreateMeeting,
-  useCompleteMeeting,
   useCancelMeeting,
-  useUpdateMeeting,
+  useCompleteMeeting,
+  useCreateMeeting,
   useDeleteMeeting,
+  useProspectMeetings,
+  useUpdateMeeting,
 } from "../api";
-import { InlineText, InlineNumber, InlineSelect } from "./InlineEdit";
-import type { ProspectMeeting } from "@shared/schema/comercial";
+import { InlineSelect, InlineText } from "./InlineEdit";
 
 interface ProspectMeetingsProps {
   prospectId: number;
@@ -124,14 +114,14 @@ function AttendeesEditor({
   };
 
   const renderSide = (side: "prospect" | "innovative", label: string, color: string) => {
-    const entries = list
-      .map((e, i) => ({ entry: e, index: i }))
-      .filter(({ entry }) => entry.side === side);
+    const entries = list.map((e, i) => ({ entry: e, index: i })).filter(({ entry }) => entry.side === side);
 
     return (
       <div>
         <div className="flex items-center justify-between mb-1">
-          <span className="text-[11px] font-semibold uppercase tracking-wider" style={{ color }}>{label}</span>
+          <span className="text-[11px] font-semibold uppercase tracking-wider" style={{ color }}>
+            {label}
+          </span>
           <button
             type="button"
             onClick={() => addEntry(side)}
@@ -215,7 +205,7 @@ export function ProspectMeetings({ prospectId }: ProspectMeetingsProps) {
   };
 
   const handleCreate = async () => {
-    if (!newTitle.trim() || !newScheduledAt) {
+    if (!(newTitle.trim() && newScheduledAt)) {
       toast({ title: "Título y fecha son requeridos", variant: "destructive" });
       return;
     }
@@ -300,11 +290,7 @@ export function ProspectMeetings({ prospectId }: ProspectMeetingsProps) {
           <div className="grid gap-2 sm:grid-cols-2">
             <div>
               <label className="text-[11px] text-muted-foreground">Fecha y hora</label>
-              <Input
-                type="datetime-local"
-                value={newScheduledAt}
-                onChange={(e) => setNewScheduledAt(e.target.value)}
-              />
+              <Input type="datetime-local" value={newScheduledAt} onChange={(e) => setNewScheduledAt(e.target.value)} />
             </div>
             <div>
               <label className="text-[11px] text-muted-foreground">Duración</label>
@@ -314,13 +300,17 @@ export function ProspectMeetings({ prospectId }: ProspectMeetingsProps) {
                 className="mt-0 h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
               >
                 {DURATION_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
                 ))}
               </select>
             </div>
           </div>
           <div className="flex justify-end gap-2">
-            <Button size="sm" variant="outline" onClick={resetCreate}>Cancelar</Button>
+            <Button size="sm" variant="outline" onClick={resetCreate}>
+              Cancelar
+            </Button>
             <Button size="sm" onClick={handleCreate} disabled={createMeeting.isPending}>
               {createMeeting.isPending ? "Guardando..." : "Programar"}
             </Button>
@@ -358,9 +348,7 @@ export function ProspectMeetings({ prospectId }: ProspectMeetingsProps) {
                             displayClassName="font-medium text-[#1c2c4a]"
                             className="min-w-[240px]"
                           />
-                          <Badge className={statusColors[m.status ?? ""]}>
-                            {statusLabels[m.status ?? ""]}
-                          </Badge>
+                          <Badge className={statusColors[m.status ?? ""]}>{statusLabels[m.status ?? ""]}</Badge>
                         </div>
 
                         <div className="mt-3 space-y-1.5 text-sm">
@@ -424,9 +412,11 @@ export function ProspectMeetings({ prospectId }: ProspectMeetingsProps) {
 
                         {/* Objetivo de la reunión (spec Vero) */}
                         <div className="mt-3">
-                          <div className="text-[11px] font-semibold uppercase tracking-widest text-[#9ca3af] mb-1">Objetivo</div>
+                          <div className="text-[11px] font-semibold uppercase tracking-widest text-[#9ca3af] mb-1">
+                            Objetivo
+                          </div>
                           <InlineText
-                            value={((m as unknown as { objective?: string }).objective) || ""}
+                            value={(m as unknown as { objective?: string }).objective || ""}
                             onSave={(v) => saveField(m.id, { objective: v || null })}
                             emptyLabel="Dimensionar oportunidad, validar levantamiento..."
                             placeholder="Objetivo de esta reunión"
@@ -448,7 +438,9 @@ export function ProspectMeetings({ prospectId }: ProspectMeetingsProps) {
 
                         {/* Descripción / agenda (opcional, texto libre) */}
                         <div className="mt-3">
-                          <div className="text-[11px] font-semibold uppercase tracking-widest text-[#9ca3af] mb-1">Notas / agenda</div>
+                          <div className="text-[11px] font-semibold uppercase tracking-widest text-[#9ca3af] mb-1">
+                            Notas / agenda
+                          </div>
                           <InlineText
                             value={m.description || ""}
                             onSave={(v) => saveField(m.id, { description: v || null })}
@@ -483,7 +475,14 @@ export function ProspectMeetings({ prospectId }: ProspectMeetingsProps) {
                             autoFocus
                           />
                           <div className="flex justify-end gap-2">
-                            <Button size="sm" variant="outline" onClick={() => { setCompletingId(null); setOutcome(""); }}>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setCompletingId(null);
+                                setOutcome("");
+                              }}
+                            >
                               Cancelar
                             </Button>
                             <Button size="sm" onClick={() => handleComplete(m.id)} disabled={completeMeeting.isPending}>
@@ -493,7 +492,14 @@ export function ProspectMeetings({ prospectId }: ProspectMeetingsProps) {
                         </div>
                       ) : (
                         <>
-                          <Button size="sm" variant="outline" onClick={() => { setCompletingId(m.id); setOutcome(""); }}>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              setCompletingId(m.id);
+                              setOutcome("");
+                            }}
+                          >
                             <CheckCircle className="h-4 w-4 mr-1" /> Completar
                           </Button>
                           <Button size="sm" variant="outline" onClick={() => handleCancel(m.id)}>
@@ -517,9 +523,7 @@ export function ProspectMeetings({ prospectId }: ProspectMeetingsProps) {
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2 flex-wrap">
                         <p className="font-medium">{m.title}</p>
-                        <Badge className={statusColors[m.status ?? ""]}>
-                          {statusLabels[m.status ?? ""]}
-                        </Badge>
+                        <Badge className={statusColors[m.status ?? ""]}>{statusLabels[m.status ?? ""]}</Badge>
                       </div>
                       <button
                         type="button"
@@ -599,8 +603,14 @@ function InlineDatetime({
           onChange={(e) => setDraft(e.target.value)}
           onBlur={save}
           onKeyDown={(e) => {
-            if (e.key === "Enter") { e.preventDefault(); save(); }
-            if (e.key === "Escape") { setDraft(toDatetimeLocalValue(value)); setEditing(false); }
+            if (e.key === "Enter") {
+              e.preventDefault();
+              save();
+            }
+            if (e.key === "Escape") {
+              setDraft(toDatetimeLocalValue(value));
+              setEditing(false);
+            }
           }}
           className="h-8 w-auto text-sm border-[#00a8a8]"
         />
@@ -611,7 +621,10 @@ function InlineDatetime({
   return (
     <button
       type="button"
-      onClick={() => { setDraft(toDatetimeLocalValue(value)); setEditing(true); }}
+      onClick={() => {
+        setDraft(toDatetimeLocalValue(value));
+        setEditing(true);
+      }}
       className="group inline-flex items-center gap-2 rounded px-1 py-0.5 -mx-1 text-[#6b7280] hover:bg-[#f3f4f6] transition-colors"
     >
       {icon}

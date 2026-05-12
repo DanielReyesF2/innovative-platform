@@ -1,35 +1,18 @@
+import { AlertCircle, BarChart3, ChevronRight, Clock, DollarSign, FileText, Leaf, Recycle, Users } from "lucide-react";
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {
-  Recycle,
-  Users,
-  FileText,
-  DollarSign,
-  Leaf,
-  ChevronRight,
-  AlertCircle,
-  Send,
-  CheckCircle,
-  Clock,
-  BarChart3,
-} from "lucide-react";
-import {
-  useServiceClients,
-  useSubproductosSummary,
-  usePendingReports,
-  useClientTraceabilitySummary,
-} from "./api";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { KpiSection } from "@/features/kpis/components/KpiSection";
+import { useClientTraceabilitySummary, usePendingReports, useServiceClients, useSubproductosSummary } from "./api";
 
-const REPORT_STATUS_LABELS: Record<string, string> = {
+const _REPORT_STATUS_LABELS: Record<string, string> = {
   pendiente: "Pendiente",
   en_proceso: "En Proceso",
   enviado: "Enviado",
   confirmado: "Confirmado",
 };
 
-const REPORT_STATUS_COLORS: Record<string, string> = {
+const _REPORT_STATUS_COLORS: Record<string, string> = {
   pendiente: "bg-yellow-100 text-yellow-800",
   en_proceso: "bg-blue-100 text-blue-800",
   enviado: "bg-green-100 text-green-800",
@@ -44,9 +27,7 @@ export default function SubproductosPage() {
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Subproductos</h1>
-        <p className="text-muted-foreground">
-          Trazabilidad, reportes a clientes, modelos económicos y conciliación
-        </p>
+        <p className="text-muted-foreground">Trazabilidad, reportes a clientes, modelos económicos y conciliación</p>
       </div>
 
       {/* Main tab selector */}
@@ -91,8 +72,13 @@ function TrazabilidadView() {
       <div className="flex flex-col items-center justify-center min-h-[40vh] gap-3">
         <div className="text-red-500 text-4xl">⚠</div>
         <h2 className="text-lg font-semibold text-[#1c2c4a]">Error al cargar subproductos</h2>
-        <p className="text-sm text-[#6b7280]">Hubo un problema al conectar con el servidor. Intenta recargar la página.</p>
-        <button onClick={() => window.location.reload()} className="mt-2 px-4 py-2 text-sm font-medium text-white bg-[#00a8a8] rounded-lg hover:bg-[#008f8f]">
+        <p className="text-sm text-[#6b7280]">
+          Hubo un problema al conectar con el servidor. Intenta recargar la página.
+        </p>
+        <button
+          onClick={() => window.location.reload()}
+          className="mt-2 px-4 py-2 text-sm font-medium text-white bg-[#00a8a8] rounded-lg hover:bg-[#008f8f]"
+        >
           Recargar
         </button>
       </div>
@@ -138,9 +124,7 @@ function TrazabilidadView() {
               <p className="text-sm font-medium text-yellow-800">
                 {pendingReports.length} reportes pendientes de envío
               </p>
-              <p className="text-xs text-yellow-700">
-                Revisa y envía los reportes mensuales a tus clientes
-              </p>
+              <p className="text-xs text-yellow-700">Revisa y envía los reportes mensuales a tus clientes</p>
             </div>
           </CardContent>
         </Card>
@@ -149,9 +133,7 @@ function TrazabilidadView() {
       {/* Clients list */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">
-            Clientes con Servicio ({clients.length})
-          </CardTitle>
+          <CardTitle className="text-lg">Clientes con Servicio ({clients.length})</CardTitle>
         </CardHeader>
         <CardContent>
           {clients.length === 0 ? (
@@ -175,9 +157,7 @@ function TrazabilidadView() {
                       <div className="font-semibold">{client.name}</div>
                       <div className="flex items-center gap-3 text-sm text-muted-foreground">
                         <span>{client.branchCount} sucursales</span>
-                        {client.monthlyAverage && (
-                          <span>{Number(client.monthlyAverage).toFixed(1)} ton/mes</span>
-                        )}
+                        {client.monthlyAverage && <span>{Number(client.monthlyAverage).toFixed(1)} ton/mes</span>}
                         {client.valorizationRate && (
                           <span className="text-green-600">
                             {Number(client.valorizationRate).toFixed(0)}% valorización
@@ -187,10 +167,7 @@ function TrazabilidadView() {
                       {client.servicesContracted && (
                         <div className="mt-1 flex gap-1">
                           {(client.servicesContracted as string[]).slice(0, 3).map((s: string) => (
-                            <span
-                              key={s}
-                              className="inline-flex rounded-full bg-muted px-2 py-0.5 text-xs"
-                            >
+                            <span key={s} className="inline-flex rounded-full bg-muted px-2 py-0.5 text-xs">
                               {s}
                             </span>
                           ))}
@@ -207,12 +184,7 @@ function TrazabilidadView() {
       </Card>
 
       {/* Client detail modal */}
-      {selectedClient && (
-        <ClientDetailModal
-          client={selectedClient}
-          onClose={() => setSelectedClient(null)}
-        />
-      )}
+      {selectedClient && <ClientDetailModal client={selectedClient} onClose={() => setSelectedClient(null)} />}
     </>
   );
 }
@@ -242,13 +214,7 @@ function MetricCard({
   );
 }
 
-function ClientDetailModal({
-  client,
-  onClose,
-}: {
-  client: any;
-  onClose: () => void;
-}) {
+function ClientDetailModal({ client, onClose }: { client: any; onClose: () => void }) {
   const { data: traceSummary } = useClientTraceabilitySummary(client.id);
 
   return (
@@ -275,27 +241,19 @@ function ClientDetailModal({
         {traceSummary && (
           <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
             <div className="rounded-lg border p-3 text-center">
-              <div className="text-lg font-bold text-green-600">
-                {traceSummary.diversionRate.toFixed(1)}%
-              </div>
+              <div className="text-lg font-bold text-green-600">{traceSummary.diversionRate.toFixed(1)}%</div>
               <div className="text-xs text-muted-foreground">Desviación</div>
             </div>
             <div className="rounded-lg border p-3 text-center">
-              <div className="text-lg font-bold">
-                {(traceSummary.totalManaged / 1000).toFixed(1)}t
-              </div>
+              <div className="text-lg font-bold">{(traceSummary.totalManaged / 1000).toFixed(1)}t</div>
               <div className="text-xs text-muted-foreground">Total Gestionado</div>
             </div>
             <div className="rounded-lg border p-3 text-center">
-              <div className="text-lg font-bold text-green-600">
-                {traceSummary.treesSaved.toLocaleString()}
-              </div>
+              <div className="text-lg font-bold text-green-600">{traceSummary.treesSaved.toLocaleString()}</div>
               <div className="text-xs text-muted-foreground">Árboles Salvados</div>
             </div>
             <div className="rounded-lg border p-3 text-center">
-              <div className="text-lg font-bold">
-                {traceSummary.co2Avoided.toFixed(1)}t
-              </div>
+              <div className="text-lg font-bold">{traceSummary.co2Avoided.toFixed(1)}t</div>
               <div className="text-xs text-muted-foreground">CO₂ Evitado</div>
             </div>
           </div>
@@ -308,18 +266,12 @@ function ClientDetailModal({
           <InfoRow
             label="Inicio Operación"
             value={
-              client.operationStartDate
-                ? new Date(client.operationStartDate).toLocaleDateString("es-MX")
-                : undefined
+              client.operationStartDate ? new Date(client.operationStartDate).toLocaleDateString("es-MX") : undefined
             }
           />
           <InfoRow
             label="Promedio Mensual"
-            value={
-              client.monthlyAverage
-                ? `${Number(client.monthlyAverage).toFixed(1)} ton/mes`
-                : undefined
-            }
+            value={client.monthlyAverage ? `${Number(client.monthlyAverage).toFixed(1)} ton/mes` : undefined}
           />
         </div>
 

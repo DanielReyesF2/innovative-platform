@@ -1,7 +1,7 @@
+import { AlertCircle, ChevronRight, Eye, EyeOff, Lock, Send } from "lucide-react";
 import { useState } from "react";
-import { useAuth } from "@/lib/auth";
 import { useToast } from "@/components/ui/use-toast";
-import { Send, Lock, Eye, EyeOff, AlertCircle, ChevronRight } from "lucide-react";
+import { useAuth } from "@/lib/auth";
 
 export default function LoginPage() {
   const [username, setUsername] = useState("");
@@ -49,11 +49,7 @@ export default function LoginPage() {
         </div>
 
         <div className="flex items-center justify-center w-full relative z-10">
-          <img
-            src="/IGMexico-Blanco.png"
-            alt="Innovative Group Mexico"
-            className="w-96 drop-shadow-lg"
-          />
+          <img src="/IGMexico-Blanco.png" alt="Innovative Group Mexico" className="w-96 drop-shadow-lg" />
         </div>
       </div>
 
@@ -62,11 +58,7 @@ export default function LoginPage() {
         <div className="w-full max-w-md">
           {/* Logo for mobile (hidden on desktop) */}
           <div className="lg:hidden flex justify-center mb-8">
-            <img
-              src="/IGMexico-V-Color-Logo.png"
-              alt="Innovative Group Mexico"
-              className="w-48"
-            />
+            <img src="/IGMexico-V-Color-Logo.png" alt="Innovative Group Mexico" className="w-48" />
           </div>
 
           {/* Welcome Text */}
@@ -152,7 +144,6 @@ export default function LoginPage() {
                 <span className="text-sm text-[#6b7280]">Recordarme</span>
               </label>
               <span />
-
             </div>
 
             {/* Submit */}
@@ -174,12 +165,8 @@ export default function LoginPage() {
 
           {/* Footer */}
           <div className="mt-8 text-center">
-            <p className="text-xs text-[#6b7280]">
-              Innovative Group Mexico © 2026
-            </p>
-            <p className="text-xs text-[#6b7280]/60 mt-1">
-              Powered by EcoNova Tech Solutions
-            </p>
+            <p className="text-xs text-[#6b7280]">Innovative Group Mexico © 2026</p>
+            <p className="text-xs text-[#6b7280]/60 mt-1">Powered by EcoNova Tech Solutions</p>
           </div>
         </div>
       </div>

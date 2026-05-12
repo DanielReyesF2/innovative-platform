@@ -1,5 +1,5 @@
-import { Component, type ReactNode } from "react";
 import { AlertTriangle, RefreshCw } from "lucide-react";
+import { Component, type ReactNode } from "react";
 
 interface Props {
   children: ReactNode;
@@ -43,18 +43,14 @@ export class ErrorBoundary extends Component<Props, State> {
               </div>
             </div>
 
-            <h1 className="text-xl font-bold text-gray-900 mb-2">
-              Algo salió mal
-            </h1>
+            <h1 className="text-xl font-bold text-gray-900 mb-2">Algo salió mal</h1>
             <p className="text-gray-600 mb-6">
               Ocurrió un error inesperado. Por favor, recarga la página o vuelve al inicio.
             </p>
 
             {process.env.NODE_ENV !== "production" && this.state.error && (
               <div className="mb-6 p-3 bg-red-50 rounded-lg text-left">
-                <p className="text-xs font-mono text-red-800 break-all">
-                  {this.state.error.message}
-                </p>
+                <p className="text-xs font-mono text-red-800 break-all">{this.state.error.message}</p>
               </div>
             )}
 

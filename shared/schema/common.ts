@@ -1,4 +1,4 @@
-import { pgTable, serial, text, integer, timestamp, boolean, index } from "drizzle-orm/pg-core";
+import { boolean, index, integer, pgTable, serial, text, timestamp } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -10,34 +10,42 @@ export const companies = pgTable("companies", {
 });
 
 // Areas/departments table
-export const areas = pgTable("areas", {
-  id: serial("id").primaryKey(),
-  name: text("name").notNull(),
-  companyId: integer("company_id").references(() => companies.id),
-  moduleSlug: text("module_slug"),
-  createdAt: timestamp("created_at").defaultNow(),
-}, (table) => ({
-  companyIdIdx: index("areas_company_id_idx").on(table.companyId),
-}));
+export const areas = pgTable(
+  "areas",
+  {
+    id: serial("id").primaryKey(),
+    name: text("name").notNull(),
+    companyId: integer("company_id").references(() => companies.id),
+    moduleSlug: text("module_slug"),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (table) => ({
+    companyIdIdx: index("areas_company_id_idx").on(table.companyId),
+  }),
+);
 
 // Users table
-export const users = pgTable("users", {
-  id: serial("id").primaryKey(),
-  name: text("name").notNull(),
-  email: text("email").notNull().unique(),
-  password: text("password").notNull(),
-  role: text("role").notNull().default("viewer"),
-  codigo: text("codigo"), // Short code for sales team (e.g. CR, AM, LM)
-  companyId: integer("company_id").references(() => companies.id),
-  areaId: integer("area_id").references(() => areas.id),
-  isActive: boolean("is_active").default(true),
-  lastLogin: timestamp("last_login"),
-  createdAt: timestamp("created_at").defaultNow(),
-}, (table) => ({
-  companyIdIdx: index("users_company_id_idx").on(table.companyId),
-  areaIdIdx: index("users_area_id_idx").on(table.areaId),
-  roleIdx: index("users_role_idx").on(table.role),
-}));
+export const users = pgTable(
+  "users",
+  {
+    id: serial("id").primaryKey(),
+    name: text("name").notNull(),
+    email: text("email").notNull().unique(),
+    password: text("password").notNull(),
+    role: text("role").notNull().default("viewer"),
+    codigo: text("codigo"), // Short code for sales team (e.g. CR, AM, LM)
+    companyId: integer("company_id").references(() => companies.id),
+    areaId: integer("area_id").references(() => areas.id),
+    isActive: boolean("is_active").default(true),
+    lastLogin: timestamp("last_login"),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (table) => ({
+    companyIdIdx: index("users_company_id_idx").on(table.companyId),
+    areaIdIdx: index("users_area_id_idx").on(table.areaId),
+    roleIdx: index("users_role_idx").on(table.role),
+  }),
+);
 
 // Validators
 export const insertUserSchema = createInsertSchema(users, {

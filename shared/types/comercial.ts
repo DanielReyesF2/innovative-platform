@@ -133,7 +133,7 @@ export interface SeguimientoUrgency {
 export interface GateMissingField {
   key: string;
   label: string;
-  type: 'text' | 'number' | 'services' | 'date';
+  type: "text" | "number" | "services" | "date";
   placeholder?: string;
 }
 

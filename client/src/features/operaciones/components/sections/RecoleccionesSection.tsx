@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -25,9 +25,7 @@ export default function RecoleccionesSection({ data, onSave, disabled }: Props) 
 
   const handleWeighing = (type: string, checked: boolean) => {
     const current = form.weighingTypes || [];
-    const updated = checked
-      ? [...current, type]
-      : current.filter((v: string) => v !== type);
+    const updated = checked ? [...current, type] : current.filter((v: string) => v !== type);
     update("weighingTypes", updated);
   };
 

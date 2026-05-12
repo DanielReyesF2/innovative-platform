@@ -1,44 +1,44 @@
 import { Router } from "express";
-import { requireAuth, requireAdmin } from "../../middleware/auth";
 import {
-  getUsers,
-  getUserStats,
-  getUserById,
-  createUser,
-  updateUser,
-  toggleUserActive,
-  resetPassword,
-  getRoles,
-  getRoleById,
-  createRole,
-  updateRole,
-  deleteRole,
-  getAreas,
-  createArea,
-  updateArea,
-  deleteArea,
-  getCompany,
-  updateCompany,
-  upsertCompanySettings,
-  getModuleConfigs,
-  upsertModuleConfig,
-  getAuditLog,
-  logAction,
-  seedSystemRoles,
-} from "./storage";
-import {
-  createUserSchema,
-  updateUserSchema,
-  resetPasswordSchema,
-  insertRoleSchema,
-  updateRoleSchema,
   createAreaSchema,
+  createUserSchema,
+  insertRoleSchema,
+  resetPasswordSchema,
   updateAreaSchema,
   updateCompanySchema,
   updateCompanySettingsSchema,
+  updateRoleSchema,
+  updateUserSchema,
   upsertModuleConfigSchema,
 } from "../../../shared/schema/settings";
-import { getErrorMessage, isErrorWithMessage } from "../../utils/errors";
+import { requireAdmin, requireAuth } from "../../middleware/auth";
+import { isErrorWithMessage } from "../../utils/errors";
+import {
+  createArea,
+  createRole,
+  createUser,
+  deleteArea,
+  deleteRole,
+  getAreas,
+  getAuditLog,
+  getCompany,
+  getModuleConfigs,
+  getRoleById,
+  getRoles,
+  getUserById,
+  getUserStats,
+  getUsers,
+  logAction,
+  resetPassword,
+  seedSystemRoles,
+  toggleUserActive,
+  updateArea,
+  updateCompany,
+  updateRole,
+  updateUser,
+  upsertCompanySettings,
+  upsertModuleConfig,
+} from "./storage";
 
 export const router = Router();
 

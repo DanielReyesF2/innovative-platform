@@ -5,4 +5,4 @@
 // Example: A project with sales would add sales_metrics tables here
 
 // Re-export common types that dashboard components might need
-export type { User, Company } from "./common";
+export type { Company, User } from "./common";

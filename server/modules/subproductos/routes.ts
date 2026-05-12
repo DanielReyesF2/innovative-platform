@@ -1,34 +1,34 @@
 import { Router } from "express";
 import { z } from "zod";
-import { requireAuth } from "../../middleware/auth";
 import {
-  getServiceClients,
-  getServiceClientById,
-  createServiceClient,
-  updateServiceClient,
-  getTraceabilityByClient,
-  getTraceabilityByPeriod,
-  createTraceabilityRecord,
-  getTraceabilitySummary,
-  getClientReports,
-  getPendingReports,
-  createClientReport,
-  updateReportStatus,
-  getEconomicModels,
-  getEconomicModelById,
-  createEconomicModel,
-  updateEconomicModel,
-  getConciliations,
-  createConciliation,
-  getSubproductosSummary,
-} from "./storage";
-import {
-  insertServiceClientSchema,
-  insertTraceabilitySchema,
   insertClientReportSchema,
   insertEconomicModelSchema,
+  insertServiceClientSchema,
+  insertTraceabilitySchema,
   reportStatusEnum,
 } from "../../../shared/schema/subproductos";
+import { requireAuth } from "../../middleware/auth";
+import {
+  createClientReport,
+  createConciliation,
+  createEconomicModel,
+  createServiceClient,
+  createTraceabilityRecord,
+  getClientReports,
+  getConciliations,
+  getEconomicModelById,
+  getEconomicModels,
+  getPendingReports,
+  getServiceClientById,
+  getServiceClients,
+  getSubproductosSummary,
+  getTraceabilityByClient,
+  getTraceabilityByPeriod,
+  getTraceabilitySummary,
+  updateEconomicModel,
+  updateReportStatus,
+  updateServiceClient,
+} from "./storage";
 
 // Inline schemas for simple routes
 const reportStatusChangeSchema = z.object({

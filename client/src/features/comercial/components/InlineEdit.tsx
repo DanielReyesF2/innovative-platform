@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect, useCallback } from "react";
-import { Pencil, Check, Loader2 } from "lucide-react";
+import { Check, Loader2, Pencil } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 type SaveFn<T> = (value: T) => Promise<void>;
 
@@ -46,7 +46,7 @@ function useInlineEdit<T>(initialValue: T, onSave: SaveFn<T>, equals: (a: T, b: 
         setEditing(false);
       }
     },
-    [value, onSave, equals]
+    [value, onSave, equals],
   );
 
   return { editing, value, setValue, saving, start, cancel, save };
@@ -94,8 +94,25 @@ interface InlineTextProps {
   type?: "text" | "email" | "tel";
 }
 
-export function InlineText({ value, onSave, placeholder, emptyLabel, multiline, className = "", displayClassName = "", type = "text" }: InlineTextProps) {
-  const { editing, value: v, setValue, saving, start, cancel, save } = useInlineEdit<string>(value || "", async (next) => {
+export function InlineText({
+  value,
+  onSave,
+  placeholder,
+  emptyLabel,
+  multiline,
+  className = "",
+  displayClassName = "",
+  type = "text",
+}: InlineTextProps) {
+  const {
+    editing,
+    value: v,
+    setValue,
+    saving,
+    start,
+    cancel,
+    save,
+  } = useInlineEdit<string>(value || "", async (next) => {
     await onSave(next.trim());
   });
 
@@ -103,11 +120,12 @@ export function InlineText({ value, onSave, placeholder, emptyLabel, multiline, 
     if (multiline) {
       return (
         <textarea
-          autoFocus
           value={v}
           onChange={(e) => setValue(e.target.value)}
           onBlur={() => save()}
-          onKeyDown={(e) => { if (e.key === "Escape") cancel(); }}
+          onKeyDown={(e) => {
+            if (e.key === "Escape") cancel();
+          }}
           rows={3}
           className={`w-full rounded-md border border-[#00a8a8] bg-white px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-[#00a8a8]/30 ${className}`}
           placeholder={placeholder}
@@ -117,12 +135,14 @@ export function InlineText({ value, onSave, placeholder, emptyLabel, multiline, 
     return (
       <input
         type={type}
-        autoFocus
         value={v}
         onChange={(e) => setValue(e.target.value)}
         onBlur={() => save()}
         onKeyDown={(e) => {
-          if (e.key === "Enter") { e.preventDefault(); save(); }
+          if (e.key === "Enter") {
+            e.preventDefault();
+            save();
+          }
           if (e.key === "Escape") cancel();
         }}
         placeholder={placeholder}
@@ -156,13 +176,38 @@ interface InlineNumberProps {
   formatter?: (n: number) => string;
 }
 
-export function InlineNumber({ value, onSave, placeholder, emptyLabel, min, max, suffix, className = "", displayClassName = "", formatter }: InlineNumberProps) {
+export function InlineNumber({
+  value,
+  onSave,
+  placeholder,
+  emptyLabel,
+  min,
+  max,
+  suffix,
+  className = "",
+  displayClassName = "",
+  formatter,
+}: InlineNumberProps) {
   const initial = value == null ? "" : String(value);
-  const { editing, value: v, setValue, saving, start, cancel, save } = useInlineEdit<string>(initial, async (next) => {
+  const {
+    editing,
+    value: v,
+    setValue,
+    saving,
+    start,
+    cancel,
+    save,
+  } = useInlineEdit<string>(initial, async (next) => {
     const trimmed = next.trim();
-    if (trimmed === "") { await onSave(null); return; }
+    if (trimmed === "") {
+      await onSave(null);
+      return;
+    }
     const num = Number(trimmed);
-    if (Number.isNaN(num)) { await onSave(null); return; }
+    if (Number.isNaN(num)) {
+      await onSave(null);
+      return;
+    }
     await onSave(num);
   });
 
@@ -170,12 +215,14 @@ export function InlineNumber({ value, onSave, placeholder, emptyLabel, min, max,
     return (
       <input
         type="number"
-        autoFocus
         value={v}
         onChange={(e) => setValue(e.target.value)}
         onBlur={() => save()}
         onKeyDown={(e) => {
-          if (e.key === "Enter") { e.preventDefault(); save(); }
+          if (e.key === "Enter") {
+            e.preventDefault();
+            save();
+          }
           if (e.key === "Escape") cancel();
         }}
         min={min}
@@ -187,9 +234,14 @@ export function InlineNumber({ value, onSave, placeholder, emptyLabel, min, max,
   }
 
   const display =
-    value == null
-      ? <span className="italic text-[#9ca3af]">{emptyLabel || placeholder || "—"}</span>
-      : <span>{formatter ? formatter(value) : value}{suffix ? ` ${suffix}` : ""}</span>;
+    value == null ? (
+      <span className="italic text-[#9ca3af]">{emptyLabel || placeholder || "—"}</span>
+    ) : (
+      <span>
+        {formatter ? formatter(value) : value}
+        {suffix ? ` ${suffix}` : ""}
+      </span>
+    );
 
   return (
     <DisplayButton onClick={start} saving={saving} className={displayClassName}>
@@ -207,36 +259,55 @@ interface InlineSelectProps<T extends string> {
   displayClassName?: string;
 }
 
-export function InlineSelect<T extends string>({ value, options, onSave, emptyLabel, displayClassName = "" }: InlineSelectProps<T>) {
-  const { editing, value: v, saving, start, cancel, save } = useInlineEdit<T | "">(
-    (value ?? "") as T | "",
-    async (next) => { if (next) await onSave(next as T); }
-  );
+export function InlineSelect<T extends string>({
+  value,
+  options,
+  onSave,
+  emptyLabel,
+  displayClassName = "",
+}: InlineSelectProps<T>) {
+  const {
+    editing,
+    value: v,
+    saving,
+    start,
+    cancel,
+    save,
+  } = useInlineEdit<T | "">((value ?? "") as T | "", async (next) => {
+    if (next) await onSave(next as T);
+  });
 
   if (editing) {
     return (
       <select
-        autoFocus
         value={v}
         onChange={(e) => save(e.target.value as T)}
         onBlur={() => cancel()}
-        onKeyDown={(e) => { if (e.key === "Escape") cancel(); }}
+        onKeyDown={(e) => {
+          if (e.key === "Escape") cancel();
+        }}
         className="rounded-md border border-[#00a8a8] bg-white px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-[#00a8a8]/30"
       >
         <option value="">—</option>
         {options.map((opt) => (
-          <option key={opt.value} value={opt.value}>{opt.label}</option>
+          <option key={opt.value} value={opt.value}>
+            {opt.label}
+          </option>
         ))}
       </select>
     );
   }
 
   const selected = options.find((o) => o.value === value);
-  const display = selected
-    ? (selected.badgeClass
-        ? <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${selected.badgeClass}`}>{selected.label}</span>
-        : <span>{selected.label}</span>)
-    : <span className="italic text-[#9ca3af]">{emptyLabel || "—"}</span>;
+  const display = selected ? (
+    selected.badgeClass ? (
+      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${selected.badgeClass}`}>{selected.label}</span>
+    ) : (
+      <span>{selected.label}</span>
+    )
+  ) : (
+    <span className="italic text-[#9ca3af]">{emptyLabel || "—"}</span>
+  );
 
   return (
     <DisplayButton onClick={start} saving={saving} className={displayClassName}>
@@ -255,7 +326,15 @@ interface InlineDateProps {
 }
 
 export function InlineDate({ value, onSave, emptyLabel, displayClassName = "" }: InlineDateProps) {
-  const { editing, value: v, setValue, saving, start, cancel, save } = useInlineEdit<string>(value || "", async (next) => {
+  const {
+    editing,
+    value: v,
+    setValue,
+    saving,
+    start,
+    cancel,
+    save,
+  } = useInlineEdit<string>(value || "", async (next) => {
     await onSave(next || null);
   });
 
@@ -263,12 +342,14 @@ export function InlineDate({ value, onSave, emptyLabel, displayClassName = "" }:
     return (
       <input
         type="date"
-        autoFocus
         value={v}
         onChange={(e) => setValue(e.target.value)}
         onBlur={() => save()}
         onKeyDown={(e) => {
-          if (e.key === "Enter") { e.preventDefault(); save(); }
+          if (e.key === "Enter") {
+            e.preventDefault();
+            save();
+          }
           if (e.key === "Escape") cancel();
         }}
         className="rounded-md border border-[#00a8a8] bg-white px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-[#00a8a8]/30"
@@ -277,7 +358,7 @@ export function InlineDate({ value, onSave, emptyLabel, displayClassName = "" }:
   }
 
   const formatted = value
-    ? new Date(value + "T12:00:00").toLocaleDateString("es-MX", { day: "numeric", month: "short", year: "numeric" })
+    ? new Date(`${value}T12:00:00`).toLocaleDateString("es-MX", { day: "numeric", month: "short", year: "numeric" })
     : null;
 
   return (
@@ -297,13 +378,30 @@ interface InlineMonthProps {
 }
 
 const MESES_MAP: Record<string, string> = {
-  "01": "Enero", "02": "Febrero", "03": "Marzo", "04": "Abril",
-  "05": "Mayo", "06": "Junio", "07": "Julio", "08": "Agosto",
-  "09": "Septiembre", "10": "Octubre", "11": "Noviembre", "12": "Diciembre",
+  "01": "Enero",
+  "02": "Febrero",
+  "03": "Marzo",
+  "04": "Abril",
+  "05": "Mayo",
+  "06": "Junio",
+  "07": "Julio",
+  "08": "Agosto",
+  "09": "Septiembre",
+  "10": "Octubre",
+  "11": "Noviembre",
+  "12": "Diciembre",
 };
 
 export function InlineMonth({ value, onSave, emptyLabel, displayClassName = "" }: InlineMonthProps) {
-  const { editing, value: v, setValue, saving, start, cancel, save } = useInlineEdit<string>(value || "", async (next) => {
+  const {
+    editing,
+    value: v,
+    setValue,
+    saving,
+    start,
+    cancel,
+    save,
+  } = useInlineEdit<string>(value || "", async (next) => {
     await onSave(next || null);
   });
 
@@ -311,12 +409,14 @@ export function InlineMonth({ value, onSave, emptyLabel, displayClassName = "" }
     return (
       <input
         type="month"
-        autoFocus
         value={v}
         onChange={(e) => setValue(e.target.value)}
         onBlur={() => save()}
         onKeyDown={(e) => {
-          if (e.key === "Enter") { e.preventDefault(); save(); }
+          if (e.key === "Enter") {
+            e.preventDefault();
+            save();
+          }
           if (e.key === "Escape") cancel();
         }}
         className="rounded-md border border-[#00a8a8] bg-white px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-[#00a8a8]/30"
@@ -348,11 +448,20 @@ interface InlineChipsProps<T extends string> {
   inactiveClassName?: string;
 }
 
-export function InlineChips<T extends string>({ value, options, onSave, emptyLabel, activeClassName = "bg-[#00a8a8] text-white", inactiveClassName = "bg-[#f3f4f6] text-[#6b7280] hover:bg-[#e5e7eb]" }: InlineChipsProps<T>) {
+export function InlineChips<T extends string>({
+  value,
+  options,
+  onSave,
+  emptyLabel,
+  activeClassName = "bg-[#00a8a8] text-white",
+  inactiveClassName = "bg-[#f3f4f6] text-[#6b7280] hover:bg-[#e5e7eb]",
+}: InlineChipsProps<T>) {
   const [saving, setSaving] = useState(false);
   const [localValue, setLocalValue] = useState<T[]>(value);
 
-  useEffect(() => { setLocalValue(value); }, [value]);
+  useEffect(() => {
+    setLocalValue(value);
+  }, [value]);
 
   const toggle = async (v: T) => {
     const next = localValue.includes(v) ? localValue.filter((x) => x !== v) : [...localValue, v];
@@ -384,9 +493,7 @@ export function InlineChips<T extends string>({ value, options, onSave, emptyLab
           </button>
         );
       })}
-      {localValue.length === 0 && emptyLabel && (
-        <span className="text-xs italic text-[#9ca3af]">{emptyLabel}</span>
-      )}
+      {localValue.length === 0 && emptyLabel && <span className="text-xs italic text-[#9ca3af]">{emptyLabel}</span>}
     </div>
   );
 }

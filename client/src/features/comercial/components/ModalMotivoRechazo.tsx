@@ -1,8 +1,8 @@
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { X, AlertCircle } from 'lucide-react';
-import { fmtCurrency } from '@/lib/utils';
-import type { KanbanProspecto } from '@shared/types/comercial';
+import type { KanbanProspecto } from "@shared/types/comercial";
+import { useQuery } from "@tanstack/react-query";
+import { AlertCircle, X } from "lucide-react";
+import { useState } from "react";
+import { fmtCurrency } from "@/lib/utils";
 
 interface Props {
   prospecto: KanbanProspecto;
@@ -11,20 +11,20 @@ interface Props {
 }
 
 export function ModalMotivoRechazo({ prospecto, onClose, onSave }: Props) {
-  const [motivoSeleccionado, setMotivoSeleccionado] = useState('');
-  const [detalle, setDetalle] = useState('');
+  const [motivoSeleccionado, setMotivoSeleccionado] = useState("");
+  const [detalle, setDetalle] = useState("");
 
   const { data: rejectionReasons = [] } = useQuery<{ id: number; reason: string; category: string }[]>({
-    queryKey: ['/api/comercial/rejection-reasons'],
+    queryKey: ["/api/comercial/rejection-reasons"],
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!motivoSeleccionado) return;
     onSave({
-      motivoRechazo: parseInt(motivoSeleccionado),
+      motivoRechazo: parseInt(motivoSeleccionado, 10),
       motivoRechazoDetalle: detalle,
-      fechaRechazo: new Date().toISOString().split('T')[0],
+      fechaRechazo: new Date().toISOString().split("T")[0],
     });
   };
 
@@ -53,7 +53,7 @@ export function ModalMotivoRechazo({ prospecto, onClose, onSave }: Props) {
               required
             >
               <option value="">Seleccione un motivo...</option>
-              {rejectionReasons.map(motivo => (
+              {rejectionReasons.map((motivo) => (
                 <option key={motivo.id} value={String(motivo.id)}>
                   {motivo.reason} ({motivo.category})
                 </option>
@@ -79,19 +79,25 @@ export function ModalMotivoRechazo({ prospecto, onClose, onSave }: Props) {
                 <p className="font-semibold mb-1">Información importante</p>
                 <p>
                   El registro del motivo de rechazo es obligatorio y ayudará a mejorar nuestros procesos comerciales.
-                  Valor cotización de esta propuesta: {fmtCurrency(prospecto?.facturacionEstimada || prospecto?.propuesta?.ventaTotal || 0)}
+                  Valor cotización de esta propuesta:{" "}
+                  {fmtCurrency(prospecto?.facturacionEstimada || prospecto?.propuesta?.ventaTotal || 0)}
                 </p>
               </div>
             </div>
           </div>
 
           <div className="flex justify-end gap-3 pt-4 border-t border-[#e5e7eb]">
-            <button type="button" onClick={onClose}
-              className="px-6 py-2.5 border border-[#e5e7eb] text-[#6b7280] rounded-lg hover:bg-[#f3f4f6] font-medium text-sm">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-6 py-2.5 border border-[#e5e7eb] text-[#6b7280] rounded-lg hover:bg-[#f3f4f6] font-medium text-sm"
+            >
               Cancelar
             </button>
-            <button type="submit"
-              className="px-6 py-2.5 bg-[#00a8a8] text-white rounded-lg hover:bg-[#008080] font-medium text-sm">
+            <button
+              type="submit"
+              className="px-6 py-2.5 bg-[#00a8a8] text-white rounded-lg hover:bg-[#008080] font-medium text-sm"
+            >
               Guardar Motivo
             </button>
           </div>

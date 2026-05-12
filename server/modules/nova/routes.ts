@@ -14,7 +14,7 @@ router.use(requireAuth);
 // POST /api/nova/chat — Proxy chat to Nova AI with SSE streaming
 router.post("/chat", async (req, res) => {
   try {
-    if (!NOVA_API_URL || !NOVA_API_KEY) {
+    if (!(NOVA_API_URL && NOVA_API_KEY)) {
       return res.status(503).json({
         message: "Nova AI no esta configurado. Verifica NOVA_API_URL y NOVA_API_KEY.",
       });
@@ -114,7 +114,7 @@ router.get("/status", async (_req, res) => {
       status: healthRes.status,
       tenantId: NOVA_TENANT_ID,
     });
-  } catch (error) {
+  } catch (_error) {
     res.json({ connected: false, reason: "Connection failed" });
   }
 });

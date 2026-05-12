@@ -1,8 +1,8 @@
-import { pgTable, serial, text, integer, timestamp, boolean, numeric, jsonb, pgEnum, index } from "drizzle-orm/pg-core";
+import { boolean, index, integer, jsonb, numeric, pgEnum, pgTable, serial, text, timestamp } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
-import { users } from "./common";
 import { prospects } from "./comercial";
+import { users } from "./common";
 
 // ─── Enums ───────────────────────────────────────────────
 
@@ -19,11 +19,7 @@ export const surveyStatusEnum = pgEnum("survey_status", [
   "en_sitio",
 ]);
 
-export const documentStatusEnum = pgEnum("document_status", [
-  "vigente",
-  "por_vencer",
-  "vencido",
-]);
+export const documentStatusEnum = pgEnum("document_status", ["vigente", "por_vencer", "vencido"]);
 
 // ─── Zod schemas for JSONB columns ──────────────────────
 
@@ -106,195 +102,253 @@ export const operationAreaSchema = z.object({
 
 // ─── Main surveys table ─────────────────────────────────
 
-export const surveys = pgTable("surveys", {
-  id: serial("id").primaryKey(),
-  // Link to prospect
-  prospectId: integer("prospect_id").references(() => prospects.id),
-  // Section 1: Generales
-  clientName: text("client_name").notNull(),
-  siteType: text("site_type"), // CEDIS | Planta | Otros
-  siteTypeOther: text("site_type_other"),
-  address: text("address"),
-  scheduledDate: timestamp("scheduled_date"),
-  completedDate: timestamp("completed_date"),
-  status: surveyStatusEnum("status").notNull().default("borrador_comercial"),
-  type: text("type").notNull().default("Levantamiento"),
-  estimatedVolume: text("estimated_volume"),
-  estimatedValue: numeric("estimated_value", { precision: 12, scale: 2 }),
-  nextStep: text("next_step"),
-  hasReport: boolean("has_report").default(false),
-  // JSONB sections (Sections 2-7)
-  installations: jsonb("installations"), // Section 2
-  personnelPolicies: jsonb("personnel_policies"), // Section 3
-  transportPolicies: jsonb("transport_policies"), // Section 4
-  allowedEquipment: jsonb("allowed_equipment"), // Section 5
-  legalRequirements: jsonb("legal_requirements"), // Section 6
-  operationArea: jsonb("operation_area"), // Section 7
-  // Section 15: Observations
-  observations: text("observations"),
-  // Assigned users
-  assignedCommercialId: integer("assigned_commercial_id").references(() => users.id),
-  assignedOperationsId: integer("assigned_operations_id").references(() => users.id),
-  // Section 16: Validation
-  elaboratedById: integer("elaborated_by_id").references(() => users.id),
-  approvedById: integer("approved_by_id").references(() => users.id),
-  // Phase gates
-  phase1CompletedAt: timestamp("phase1_completed_at"),
-  phase2CompletedAt: timestamp("phase2_completed_at"),
-  // Handoff from comercial
-  sentById: integer("sent_by_id").references(() => users.id),
-  rejectionReason: text("rejection_reason"),
-  rejectedById: integer("rejected_by_id").references(() => users.id),
-  rejectedAt: timestamp("rejected_at"),
-  acceptedById: integer("accepted_by_id").references(() => users.id),
-  acceptedAt: timestamp("accepted_at"),
-  schedulingNotes: text("scheduling_notes"),
-  // Legacy columns (exist in DB)
-  assignedToId: integer("assigned_to_id").references(() => users.id),
-  generalInfo: jsonb("general_info"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-}, (table) => ({
-  prospectIdIdx: index("surveys_prospect_id_idx").on(table.prospectId),
-  statusIdx: index("surveys_status_idx").on(table.status),
-  assignedCommercialIdx: index("surveys_assigned_commercial_id_idx").on(table.assignedCommercialId),
-  assignedOperationsIdx: index("surveys_assigned_operations_id_idx").on(table.assignedOperationsId),
-}));
+export const surveys = pgTable(
+  "surveys",
+  {
+    id: serial("id").primaryKey(),
+    // Link to prospect
+    prospectId: integer("prospect_id").references(() => prospects.id),
+    // Section 1: Generales
+    clientName: text("client_name").notNull(),
+    siteType: text("site_type"), // CEDIS | Planta | Otros
+    siteTypeOther: text("site_type_other"),
+    address: text("address"),
+    scheduledDate: timestamp("scheduled_date"),
+    completedDate: timestamp("completed_date"),
+    status: surveyStatusEnum("status").notNull().default("borrador_comercial"),
+    type: text("type").notNull().default("Levantamiento"),
+    estimatedVolume: text("estimated_volume"),
+    estimatedValue: numeric("estimated_value", { precision: 12, scale: 2 }),
+    nextStep: text("next_step"),
+    hasReport: boolean("has_report").default(false),
+    // JSONB sections (Sections 2-7)
+    installations: jsonb("installations"), // Section 2
+    personnelPolicies: jsonb("personnel_policies"), // Section 3
+    transportPolicies: jsonb("transport_policies"), // Section 4
+    allowedEquipment: jsonb("allowed_equipment"), // Section 5
+    legalRequirements: jsonb("legal_requirements"), // Section 6
+    operationArea: jsonb("operation_area"), // Section 7
+    // Section 15: Observations
+    observations: text("observations"),
+    // Assigned users
+    assignedCommercialId: integer("assigned_commercial_id").references(() => users.id),
+    assignedOperationsId: integer("assigned_operations_id").references(() => users.id),
+    // Section 16: Validation
+    elaboratedById: integer("elaborated_by_id").references(() => users.id),
+    approvedById: integer("approved_by_id").references(() => users.id),
+    // Phase gates
+    phase1CompletedAt: timestamp("phase1_completed_at"),
+    phase2CompletedAt: timestamp("phase2_completed_at"),
+    // Handoff from comercial
+    sentById: integer("sent_by_id").references(() => users.id),
+    rejectionReason: text("rejection_reason"),
+    rejectedById: integer("rejected_by_id").references(() => users.id),
+    rejectedAt: timestamp("rejected_at"),
+    acceptedById: integer("accepted_by_id").references(() => users.id),
+    acceptedAt: timestamp("accepted_at"),
+    schedulingNotes: text("scheduling_notes"),
+    // Legacy columns (exist in DB)
+    assignedToId: integer("assigned_to_id").references(() => users.id),
+    generalInfo: jsonb("general_info"),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+  },
+  (table) => ({
+    prospectIdIdx: index("surveys_prospect_id_idx").on(table.prospectId),
+    statusIdx: index("surveys_status_idx").on(table.status),
+    assignedCommercialIdx: index("surveys_assigned_commercial_id_idx").on(table.assignedCommercialId),
+    assignedOperationsIdx: index("surveys_assigned_operations_id_idx").on(table.assignedOperationsId),
+  }),
+);
 
 // ─── Legacy table (kept temporarily) ────────────────────
 
-export const surveyWasteTypes = pgTable("survey_waste_types", {
-  id: serial("id").primaryKey(),
-  surveyId: integer("survey_id").references(() => surveys.id).notNull(),
-  wasteType: text("waste_type").notNull(),
-  quantity: text("quantity"),
-  percentage: integer("percentage"),
-  currentDestination: text("current_destination"),
-  monthlyCost: numeric("monthly_cost", { precision: 10, scale: 2 }),
-}, (table) => ({
-  surveyIdIdx: index("survey_waste_types_survey_id_idx").on(table.surveyId),
-}));
+export const surveyWasteTypes = pgTable(
+  "survey_waste_types",
+  {
+    id: serial("id").primaryKey(),
+    surveyId: integer("survey_id")
+      .references(() => surveys.id)
+      .notNull(),
+    wasteType: text("waste_type").notNull(),
+    quantity: text("quantity"),
+    percentage: integer("percentage"),
+    currentDestination: text("current_destination"),
+    monthlyCost: numeric("monthly_cost", { precision: 10, scale: 2 }),
+  },
+  (table) => ({
+    surveyIdIdx: index("survey_waste_types_survey_id_idx").on(table.surveyId),
+  }),
+);
 
 // ─── Kept table: competitor info ────────────────────────
 
-export const surveyCurrentServices = pgTable("survey_current_services", {
-  id: serial("id").primaryKey(),
-  surveyId: integer("survey_id").references(() => surveys.id).notNull(),
-  providerName: text("provider_name"),
-  contractActive: boolean("contract_active").default(false),
-  contractStart: timestamp("contract_start"),
-  contractEnd: timestamp("contract_end"),
-  monthlyCost: numeric("monthly_cost", { precision: 10, scale: 2 }),
-  collectionFrequency: text("collection_frequency"),
-  serviceType: text("service_type"),
-  includesSeparation: boolean("includes_separation").default(false),
-  includesValorization: boolean("includes_valorization").default(false),
-  includesReporting: boolean("includes_reporting").default(false),
-  satisfactionLevel: integer("satisfaction_level"),
-  reasonForChange: text("reason_for_change"),
-}, (table) => ({
-  surveyIdIdx: index("survey_current_services_survey_id_idx").on(table.surveyId),
-}));
+export const surveyCurrentServices = pgTable(
+  "survey_current_services",
+  {
+    id: serial("id").primaryKey(),
+    surveyId: integer("survey_id")
+      .references(() => surveys.id)
+      .notNull(),
+    providerName: text("provider_name"),
+    contractActive: boolean("contract_active").default(false),
+    contractStart: timestamp("contract_start"),
+    contractEnd: timestamp("contract_end"),
+    monthlyCost: numeric("monthly_cost", { precision: 10, scale: 2 }),
+    collectionFrequency: text("collection_frequency"),
+    serviceType: text("service_type"),
+    includesSeparation: boolean("includes_separation").default(false),
+    includesValorization: boolean("includes_valorization").default(false),
+    includesReporting: boolean("includes_reporting").default(false),
+    satisfactionLevel: integer("satisfaction_level"),
+    reasonForChange: text("reason_for_change"),
+  },
+  (table) => ({
+    surveyIdIdx: index("survey_current_services_survey_id_idx").on(table.surveyId),
+  }),
+);
 
 // ─── Section 8: Photos ──────────────────────────────────
 
-export const surveyPhotos = pgTable("survey_photos", {
-  id: serial("id").primaryKey(),
-  surveyId: integer("survey_id").references(() => surveys.id).notNull(),
-  url: text("url").notNull(),
-  caption: text("caption"),
-  section: text("section"), // which area of the site
-  sortOrder: integer("sort_order").default(0),
-  uploadedById: integer("uploaded_by_id").references(() => users.id),
-  createdAt: timestamp("created_at").defaultNow(),
-}, (table) => ({
-  surveyIdIdx: index("survey_photos_survey_id_idx").on(table.surveyId),
-}));
+export const surveyPhotos = pgTable(
+  "survey_photos",
+  {
+    id: serial("id").primaryKey(),
+    surveyId: integer("survey_id")
+      .references(() => surveys.id)
+      .notNull(),
+    url: text("url").notNull(),
+    caption: text("caption"),
+    section: text("section"), // which area of the site
+    sortOrder: integer("sort_order").default(0),
+    uploadedById: integer("uploaded_by_id").references(() => users.id),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (table) => ({
+    surveyIdIdx: index("survey_photos_survey_id_idx").on(table.surveyId),
+  }),
+);
 
 // ─── Section 9: Proposal Personnel ──────────────────────
 
-export const surveyProposalPersonnel = pgTable("survey_proposal_personnel", {
-  id: serial("id").primaryKey(),
-  surveyId: integer("survey_id").references(() => surveys.id).notNull(),
-  role: text("role").notNull(),
-  quantity: integer("quantity").default(1),
-  schedule: text("schedule"),
-  observations: text("observations"),
-}, (table) => ({
-  surveyIdIdx: index("survey_proposal_personnel_survey_id_idx").on(table.surveyId),
-}));
+export const surveyProposalPersonnel = pgTable(
+  "survey_proposal_personnel",
+  {
+    id: serial("id").primaryKey(),
+    surveyId: integer("survey_id")
+      .references(() => surveys.id)
+      .notNull(),
+    role: text("role").notNull(),
+    quantity: integer("quantity").default(1),
+    schedule: text("schedule"),
+    observations: text("observations"),
+  },
+  (table) => ({
+    surveyIdIdx: index("survey_proposal_personnel_survey_id_idx").on(table.surveyId),
+  }),
+);
 
 // ─── Section 10: Proposal Equipment ─────────────────────
 
-export const surveyProposalEquipment = pgTable("survey_proposal_equipment", {
-  id: serial("id").primaryKey(),
-  surveyId: integer("survey_id").references(() => surveys.id).notNull(),
-  item: text("item").notNull(),
-  quantity: integer("quantity").default(1),
-  observations: text("observations"),
-}, (table) => ({
-  surveyIdIdx: index("survey_proposal_equipment_survey_id_idx").on(table.surveyId),
-}));
+export const surveyProposalEquipment = pgTable(
+  "survey_proposal_equipment",
+  {
+    id: serial("id").primaryKey(),
+    surveyId: integer("survey_id")
+      .references(() => surveys.id)
+      .notNull(),
+    item: text("item").notNull(),
+    quantity: integer("quantity").default(1),
+    observations: text("observations"),
+  },
+  (table) => ({
+    surveyIdIdx: index("survey_proposal_equipment_survey_id_idx").on(table.surveyId),
+  }),
+);
 
 // ─── Section 11: Proposal Supplies ──────────────────────
 
-export const surveyProposalSupplies = pgTable("survey_proposal_supplies", {
-  id: serial("id").primaryKey(),
-  surveyId: integer("survey_id").references(() => surveys.id).notNull(),
-  item: text("item").notNull(),
-  quantity: integer("quantity").default(1),
-  observations: text("observations"),
-}, (table) => ({
-  surveyIdIdx: index("survey_proposal_supplies_survey_id_idx").on(table.surveyId),
-}));
+export const surveyProposalSupplies = pgTable(
+  "survey_proposal_supplies",
+  {
+    id: serial("id").primaryKey(),
+    surveyId: integer("survey_id")
+      .references(() => surveys.id)
+      .notNull(),
+    item: text("item").notNull(),
+    quantity: integer("quantity").default(1),
+    observations: text("observations"),
+  },
+  (table) => ({
+    surveyIdIdx: index("survey_proposal_supplies_survey_id_idx").on(table.surveyId),
+  }),
+);
 
 // ─── Section 12: Proposal Rentals ───────────────────────
 
-export const surveyProposalRentals = pgTable("survey_proposal_rentals", {
-  id: serial("id").primaryKey(),
-  surveyId: integer("survey_id").references(() => surveys.id).notNull(),
-  item: text("item").notNull(),
-  quantity: integer("quantity").default(1),
-  observations: text("observations"),
-}, (table) => ({
-  surveyIdIdx: index("survey_proposal_rentals_survey_id_idx").on(table.surveyId),
-}));
+export const surveyProposalRentals = pgTable(
+  "survey_proposal_rentals",
+  {
+    id: serial("id").primaryKey(),
+    surveyId: integer("survey_id")
+      .references(() => surveys.id)
+      .notNull(),
+    item: text("item").notNull(),
+    quantity: integer("quantity").default(1),
+    observations: text("observations"),
+  },
+  (table) => ({
+    surveyIdIdx: index("survey_proposal_rentals_survey_id_idx").on(table.surveyId),
+  }),
+);
 
 // ─── Section 13: Subproducts Catalog ────────────────────
 
-export const surveySubproducts = pgTable("survey_subproducts", {
-  id: serial("id").primaryKey(),
-  surveyId: integer("survey_id").references(() => surveys.id).notNull(),
-  itemNumber: integer("item_number"),
-  name: text("name").notNull(),
-  um: text("um"), // unit of measure
-  monthlyQty: numeric("monthly_qty", { precision: 12, scale: 2 }),
-  characteristics: text("characteristics"),
-  imageUrl: text("image_url"),
-  collectionFrequency: text("collection_frequency"),
-  transportRequired: text("transport_required"),
-  storage: text("storage"),
-}, (table) => ({
-  surveyIdIdx: index("survey_subproducts_survey_id_idx").on(table.surveyId),
-}));
+export const surveySubproducts = pgTable(
+  "survey_subproducts",
+  {
+    id: serial("id").primaryKey(),
+    surveyId: integer("survey_id")
+      .references(() => surveys.id)
+      .notNull(),
+    itemNumber: integer("item_number"),
+    name: text("name").notNull(),
+    um: text("um"), // unit of measure
+    monthlyQty: numeric("monthly_qty", { precision: 12, scale: 2 }),
+    characteristics: text("characteristics"),
+    imageUrl: text("image_url"),
+    collectionFrequency: text("collection_frequency"),
+    transportRequired: text("transport_required"),
+    storage: text("storage"),
+  },
+  (table) => ({
+    surveyIdIdx: index("survey_subproducts_survey_id_idx").on(table.surveyId),
+  }),
+);
 
 // ─── Section 14: Services Catalog ───────────────────────
 
-export const surveyServices = pgTable("survey_services", {
-  id: serial("id").primaryKey(),
-  surveyId: integer("survey_id").references(() => surveys.id).notNull(),
-  itemNumber: integer("item_number"),
-  serviceName: text("service_name").notNull(),
-  characteristic: text("characteristic"),
-  um: text("um"),
-  monthlyQty: numeric("monthly_qty", { precision: 12, scale: 2 }),
-  imageUrl: text("image_url"),
-  collectionFrequency: text("collection_frequency"),
-  equipmentRequired: text("equipment_required"),
-  suggestedTreatment: text("suggested_treatment"),
-}, (table) => ({
-  surveyIdIdx: index("survey_services_survey_id_idx").on(table.surveyId),
-}));
+export const surveyServices = pgTable(
+  "survey_services",
+  {
+    id: serial("id").primaryKey(),
+    surveyId: integer("survey_id")
+      .references(() => surveys.id)
+      .notNull(),
+    itemNumber: integer("item_number"),
+    serviceName: text("service_name").notNull(),
+    characteristic: text("characteristic"),
+    um: text("um"),
+    monthlyQty: numeric("monthly_qty", { precision: 12, scale: 2 }),
+    imageUrl: text("image_url"),
+    collectionFrequency: text("collection_frequency"),
+    equipmentRequired: text("equipment_required"),
+    suggestedTreatment: text("suggested_treatment"),
+  },
+  (table) => ({
+    surveyIdIdx: index("survey_services_survey_id_idx").on(table.surveyId),
+  }),
+);
 
 // ─── Gate Configuration (admin-configurable required fields) ─
 

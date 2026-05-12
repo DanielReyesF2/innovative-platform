@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -35,9 +35,7 @@ export default function PersonalSection({ data, onSave, disabled }: Props) {
 
   const handleArrayToggle = (field: string, item: string, checked: boolean) => {
     const current = form[field] || [];
-    const updated = checked
-      ? [...current, item]
-      : current.filter((v: string) => v !== item);
+    const updated = checked ? [...current, item] : current.filter((v: string) => v !== item);
     update(field, updated);
   };
 

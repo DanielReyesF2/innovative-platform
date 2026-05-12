@@ -1,14 +1,14 @@
+import { STAGE } from "@shared/schema/comercial-stages";
+import type { KanbanProspecto } from "@shared/types/comercial";
+import { Calendar as CalendarIcon, ChevronRight, Target, Trash2, Users, X } from "lucide-react";
 import { useState } from "react";
-import { X, Calendar as CalendarIcon, Users, Target, ChevronRight, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
-import { useCreateMeeting, useUpdateProspect } from "../api";
 import { KANBAN_STAGES } from "@/lib/comercial-constants";
-import { STAGE } from "@shared/schema/comercial-stages";
-import type { KanbanProspecto } from "@shared/types/comercial";
+import { useCreateMeeting, useUpdateProspect } from "../api";
 
 // Al avanzar de Prospecto → Reunión, Vero pide que se capturen todos los
 // campos obligatorios de la etapa Reunión: fecha, hora, tipo, objetivo,
@@ -111,9 +111,7 @@ export function AgendarReunionModal({ prospecto, onClose, onAdvanced }: Props) {
   const toLabel = KANBAN_STAGES.find((s) => s.id === STAGE.LEVANTAMIENTO)?.label || "Reunión";
 
   const renderAttendeeList = (side: "prospect" | "innovative", label: string, color: string) => {
-    const entries = attendees
-      .map((a, i) => ({ entry: a, index: i }))
-      .filter(({ entry }) => entry.side === side);
+    const entries = attendees.map((a, i) => ({ entry: a, index: i })).filter(({ entry }) => entry.side === side);
     return (
       <div>
         <div className="flex items-center justify-between mb-1">
@@ -180,7 +178,9 @@ export function AgendarReunionModal({ prospecto, onClose, onAdvanced }: Props) {
         <div className="px-6 pt-4">
           <div className="rounded-lg bg-[#f9fafb] px-3 py-2">
             <div className="text-sm font-semibold text-[#1c2c4a]">{prospecto.empresa}</div>
-            <div className="text-xs text-[#6b7280]">{prospecto.ciudad} · {prospecto.industria}</div>
+            <div className="text-xs text-[#6b7280]">
+              {prospecto.ciudad} · {prospecto.industria}
+            </div>
           </div>
           <div className="flex items-center gap-2 text-sm mt-3">
             <span className="rounded bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800">{fromLabel}</span>
@@ -274,13 +274,15 @@ export function AgendarReunionModal({ prospecto, onClose, onAdvanced }: Props) {
             * Requerido. Notas y próximo paso se llenan después de la reunión.
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={onClose}>Cancelar</Button>
+            <Button variant="outline" onClick={onClose}>
+              Cancelar
+            </Button>
             <Button
               onClick={handleSubmit}
               disabled={!canSubmit || createMeeting.isPending || updateProspect.isPending}
               className="bg-[#00a8a8] hover:bg-[#008b8b]"
             >
-              {(createMeeting.isPending || updateProspect.isPending) ? "Agendando..." : "Agendar y avanzar"}
+              {createMeeting.isPending || updateProspect.isPending ? "Agendando..." : "Agendar y avanzar"}
             </Button>
           </div>
         </div>
