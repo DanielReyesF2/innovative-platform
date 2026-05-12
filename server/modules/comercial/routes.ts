@@ -1152,7 +1152,12 @@ router.post("/prospects/:id/documents/upload", upload.single("file"), async (req
 router.get("/uploads/:prospectId/:filename", async (req, res) => {
   try {
     const { prospectId, filename } = req.params;
-    const filePath = path.join(uploadsDir, prospectId, filename);
+    const filePath = path.resolve(uploadsDir, prospectId, filename);
+
+    // Prevent path traversal — resolved path must stay inside uploadsDir
+    if (!filePath.startsWith(uploadsDir)) {
+      return res.status(403).json({ message: "Acceso denegado" });
+    }
 
     if (!fs.existsSync(filePath)) {
       return res.status(404).json({ message: "Archivo no encontrado" });
