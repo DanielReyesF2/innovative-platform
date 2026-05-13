@@ -1,4 +1,8 @@
 import { Router } from "express";
+import fs from "fs";
+import multer from "multer";
+import path from "path";
+import { fileURLToPath } from "url";
 import { z } from "zod";
 import {
   insertDocumentSchema,
@@ -18,6 +22,7 @@ import { getErrorMessage } from "../../utils/errors";
 import {
   acceptSurvey,
   addSurveyWasteType,
+  approveSurvey,
   advanceSurveyStatus,
   checkGateCompleteness,
   createDocument,
@@ -39,6 +44,7 @@ import {
   deleteSurveyPhoto,
   deleteSurveyService,
   deleteSurveySubproduct,
+  getApprovedSurveys,
   getDocumentById,
   // Documents
   getDocuments,
@@ -47,6 +53,7 @@ import {
   // Gate config
   getGateConfigs,
   getOpsTeamStats,
+  getPendingApprovalSurveys,
   getPendingReviewSurveys,
   getSurveyById,
   // Photos
@@ -67,6 +74,7 @@ import {
   getSurveys,
   getSurveysByStatus,
   rejectSurvey,
+  returnSurvey,
   updateDocument,
   updateGateConfig,
   updateProposalEquipment,
@@ -81,6 +89,44 @@ import {
 } from "./storage";
 
 export const router = Router();
+
+// ─── Multer config for photo uploads ───
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const uploadsDir = path.resolve(__dirname, "../../../dist/uploads/operaciones");
+
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+const photoStorage = multer.diskStorage({
+  destination: (req, _file, cb) => {
+    const surveyDir = path.join(uploadsDir, req.params.id);
+    if (!fs.existsSync(surveyDir)) {
+      fs.mkdirSync(surveyDir, { recursive: true });
+    }
+    cb(null, surveyDir);
+  },
+  filename: (_req, file, cb) => {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    const ext = path.extname(file.originalname);
+    cb(null, `${uniqueSuffix}${ext}`);
+  },
+});
+
+const photoUpload = multer({
+  storage: photoStorage,
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    const allowed = ["image/jpeg", "image/png", "image/gif", "image/webp", "image/heic", "image/heif"];
+    if (allowed.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error("Solo se permiten imágenes (JPEG, PNG, GIF, WebP, HEIC)"));
+    }
+  },
+});
 
 router.use(requireAuth);
 
@@ -162,6 +208,70 @@ router.post("/surveys/:id/reject", requireRole("admin", "director", "operaciones
     res.json(result);
   } catch (error: unknown) {
     console.error("[operaciones] Reject survey error:", error);
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ message: error.errors[0].message });
+    }
+    const msg = getErrorMessage(error);
+    if (msg.startsWith("NOT_FOUND")) return res.status(404).json({ message: "Levantamiento no encontrado" });
+    if (msg.startsWith("CONFLICT:")) return res.status(409).json({ message: msg.slice(9) });
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+// ─── Approval: Director reviews completed surveys ───────
+
+router.get("/surveys/pending-approval", async (_req, res) => {
+  try {
+    const surveys = await getPendingApprovalSurveys();
+    res.json(surveys);
+  } catch (error: unknown) {
+    console.error("[operaciones] Get pending approval error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+router.get("/surveys/approved", async (_req, res) => {
+  try {
+    const surveys = await getApprovedSurveys();
+    res.json(surveys);
+  } catch (error: unknown) {
+    console.error("[operaciones] Get approved surveys error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+const approveSurveySchema = z.object({
+  notes: z.string().optional(),
+});
+
+router.post("/surveys/:id/approve", requireRole("admin", "director"), async (req, res) => {
+  try {
+    const parsed = approveSurveySchema.parse(req.body);
+    const result = await approveSurvey(Number(req.params.id), req.user!.id, parsed.notes);
+    res.json(result);
+  } catch (error: unknown) {
+    console.error("[operaciones] Approve survey error:", error);
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ message: error.errors[0].message });
+    }
+    const msg = getErrorMessage(error);
+    if (msg.startsWith("NOT_FOUND")) return res.status(404).json({ message: "Levantamiento no encontrado" });
+    if (msg.startsWith("CONFLICT:")) return res.status(409).json({ message: msg.slice(9) });
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+const returnSurveySchema = z.object({
+  reason: z.string().min(10, "La razón debe tener al menos 10 caracteres"),
+});
+
+router.post("/surveys/:id/return", requireRole("admin", "director"), async (req, res) => {
+  try {
+    const parsed = returnSurveySchema.parse(req.body);
+    const result = await returnSurvey(Number(req.params.id), parsed.reason, req.user!.id);
+    res.json(result);
+  } catch (error: unknown) {
+    console.error("[operaciones] Return survey error:", error);
     if (error instanceof z.ZodError) {
       return res.status(400).json({ message: error.errors[0].message });
     }
@@ -353,6 +463,51 @@ router.post("/surveys/:id/photos", async (req, res) => {
   } catch (error) {
     console.error("[operaciones] Create photo error:", error);
     res.status(400).json({ message: "Datos invalidos" });
+  }
+});
+
+router.post("/surveys/:id/photos/upload", photoUpload.single("photo"), async (req, res) => {
+  try {
+    const file = req.file;
+    if (!file) {
+      return res.status(400).json({ message: "Foto requerida" });
+    }
+
+    const surveyId = Number(req.params.id);
+    const relativePath = `/uploads/operaciones/${surveyId}/${file.filename}`;
+
+    const photo = await createSurveyPhoto({
+      surveyId,
+      url: relativePath,
+      caption: req.body.caption || null,
+      section: req.body.section || "general",
+      uploadedById: req.user!.id,
+    });
+
+    res.status(201).json(photo);
+  } catch (error) {
+    console.error("[operaciones] Upload photo error:", error);
+    res.status(500).json({ message: getErrorMessage(error) });
+  }
+});
+
+router.get("/uploads/:surveyId/:filename", async (req, res) => {
+  try {
+    const { surveyId, filename } = req.params;
+    const filePath = path.resolve(uploadsDir, surveyId, filename);
+
+    if (!filePath.startsWith(uploadsDir)) {
+      return res.status(403).json({ message: "Acceso denegado" });
+    }
+
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ message: "Archivo no encontrado" });
+    }
+
+    res.sendFile(filePath);
+  } catch (error) {
+    console.error("[operaciones] Serve photo error:", error);
+    res.status(500).json({ message: "Internal server error" });
   }
 });
 

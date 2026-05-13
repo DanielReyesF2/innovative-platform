@@ -44,7 +44,8 @@ const VALID_TRANSITIONS: Record<string, string[]> = {
   pendiente_operaciones: ["agendado", "borrador_comercial", "cancelado"],
   agendado: ["en_sitio", "cancelado"],
   en_sitio: ["completado", "agendado", "cancelado"],
-  completado: [],
+  completado: ["pendiente_revision"],
+  pendiente_revision: ["completado", "cancelado"],
   cancelado: ["borrador_comercial"],
 };
 
@@ -624,10 +625,68 @@ export async function rejectSurvey(id: number, rejectionReason: string, rejected
   return result;
 }
 
+// ─── Approval: Director reviews completed surveys ───────
+
+export async function getPendingApprovalSurveys() {
+  return db.query.surveys.findMany({
+    where: eq(surveys.status, "completado" as Survey["status"]),
+    orderBy: [desc(surveys.completedDate)],
+  });
+}
+
+export async function getApprovedSurveys() {
+  return db.query.surveys.findMany({
+    where: eq(surveys.status, "pendiente_revision" as Survey["status"]),
+    orderBy: [desc(surveys.approvedAt)],
+  });
+}
+
+export async function approveSurvey(id: number, approvedById: number, notes?: string) {
+  const survey = await db.query.surveys.findFirst({ where: eq(surveys.id, id) });
+  if (!survey) throw new Error("NOT_FOUND");
+  if (survey.status !== "completado") {
+    throw new Error("CONFLICT:Solo se pueden aprobar levantamientos en estado 'completado'");
+  }
+
+  const [updated] = await db
+    .update(surveys)
+    .set({
+      status: "pendiente_revision" as Survey["status"],
+      approvedById,
+      approvedAt: new Date(),
+      approvalNotes: notes || null,
+      updatedAt: new Date(),
+    })
+    .where(eq(surveys.id, id))
+    .returning();
+  return updated;
+}
+
+export async function returnSurvey(id: number, reason: string, rejectedById: number) {
+  const survey = await db.query.surveys.findFirst({ where: eq(surveys.id, id) });
+  if (!survey) throw new Error("NOT_FOUND");
+  if (survey.status !== "completado") {
+    throw new Error("CONFLICT:Solo se pueden devolver levantamientos en estado 'completado'");
+  }
+
+  const [updated] = await db
+    .update(surveys)
+    .set({
+      status: "en_sitio" as Survey["status"],
+      approvalNotes: reason,
+      approvedById: null,
+      approvedAt: null,
+      updatedAt: new Date(),
+    })
+    .where(eq(surveys.id, id))
+    .returning();
+  return updated;
+}
+
 // ─── Summary stats ──────────────────────────────────────
 
 export async function getSurveySummary() {
-  const statuses = ["borrador_comercial", "pendiente_operaciones", "agendado", "en_sitio", "completado"];
+  const statuses = ["borrador_comercial", "pendiente_operaciones", "agendado", "en_sitio", "completado", "pendiente_revision"];
   const results: Record<string, number> = {};
 
   for (const status of statuses) {

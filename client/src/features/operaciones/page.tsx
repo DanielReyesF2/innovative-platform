@@ -3,29 +3,38 @@ import {
   BarChart3,
   Calendar,
   CheckCircle,
+  CheckCircle2,
   ChevronRight,
+  Play,
   ClipboardList,
   Clock,
   FileText,
   Inbox,
   MapPin,
+  RotateCcw,
   Search,
+  ShieldCheck,
   Users,
 } from "lucide-react";
 import { useState } from "react";
-import { useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { useToast } from "@/components/ui/use-toast";
 import { KpiSection } from "@/features/kpis/components/KpiSection";
 import { ExecutiveAvatar } from "@/lib/comercial-constants";
 import {
+  useApproveSurvey,
+  useApprovedSurveys,
   useDocuments,
   useExpiredDocuments,
   useOpsTeam,
+  usePendingApprovalSurveys,
   usePendingReviewSurveys,
+  useReturnSurvey,
   useSurveySummary,
   useSurveys,
 } from "./api";
+import LevantamientoHub from "./components/LevantamientoHub";
 import { OperacionesCalendar } from "./components/OperacionesCalendar";
 import { ReviewSurveyModal } from "./components/ReviewSurveyModal";
 
@@ -35,6 +44,7 @@ const STATUS_LABELS: Record<string, string> = {
   agendado: "Agendado",
   en_sitio: "En Sitio",
   completado: "Completado",
+  pendiente_revision: "Aprobado",
   cancelado: "Cancelado",
   rechazado: "Rechazado",
 };
@@ -43,6 +53,7 @@ const STATUS_COLORS: Record<string, string> = {
   borrador_comercial: "bg-blue-100 text-blue-800",
   pendiente_operaciones: "bg-purple-100 text-purple-800",
   agendado: "bg-yellow-100 text-yellow-800",
+  pendiente_revision: "bg-emerald-100 text-emerald-800",
   en_sitio: "bg-orange-100 text-orange-800",
   completado: "bg-green-100 text-green-800",
   cancelado: "bg-gray-100 text-gray-800",
@@ -55,21 +66,33 @@ const DOC_STATUS_COLORS: Record<string, string> = {
   vencido: "bg-red-100 text-red-800",
 };
 
+const STATUS_LABELS_APPROVAL: Record<string, string> = {
+  completado: "Pendiente de Aprobación",
+  pendiente_revision: "Aprobado",
+};
+
 export default function OperacionesPage() {
-  const [, navigate] = useLocation();
   const { data: surveys = [], isError: surveysError } = useSurveys();
   const { data: summary } = useSurveySummary();
   const { data: documents = [], isError: docsError } = useDocuments();
   const { data: expiredDocs = [] } = useExpiredDocuments();
   const { data: pendingReview = [] } = usePendingReviewSurveys();
+  const { data: pendingApproval = [] } = usePendingApprovalSurveys();
+  const { data: approvedSurveys = [] } = useApprovedSurveys();
   const { data: opsTeam = [] } = useOpsTeam();
+  const approveMutation = useApproveSurvey();
+  const returnMutation = useReturnSurvey();
+  const { toast } = useToast();
 
   const isError = surveysError || docsError;
 
-  const [activeTab, setActiveTab] = useState<"solicitudes" | "surveys" | "documents" | "kpis">("solicitudes");
+  const [activeTab, setActiveTab] = useState<"solicitudes" | "aprobacion" | "surveys" | "documents" | "kpis">("solicitudes");
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [reviewSurvey, setReviewSurvey] = useState<any>(null);
+  const [hubSurveyId, setHubSurveyId] = useState<number | null>(null);
+  const [returnSurveyId, setReturnSurveyId] = useState<number | null>(null);
+  const [returnReason, setReturnReason] = useState("");
   const [showLivePanel, setShowLivePanel] = useState(false);
 
   // Live: surveys where personnel is on-site right now
@@ -256,6 +279,22 @@ export default function OperacionesPage() {
           )}
         </button>
         <button
+          onClick={() => setActiveTab("aprobacion")}
+          className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-t-md transition-colors ${
+            activeTab === "aprobacion"
+              ? "border-b-2 border-primary text-primary"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <ShieldCheck className="h-4 w-4" />
+          Aprobación
+          {pendingApproval.length > 0 && (
+            <span className="inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-green-600 px-1.5 text-xs font-bold text-white">
+              {pendingApproval.length}
+            </span>
+          )}
+        </button>
+        <button
           onClick={() => setActiveTab("surveys")}
           className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-t-md transition-colors ${
             activeTab === "surveys"
@@ -322,6 +361,132 @@ export default function OperacionesPage() {
       {/* Content */}
       {activeTab === "kpis" ? (
         <KpiSection moduleSlug="operaciones" compact />
+      ) : activeTab === "aprobacion" ? (
+        <div className="space-y-6">
+          {/* Pendientes de Aprobación */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Clock className="h-5 w-5 text-amber-500" />
+                Pendientes de Aprobación ({pendingApproval.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {pendingApproval.length === 0 ? (
+                <EmptyState message="No hay levantamientos pendientes de aprobación" />
+              ) : (
+                <div className="space-y-3">
+                  {pendingApproval.map((survey: any) => (
+                    <div
+                      key={survey.id}
+                      className="flex items-center gap-4 rounded-lg border border-amber-200 bg-amber-50/50 p-4"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold">{survey.clientName}</span>
+                          <span className="inline-flex rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800">
+                            Completado
+                          </span>
+                        </div>
+                        <div className="mt-1 flex items-center gap-4 text-sm text-muted-foreground">
+                          {survey.completedDate && (
+                            <span className="flex items-center gap-1">
+                              <Calendar className="h-3 w-3" />
+                              Completado: {new Date(survey.completedDate).toLocaleDateString("es-MX")}
+                            </span>
+                          )}
+                          {survey.address && (
+                            <span className="truncate max-w-xs">{survey.address}</span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <button
+                          onClick={() => setHubSurveyId(survey.id)}
+                          className="px-3 py-2 text-xs font-medium text-[#0067B0] border border-[#0067B0]/30 rounded-lg hover:bg-[#0067B0]/5 transition-colors"
+                        >
+                          Ver Detalle
+                        </button>
+                        <button
+                          onClick={() => {
+                            setReturnSurveyId(survey.id);
+                            setReturnReason("");
+                          }}
+                          className="px-3 py-2 text-xs font-medium text-amber-700 border border-amber-300 rounded-lg hover:bg-amber-50 transition-colors flex items-center gap-1"
+                        >
+                          <RotateCcw className="h-3 w-3" />
+                          Devolver
+                        </button>
+                        <button
+                          onClick={() => {
+                            approveMutation.mutate(
+                              { id: survey.id },
+                              {
+                                onSuccess: () => toast({ description: `${survey.clientName} aprobado` }),
+                                onError: () => toast({ title: "Error al aprobar", variant: "destructive" }),
+                              },
+                            );
+                          }}
+                          disabled={approveMutation.isPending}
+                          className="px-4 py-2 text-xs font-semibold text-white bg-[#2E7D32] rounded-lg hover:bg-[#1B5E20] transition-colors flex items-center gap-1 disabled:opacity-50"
+                        >
+                          <CheckCircle2 className="h-3.5 w-3.5" />
+                          Aprobar
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Aprobados — listos para subproductos */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <CheckCircle className="h-5 w-5 text-green-600" />
+                Aprobados — Listos para Modelo Económico ({approvedSurveys.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {approvedSurveys.length === 0 ? (
+                <EmptyState message="No hay levantamientos aprobados aún" />
+              ) : (
+                <div className="space-y-3">
+                  {approvedSurveys.map((survey: any) => (
+                    <button
+                      key={survey.id}
+                      onClick={() => setHubSurveyId(survey.id)}
+                      className="flex w-full items-center justify-between rounded-lg border border-green-200 bg-green-50/50 p-4 text-left transition-colors hover:bg-green-100/50"
+                    >
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold">{survey.clientName}</span>
+                          <span className="inline-flex rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800">
+                            Aprobado
+                          </span>
+                        </div>
+                        <div className="mt-1 flex items-center gap-4 text-sm text-muted-foreground">
+                          {survey.approvedAt && (
+                            <span className="flex items-center gap-1">
+                              <ShieldCheck className="h-3 w-3 text-green-600" />
+                              Aprobado: {new Date(survey.approvedAt).toLocaleDateString("es-MX")}
+                            </span>
+                          )}
+                          {survey.address && (
+                            <span className="truncate max-w-xs">{survey.address}</span>
+                          )}
+                        </div>
+                      </div>
+                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                    </button>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       ) : activeTab === "solicitudes" ? (
         <Card>
           <CardHeader>
@@ -374,7 +539,7 @@ export default function OperacionesPage() {
                 {filteredSurveys.map((survey: any) => (
                   <button
                     key={survey.id}
-                    onClick={() => navigate(`/operaciones/levantamiento/${survey.id}`)}
+                    onClick={() => setHubSurveyId(survey.id)}
                     className="flex w-full items-center justify-between rounded-lg border p-4 text-left transition-colors hover:bg-accent"
                   >
                     <div className="flex-1">
@@ -401,6 +566,14 @@ export default function OperacionesPage() {
                       </div>
                       {survey.address && (
                         <div className="mt-1 text-xs text-muted-foreground truncate max-w-md">{survey.address}</div>
+                      )}
+                      {(survey.status === "agendado" || survey.status === "en_sitio") && (
+                        <div className="mt-2">
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#0067B0] text-white text-xs font-semibold">
+                            <Play className="h-3 w-3" />
+                            {survey.status === "agendado" ? "Comenzar Levantamiento" : "Continuar Levantamiento"}
+                          </span>
+                        </div>
                       )}
                     </div>
                     <ChevronRight className="h-4 w-4 text-muted-foreground" />
@@ -460,6 +633,59 @@ export default function OperacionesPage() {
         />
       )}
 
+      {/* Levantamiento Hub modal */}
+      {hubSurveyId && (
+        <LevantamientoHub surveyId={hubSurveyId} onClose={() => setHubSurveyId(null)} />
+      )}
+
+      {/* Return survey modal */}
+      {returnSurveyId !== null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={() => setReturnSurveyId(null)}>
+          <div className="absolute inset-0 bg-black/40" />
+          <div className="relative bg-white rounded-2xl p-6 mx-4 max-w-md w-full shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-bold text-[#1c2c4a] mb-1">Devolver Levantamiento</h3>
+            <p className="text-sm text-[#6b7280] mb-4">
+              El levantamiento regresará al equipo de campo para correcciones.
+            </p>
+            <textarea
+              value={returnReason}
+              onChange={(e) => setReturnReason(e.target.value)}
+              placeholder="Describe qué se necesita corregir o completar..."
+              className="w-full h-28 rounded-xl border border-[#e5e7eb] px-4 py-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#0067B0]/30 focus:border-[#0067B0]"
+            />
+            <div className="flex gap-3 mt-4">
+              <button
+                onClick={() => setReturnSurveyId(null)}
+                className="flex-1 py-2.5 rounded-xl border border-[#e5e7eb] text-sm font-medium text-[#6b7280] hover:bg-[#f3f4f6] transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => {
+                  returnMutation.mutate(
+                    { id: returnSurveyId, reason: returnReason },
+                    {
+                      onSuccess: () => {
+                        toast({ description: "Levantamiento devuelto al equipo de campo" });
+                        setReturnSurveyId(null);
+                        setReturnReason("");
+                      },
+                      onError: (err: any) => {
+                        toast({ title: "Error", description: err.message || "No se pudo devolver", variant: "destructive" });
+                      },
+                    },
+                  );
+                }}
+                disabled={returnReason.length < 10 || returnMutation.isPending}
+                className="flex-1 py-2.5 rounded-xl bg-amber-600 text-white text-sm font-semibold hover:bg-amber-700 transition-colors disabled:opacity-50"
+              >
+                {returnMutation.isPending ? "Devolviendo..." : "Devolver"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ═══ Live floating button ═══ */}
       {liveSurveys.length > 0 && (
         <>
@@ -500,7 +726,7 @@ export default function OperacionesPage() {
                     <button
                       key={s.id}
                       onClick={() => {
-                        navigate(`/operaciones/levantamiento/${s.id}`);
+                        setHubSurveyId(s.id);
                         setShowLivePanel(false);
                       }}
                       className="w-full px-4 py-3 text-left hover:bg-[#f0fdf4] transition-colors"

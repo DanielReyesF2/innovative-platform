@@ -136,6 +136,8 @@ export const surveys = pgTable(
     // Section 16: Validation
     elaboratedById: integer("elaborated_by_id").references(() => users.id),
     approvedById: integer("approved_by_id").references(() => users.id),
+    approvedAt: timestamp("approved_at"),
+    approvalNotes: text("approval_notes"),
     // Phase gates
     phase1CompletedAt: timestamp("phase1_completed_at"),
     phase2CompletedAt: timestamp("phase2_completed_at"),

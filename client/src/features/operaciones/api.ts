@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { apiRequest, getAuthToken, queryClient } from "@/lib/queryClient";
 
 // ─── Team Dashboard ─────────────────────────────────────
 
@@ -148,6 +148,47 @@ export function useRejectSurvey() {
   });
 }
 
+// ─── Approval: Director reviews completed surveys ────────
+
+export function usePendingApprovalSurveys() {
+  return useQuery<any[]>({
+    queryKey: ["/api/operaciones/surveys/pending-approval"],
+  });
+}
+
+export function useApprovedSurveys() {
+  return useQuery<any[]>({
+    queryKey: ["/api/operaciones/surveys/approved"],
+  });
+}
+
+export function useApproveSurvey() {
+  return useMutation({
+    mutationFn: async ({ id, notes }: { id: number; notes?: string }) => {
+      const res = await apiRequest("POST", `/api/operaciones/surveys/${id}/approve`, { notes });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/operaciones/surveys"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/operaciones/surveys/pending-approval"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/operaciones/surveys/approved"] });
+    },
+  });
+}
+
+export function useReturnSurvey() {
+  return useMutation({
+    mutationFn: async ({ id, reason }: { id: number; reason: string }) => {
+      const res = await apiRequest("POST", `/api/operaciones/surveys/${id}/return`, { reason });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/operaciones/surveys"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/operaciones/surveys/pending-approval"] });
+    },
+  });
+}
+
 // ─── Generic sub-item CRUD hook factory ─────────────────
 
 function createSubItemHooks(resource: string) {
@@ -194,6 +235,37 @@ function createSubItemHooks(resource: string) {
         },
       }),
   };
+}
+
+// ─── Photo upload (multipart) ────────────────────────────
+
+export function useUploadPhoto() {
+  return useMutation({
+    mutationFn: async ({ surveyId, file, caption, section }: { surveyId: number; file: File; caption?: string; section?: string }) => {
+      const formData = new FormData();
+      formData.append("photo", file);
+      if (caption) formData.append("caption", caption);
+      formData.append("section", section || "general");
+
+      const token = getAuthToken();
+      const res = await fetch(`/api/operaciones/surveys/${surveyId}/photos/upload`, {
+        method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ message: "Error al subir foto" }));
+        throw new Error(err.message || "Error al subir foto");
+      }
+
+      return res.json();
+    },
+    onSuccess: (_data: any, variables: any) => {
+      queryClient.invalidateQueries({ queryKey: [`/api/operaciones/surveys/${variables.surveyId}/photos`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/operaciones/surveys/${variables.surveyId}`] });
+    },
+  });
 }
 
 // Sub-item hooks
