@@ -455,6 +455,17 @@ export const insertProspectSchema = createInsertSchema(prospects, {
   services: z.array(z.string().max(50)).max(10).optional(),
   serviceVolumes: z.record(z.string().max(50), z.string().max(100)).optional(),
   levantamientoData: levantamientoDataSchema,
+  // Timestamps editables: drizzle-zod genera z.date() para timestamp() sin
+  // mode:"string", pero el frontend envía ISO strings. z.coerce.date()
+  // acepta ambos formatos y produce Date (lo que Drizzle espera).
+  closeDate: z.coerce.date().nullable().optional(),
+  rejectionDate: z.coerce.date().nullable().optional(),
+  proposalDate: z.coerce.date().nullable().optional(),
+  sentToOpsAt: z.coerce.date().nullable().optional(),
+  lastContactAt: z.coerce.date().nullable().optional(),
+  nextFollowUpAt: z.coerce.date().nullable().optional(),
+  fechaVencimientoContrato: z.coerce.date().nullable().optional(),
+  proposalDeadline: z.coerce.date().nullable().optional(),
 }).omit({ id: true, createdAt: true, updatedAt: true });
 
 // Per Vero's flow (Prospecto stage): only contact data is required at this
