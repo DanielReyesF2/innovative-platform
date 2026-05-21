@@ -133,8 +133,15 @@ export interface SeguimientoUrgency {
 export interface GateMissingField {
   key: string;
   label: string;
-  type: "text" | "number" | "services" | "date";
+  type: "text" | "number" | "services" | "date" | "month";
   placeholder?: string;
+}
+
+export interface StageGateSkip {
+  label: string;
+  /** Field key where the skip reason is stored (e.g. "nextStep") */
+  reasonKey: string;
+  reasonPlaceholder: string;
 }
 
 export interface StageGate {
@@ -143,6 +150,8 @@ export interface StageGate {
   message: (p: KanbanProspecto) => string;
   requirement: string;
   missingFields: (p: KanbanProspecto) => GateMissingField[];
+  /** If defined, the gate can be skipped with a reason */
+  skip?: StageGateSkip;
 }
 
 // ═══════ PENDING MOVE (DnD) ═══════

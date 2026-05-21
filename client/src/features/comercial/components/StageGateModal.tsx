@@ -1,5 +1,5 @@
 import type { PendingMove } from "@shared/types/comercial";
-import { ArrowRight, CheckCircle2, Lock } from "lucide-react";
+import { ArrowRight, CheckCircle2, Lock, SkipForward } from "lucide-react";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,6 +20,10 @@ export function StageGateModal({ pendingMove, isHub, onForce, onCancel }: Props)
   const gate = STAGE_GATES[pendingMove.toStage];
   const missingFields = gate?.missingFields(pendingMove.prospecto) || [];
   const canCompleteInline = missingFields.length > 0;
+  const skipConfig = gate?.skip;
+
+  const [skipping, setSkipping] = useState(false);
+  const [skipReason, setSkipReason] = useState("");
 
   const [formValues, setFormValues] = useState<Record<string, string | string[]>>(() => {
     const initial: Record<string, string | string[]> = {};
@@ -51,6 +55,8 @@ export function StageGateModal({ pendingMove, isHub, onForce, onCancel }: Props)
     return val && String(val).trim() !== "";
   });
 
+  const isSkipValid = skipping && skipReason.trim().length > 0;
+
   const handleCompleteAndAdvance = async () => {
     if (!isFormValid) return;
     setIsSaving(true);
@@ -62,6 +68,24 @@ export function StageGateModal({ pendingMove, isHub, onForce, onCancel }: Props)
         stage: pendingMove.toStage,
       });
       toast({ title: `Avanzado a ${stageLabel}` });
+      onCancel();
+    } catch {
+      toast({ title: "Error al actualizar", variant: "destructive" });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleSkipAndAdvance = async () => {
+    if (!skipConfig || !isSkipValid) return;
+    setIsSaving(true);
+    try {
+      await updateProspect.mutateAsync({
+        id: pendingMove.prospecto.id,
+        [skipConfig.reasonKey]: `N/A — ${skipReason.trim()}`,
+        stage: pendingMove.toStage,
+      });
+      toast({ title: `Avanzado a ${stageLabel} (sin levantamiento)` });
       onCancel();
     } catch {
       toast({ title: "Error al actualizar", variant: "destructive" });
@@ -111,8 +135,28 @@ export function StageGateModal({ pendingMove, isHub, onForce, onCancel }: Props)
           </div>
         )}
 
+        {/* Skip mode — when user chooses "No aplica" */}
+        {skipping && skipConfig && (
+          <div className="space-y-3 mb-4">
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+              <p className="text-xs text-amber-800 font-medium">Se saltará esta etapa. Indica el motivo:</p>
+            </div>
+            <div>
+              <Label className="text-xs font-medium text-[#1c2c4a]">Motivo</Label>
+              <Input
+                type="text"
+                value={skipReason}
+                onChange={(e) => setSkipReason(e.target.value)}
+                placeholder={skipConfig.reasonPlaceholder}
+                className="mt-1"
+                autoFocus
+              />
+            </div>
+          </div>
+        )}
+
         {/* Inline form for missing fields */}
-        {canCompleteInline && (
+        {canCompleteInline && !skipping && (
           <div className="space-y-3 mb-4">
             {missingFields.map((field) => (
               <div key={field.key}>
@@ -140,7 +184,7 @@ export function StageGateModal({ pendingMove, isHub, onForce, onCancel }: Props)
                   <div>
                     <Label className="text-xs font-medium text-[#1c2c4a]">{field.label}</Label>
                     <Input
-                      type={field.type === "number" ? "number" : field.type === "date" ? "date" : "text"}
+                      type={field.type === "number" ? "number" : field.type === "date" ? "date" : field.type === "month" ? "month" : "text"}
                       value={formValues[field.key] || ""}
                       onChange={(e) => set(field.key, e.target.value)}
                       placeholder={field.placeholder}
@@ -164,23 +208,54 @@ export function StageGateModal({ pendingMove, isHub, onForce, onCancel }: Props)
 
         {/* Actions */}
         <div className="space-y-2">
-          {canCompleteInline && (
-            <button
-              onClick={handleCompleteAndAdvance}
-              disabled={!isFormValid || isSaving}
-              className="w-full px-4 py-2.5 bg-[#0067B0] hover:bg-[#005a9e] disabled:bg-[#93c5fd] text-white rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
-            >
-              <CheckCircle2 size={16} />
-              {isSaving ? "Guardando..." : `Completar y avanzar a ${stageLabel}`}
-            </button>
-          )}
+          {skipping ? (
+            <>
+              <button
+                onClick={handleSkipAndAdvance}
+                disabled={!isSkipValid || isSaving}
+                className="w-full px-4 py-2.5 bg-amber-600 hover:bg-amber-700 disabled:bg-amber-300 text-white rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
+              >
+                <SkipForward size={16} />
+                {isSaving ? "Guardando..." : `Saltar y avanzar a ${stageLabel}`}
+              </button>
+              <button
+                onClick={() => setSkipping(false)}
+                className="w-full px-4 py-2 bg-[#f3f4f6] hover:bg-[#e5e7eb] text-[#1c2c4a] rounded-lg text-sm font-medium transition-colors"
+              >
+                Volver
+              </button>
+            </>
+          ) : (
+            <>
+              {canCompleteInline && (
+                <button
+                  onClick={handleCompleteAndAdvance}
+                  disabled={!isFormValid || isSaving}
+                  className="w-full px-4 py-2.5 bg-[#0067B0] hover:bg-[#005a9e] disabled:bg-[#93c5fd] text-white rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
+                >
+                  <CheckCircle2 size={16} />
+                  {isSaving ? "Guardando..." : `Completar y avanzar a ${stageLabel}`}
+                </button>
+              )}
 
-          <button
-            onClick={onCancel}
-            className="w-full px-4 py-2 bg-[#f3f4f6] hover:bg-[#e5e7eb] text-[#1c2c4a] rounded-lg text-sm font-medium transition-colors"
-          >
-            Cancelar
-          </button>
+              {skipConfig && (
+                <button
+                  onClick={() => setSkipping(true)}
+                  className="w-full px-4 py-2 bg-white text-amber-700 border border-amber-300 hover:bg-amber-50 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
+                >
+                  <SkipForward size={16} />
+                  {skipConfig.label}
+                </button>
+              )}
+
+              <button
+                onClick={onCancel}
+                className="w-full px-4 py-2 bg-[#f3f4f6] hover:bg-[#e5e7eb] text-[#1c2c4a] rounded-lg text-sm font-medium transition-colors"
+              >
+                Cancelar
+              </button>
+            </>
+          )}
         </div>
       </div>
     </div>

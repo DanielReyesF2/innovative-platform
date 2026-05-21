@@ -668,6 +668,7 @@ export const STAGE_GATES: Record<string, StageGate> = {
   // Reunión (DB levantamiento) → Agendar Levantamiento (DB propuesta):
   // per Vero, el prospecto debe tener próximo paso definido (campo obligatorio
   // de Reunión) además de la fecha de levantamiento agendada.
+  // Si no aplica levantamiento, se puede saltar con razón.
   propuesta: {
     label: "Agendamiento + Próximo paso",
     validate: (p) => !!p.surveyDate && !!p.nextStep?.trim(),
@@ -693,9 +694,33 @@ export const STAGE_GATES: Record<string, StageGate> = {
           ]
         : []),
     ],
+    skip: {
+      label: "No aplica levantamiento",
+      reasonKey: "nextStep",
+      reasonPlaceholder: "Ej: cliente solo requiere cotización directa",
+    },
   },
-  // No gate for negociacion: auto-advance cuando se completa el agendamiento
-  // (ver server/storage.ts isSchedulingComplete + updateProspect hook).
+  // Agendar Levantamiento (DB propuesta) → Propuesta (DB negociacion):
+  // Pedir monto estimado y mes de cierre para que aparezca en Pipeline de Cierre.
+  negociacion: {
+    label: "Valor y fecha de cierre",
+    validate: (p) => !!p.facturacionEstimada && !!p.estimatedCloseTime,
+    message: (p) => {
+      const missing = [];
+      if (!p.facturacionEstimada) missing.push("valor estimado");
+      if (!p.estimatedCloseTime) missing.push("mes de cierre");
+      return `Falta: ${missing.join(" y ")}`;
+    },
+    requirement: "Requiere: Valor estimado de la venta + Mes estimado de cierre",
+    missingFields: (p) => [
+      ...(!p.facturacionEstimada
+        ? [{ key: "estimatedValue", label: "Valor estimado ($)", type: "number" as const, placeholder: "Ej: 150000" }]
+        : []),
+      ...(!p.estimatedCloseTime
+        ? [{ key: "estimatedCloseTime", label: "Mes estimado de cierre", type: "month" as const, placeholder: "" }]
+        : []),
+    ],
+  },
 };
 
 // ═══════ SHARED COMPONENTS ═══════

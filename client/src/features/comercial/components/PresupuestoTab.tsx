@@ -417,13 +417,17 @@ export function PresupuestoTab() {
               Q3: [7, 8, 9],
               Q4: [10, 11, 12],
             };
-            const allCuentas = kanbanProspectos
-              .filter((p) => p.estimatedCloseTime && p.status !== "cierre_perdido")
+            const activeCuentas = kanbanProspectos.filter((p) => p.status !== "cierre_perdido");
+            const withDate = activeCuentas
+              .filter((p) => !!p.estimatedCloseTime)
               .sort((a, b) => (a.estimatedCloseTime || "").localeCompare(b.estimatedCloseTime || ""));
+            const withoutDate = activeCuentas.filter((p) => !p.estimatedCloseTime);
+            const allCuentas = [...withDate, ...withoutDate];
             const cuentas =
               quarterFilter === "all"
                 ? allCuentas
                 : allCuentas.filter((p) => {
+                    if (!p.estimatedCloseTime) return false;
                     const month = parseInt(p.estimatedCloseTime?.split("-")[1] || "0", 10);
                     return QUARTER_MONTHS[quarterFilter]?.includes(month);
                   });
