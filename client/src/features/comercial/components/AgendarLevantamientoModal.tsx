@@ -13,6 +13,7 @@ import {
   Recycle,
   Save,
   ShieldCheck,
+  SkipForward,
   Trash2,
   Users,
   X,
@@ -88,6 +89,10 @@ export function AgendarLevantamientoModal({ prospecto, onClose, onAdvanced }: Pr
   const [notes, setNotes] = useState<string>((seed.notes as string) || "");
   const [wasteTypes, setWasteTypes] = useState<WasteRow[]>(seedWaste);
 
+  // Skip levantamiento
+  const [skipping, setSkipping] = useState(false);
+  const [skipReason, setSkipReason] = useState("");
+
   const allParticipants = Array.from(new Set([...partComercial, ...partOperaciones, ...partSubproductos]));
   const participantsInfo = allParticipants
     .map((id) => teamMembers.find((m) => m.id === id))
@@ -156,6 +161,22 @@ export function AgendarLevantamientoModal({ prospecto, onClose, onAdvanced }: Pr
       notes: notes.trim() || null,
     },
   });
+
+  const handleSkip = async () => {
+    if (!skipReason.trim()) return;
+    try {
+      await updateProspect.mutateAsync({
+        id: prospecto.id,
+        stage: STAGE.PROPUESTA,
+        nextStep: `N/A — ${skipReason.trim()}`,
+      });
+      toast({ title: "Avanzado sin levantamiento" });
+      onAdvanced?.();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Error al avanzar";
+      toast({ title: "No se pudo avanzar", description: msg, variant: "destructive" });
+    }
+  };
 
   const handleDraft = async () => {
     try {
@@ -279,8 +300,29 @@ export function AgendarLevantamientoModal({ prospecto, onClose, onAdvanced }: Pr
           </p>
         </div>
 
+        {/* Skip mode */}
+        {skipping && (
+          <div className="px-6 py-4 space-y-3">
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+              <p className="text-sm text-amber-800 font-medium">No aplica levantamiento</p>
+              <p className="text-xs text-amber-700 mt-1">Se avanzará directo a la siguiente etapa. Indica el motivo:</p>
+            </div>
+            <div>
+              <Label className="text-xs font-medium">Motivo</Label>
+              <Input
+                type="text"
+                value={skipReason}
+                onChange={(e) => setSkipReason(e.target.value)}
+                placeholder="Ej: cliente solo requiere cotización directa"
+                className="mt-1"
+                autoFocus
+              />
+            </div>
+          </div>
+        )}
+
         {/* Fields */}
-        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-5">
+        {!skipping && <div className="flex-1 overflow-y-auto px-6 py-4 space-y-5">
           {/* Fecha + hora */}
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
@@ -560,34 +602,65 @@ export function AgendarLevantamientoModal({ prospecto, onClose, onAdvanced }: Pr
               className="mt-1"
             />
           </div>
-        </div>
+        </div>}
 
         {/* Footer */}
         <div className="flex items-center justify-between border-t px-6 py-3 gap-3">
-          <div className="text-[11px] text-muted-foreground">
-            {canAdvance ? "Listo para agendar y avanzar." : `Para avanzar faltan: ${missing.join(", ")}.`}
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={onClose}>
-              Cancelar
-            </Button>
-            <Button
-              variant="outline"
-              onClick={handleDraft}
-              disabled={updateProspect.isPending}
-              title="Guardar sin avanzar de etapa"
-            >
-              <Save className="mr-1 h-4 w-4" />
-              {updateProspect.isPending ? "Guardando..." : "Guardar borrador"}
-            </Button>
-            <Button
-              onClick={handleAdvance}
-              disabled={!canAdvance || updateProspect.isPending}
-              className="bg-[#00a8a8] hover:bg-[#008b8b]"
-            >
-              {updateProspect.isPending ? "Agendando..." : "Agendar y avanzar"}
-            </Button>
-          </div>
+          {skipping ? (
+            <>
+              <div className="text-[11px] text-muted-foreground">
+                {skipReason.trim() ? "Listo para avanzar sin levantamiento." : "Indica un motivo para continuar."}
+              </div>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => setSkipping(false)}>
+                  Volver
+                </Button>
+                <Button
+                  onClick={handleSkip}
+                  disabled={!skipReason.trim() || updateProspect.isPending}
+                  className="bg-amber-600 hover:bg-amber-700"
+                >
+                  <SkipForward className="mr-1 h-4 w-4" />
+                  {updateProspect.isPending ? "Avanzando..." : "Saltar y avanzar"}
+                </Button>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="text-[11px] text-muted-foreground">
+                {canAdvance ? "Listo para agendar y avanzar." : `Para avanzar faltan: ${missing.join(", ")}.`}
+              </div>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={onClose}>
+                  Cancelar
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setSkipping(true)}
+                  className="text-amber-700 border-amber-300 hover:bg-amber-50"
+                >
+                  <SkipForward className="mr-1 h-4 w-4" />
+                  No aplica
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={handleDraft}
+                  disabled={updateProspect.isPending}
+                  title="Guardar sin avanzar de etapa"
+                >
+                  <Save className="mr-1 h-4 w-4" />
+                  {updateProspect.isPending ? "Guardando..." : "Guardar borrador"}
+                </Button>
+                <Button
+                  onClick={handleAdvance}
+                  disabled={!canAdvance || updateProspect.isPending}
+                  className="bg-[#00a8a8] hover:bg-[#008b8b]"
+                >
+                  {updateProspect.isPending ? "Agendando..." : "Agendar y avanzar"}
+                </Button>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>
