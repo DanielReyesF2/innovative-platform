@@ -154,6 +154,9 @@ export const prospects = pgTable(
     contractDurationMonths: integer("contract_duration_months"),
     paymentTermsServices: integer("payment_terms_services"), // días
     paymentTermsValuables: integer("payment_terms_valuables"), // días
+    // Venta Real: lo que realmente se facturó de este prospecto (puede diferir
+    // de estimatedValue/cotización). Se suma por mes en la gráfica de presupuesto.
+    actualRevenue: numeric("actual_revenue", { precision: 14, scale: 2 }),
     createdAt: timestamp("created_at").defaultNow(),
     updatedAt: timestamp("updated_at").defaultNow(),
   },

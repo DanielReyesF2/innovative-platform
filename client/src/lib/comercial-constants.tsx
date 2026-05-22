@@ -483,6 +483,7 @@ export const dbProspectToKanban = (
     contractDurationMonths: prospect.contractDurationMonths ?? null,
     paymentTermsServices: prospect.paymentTermsServices ?? null,
     paymentTermsValuables: prospect.paymentTermsValuables ?? null,
+    ventaReal: prospect.actualRevenue ? Number(prospect.actualRevenue) : null,
     updatedAt: prospect.updatedAt || null,
   };
 };

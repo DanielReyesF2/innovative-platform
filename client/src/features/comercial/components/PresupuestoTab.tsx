@@ -1,4 +1,4 @@
-import { DollarSign, Edit3, Pencil, Save, X } from "lucide-react";
+import { DollarSign, Pencil, Save, X } from "lucide-react";
 import { useState } from "react";
 import { Bar, BarChart, CartesianGrid, LabelList, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { useToast } from "@/components/ui/use-toast";
@@ -35,40 +35,19 @@ export function PresupuestoTab() {
     kanbanProspectos,
     salesTeamData,
     presupuestoEvolution,
-    ventasRealesEditadas,
-    setVentasRealesEditadas,
     authUser,
+    updateProspectMutation,
   } = useComercialData();
   const { toast } = useToast();
-
-  const [editingVentaReal, setEditingVentaReal] = useState<string | null>(null);
-  const [editingBudget, setEditingBudget] = useState<string | null>(null);
-  const [budgetEditValue, setBudgetEditValue] = useState<string>("");
-  const [ventaRealMes, setVentaRealMes] = useState(new Date().getMonth() + 1);
-  const [ventaRealAño, setVentaRealAño] = useState(new Date().getFullYear());
   const currentQuarter = `Q${Math.ceil((new Date().getMonth() + 1) / 3)}`;
   const [quarterFilter, setQuarterFilter] = useState<string>(currentQuarter);
   const [cuentasSubTab, setCuentasSubTab] = useState<"ejecutivo" | "pipeline">("pipeline");
 
   const [showBudgetModal, setShowBudgetModal] = useState(false);
+  const [editingVentaReal, setEditingVentaReal] = useState<number | null>(null);
+  const [ventaRealEditValue, setVentaRealEditValue] = useState<string>("");
 
   const canEditBudget = authUser?.role === "admin" || authUser?.role === "director";
-
-  const MESES_NOMBRE = [
-    "Enero",
-    "Febrero",
-    "Marzo",
-    "Abril",
-    "Mayo",
-    "Junio",
-    "Julio",
-    "Agosto",
-    "Septiembre",
-    "Octubre",
-    "Noviembre",
-    "Diciembre",
-  ];
-  const mesNombre = MESES_NOMBRE[ventaRealMes - 1];
 
   return (
     <>
@@ -152,32 +131,15 @@ export function PresupuestoTab() {
           </div>
         </div>
 
-        {cuentasSubTab === "ejecutivo" && (
+        {cuentasSubTab === "ejecutivo" && (() => {
+          const currentMonth = new Date().getMonth() + 1;
+          const currentYear = new Date().getFullYear();
+          const period = `${currentYear}-${String(currentMonth).padStart(2, "0")}`;
+          const MESES_NOMBRE = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+          const mesNombre = MESES_NOMBRE[currentMonth - 1];
+
+          return (
           <div>
-            <div className="flex items-center justify-end gap-2 mb-3">
-              <select
-                value={ventaRealMes}
-                onChange={(e) => setVentaRealMes(Number(e.target.value))}
-                className="text-xs border border-[#e5e7eb] rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#00a8a8]"
-              >
-                {["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"].map((m, i) => (
-                  <option key={i} value={i + 1}>
-                    {m}
-                  </option>
-                ))}
-              </select>
-              <select
-                value={ventaRealAño}
-                onChange={(e) => setVentaRealAño(Number(e.target.value))}
-                className="text-xs border border-[#e5e7eb] rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#00a8a8]"
-              >
-                {[2025, 2026, 2027].map((y) => (
-                  <option key={y} value={y}>
-                    {y}
-                  </option>
-                ))}
-              </select>
-            </div>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
@@ -189,25 +151,15 @@ export function PresupuestoTab() {
                       Presupuesto {mesNombre}
                     </th>
                     <th className="text-right py-2 px-2 text-[10px] font-semibold text-[#6b7280] uppercase">
-                      Venta Cerrada {mesNombre}
+                      Presupuesto Anual
                     </th>
-                    <th className="text-right py-2 px-2 text-[10px] font-semibold text-[#6b7280] uppercase">%</th>
-                    <th className="text-center py-2 px-2 text-[10px] font-semibold text-[#6b7280] uppercase w-20"></th>
                   </tr>
                 </thead>
                 <tbody>
                   {salesTeamData
                     .filter((m) => m.presupuestoAnual2026 > 0)
                     .map((member) => {
-                      const selectedPeriod = `${ventaRealAño}-${String(ventaRealMes).padStart(2, "0")}`;
-                      const memberBudgetMes = member.presupuestosMensuales?.[selectedPeriod] || 0;
-                      const editKey = `${member.id}-${ventaRealMes}-${ventaRealAño}`;
-                      const isEditing = editingVentaReal === editKey;
-                      const ventaActual = ventasRealesEditadas[editKey] ?? 0;
-                      const pctVal =
-                        memberBudgetMes > 0 ? Math.round((Number(ventaActual) / memberBudgetMes) * 100) : 0;
-                      const pctColor = pctVal >= 80 ? "#2E7D32" : pctVal >= 40 ? "#F57C00" : "#EF4444";
-
+                      const memberBudgetMes = member.presupuestosMensuales?.[period] || 0;
                       return (
                         <tr key={member.id} className="border-b border-[#f3f4f6] hover:bg-[#f9fafb] transition-colors">
                           <td className="py-2.5 px-2">
@@ -221,156 +173,11 @@ export function PresupuestoTab() {
                               </div>
                             </div>
                           </td>
-                          <td className="py-2.5 px-2 text-right">
-                            {editingBudget === editKey ? (
-                              <input
-                                type="number"
-                                value={budgetEditValue}
-                                onChange={(e) => setBudgetEditValue(e.target.value)}
-                                onKeyDown={(e) => {
-                                  if (e.key === "Enter" || e.key === "Tab") {
-                                    e.preventDefault();
-                                    const monto = Number(budgetEditValue) || 0;
-                                    setEditingBudget(null);
-                                    apiRequest("PATCH", "/api/comercial/sales-metrics", {
-                                      userId: member.dbUserId,
-                                      period: selectedPeriod,
-                                      monthlyBudget: monto,
-                                    })
-                                      .then(() => {
-                                        invalidateByPrefix("/api/comercial/team");
-                                        invalidateByPrefix("/api/comercial/sales-metrics");
-                                        toast({ title: `Presupuesto actualizado: $${monto.toLocaleString()}` });
-                                      })
-                                      .catch(() =>
-                                        toast({ title: "Error al guardar presupuesto", variant: "destructive" }),
-                                      );
-                                  } else if (e.key === "Escape") {
-                                    setEditingBudget(null);
-                                  }
-                                }}
-                                onBlur={() => {
-                                  const monto = Number(budgetEditValue) || 0;
-                                  setEditingBudget(null);
-                                  if (monto !== memberBudgetMes) {
-                                    apiRequest("PATCH", "/api/comercial/sales-metrics", {
-                                      userId: member.dbUserId,
-                                      period: selectedPeriod,
-                                      monthlyBudget: monto,
-                                    })
-                                      .then(() => {
-                                        invalidateByPrefix("/api/comercial/team");
-                                        invalidateByPrefix("/api/comercial/sales-metrics");
-                                        toast({ title: `Presupuesto actualizado: $${monto.toLocaleString()}` });
-                                      })
-                                      .catch(() =>
-                                        toast({ title: "Error al guardar presupuesto", variant: "destructive" }),
-                                      );
-                                  }
-                                }}
-                                className="w-28 px-2 py-1 text-sm text-right border border-[#7C3AED] rounded focus:outline-none focus:ring-1 focus:ring-[#7C3AED]"
-                                placeholder="0"
-                              />
-                            ) : (
-                              <span
-                                className={`text-sm text-[#6b7280] ${canEditBudget ? "cursor-pointer hover:text-[#7C3AED] hover:underline" : ""}`}
-                                onClick={() => {
-                                  if (!canEditBudget) return;
-                                  setEditingBudget(editKey);
-                                  setBudgetEditValue(String(memberBudgetMes || ""));
-                                }}
-                                title={canEditBudget ? "Click para editar presupuesto" : undefined}
-                              >
-                                {fmtCurrency(memberBudgetMes)}
-                              </span>
-                            )}
+                          <td className="py-2.5 px-2 text-right text-sm text-[#6b7280]">
+                            {fmtCurrency(memberBudgetMes)}
                           </td>
-                          <td className="py-2.5 px-2 text-right">
-                            {isEditing ? (
-                              <input
-                                type="number"
-                                value={ventasRealesEditadas[editKey] ?? ""}
-                                onChange={(e) =>
-                                  setVentasRealesEditadas((prev) => ({
-                                    ...prev,
-                                    [editKey]: parseFloat(e.target.value) || 0,
-                                  }))
-                                }
-                                onKeyDown={(e) => {
-                                  if (e.key === "Enter" || e.key === "Tab") {
-                                    e.preventDefault();
-                                    const monto = Number(ventasRealesEditadas[editKey] || 0);
-                                    setVentasRealesEditadas((prev) => ({ ...prev, [editKey]: monto }));
-                                    setEditingVentaReal(null);
-                                    apiRequest("POST", "/api/comercial/ventas-reales", {
-                                      userId: member.dbUserId,
-                                      mes: ventaRealMes,
-                                      año: ventaRealAño,
-                                      monto,
-                                    })
-                                      .then(() => {
-                                        invalidateByPrefix("/api/comercial/ventas-reales");
-                                        invalidateByPrefix("/api/comercial/team");
-                                        toast({ title: `Venta cerrada guardada: $${monto.toLocaleString()}` });
-                                      })
-                                      .catch(() => {
-                                        toast({ title: "Error al guardar", variant: "destructive" });
-                                      });
-                                  } else if (e.key === "Escape") {
-                                    setVentasRealesEditadas((prev) => {
-                                      const n = { ...prev };
-                                      delete n[editKey];
-                                      return n;
-                                    });
-                                    setEditingVentaReal(null);
-                                  }
-                                }}
-                                onBlur={() => {
-                                  const monto = Number(ventasRealesEditadas[editKey] || 0);
-                                  setVentasRealesEditadas((prev) => ({ ...prev, [editKey]: monto }));
-                                  setEditingVentaReal(null);
-                                  if (monto > 0) {
-                                    apiRequest("POST", "/api/comercial/ventas-reales", {
-                                      userId: member.dbUserId,
-                                      mes: ventaRealMes,
-                                      año: ventaRealAño,
-                                      monto,
-                                    })
-                                      .then(() => {
-                                        invalidateByPrefix("/api/comercial/ventas-reales");
-                                        invalidateByPrefix("/api/comercial/team");
-                                        toast({ title: `Venta cerrada guardada: $${monto.toLocaleString()}` });
-                                      })
-                                      .catch(() => {
-                                        toast({ title: "Error al guardar", variant: "destructive" });
-                                      });
-                                  }
-                                }}
-                                className="w-24 px-2 py-1 text-sm text-right border border-[#00a8a8] rounded focus:outline-none focus:ring-1 focus:ring-[#00a8a8]"
-                                placeholder="0"
-                              />
-                            ) : (
-                              <span className="text-sm font-semibold text-[#00a8a8]">{fmtCurrency(ventaActual)}</span>
-                            )}
-                          </td>
-                          <td className="py-2.5 px-2 text-right">
-                            <span className="text-sm font-bold" style={{ color: pctColor }}>
-                              {pctVal}%
-                            </span>
-                          </td>
-                          <td className="py-2.5 px-2 text-center">
-                            {!isEditing && (
-                              <button
-                                onClick={() => {
-                                  setEditingVentaReal(editKey);
-                                  setVentasRealesEditadas((prev) => ({ ...prev, [editKey]: ventaActual || 0 }));
-                                }}
-                                className="text-[#00a8a8] hover:bg-[#00a8a8]/10 p-1.5 rounded-lg transition-colors"
-                                title="Editar venta cerrada"
-                              >
-                                <Edit3 size={14} />
-                              </button>
-                            )}
+                          <td className="py-2.5 px-2 text-right text-sm text-[#6b7280]">
+                            {fmtCurrency(member.presupuestoAnual2026)}
                           </td>
                         </tr>
                       );
@@ -378,36 +185,22 @@ export function PresupuestoTab() {
                 </tbody>
                 <tfoot>
                   {(() => {
-                    const sp = `${ventaRealAño}-${String(ventaRealMes).padStart(2, "0")}`;
-                    const totalPres = salesTeamData.reduce((s, m) => s + (m.presupuestosMensuales?.[sp] || 0), 0);
-                    const totalReal = salesTeamData.reduce(
-                      (s, m) => s + Number(ventasRealesEditadas[`${m.id}-${ventaRealMes}-${ventaRealAño}`] ?? 0),
-                      0,
-                    );
-                    const pct = totalPres > 0 ? Math.round((totalReal / totalPres) * 100) : 0;
-                    const pctColor = pct >= 80 ? "#2E7D32" : pct >= 40 ? "#F57C00" : "#EF4444";
+                    const totalMes = salesTeamData.reduce((s, m) => s + (m.presupuestosMensuales?.[period] || 0), 0);
+                    const totalAnual = salesTeamData.reduce((s, m) => s + m.presupuestoAnual2026, 0);
                     return (
                       <tr className="bg-[#f9fafb]">
                         <td className="py-2.5 px-2 font-semibold text-[#1c2c4a]">Total Equipo</td>
-                        <td className="py-2.5 px-2 text-right font-semibold text-[#1c2c4a]">
-                          {fmtCurrency(totalPres)}
-                        </td>
-                        <td className="py-2.5 px-2 text-right font-bold text-[#00a8a8]">{fmtCurrency(totalReal)}</td>
-                        <td className="py-2.5 px-2 text-right font-bold" style={{ color: pctColor }}>
-                          {pct}%
-                        </td>
-                        <td></td>
+                        <td className="py-2.5 px-2 text-right font-semibold text-[#1c2c4a]">{fmtCurrency(totalMes)}</td>
+                        <td className="py-2.5 px-2 text-right font-semibold text-[#1c2c4a]">{fmtCurrency(totalAnual)}</td>
                       </tr>
                     );
                   })()}
                 </tfoot>
               </table>
             </div>
-            <p className="text-[10px] text-[#9ca3af] mt-3 flex items-center gap-1">
-              <Edit3 size={10} /> Click en el icono de lápiz para editar la venta cerrada. Presiona Enter para guardar.
-            </p>
           </div>
-        )}
+          );
+        })()}
 
         {cuentasSubTab === "pipeline" &&
           (() => {
@@ -498,13 +291,17 @@ export function PresupuestoTab() {
                             Mes Cierre
                           </th>
                           <th className="text-right py-2 px-2 text-[10px] font-semibold text-[#6b7280] uppercase">
-                            Venta Total
+                            Cotización
+                          </th>
+                          <th className="text-right py-2 px-2 text-[10px] font-semibold text-[#6b7280] uppercase">
+                            Venta Real
                           </th>
                         </tr>
                       </thead>
                       <tbody>
                         {cuentas.map((p) => {
                           const stage = KANBAN_STAGES.find((s) => s.id === p.status);
+                          const isEditing = editingVentaReal === p.id;
                           return (
                             <tr key={p.id} className="border-b border-[#f3f4f6] hover:bg-[#f9fafb] transition-colors">
                               <td className="py-2 px-2 text-sm font-medium text-[#1c2c4a]">{p.empresa}</td>
@@ -528,22 +325,72 @@ export function PresupuestoTab() {
                               <td className="py-2 px-2 text-sm text-[#6b7280]">
                                 {formatMesCierre(p.estimatedCloseTime)}
                               </td>
-                              <td className="py-2 px-2 text-right text-sm font-semibold text-[#00a8a8]">
+                              <td className="py-2 px-2 text-right text-sm font-semibold text-[#0D47A1]">
                                 {fmtCurrency(p.propuesta?.ventaTotal || p.facturacionEstimada || 0)}
+                              </td>
+                              <td className="py-2 px-2 text-right">
+                                {isEditing ? (
+                                  <input
+                                    type="number"
+                                    value={ventaRealEditValue}
+                                    onChange={(e) => setVentaRealEditValue(e.target.value)}
+                                    onKeyDown={(e) => {
+                                      if (e.key === "Enter" || e.key === "Tab") {
+                                        e.preventDefault();
+                                        const monto = Number(ventaRealEditValue) || 0;
+                                        setEditingVentaReal(null);
+                                        updateProspectMutation.mutate({ id: p.id, actualRevenue: monto });
+                                        toast({ title: `Venta real: $${monto.toLocaleString()}` });
+                                      } else if (e.key === "Escape") {
+                                        setEditingVentaReal(null);
+                                      }
+                                    }}
+                                    onBlur={() => {
+                                      const monto = Number(ventaRealEditValue) || 0;
+                                      setEditingVentaReal(null);
+                                      if (monto !== (p.ventaReal || 0)) {
+                                        updateProspectMutation.mutate({ id: p.id, actualRevenue: monto });
+                                        toast({ title: `Venta real: $${monto.toLocaleString()}` });
+                                      }
+                                    }}
+                                    className="w-24 px-2 py-1 text-sm text-right border border-[#00a8a8] rounded focus:outline-none focus:ring-1 focus:ring-[#00a8a8]"
+                                    placeholder="0"
+                                    autoFocus
+                                  />
+                                ) : (
+                                  <span
+                                    className="text-sm font-semibold text-[#00a8a8] cursor-pointer hover:underline"
+                                    onClick={() => {
+                                      setEditingVentaReal(p.id);
+                                      setVentaRealEditValue(String(p.ventaReal || ""));
+                                    }}
+                                    title="Click para editar venta real"
+                                  >
+                                    {p.ventaReal ? fmtCurrency(p.ventaReal) : <span className="text-[#9ca3af] font-normal">—</span>}
+                                  </span>
+                                )}
                               </td>
                             </tr>
                           );
                         })}
                       </tbody>
                       <tfoot>
-                        <tr className="bg-[#f9fafb]">
-                          <td colSpan={4} className="py-2 px-2 font-semibold text-[#1c2c4a]">
-                            {cuentas.length} cuentas
-                          </td>
-                          <td className="py-2 px-2 text-right font-bold text-[#00a8a8]">
-                            {fmtCurrency(totalCuentasValor)}
-                          </td>
-                        </tr>
+                        {(() => {
+                          const totalVentaReal = cuentas.reduce((s, p) => s + (p.ventaReal || 0), 0);
+                          return (
+                            <tr className="bg-[#f9fafb]">
+                              <td colSpan={4} className="py-2 px-2 font-semibold text-[#1c2c4a]">
+                                {cuentas.length} cuentas
+                              </td>
+                              <td className="py-2 px-2 text-right font-bold text-[#0D47A1]">
+                                {fmtCurrency(totalCuentasValor)}
+                              </td>
+                              <td className="py-2 px-2 text-right font-bold text-[#00a8a8]">
+                                {fmtCurrency(totalVentaReal)}
+                              </td>
+                            </tr>
+                          );
+                        })()}
                       </tfoot>
                     </table>
                   </div>

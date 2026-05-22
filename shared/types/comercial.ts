@@ -75,6 +75,7 @@ export interface KanbanProspecto {
   contractDurationMonths: number | null;
   paymentTermsServices: number | null;
   paymentTermsValuables: number | null;
+  ventaReal: number | null;
   updatedAt: string | null;
 }
 

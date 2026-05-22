@@ -130,26 +130,28 @@ export function useComercialData() {
   }, [dbTeamRaw]);
 
   const presupuestoEvolution = useMemo(() => {
+    // Venta Real por mes = suma de actualRevenue de cada prospecto, agrupado
+    // por su estimatedCloseTime (YYYY-MM). Es lo que realmente se facturó.
     const realPorMes: Record<string, number> = {};
-    dbVentasReales.forEach((vr) => {
-      const key = `${vr.año}-${vr.mes}`;
-      realPorMes[key] = (realPorMes[key] || 0) + Number(vr.monto);
-    });
-
     // Cotización por mes = suma del estimatedValue de prospectos activos cuyo
-    // estimatedCloseTime cae en ese mes (excluye cierre_perdido). El
-    // estimatedValue ya está sincronizado con la propuesta aceptada / más
-    // reciente (ver updateProposalAmount en backend + backfill).
+    // estimatedCloseTime cae en ese mes (excluye cierre_perdido).
     const cotizacionPorMes: Record<string, number> = {};
+
     kanbanProspectos.forEach((p) => {
       if (p.status === "cierre_perdido") return;
       const ect = p.estimatedCloseTime; // "YYYY-MM"
       if (!ect) return;
-      const amount = Number(p.propuesta?.ventaTotal || p.facturacionEstimada || 0);
-      if (amount <= 0) return;
       const [year, month] = ect.split("-");
       const key = `${year}-${Number(month)}`;
-      cotizacionPorMes[key] = (cotizacionPorMes[key] || 0) + amount;
+
+      const cotAmount = Number(p.propuesta?.ventaTotal || p.facturacionEstimada || 0);
+      if (cotAmount > 0) {
+        cotizacionPorMes[key] = (cotizacionPorMes[key] || 0) + cotAmount;
+      }
+
+      if (p.ventaReal && p.ventaReal > 0) {
+        realPorMes[key] = (realPorMes[key] || 0) + p.ventaReal;
+      }
     });
 
     const currentYear = new Date().getFullYear();
@@ -167,7 +169,7 @@ export function useComercialData() {
         cotizacion: cotizacionPorMes[key] || 0,
       };
     });
-  }, [dbVentasReales, dbTeamRaw, kanbanProspectos]);
+  }, [dbTeamRaw, kanbanProspectos]);
 
   const pipelineData = useMemo(() => calcularPipelineData(kanbanProspectos), [kanbanProspectos]);
 
