@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { useLocation } from "wouter";
 import { useComercialData } from "@/features/comercial/hooks/useComercialData";
@@ -8,6 +9,20 @@ import {
   KANBAN_STAGES,
 } from "@/lib/comercial-constants";
 import { fmtCurrency, fmtM } from "@/lib/utils";
+
+// ─── Design tokens ───
+const C = {
+  ink: "#1a1a2e",
+  ink2: "#4a4a5a",
+  muted: "#8a8a9a",
+  border: "#e8e6e1",
+  surface: "#ffffff",
+  bg: "#f5f3ee",
+  accent: "#0067B0",     // Innovative primary blue
+  positive: "#1a7a3a",
+  warning: "#c47a00",
+  negative: "#c43a3a",
+} as const;
 
 export default function DashboardPage() {
   const [, navigate] = useLocation();
@@ -21,30 +36,31 @@ export default function DashboardPage() {
     isError,
   } = useComercialData();
 
+  // ─── Loading ───
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#00a8a8]" />
+        <div className="w-5 h-5 border-2 border-[#e8e6e1] border-t-[#0067B0] rounded-full animate-spin" />
       </div>
     );
   }
 
   if (isError) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-3">
-        <h2 className="text-lg font-semibold text-[#1c2c4a]">Error al cargar el dashboard</h2>
-        <p className="text-sm text-[#6b7280]">Intenta recargar la página.</p>
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+        <p className="text-sm" style={{ color: C.ink2 }}>No se pudo cargar el dashboard.</p>
         <button
           onClick={() => window.location.reload()}
-          className="mt-2 px-4 py-2 text-sm font-medium text-white bg-[#00a8a8] rounded-lg hover:bg-[#008f8f]"
+          className="px-5 py-2 text-xs font-medium text-white rounded-lg transition-all hover:opacity-90"
+          style={{ backgroundColor: C.accent }}
         >
-          Recargar
+          Reintentar
         </button>
       </div>
     );
   }
 
-  // ═══════ CALCULATIONS ═══════
+  // ─── Calculations ───
   const activos = kanbanProspectos.filter((p) => !["cierre_perdido", "cierre_ganado"].includes(p.status));
   const ganadas = kanbanProspectos.filter((p) => p.status === "cierre_ganado");
   const perdidas = kanbanProspectos.filter((p) => p.status === "cierre_perdido");
@@ -62,7 +78,9 @@ export default function DashboardPage() {
   const mesCotizacion = presupuestoEvolution[currentMonthIdx]?.cotizacion ?? 0;
   const mesCumplimiento = mesBudget > 0 ? Math.round((mesReal / mesBudget) * 100) : 0;
 
-  // Stage data for funnel
+  const pipelineCoverage = presupuestoAnual > 0 ? (pipelinePonderado / presupuestoAnual).toFixed(1) : "0";
+
+  // Stage data
   const stageData = KANBAN_STAGES.map((stage) => {
     const inStage = kanbanProspectos.filter((p) => p.status === stage.id);
     return {
@@ -71,8 +89,9 @@ export default function DashboardPage() {
       valor: inStage.reduce((s, p) => s + (p.propuesta?.ventaTotal || p.facturacionEstimada || 0), 0),
     };
   });
+  const totalPipelineValor = stageData.reduce((s, st) => s + st.valor, 0);
 
-  // Top 5 deals
+  // Top deals
   const topDeals = [...kanbanProspectos]
     .filter((p) => !["cierre_perdido"].includes(p.status))
     .sort(
@@ -97,7 +116,7 @@ export default function DashboardPage() {
     })
     .sort((a, b) => b.cumplimientoPresupuesto - a.cumplimientoPresupuesto);
 
-  // Alerts: overdue follow-ups + stale prospects (no activity in 14+ days)
+  // Alerts
   const now = new Date();
   const overdueFollowUps = kanbanProspectos.filter((p) => {
     if (["cierre_perdido", "cierre_ganado"].includes(p.status)) return false;
@@ -109,8 +128,9 @@ export default function DashboardPage() {
     const daysSince = (now.getTime() - new Date(p.updatedAt).getTime()) / (1000 * 60 * 60 * 24);
     return daysSince > 14;
   });
+  const alertCount = overdueFollowUps.length + staleProspects.length;
 
-  // Chart data for monthly trend
+  // Chart data
   const monthNames = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
   const chartData = presupuestoEvolution.map((row, i) => ({
     mes: monthNames[i],
@@ -119,164 +139,199 @@ export default function DashboardPage() {
     "Venta Real": row.real,
   }));
 
-  const pctColor = (v: number) => (v >= 80 ? "#2E7D32" : v >= 50 ? "#F57C00" : "#DC2626");
+  // Executive summary sentence
+  const summaryParts: string[] = [];
+  if (cumplimiento > 0) {
+    summaryParts.push(
+      cumplimiento >= 80
+        ? `Vas al ${cumplimiento}% del presupuesto anual — buen ritmo`
+        : cumplimiento >= 40
+          ? `Llevas ${cumplimiento}% del presupuesto anual`
+          : `Atención: solo ${cumplimiento}% del presupuesto anual cubierto`,
+    );
+  }
+  if (Number(pipelineCoverage) > 0) {
+    summaryParts.push(`el pipeline cubre ${pipelineCoverage}x`);
+  }
+  if (alertCount > 0) {
+    summaryParts.push(`${alertCount} tema${alertCount > 1 ? "s" : ""} requiere${alertCount === 1 ? "" : "n"} atención`);
+  }
+  const summaryText = summaryParts.length > 0 ? summaryParts.join(". ") + "." : "";
 
-  // ═══════ RENDER ═══════
+  // ─── Render ───
   return (
-    <div className="min-h-full" style={{ backgroundColor: "#faf7f2" }}>
-      <div className="max-w-[1400px] mx-auto space-y-6">
-        {/* ─── HEADER ─── */}
-        <div className="flex items-end justify-between">
-          <div>
-            <p className="text-[13px] text-[#9ca3af] font-medium tracking-wide uppercase">
-              {new Date().toLocaleDateString("es-MX", { weekday: "long", day: "numeric", month: "long" })}
-            </p>
-            <h1 className="text-2xl font-bold text-[#1c2c4a] mt-1">
-              {userGreeting}, {currentUserName}
-            </h1>
-          </div>
-          <button
-            onClick={() => navigate("/comercial")}
-            className="text-xs font-medium text-[#00a8a8] hover:text-[#008080] transition-colors"
-          >
-            Ir a Comercial →
-          </button>
-        </div>
+    <div className="min-h-full" style={{ backgroundColor: C.bg }}>
+      <div className="max-w-[1360px] mx-auto px-6 py-8 space-y-8">
 
-        {/* ─── KPI CARDS ROW ─── */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* ━━━ HEADER ━━━ */}
+        <header>
+          <div className="flex items-end justify-between mb-1">
+            <div>
+              <p className="text-[12px] font-medium tracking-widest uppercase" style={{ color: C.muted }}>
+                {new Date().toLocaleDateString("es-MX", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
+              </p>
+              <h1 className="text-[26px] font-semibold mt-1 tracking-tight" style={{ color: C.ink }}>
+                {userGreeting}, {currentUserName}
+              </h1>
+            </div>
+            <button
+              onClick={() => navigate("/comercial")}
+              className="text-[12px] font-medium px-4 py-2 rounded-lg transition-all hover:bg-white/60"
+              style={{ color: C.accent }}
+            >
+              Ir a Comercial →
+            </button>
+          </div>
+
+          {/* Executive summary */}
+          {summaryText && (
+            <p className="text-[14px] mt-3 leading-relaxed" style={{ color: C.ink2 }}>
+              {summaryText}
+            </p>
+          )}
+        </header>
+
+        {/* ━━━ KPI STRIP ━━━ */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
           {/* Presupuesto Anual */}
-          <div className="bg-white rounded-2xl p-5 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
-            <p className="text-[11px] font-medium text-[#9ca3af] uppercase tracking-wider">Presupuesto Anual</p>
-            <p className="text-[28px] font-bold text-[#1c2c4a] mt-2 leading-none">{fmtM(presupuestoAnual, 0)}</p>
-            <div className="mt-3">
-              <div className="flex items-center justify-between text-[11px] mb-1.5">
-                <span className="text-[#6b7280]">Cumplimiento</span>
-                <span className="font-bold" style={{ color: pctColor(cumplimiento) }}>{cumplimiento}%</span>
+          <Card>
+            <Label>Presupuesto anual</Label>
+            <BigNumber>{fmtM(presupuestoAnual, 0)}</BigNumber>
+            <div className="mt-4">
+              <div className="flex items-center justify-between text-[11px] mb-2">
+                <span style={{ color: C.muted }}>Avance</span>
+                <span className="font-semibold" style={{ color: statusColor(cumplimiento) }}>{cumplimiento}%</span>
               </div>
-              <div className="h-1.5 bg-[#f3f4f6] rounded-full overflow-hidden">
+              <ProgressBar value={cumplimiento} color={statusColor(cumplimiento)} />
+            </div>
+            <Divider />
+            <Row label="Venta real" value={fmtM(ventaRealAnual, 1)} />
+            <Row label="Cotizado" value={fmtM(cotizacionAnual, 1)} />
+          </Card>
+
+          {/* Pipeline */}
+          <Card>
+            <Label>Pipeline ponderado</Label>
+            <BigNumber color={C.accent}>{fmtM(pipelinePonderado, 1)}</BigNumber>
+            <Divider />
+            <Row label="Cobertura vs presupuesto" value={`${pipelineCoverage}x`} bold />
+            <Row label="Oportunidades activas" value={String(activos.length)} />
+            <Row label="Cotización total" value={fmtM(cotizacionAnual, 1)} />
+          </Card>
+
+          {/* Tasa de cierre */}
+          <Card>
+            <Label>Tasa de cierre</Label>
+            <BigNumber color={statusColor(winRate)}>{winRate.toFixed(0)}%</BigNumber>
+            <Divider />
+            <div className="flex items-center gap-6 mt-1">
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: C.positive }} />
+                <span className="text-[12px] font-semibold" style={{ color: C.ink }}>{ganadas.length}</span>
+                <span className="text-[11px]" style={{ color: C.muted }}>ganadas</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: C.negative }} />
+                <span className="text-[12px] font-semibold" style={{ color: C.ink }}>{perdidas.length}</span>
+                <span className="text-[11px]" style={{ color: C.muted }}>perdidas</span>
+              </div>
+            </div>
+          </Card>
+
+          {/* Mes actual — dark card */}
+          <div
+            className="rounded-2xl p-6 flex flex-col justify-between"
+            style={{
+              background: "linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)",
+              boxShadow: "0 2px 8px rgba(26,26,46,0.15)",
+            }}
+          >
+            <div>
+              <p className="text-[11px] font-medium tracking-widest uppercase text-white/40">
+                {monthNames[currentMonthIdx]} {new Date().getFullYear()}
+              </p>
+              <p className="text-[28px] font-semibold text-white mt-2 tracking-tight leading-none">
+                {fmtM(mesBudget, 0)}
+              </p>
+            </div>
+            <div className="mt-4">
+              <div className="flex items-center justify-between text-[11px] mb-2">
+                <span className="text-white/40">Avance</span>
+                <span className="font-semibold text-white">{mesCumplimiento}%</span>
+              </div>
+              <div className="h-1 bg-white/10 rounded-full overflow-hidden">
                 <div
                   className="h-full rounded-full transition-all duration-700"
-                  style={{ width: `${Math.min(cumplimiento, 100)}%`, backgroundColor: pctColor(cumplimiento) }}
+                  style={{
+                    width: `${Math.min(mesCumplimiento, 100)}%`,
+                    backgroundColor: mesCumplimiento >= 80 ? "#4ade80" : mesCumplimiento >= 50 ? "#fbbf24" : "#f87171",
+                  }}
                 />
               </div>
             </div>
-            <div className="mt-3 pt-3 border-t border-[#f3f4f6] flex items-center justify-between text-[11px]">
-              <span className="text-[#9ca3af]">Venta real</span>
-              <span className="font-semibold text-[#1c2c4a]">{fmtM(ventaRealAnual, 1)}</span>
-            </div>
-          </div>
-
-          {/* Pipeline Activo */}
-          <div className="bg-white rounded-2xl p-5 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
-            <p className="text-[11px] font-medium text-[#9ca3af] uppercase tracking-wider">Pipeline Ponderado</p>
-            <p className="text-[28px] font-bold text-[#0D47A1] mt-2 leading-none">{fmtM(pipelinePonderado, 1)}</p>
-            <div className="mt-3 pt-3 border-t border-[#f3f4f6] space-y-1.5">
-              <div className="flex items-center justify-between text-[11px]">
-                <span className="text-[#9ca3af]">Cotización total</span>
-                <span className="font-semibold text-[#1c2c4a]">{fmtM(cotizacionAnual, 1)}</span>
-              </div>
-              <div className="flex items-center justify-between text-[11px]">
-                <span className="text-[#9ca3af]">Oportunidades</span>
-                <span className="font-semibold text-[#1c2c4a]">{activos.length}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Win Rate */}
-          <div className="bg-white rounded-2xl p-5 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
-            <p className="text-[11px] font-medium text-[#9ca3af] uppercase tracking-wider">Tasa de Cierre</p>
-            <p className="text-[28px] font-bold mt-2 leading-none" style={{ color: pctColor(winRate) }}>
-              {winRate.toFixed(0)}%
-            </p>
-            <div className="mt-3 pt-3 border-t border-[#f3f4f6] space-y-1.5">
-              <div className="flex items-center justify-between text-[11px]">
-                <div className="flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#2E7D32]" />
-                  <span className="text-[#9ca3af]">Ganadas</span>
-                </div>
-                <span className="font-semibold text-[#2E7D32]">{ganadas.length}</span>
-              </div>
-              <div className="flex items-center justify-between text-[11px]">
-                <div className="flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#DC2626]" />
-                  <span className="text-[#9ca3af]">Perdidas</span>
-                </div>
-                <span className="font-semibold text-[#DC2626]">{perdidas.length}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Mes Actual */}
-          <div className="bg-gradient-to-br from-[#1c2c4a] to-[#0D47A1] rounded-2xl p-5 shadow-[0_1px_3px_rgba(0,0,0,0.08)] text-white">
-            <p className="text-[11px] font-medium text-white/50 uppercase tracking-wider">
-              {monthNames[currentMonthIdx]} {new Date().getFullYear()}
-            </p>
-            <p className="text-[28px] font-bold mt-2 leading-none">{fmtM(mesBudget, 0)}</p>
-            <div className="mt-3">
-              <div className="flex items-center justify-between text-[11px] mb-1.5">
-                <span className="text-white/50">Cumplimiento</span>
-                <span className="font-bold text-white">{mesCumplimiento}%</span>
-              </div>
-              <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
-                <div
-                  className="h-full rounded-full bg-[#00a8a8] transition-all duration-700"
-                  style={{ width: `${Math.min(mesCumplimiento, 100)}%` }}
-                />
-              </div>
-            </div>
-            <div className="mt-3 pt-3 border-t border-white/10 space-y-1">
+            <div className="mt-4 pt-3 border-t border-white/8 space-y-1.5">
               <div className="flex items-center justify-between text-[11px]">
                 <span className="text-white/40">Cotizado</span>
-                <span className="font-semibold">{fmtM(mesCotizacion, 1)}</span>
+                <span className="text-white font-medium">{fmtM(mesCotizacion, 1)}</span>
               </div>
               <div className="flex items-center justify-between text-[11px]">
                 <span className="text-white/40">Facturado</span>
-                <span className="font-semibold text-[#00a8a8]">{fmtM(mesReal, 1)}</span>
+                <span className="font-medium" style={{ color: "#4ade80" }}>{fmtM(mesReal, 1)}</span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* ─── MONTHLY TREND + TOP DEALS ─── */}
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+        {/* ━━━ CHART + TOP DEALS ━━━ */}
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
           {/* Monthly Chart */}
-          <div className="lg:col-span-3 bg-white rounded-2xl p-5 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-[13px] font-semibold text-[#1c2c4a]">Evolución Mensual</h3>
-              <div className="flex items-center gap-4 text-[10px] text-[#9ca3af]">
-                <span className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-sm bg-[#1B5E20]" /> Presupuesto
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-sm bg-[#0D47A1]" /> Cotización
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-sm bg-[#00a8a8]" /> Venta Real
-                </span>
+          <Card className="lg:col-span-3">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-[14px] font-semibold" style={{ color: C.ink }}>Evolución mensual</h3>
+              <div className="flex items-center gap-5 text-[11px]" style={{ color: C.muted }}>
+                <Legend color={C.ink} label="Presupuesto" />
+                <Legend color={C.accent} label="Cotización" />
+                <Legend color={C.positive} label="Venta Real" />
               </div>
             </div>
-            <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={chartData} barGap={1} margin={{ top: 5, right: 5, left: -15, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" vertical={false} />
-                <XAxis dataKey="mes" tick={{ fontSize: 10, fill: "#9ca3af" }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 9, fill: "#9ca3af" }} axisLine={false} tickLine={false} tickFormatter={(v: number) => fmtM(v, 0)} />
-                <Tooltip
-                  contentStyle={{ fontSize: 11, borderRadius: 12, border: "none", boxShadow: "0 4px 12px rgba(0,0,0,0.08)" }}
-                  formatter={(value: number) => [fmtM(value, 1)]}
-                  labelStyle={{ fontWeight: 600, color: "#1c2c4a" }}
+            <ResponsiveContainer width="100%" height={240}>
+              <BarChart data={chartData} barGap={2} barCategoryGap="20%" margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+                <CartesianGrid stroke={C.border} strokeDasharray="0" vertical={false} />
+                <XAxis
+                  dataKey="mes"
+                  tick={{ fontSize: 11, fill: C.muted }}
+                  axisLine={false}
+                  tickLine={false}
                 />
-                <Bar dataKey="Presupuesto" fill="#1B5E20" radius={[3, 3, 0, 0]} />
-                <Bar dataKey="Cotización" fill="#0D47A1" radius={[3, 3, 0, 0]} />
-                <Bar dataKey="Venta Real" fill="#00a8a8" radius={[3, 3, 0, 0]} />
+                <YAxis
+                  tick={{ fontSize: 10, fill: C.muted }}
+                  axisLine={false}
+                  tickLine={false}
+                  tickFormatter={(v: number) => fmtM(v, 0)}
+                />
+                <Tooltip
+                  contentStyle={{
+                    fontSize: 12,
+                    borderRadius: 10,
+                    border: `1px solid ${C.border}`,
+                    boxShadow: "0 8px 24px rgba(0,0,0,0.06)",
+                    padding: "10px 14px",
+                  }}
+                  formatter={(value: number) => [fmtCurrency(value)]}
+                  labelStyle={{ fontWeight: 600, color: C.ink, marginBottom: 4 }}
+                  cursor={{ fill: "rgba(0,0,0,0.02)" }}
+                />
+                <Bar dataKey="Presupuesto" fill={C.ink} radius={[4, 4, 0, 0]} />
+                <Bar dataKey="Cotización" fill={C.accent} radius={[4, 4, 0, 0]} />
+                <Bar dataKey="Venta Real" fill={C.positive} radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
-          </div>
+          </Card>
 
-          {/* Top 5 Deals */}
-          <div className="lg:col-span-2 bg-white rounded-2xl p-5 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
-            <h3 className="text-[13px] font-semibold text-[#1c2c4a] mb-4">Top Oportunidades</h3>
-            <div className="space-y-1">
+          {/* Top Deals */}
+          <Card className="lg:col-span-2">
+            <h3 className="text-[14px] font-semibold mb-5" style={{ color: C.ink }}>Top oportunidades</h3>
+            <div className="space-y-0.5">
               {topDeals.length > 0 ? (
                 topDeals.map((deal, idx) => {
                   const valor = deal.propuesta?.ventaTotal || deal.facturacionEstimada || 0;
@@ -284,137 +339,174 @@ export default function DashboardPage() {
                   return (
                     <div
                       key={deal.id}
-                      className="flex items-center gap-3 py-2.5 px-2 rounded-xl hover:bg-[#faf7f2] transition-colors cursor-pointer"
+                      className="flex items-center gap-3 py-3 px-3 rounded-xl cursor-pointer transition-all hover:bg-[#f5f3ee]"
                       onClick={() => navigate("/comercial")}
                     >
-                      <span className="text-[11px] font-bold text-[#9ca3af] w-4">{idx + 1}</span>
+                      <span
+                        className="text-[12px] font-bold w-5 h-5 rounded-full flex items-center justify-center shrink-0"
+                        style={{ backgroundColor: `${C.accent}0c`, color: C.accent }}
+                      >
+                        {idx + 1}
+                      </span>
                       <div className="flex-1 min-w-0">
-                        <p className="text-[13px] font-semibold text-[#1c2c4a] truncate">{deal.empresa}</p>
-                        <div className="flex items-center gap-2 mt-0.5">
+                        <p className="text-[13px] font-medium truncate" style={{ color: C.ink }}>{deal.empresa}</p>
+                        <div className="flex items-center gap-2 mt-1">
                           <span
-                            className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full uppercase tracking-wide"
-                            style={{ backgroundColor: `${stage?.color}12`, color: stage?.color }}
+                            className="text-[10px] font-medium px-2 py-0.5 rounded-md"
+                            style={{ backgroundColor: `${stage?.color}10`, color: stage?.color }}
                           >
                             {stage?.label}
                           </span>
                           {deal.ejecutivo && (
-                            <span className="text-[10px] text-[#9ca3af]">{deal.ejecutivo}</span>
+                            <span className="text-[10px]" style={{ color: C.muted }}>{deal.ejecutivo}</span>
                           )}
                         </div>
                       </div>
-                      <span className="text-[13px] font-bold text-[#0D47A1]">{fmtM(valor, 1)}</span>
+                      <span className="text-[13px] font-semibold shrink-0" style={{ color: C.ink }}>
+                        {fmtM(valor, 1)}
+                      </span>
                     </div>
                   );
                 })
               ) : (
-                <p className="text-xs text-[#9ca3af] text-center py-8">Sin oportunidades</p>
+                <p className="text-[12px] text-center py-10" style={{ color: C.muted }}>Sin oportunidades</p>
               )}
             </div>
-          </div>
+          </Card>
         </div>
 
-        {/* ─── PIPELINE + TEAM + ALERTS ─── */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* ━━━ FUNNEL + TEAM + ALERTS ━━━ */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
           {/* Pipeline Funnel */}
-          <div className="bg-white rounded-2xl p-5 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
-            <h3 className="text-[13px] font-semibold text-[#1c2c4a] mb-4">Pipeline por Etapa</h3>
-            <div className="space-y-2">
-              {stageData.map((stage) => {
-                const maxVal = Math.max(...stageData.map((s) => s.valor), 1);
-                const pct = (stage.valor / maxVal) * 100;
+          <Card>
+            <h3 className="text-[14px] font-semibold mb-5" style={{ color: C.ink }}>Pipeline por etapa</h3>
+            <div className="space-y-4">
+              {stageData.map((stage, idx) => {
+                const pct = totalPipelineValor > 0 ? (stage.valor / totalPipelineValor) * 100 : 0;
+                // Funnel: wider at top, narrower at bottom
+                const funnelWidth = 100 - idx * 6;
                 return (
-                  <div key={stage.id}>
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-[11px] font-medium text-[#6b7280]">{stage.label}</span>
-                      <div className="flex items-center gap-2">
-                        <span className="text-[10px] text-[#9ca3af]">{stage.count}</span>
-                        <span className="text-[11px] font-semibold text-[#1c2c4a]">{fmtM(stage.valor, 1)}</span>
+                  <div key={stage.id} className="flex items-center gap-3">
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between mb-1.5">
+                        <div className="flex items-center gap-2">
+                          <span
+                            className="w-2.5 h-2.5 rounded-sm shrink-0"
+                            style={{ backgroundColor: stage.color }}
+                          />
+                          <span className="text-[12px] font-medium" style={{ color: C.ink2 }}>{stage.label}</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="text-[11px] tabular-nums" style={{ color: C.muted }}>{stage.count}</span>
+                          <span className="text-[12px] font-semibold tabular-nums" style={{ color: C.ink }}>
+                            {fmtM(stage.valor, 1)}
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                    <div className="h-2 bg-[#f3f4f6] rounded-full overflow-hidden">
-                      <div
-                        className="h-full rounded-full transition-all duration-500"
-                        style={{ width: `${Math.max(pct, 3)}%`, backgroundColor: stage.color }}
-                      />
+                      <div className="relative h-2 rounded-full overflow-hidden" style={{ backgroundColor: `${stage.color}0c`, width: `${funnelWidth}%` }}>
+                        <div
+                          className="absolute inset-y-0 left-0 rounded-full transition-all duration-700"
+                          style={{ width: `${Math.max(pct * (100 / funnelWidth) * (totalPipelineValor > 0 ? 1 : 0), 0)}%`, backgroundColor: stage.color }}
+                        />
+                      </div>
                     </div>
                   </div>
                 );
               })}
             </div>
-            <div className="mt-4 pt-3 border-t border-[#f3f4f6] flex items-center justify-between text-[11px]">
-              <span className="text-[#9ca3af]">{activos.length} oportunidades activas</span>
-              <span className="font-bold text-[#00a8a8]">{fmtM(pipelinePonderado, 1)} ponderado</span>
+            <Divider />
+            <div className="flex items-center justify-between">
+              <span className="text-[11px]" style={{ color: C.muted }}>{activos.length} oportunidades</span>
+              <span className="text-[12px] font-semibold" style={{ color: C.accent }}>
+                {fmtM(pipelinePonderado, 1)} ponderado
+              </span>
             </div>
-          </div>
+          </Card>
 
-          {/* Team Performance */}
-          <div className="bg-white rounded-2xl p-5 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
-            <h3 className="text-[13px] font-semibold text-[#1c2c4a] mb-4">Equipo</h3>
-            <div className="space-y-3">
+          {/* Team */}
+          <Card>
+            <h3 className="text-[14px] font-semibold mb-5" style={{ color: C.ink }}>Equipo</h3>
+            <div className="space-y-4">
               {teamPerformance.map((m) => {
                 const pct = m.cumplimientoPresupuesto;
                 return (
                   <div key={m.id} className="flex items-center gap-3">
                     <ExecutiveAvatar codigo={m.codigo} name={m.name} size="sm" />
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-[12px] font-medium text-[#1c2c4a] truncate">
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-[12px] font-medium truncate" style={{ color: C.ink }}>
                           {m.name.split(" ").slice(0, 2).join(" ")}
                         </span>
-                        <span className="text-[11px] font-bold" style={{ color: pctColor(pct) }}>
+                        <span className="text-[12px] font-semibold tabular-nums" style={{ color: statusColor(pct) }}>
                           {pct}%
                         </span>
                       </div>
-                      <div className="h-1.5 bg-[#f3f4f6] rounded-full overflow-hidden">
-                        <div
-                          className="h-full rounded-full transition-all duration-500"
-                          style={{ width: `${Math.min(pct, 100)}%`, backgroundColor: pctColor(pct) }}
-                        />
-                      </div>
-                      <div className="flex items-center gap-3 mt-1 text-[10px] text-[#9ca3af]">
+                      <ProgressBar value={pct} color={statusColor(pct)} height={4} />
+                      <div className="flex items-center gap-4 mt-1.5 text-[10px]" style={{ color: C.muted }}>
                         <span>{m.activeCount} activas</span>
-                        <span>{m.wonCount} ganadas</span>
-                        <span className="ml-auto">{fmtM(m.monthlyBudget, 1)}</span>
+                        <span>{m.wonCount} cerradas</span>
+                        <span className="ml-auto tabular-nums">{fmtM(m.monthlyBudget, 1)}/mes</span>
                       </div>
                     </div>
                   </div>
                 );
               })}
               {teamPerformance.length === 0 && (
-                <p className="text-xs text-[#9ca3af] text-center py-6">Sin datos de equipo</p>
+                <p className="text-[12px] text-center py-8" style={{ color: C.muted }}>Sin datos de equipo</p>
               )}
             </div>
-          </div>
+          </Card>
 
           {/* Alerts */}
-          <div className="bg-white rounded-2xl p-5 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
-            <h3 className="text-[13px] font-semibold text-[#1c2c4a] mb-4">Atención</h3>
-            {overdueFollowUps.length === 0 && staleProspects.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-2xl mb-2">✓</p>
-                <p className="text-[12px] text-[#9ca3af]">Todo al día</p>
+          <Card>
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-[14px] font-semibold" style={{ color: C.ink }}>Atención</h3>
+              {alertCount > 0 && (
+                <span
+                  className="text-[10px] font-bold px-2 py-0.5 rounded-full text-white"
+                  style={{ backgroundColor: C.negative }}
+                >
+                  {alertCount}
+                </span>
+              )}
+            </div>
+
+            {alertCount === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12">
+                <div
+                  className="w-10 h-10 rounded-full flex items-center justify-center text-[18px] mb-3"
+                  style={{ backgroundColor: `${C.positive}10`, color: C.positive }}
+                >
+                  ✓
+                </div>
+                <p className="text-[13px] font-medium" style={{ color: C.ink2 }}>Todo al día</p>
+                <p className="text-[11px] mt-1" style={{ color: C.muted }}>Sin alertas pendientes</p>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-5">
                 {overdueFollowUps.length > 0 && (
                   <div>
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#DC2626]" />
-                      <span className="text-[11px] font-semibold text-[#DC2626]">
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: C.negative }} />
+                      <span className="text-[11px] font-semibold" style={{ color: C.negative }}>
                         {overdueFollowUps.length} seguimiento{overdueFollowUps.length > 1 ? "s" : ""} vencido{overdueFollowUps.length > 1 ? "s" : ""}
                       </span>
                     </div>
                     <div className="space-y-1.5">
                       {overdueFollowUps.slice(0, 4).map((p) => (
-                        <div key={p.id} className="flex items-center justify-between py-1 px-2 rounded-lg bg-[#FEF2F2]">
-                          <span className="text-[11px] font-medium text-[#1c2c4a] truncate">{p.empresa}</span>
-                          <span className="text-[10px] text-[#DC2626] shrink-0 ml-2">
+                        <div
+                          key={p.id}
+                          className="flex items-center justify-between py-2 px-3 rounded-lg"
+                          style={{ backgroundColor: "#fef2f2" }}
+                        >
+                          <span className="text-[11px] font-medium truncate" style={{ color: C.ink }}>{p.empresa}</span>
+                          <span className="text-[10px] shrink-0 ml-3 tabular-nums" style={{ color: C.negative }}>
                             {p.fechaSeguimiento?.split("-").reverse().slice(0, 2).join("/")}
                           </span>
                         </div>
                       ))}
                       {overdueFollowUps.length > 4 && (
-                        <p className="text-[10px] text-[#9ca3af] pl-2">+{overdueFollowUps.length - 4} más</p>
+                        <p className="text-[10px] pl-3" style={{ color: C.muted }}>+{overdueFollowUps.length - 4} más</p>
                       )}
                     </div>
                   </div>
@@ -422,9 +514,9 @@ export default function DashboardPage() {
 
                 {staleProspects.length > 0 && (
                   <div>
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#F57C00]" />
-                      <span className="text-[11px] font-semibold text-[#F57C00]">
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: C.warning }} />
+                      <span className="text-[11px] font-semibold" style={{ color: C.warning }}>
                         {staleProspects.length} sin actividad (+14 días)
                       </span>
                     </div>
@@ -434,23 +526,101 @@ export default function DashboardPage() {
                           (now.getTime() - new Date(p.updatedAt!).getTime()) / (1000 * 60 * 60 * 24),
                         );
                         return (
-                          <div key={p.id} className="flex items-center justify-between py-1 px-2 rounded-lg bg-[#FFF7ED]">
-                            <span className="text-[11px] font-medium text-[#1c2c4a] truncate">{p.empresa}</span>
-                            <span className="text-[10px] text-[#F57C00] shrink-0 ml-2">{days}d</span>
+                          <div
+                            key={p.id}
+                            className="flex items-center justify-between py-2 px-3 rounded-lg"
+                            style={{ backgroundColor: "#fffbeb" }}
+                          >
+                            <span className="text-[11px] font-medium truncate" style={{ color: C.ink }}>{p.empresa}</span>
+                            <span className="text-[10px] shrink-0 ml-3 tabular-nums" style={{ color: C.warning }}>{days}d</span>
                           </div>
                         );
                       })}
                       {staleProspects.length > 4 && (
-                        <p className="text-[10px] text-[#9ca3af] pl-2">+{staleProspects.length - 4} más</p>
+                        <p className="text-[10px] pl-3" style={{ color: C.muted }}>+{staleProspects.length - 4} más</p>
                       )}
                     </div>
                   </div>
                 )}
               </div>
             )}
-          </div>
+          </Card>
         </div>
       </div>
     </div>
   );
+}
+
+// ─── Primitives ───
+
+function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  return (
+    <div
+      className={`rounded-2xl p-6 ${className}`}
+      style={{
+        backgroundColor: C.surface,
+        boxShadow: "0 1px 2px rgba(0,0,0,0.03), 0 0 0 1px rgba(0,0,0,0.02)",
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+function Label({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="text-[11px] font-medium tracking-widest uppercase" style={{ color: C.muted }}>
+      {children}
+    </p>
+  );
+}
+
+function BigNumber({ children, color = C.ink }: { children: React.ReactNode; color?: string }) {
+  return (
+    <p className="text-[30px] font-semibold mt-2 leading-none tracking-tight" style={{ color }}>
+      {children}
+    </p>
+  );
+}
+
+function Divider() {
+  return <div className="my-4 h-px" style={{ backgroundColor: C.border }} />;
+}
+
+function Row({ label, value, bold }: { label: string; value: string; bold?: boolean }) {
+  return (
+    <div className="flex items-center justify-between py-0.5">
+      <span className="text-[11px]" style={{ color: C.muted }}>{label}</span>
+      <span
+        className={`text-[12px] tabular-nums ${bold ? "font-semibold" : "font-medium"}`}
+        style={{ color: bold ? C.accent : C.ink }}
+      >
+        {value}
+      </span>
+    </div>
+  );
+}
+
+function ProgressBar({ value, color, height = 5 }: { value: number; color: string; height?: number }) {
+  return (
+    <div className="rounded-full overflow-hidden" style={{ height, backgroundColor: `${color}12` }}>
+      <div
+        className="h-full rounded-full transition-all duration-700 ease-out"
+        style={{ width: `${Math.min(value, 100)}%`, backgroundColor: color }}
+      />
+    </div>
+  );
+}
+
+function Legend({ color, label }: { color: string; label: string }) {
+  return (
+    <span className="flex items-center gap-1.5">
+      <span className="w-2 h-2 rounded-sm" style={{ backgroundColor: color }} />
+      {label}
+    </span>
+  );
+}
+
+function statusColor(v: number): string {
+  return v >= 80 ? C.positive : v >= 50 ? C.warning : C.negative;
 }
