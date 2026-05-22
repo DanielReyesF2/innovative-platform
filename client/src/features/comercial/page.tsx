@@ -123,7 +123,7 @@ export default function ComercialPage() {
   // Anual: sum every month of the year so the card reads as a YTD snapshot.
   const presupuestoAnualTotal = salesTeamData.reduce((s, m) => s + (m.presupuestoAnual2026 || 0), 0);
   const cotizacionAnual = presupuestoEvolution.reduce((s, r) => s + (r.cotizacion || 0), 0);
-  const ventasCerradasAnual = salesTeamData.reduce((s, m) => s + (m.ventasRealesAnual || 0), 0);
+  const ventasCerradasAnual = presupuestoEvolution.reduce((s, r) => s + (r.real || 0), 0);
 
   // Mes actual.
   const presupuestoMesEquipo = salesTeamData.reduce((s, m) => s + (m.presupuestoMensual || 0), 0);
