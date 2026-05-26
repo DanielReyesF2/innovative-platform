@@ -392,6 +392,7 @@ export const catalogCategoryEnum = pgEnum("catalog_category", [
   "mantenimiento",
   "rentas",
   "gastos_rep",
+  "subproductos",
 ]);
 
 export const masterCatalog = pgTable(
@@ -528,6 +529,11 @@ export const insertSurveyProposalRentalsSchema = createInsertSchema(surveyPropos
 
 export const insertSurveySubproductSchema = createInsertSchema(surveySubproducts, {
   name: z.string().min(1).max(300),
+  monthlyQty: z
+    .union([z.string(), z.number()])
+    .transform((v) => (v === null || v === undefined ? null : String(v)))
+    .nullable()
+    .optional(),
 }).omit({ id: true });
 
 export const insertSurveyServiceSchema = createInsertSchema(surveyServices, {

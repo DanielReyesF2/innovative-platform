@@ -814,7 +814,7 @@ export async function deleteSurveyExpense(id: number) {
 // ─── Master Catalog (seed from Excel) ───────────────────
 
 const CATALOG_SEED: Array<{
-  category: "personal" | "equipos" | "insumos" | "herramientas" | "mantenimiento" | "rentas" | "gastos_rep";
+  category: "personal" | "equipos" | "insumos" | "herramientas" | "mantenimiento" | "rentas" | "gastos_rep" | "subproductos";
   items: string[];
 }> = [
   {
@@ -885,6 +885,35 @@ const CATALOG_SEED: Array<{
     ],
   },
   { category: "gastos_rep", items: ["Viajes corporativos", "Viajes operativos", "Diplomas anuales"] },
+  {
+    category: "subproductos",
+    items: [
+      "Cartón corrugado",
+      "Cartón plegadizo",
+      "Papel blanco / bond",
+      "Papel mezclado / archivo muerto",
+      "PET (botellas)",
+      "HDPE (envases)",
+      "PP (polipropileno)",
+      "LDPE (películas / bolsas)",
+      "PS (poliestireno / unicel)",
+      "Plástico mezclado",
+      "Vidrio",
+      "Aluminio (latas / perfil)",
+      "Fierro / chatarra",
+      "Cobre",
+      "Acero inoxidable",
+      "Madera / tarima",
+      "Tetra Pak",
+      "Electrónicos (RAEE)",
+      "Residuos orgánicos",
+      "Aceites usados",
+      "Trapos / estopas contaminadas",
+      "Residuos peligrosos (varios)",
+      "Lodos industriales",
+      "Otros valorizables",
+    ],
+  },
 ];
 
 let catalogSeeded = false;

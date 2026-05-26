@@ -10,12 +10,26 @@ interface SubItemApi {
   useDelete: () => { mutate: (vars: any, opts?: any) => void };
 }
 
+/** Maps the conceptual fields (item/quantity/observations) to the actual column names in the backend table. */
+export interface ChecklistFieldMap {
+  item: string;
+  quantity: string;
+  observations: string;
+}
+
+const DEFAULT_FIELD_MAP: ChecklistFieldMap = {
+  item: "item",
+  quantity: "quantity",
+  observations: "observations",
+};
+
 interface Props {
   surveyId: number;
   catalogCategory: string;
   api: SubItemApi;
   disabled?: boolean;
   itemLabel?: string;
+  fieldMap?: ChecklistFieldMap;
 }
 
 interface RowProps {
@@ -89,6 +103,7 @@ export default function CatalogChecklistSection({
   api,
   disabled,
   itemLabel = "Item",
+  fieldMap = DEFAULT_FIELD_MAP,
 }: Props) {
   const { toast } = useToast();
   const { data: catalog = [], isLoading } = useCatalog(catalogCategory);
@@ -99,13 +114,13 @@ export default function CatalogChecklistSection({
 
   const byName = useMemo(() => {
     const m = new Map<string, any>();
-    (items.data || []).forEach((it: any) => m.set(it.item, it));
+    (items.data || []).forEach((it: any) => m.set(it[fieldMap.item] as string, it));
     return m;
-  }, [items.data]);
+  }, [items.data, fieldMap.item]);
 
   const selectedCount = useMemo(
-    () => (items.data || []).filter((it: any) => (it.quantity ?? 0) > 0).length,
-    [items.data],
+    () => (items.data || []).filter((it: any) => Number(it[fieldMap.quantity] ?? 0) > 0).length,
+    [items.data, fieldMap.quantity],
   );
 
   const onError = () => {
@@ -120,18 +135,33 @@ export default function CatalogChecklistSection({
       return;
     }
     if (existing && quantity > 0) {
-      const qtyChanged = (existing.quantity ?? 0) !== quantity;
-      const obsChanged = (existing.observations ?? "") !== observations;
+      const existingQty = Number(existing[fieldMap.quantity] ?? 0);
+      const existingObs = (existing[fieldMap.observations] ?? "") as string;
+      const qtyChanged = existingQty !== quantity;
+      const obsChanged = existingObs !== observations;
       if (qtyChanged || obsChanged) {
         updateMut.mutate(
-          { surveyId, itemId: existing.id, quantity, observations },
+          {
+            surveyId,
+            itemId: existing.id,
+            [fieldMap.quantity]: quantity,
+            [fieldMap.observations]: observations,
+          },
           { onError },
         );
       }
       return;
     }
     if (!existing && quantity > 0) {
-      createMut.mutate({ surveyId, item: name, quantity, observations }, { onError });
+      createMut.mutate(
+        {
+          surveyId,
+          [fieldMap.item]: name,
+          [fieldMap.quantity]: quantity,
+          [fieldMap.observations]: observations,
+        },
+        { onError },
+      );
     }
   };
 
@@ -166,8 +196,8 @@ export default function CatalogChecklistSection({
             <ChecklistRow
               key={`${c.id}-${existing?.id ?? "new"}`}
               name={c.name}
-              initialQuantity={existing?.quantity ?? 0}
-              initialObservations={existing?.observations ?? ""}
+              initialQuantity={existing ? Number(existing[fieldMap.quantity] ?? 0) : 0}
+              initialObservations={(existing?.[fieldMap.observations] ?? "") as string}
               disabled={!!disabled}
               onCommit={handleCommit}
             />
