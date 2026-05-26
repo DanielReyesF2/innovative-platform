@@ -105,6 +105,22 @@ export default function EquipoPermitidoSection({ data, onSave, disabled }: Props
     return <p className="text-center text-sm text-muted-foreground py-6">Catálogo de equipos vacío</p>;
   }
 
+  // Group by groupName (if present in catalog)
+  const grouped = useMemo(() => {
+    const hasGroups = catalog.some((c: any) => c.groupName);
+    if (!hasGroups) return [{ groupName: null as string | null, items: catalog }];
+    const map = new Map<string, any[]>();
+    for (const c of catalog) {
+      const key = c.groupName || "Otros";
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(c);
+    }
+    return Array.from(map.entries()).map(([groupName, groupItems]) => ({
+      groupName: groupName as string | null,
+      items: groupItems,
+    }));
+  }, [catalog]);
+
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
@@ -122,19 +138,28 @@ export default function EquipoPermitidoSection({ data, onSave, disabled }: Props
           <span className="text-center">Cantidad</span>
           <span>Observaciones</span>
         </div>
-        {catalog.map((c: any) => {
-          const existing = byName.get(c.name);
-          return (
-            <EquipmentRow
-              key={c.id}
-              name={c.name}
-              initialQuantity={existing?.quantity ?? 0}
-              initialObservations={existing?.observations ?? ""}
-              disabled={!!disabled}
-              onChange={handleChange}
-            />
-          );
-        })}
+        {grouped.map((group) => (
+          <div key={group.groupName ?? "_default"}>
+            {group.groupName && (
+              <div className="px-3 py-1.5 bg-[#f3f4f6] border-b text-[11px] font-semibold uppercase tracking-wide text-[#2E7D32]">
+                {group.groupName}
+              </div>
+            )}
+            {group.items.map((c: any) => {
+              const existing = byName.get(c.name);
+              return (
+                <EquipmentRow
+                  key={c.id}
+                  name={c.name}
+                  initialQuantity={existing?.quantity ?? 0}
+                  initialObservations={existing?.observations ?? ""}
+                  disabled={!!disabled}
+                  onChange={handleChange}
+                />
+              );
+            })}
+          </div>
+        ))}
       </div>
     </div>
   );

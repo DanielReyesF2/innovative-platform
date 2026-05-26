@@ -920,19 +920,20 @@ let catalogSeeded = false;
 
 export async function seedMasterCatalog() {
   if (catalogSeeded) return;
+  // Idempotent via UNIQUE(category, name) + ON CONFLICT DO NOTHING.
+  // Survives race conditions when multiple requests trigger seed at boot.
   for (const block of CATALOG_SEED) {
-    const existing = await db.query.masterCatalog.findFirst({
-      where: eq(masterCatalog.category, block.category),
-    });
-    if (existing) continue; // category already seeded
-    await db.insert(masterCatalog).values(
-      block.items.map((name, idx) => ({
-        category: block.category,
-        name,
-        sortOrder: idx,
-        active: true,
-      })),
-    );
+    await db
+      .insert(masterCatalog)
+      .values(
+        block.items.map((name, idx) => ({
+          category: block.category,
+          name,
+          sortOrder: idx,
+          active: true,
+        })),
+      )
+      .onConflictDoNothing({ target: [masterCatalog.category, masterCatalog.name] });
   }
   catalogSeeded = true;
 }

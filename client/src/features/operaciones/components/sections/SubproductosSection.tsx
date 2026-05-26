@@ -15,6 +15,7 @@ export default function SubproductosSection({ surveyId, disabled }: Props) {
       itemLabel="Residuo / Subproducto"
       disabled={disabled}
       fieldMap={{ item: "name", quantity: "monthlyQty", observations: "characteristics" }}
+      allowManual
     />
   );
 }

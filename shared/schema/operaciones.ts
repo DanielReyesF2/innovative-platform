@@ -1,4 +1,16 @@
-import { boolean, index, integer, jsonb, numeric, pgEnum, pgTable, serial, text, timestamp } from "drizzle-orm/pg-core";
+import {
+  boolean,
+  index,
+  integer,
+  jsonb,
+  numeric,
+  pgEnum,
+  pgTable,
+  serial,
+  text,
+  timestamp,
+  uniqueIndex,
+} from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { prospects } from "./comercial";
@@ -401,6 +413,7 @@ export const masterCatalog = pgTable(
     id: serial("id").primaryKey(),
     category: catalogCategoryEnum("category").notNull(),
     name: text("name").notNull(),
+    groupName: text("group_name"), // visual grouping within a category (e.g., "Jaulas", "Prensas")
     sortOrder: integer("sort_order").default(0),
     active: boolean("active").default(true),
     createdAt: timestamp("created_at").defaultNow(),
@@ -409,6 +422,9 @@ export const masterCatalog = pgTable(
   (table) => ({
     categoryIdx: index("master_catalog_category_idx").on(table.category),
     activeIdx: index("master_catalog_active_idx").on(table.active),
+    // CRITICAL: prevents seed race condition (multiple inserts at boot).
+    // Must exist for ON CONFLICT DO NOTHING in seedMasterCatalog().
+    categoryNameUniq: uniqueIndex("master_catalog_category_name_uniq").on(table.category, table.name),
   }),
 );
 

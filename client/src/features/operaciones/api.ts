@@ -309,6 +309,7 @@ export interface CatalogItem {
   id: number;
   category: string;
   name: string;
+  groupName: string | null;
   sortOrder: number | null;
   active: boolean | null;
 }
