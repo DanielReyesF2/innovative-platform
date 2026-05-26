@@ -8,11 +8,15 @@ interface Props {
   disabled?: boolean;
 }
 
+const SHIFT_OPTIONS = ["1er turno", "2do turno", "3er turno"];
+
 export default function GeneralesSection({ data, onSave, disabled }: Props) {
   const [form, setForm] = useState({
     siteType: data?.siteType || "",
     siteTypeOther: data?.siteTypeOther || "",
     address: data?.address || "",
+    shifts: (data?.shifts as string[]) || [],
+    shiftsObs: data?.shiftsObs || "",
   });
 
   useEffect(() => {
@@ -20,13 +24,20 @@ export default function GeneralesSection({ data, onSave, disabled }: Props) {
       siteType: data?.siteType || "",
       siteTypeOther: data?.siteTypeOther || "",
       address: data?.address || "",
+      shifts: (data?.shifts as string[]) || [],
+      shiftsObs: data?.shiftsObs || "",
     });
   }, [data]);
 
-  const handleChange = (field: string, value: string) => {
+  const handleChange = (field: string, value: any) => {
     const updated = { ...form, [field]: value };
     setForm(updated);
     onSave(updated);
+  };
+
+  const toggleShift = (shift: string, checked: boolean) => {
+    const next = checked ? [...form.shifts, shift] : form.shifts.filter((s) => s !== shift);
+    handleChange("shifts", next);
   };
 
   return (
@@ -64,13 +75,39 @@ export default function GeneralesSection({ data, onSave, disabled }: Props) {
         )}
       </div>
       <div>
-        <Label>Direccion</Label>
+        <Label>Dirección</Label>
         <Input
           value={form.address}
           onChange={(e) => handleChange("address", e.target.value)}
           disabled={disabled}
           className="mt-1"
-          placeholder="Direccion completa del sitio..."
+          placeholder="Dirección completa del sitio..."
+        />
+      </div>
+
+      {/* Turnos de trabajo — movido desde Personal */}
+      <div className="p-3 rounded-lg border space-y-3">
+        <Label className="font-semibold">Turnos de trabajo</Label>
+        <div className="flex flex-wrap gap-4">
+          {SHIFT_OPTIONS.map((shift) => (
+            <label key={shift} className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={form.shifts.includes(shift)}
+                onChange={(e) => toggleShift(shift, e.target.checked)}
+                disabled={disabled}
+                className="h-4 w-4 rounded border-gray-300"
+              />
+              {shift}
+            </label>
+          ))}
+        </div>
+        <Input
+          value={form.shiftsObs}
+          onChange={(e) => handleChange("shiftsObs", e.target.value)}
+          disabled={disabled}
+          placeholder="Horarios u observaciones de turnos..."
+          className="h-8 text-sm"
         />
       </div>
     </div>

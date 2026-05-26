@@ -41,6 +41,15 @@ export const installationsSchema = z.object({
   wifiObs: z.string().nullable().optional(),
   officeSpace: z.boolean().nullable().optional(),
   officeSpaceObs: z.string().nullable().optional(),
+  // Moved from personnelPolicies (servicios al personal en sitio)
+  diningArea: z.boolean().nullable().optional(),
+  diningObs: z.string().nullable().optional(),
+  restroomsAvailable: z.boolean().nullable().optional(),
+  restroomsObs: z.string().nullable().optional(),
+  hydrationProvided: z.boolean().nullable().optional(),
+  hydrationObs: z.string().nullable().optional(),
+  transportProvided: z.boolean().nullable().optional(),
+  transportObs: z.string().nullable().optional(),
 });
 
 export const personnelPoliciesSchema = z.object({
@@ -73,7 +82,16 @@ export const transportPoliciesSchema = z.object({
   maxStayTimeObs: z.string().nullable().optional(),
 });
 
+export const allowedEquipmentItemSchema = z.object({
+  item: z.string().min(1).max(300),
+  quantity: z.number().int().min(1).default(1),
+  observations: z.string().nullable().optional(),
+});
+
 export const allowedEquipmentSchema = z.object({
+  // New shape: array of selected catalog items with quantity
+  items: z.array(allowedEquipmentItemSchema).nullable().optional(),
+  // Legacy fields (kept for backward compat with old surveys)
   scale: z.boolean().nullable().optional(),
   scaleObs: z.string().nullable().optional(),
   press: z.boolean().nullable().optional(),
@@ -90,6 +108,13 @@ export const legalRequirementsSchema = z.object({
   manifestObs: z.string().nullable().optional(),
   traceabilityLetter: z.boolean().nullable().optional(),
   traceabilityObs: z.string().nullable().optional(),
+  // Moved from personnelPolicies (normativa de seguridad/acceso al personal)
+  ppeRequired: z.array(z.string()).nullable().optional(), // ["Casco", "Chaleco", "Botas", "Guantes", "Lentes", "Tapones"]
+  ppeObs: z.string().nullable().optional(),
+  credentialRequired: z.boolean().nullable().optional(),
+  credentialObs: z.string().nullable().optional(),
+  uniformRequired: z.boolean().nullable().optional(),
+  uniformObs: z.string().nullable().optional(),
 });
 
 export const operationAreaSchema = z.object({
@@ -128,6 +153,9 @@ export const surveys = pgTable(
     allowedEquipment: jsonb("allowed_equipment"), // Section 5
     legalRequirements: jsonb("legal_requirements"), // Section 6
     operationArea: jsonb("operation_area"), // Section 7
+    // Turnos de trabajo (movido desde personnelPolicies)
+    shifts: text("shifts").array(),
+    shiftsObs: text("shifts_obs"),
     // Section 15: Observations
     observations: text("observations"),
     // Assigned users
@@ -141,6 +169,8 @@ export const surveys = pgTable(
     // Phase gates
     phase1CompletedAt: timestamp("phase1_completed_at"),
     phase2CompletedAt: timestamp("phase2_completed_at"),
+    // KPI timer: starts when status → en_sitio, ends when status → completado (completedDate)
+    siteVisitStartedAt: timestamp("site_visit_started_at"),
     // Handoff from comercial
     sentById: integer("sent_by_id").references(() => users.id),
     rejectionReason: text("rejection_reason"),
@@ -352,6 +382,89 @@ export const surveyServices = pgTable(
   }),
 );
 
+// ─── Master Catalog (Excel-seeded items) ────────────────
+
+export const catalogCategoryEnum = pgEnum("catalog_category", [
+  "personal",
+  "equipos",
+  "insumos",
+  "herramientas",
+  "mantenimiento",
+  "rentas",
+  "gastos_rep",
+]);
+
+export const masterCatalog = pgTable(
+  "master_catalog",
+  {
+    id: serial("id").primaryKey(),
+    category: catalogCategoryEnum("category").notNull(),
+    name: text("name").notNull(),
+    sortOrder: integer("sort_order").default(0),
+    active: boolean("active").default(true),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+  },
+  (table) => ({
+    categoryIdx: index("master_catalog_category_idx").on(table.category),
+    activeIdx: index("master_catalog_active_idx").on(table.active),
+  }),
+);
+
+// ─── Section 17: Tools (Herramientas) ───────────────────
+
+export const surveyTools = pgTable(
+  "survey_tools",
+  {
+    id: serial("id").primaryKey(),
+    surveyId: integer("survey_id")
+      .references(() => surveys.id)
+      .notNull(),
+    item: text("item").notNull(),
+    quantity: integer("quantity").default(1),
+    observations: text("observations"),
+  },
+  (table) => ({
+    surveyIdIdx: index("survey_tools_survey_id_idx").on(table.surveyId),
+  }),
+);
+
+// ─── Section 18: Maintenance (Mantenimiento) ────────────
+
+export const surveyMaintenance = pgTable(
+  "survey_maintenance",
+  {
+    id: serial("id").primaryKey(),
+    surveyId: integer("survey_id")
+      .references(() => surveys.id)
+      .notNull(),
+    item: text("item").notNull(),
+    quantity: integer("quantity").default(1),
+    observations: text("observations"),
+  },
+  (table) => ({
+    surveyIdIdx: index("survey_maintenance_survey_id_idx").on(table.surveyId),
+  }),
+);
+
+// ─── Section 19: Expenses (Gastos Representación) ───────
+
+export const surveyExpenses = pgTable(
+  "survey_expenses",
+  {
+    id: serial("id").primaryKey(),
+    surveyId: integer("survey_id")
+      .references(() => surveys.id)
+      .notNull(),
+    item: text("item").notNull(),
+    quantity: integer("quantity").default(1),
+    observations: text("observations"),
+  },
+  (table) => ({
+    surveyIdIdx: index("survey_expenses_survey_id_idx").on(table.surveyId),
+  }),
+);
+
 // ─── Gate Configuration (admin-configurable required fields) ─
 
 export const surveyGateConfigs = pgTable("survey_gate_configs", {
@@ -421,6 +534,22 @@ export const insertSurveyServiceSchema = createInsertSchema(surveyServices, {
   serviceName: z.string().min(1).max(300),
 }).omit({ id: true });
 
+export const insertCatalogItemSchema = createInsertSchema(masterCatalog, {
+  name: z.string().min(1).max(300),
+}).omit({ id: true, createdAt: true, updatedAt: true });
+
+export const insertSurveyToolSchema = createInsertSchema(surveyTools, {
+  item: z.string().min(1).max(200),
+}).omit({ id: true });
+
+export const insertSurveyMaintenanceSchema = createInsertSchema(surveyMaintenance, {
+  item: z.string().min(1).max(200),
+}).omit({ id: true });
+
+export const insertSurveyExpenseSchema = createInsertSchema(surveyExpenses, {
+  item: z.string().min(1).max(200),
+}).omit({ id: true });
+
 export const insertGateConfigSchema = createInsertSchema(surveyGateConfigs, {
   gate: z.string().min(1).max(50),
   section: z.string().min(1).max(100),
@@ -447,6 +576,10 @@ export type SurveyProposalRentals = typeof surveyProposalRentals.$inferSelect;
 export type SurveySubproduct = typeof surveySubproducts.$inferSelect;
 export type SurveyService = typeof surveyServices.$inferSelect;
 export type SurveyGateConfig = typeof surveyGateConfigs.$inferSelect;
+export type MasterCatalogItem = typeof masterCatalog.$inferSelect;
+export type SurveyTool = typeof surveyTools.$inferSelect;
+export type SurveyMaintenance = typeof surveyMaintenance.$inferSelect;
+export type SurveyExpense = typeof surveyExpenses.$inferSelect;
 export type OperationalDocument = typeof operationalDocuments.$inferSelect;
 export type InsertDocument = z.infer<typeof insertDocumentSchema>;
 

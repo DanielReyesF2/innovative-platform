@@ -7,12 +7,16 @@ import {
   type InsertSurvey,
   installationsSchema,
   legalRequirementsSchema,
+  masterCatalog,
+  type MasterCatalogItem,
   operationAreaSchema,
   operationalDocuments,
   personnelPoliciesSchema,
   type Survey,
   surveyCurrentServices,
+  surveyExpenses,
   surveyGateConfigs,
+  surveyMaintenance,
   surveyPhotos,
   surveyProposalEquipment,
   surveyProposalPersonnel,
@@ -20,6 +24,7 @@ import {
   surveyProposalSupplies,
   surveyServices,
   surveySubproducts,
+  surveyTools,
   surveys,
   surveyWasteTypes,
   transportPoliciesSchema,
@@ -73,6 +78,9 @@ export async function getSurveyById(id: number) {
     proposalEquipment,
     proposalSupplies,
     proposalRentals,
+    tools,
+    maintenance,
+    expenses,
   ] = await Promise.all([
     db.query.surveyWasteTypes.findMany({ where: eq(surveyWasteTypes.surveyId, id) }),
     db.query.surveyCurrentServices.findMany({ where: eq(surveyCurrentServices.surveyId, id) }),
@@ -83,6 +91,9 @@ export async function getSurveyById(id: number) {
     db.query.surveyProposalEquipment.findMany({ where: eq(surveyProposalEquipment.surveyId, id) }),
     db.query.surveyProposalSupplies.findMany({ where: eq(surveyProposalSupplies.surveyId, id) }),
     db.query.surveyProposalRentals.findMany({ where: eq(surveyProposalRentals.surveyId, id) }),
+    db.query.surveyTools.findMany({ where: eq(surveyTools.surveyId, id) }),
+    db.query.surveyMaintenance.findMany({ where: eq(surveyMaintenance.surveyId, id) }),
+    db.query.surveyExpenses.findMany({ where: eq(surveyExpenses.surveyId, id) }),
   ]);
 
   return {
@@ -96,6 +107,9 @@ export async function getSurveyById(id: number) {
     proposalEquipment,
     proposalSupplies,
     proposalRentals,
+    tools,
+    maintenance,
+    expenses,
   };
 }
 
@@ -294,6 +308,9 @@ export async function advanceSurveyStatus(id: number, targetStatus: string) {
 
   if (targetStatus === "pendiente_operaciones") {
     updateData.phase1CompletedAt = new Date();
+  }
+  if (targetStatus === "en_sitio" && !survey.siteVisitStartedAt) {
+    updateData.siteVisitStartedAt = new Date();
   }
   if (targetStatus === "completado") {
     updateData.phase2CompletedAt = new Date();
@@ -743,6 +760,234 @@ export async function getOpsTeamStats() {
       completed,
       total,
       avgResponseHours,
+    };
+  });
+}
+
+// ─── Survey Tools / Maintenance / Expenses (new sections) ─
+
+export async function getSurveyTools(surveyId: number) {
+  return db.query.surveyTools.findMany({ where: eq(surveyTools.surveyId, surveyId) });
+}
+export async function createSurveyTool(data: any) {
+  const [item] = await db.insert(surveyTools).values(data).returning();
+  return item;
+}
+export async function updateSurveyTool(id: number, data: any) {
+  const [updated] = await db.update(surveyTools).set(data).where(eq(surveyTools.id, id)).returning();
+  return updated;
+}
+export async function deleteSurveyTool(id: number) {
+  await db.delete(surveyTools).where(eq(surveyTools.id, id));
+}
+
+export async function getSurveyMaintenance(surveyId: number) {
+  return db.query.surveyMaintenance.findMany({ where: eq(surveyMaintenance.surveyId, surveyId) });
+}
+export async function createSurveyMaintenance(data: any) {
+  const [item] = await db.insert(surveyMaintenance).values(data).returning();
+  return item;
+}
+export async function updateSurveyMaintenance(id: number, data: any) {
+  const [updated] = await db.update(surveyMaintenance).set(data).where(eq(surveyMaintenance.id, id)).returning();
+  return updated;
+}
+export async function deleteSurveyMaintenance(id: number) {
+  await db.delete(surveyMaintenance).where(eq(surveyMaintenance.id, id));
+}
+
+export async function getSurveyExpenses(surveyId: number) {
+  return db.query.surveyExpenses.findMany({ where: eq(surveyExpenses.surveyId, surveyId) });
+}
+export async function createSurveyExpense(data: any) {
+  const [item] = await db.insert(surveyExpenses).values(data).returning();
+  return item;
+}
+export async function updateSurveyExpense(id: number, data: any) {
+  const [updated] = await db.update(surveyExpenses).set(data).where(eq(surveyExpenses.id, id)).returning();
+  return updated;
+}
+export async function deleteSurveyExpense(id: number) {
+  await db.delete(surveyExpenses).where(eq(surveyExpenses.id, id));
+}
+
+// ─── Master Catalog (seed from Excel) ───────────────────
+
+const CATALOG_SEED: Array<{
+  category: "personal" | "equipos" | "insumos" | "herramientas" | "mantenimiento" | "rentas" | "gastos_rep";
+  items: string[];
+}> = [
+  {
+    category: "personal",
+    items: ["Supervisor de Operaciones", "Líder de Operaciones", "Montacarguista", "Operario"],
+  },
+  {
+    category: "equipos",
+    items: [
+      "Compactador estacionario 2.5 YDS3",
+      "Guía metálica",
+      "Prensa mediana (pacas de 400 a 500 kg)",
+      "Prensa chica (pacas de 120 a 180 kg)",
+      "Prensa de picos",
+      "Báscula de piso 1.2 x 1.2 m",
+      "Sustayn",
+      "Jaula para tanque de gas",
+      "Patín hidráulico",
+      "Jaula vertical ligera",
+      "Jaula vertical ligera con llantas",
+      "Jaula vertical reforzada",
+      "Jaula vertical reforzada con llantas",
+      "Jaula horizontal",
+      "Cartucho de 40 YDS30",
+      "Remolque Jaula (1.76 x 3.05 x 2.50 mts Cap.1,500 kg)",
+      "Remolque Jaula (4.2 x 2.1 x 2.1 mts Cap.3,000 kg)",
+      "Canoa de plástico",
+      "Contenedor de plástico con copete",
+      "Contenedor de plástico con copete con llantas",
+      "Tolva estándar de 40 YDS3 de capacidad 30 m3",
+      "Molino 40 HP",
+    ],
+  },
+  {
+    category: "insumos",
+    items: [
+      "Rafia (kg)",
+      "Uniforme (estándar)",
+      "Uniforme (especializado)",
+      "Jarcería",
+      "Gas",
+      "Mensajería",
+      "Papelería",
+      "Carcher",
+      "Mesa y silla",
+      "Lockers (4)",
+    ],
+  },
+  {
+    category: "herramientas",
+    items: [
+      "Básicos (cúters, flexómetro, caja de herramientas básica)",
+      "Teléfono celular",
+      "Multifuncional",
+      "Impresora",
+      "Computadora portátil",
+    ],
+  },
+  { category: "mantenimiento", items: ["Prensa", "Báscula", "Molino"] },
+  {
+    category: "rentas",
+    items: [
+      "Montacargas de gas",
+      "Montacargas eléctrico",
+      "Caja fija de tráiler 53'",
+      "Cartucho compactador",
+      "Transporte e instalación de activos",
+    ],
+  },
+  { category: "gastos_rep", items: ["Viajes corporativos", "Viajes operativos", "Diplomas anuales"] },
+];
+
+let catalogSeeded = false;
+
+export async function seedMasterCatalog() {
+  if (catalogSeeded) return;
+  for (const block of CATALOG_SEED) {
+    const existing = await db.query.masterCatalog.findFirst({
+      where: eq(masterCatalog.category, block.category),
+    });
+    if (existing) continue; // category already seeded
+    await db.insert(masterCatalog).values(
+      block.items.map((name, idx) => ({
+        category: block.category,
+        name,
+        sortOrder: idx,
+        active: true,
+      })),
+    );
+  }
+  catalogSeeded = true;
+}
+
+export async function getCatalogByCategory(category: string) {
+  return db
+    .select()
+    .from(masterCatalog)
+    .where(and(eq(masterCatalog.category, category as MasterCatalogItem["category"]), eq(masterCatalog.active, true)))
+    .orderBy(masterCatalog.sortOrder, masterCatalog.name);
+}
+
+// ─── KPI Tiempo de Respuesta por Gerente ────────────────
+// Timer starts: status → en_sitio (siteVisitStartedAt)
+// Timer ends:   status → completado (completedDate)
+// Buckets: <24h=10, 24-48h=8, 48-72h=6, >72h=0
+
+export interface TiempoRespuestaRow {
+  userId: number;
+  userName: string;
+  codigo: string | null;
+  completadosEnMes: number;
+  tiempoPromedioHoras: number | null;
+  calificacion: number | null;
+}
+
+export function calificarTiempo(horas: number): number {
+  if (horas < 24) return 10;
+  if (horas < 48) return 8;
+  if (horas < 72) return 6;
+  return 0;
+}
+
+export async function getTiempoRespuestaPorGerente(month: string): Promise<TiempoRespuestaRow[]> {
+  // month format: "YYYY-MM"
+  const [yearStr, monthStr] = month.split("-");
+  const year = Number(yearStr);
+  const mon = Number(monthStr);
+  if (!year || !mon || mon < 1 || mon > 12) {
+    throw new Error("INVALID_MONTH:Formato esperado YYYY-MM");
+  }
+
+  const monthStart = new Date(Date.UTC(year, mon - 1, 1));
+  const monthEnd = new Date(Date.UTC(year, mon, 1));
+
+  const opsUsers = await db.query.users.findMany({
+    where: eq(users.role, "operaciones"),
+    columns: { id: true, name: true, codigo: true },
+  });
+
+  const completedSurveys = await db.query.surveys.findMany({
+    columns: {
+      id: true,
+      assignedOperationsId: true,
+      siteVisitStartedAt: true,
+      completedDate: true,
+    },
+    where: and(
+      eq(surveys.status, "completado" as Survey["status"]),
+      sql`${surveys.completedDate} >= ${monthStart}`,
+      sql`${surveys.completedDate} < ${monthEnd}`,
+      sql`${surveys.siteVisitStartedAt} IS NOT NULL`,
+    ),
+  });
+
+  return opsUsers.map((user) => {
+    const mySurveys = completedSurveys.filter((s) => s.assignedOperationsId === user.id);
+    const deltas = mySurveys
+      .filter((s) => s.siteVisitStartedAt && s.completedDate)
+      .map(
+        (s) => (new Date(s.completedDate!).getTime() - new Date(s.siteVisitStartedAt!).getTime()) / (1000 * 60 * 60),
+      );
+
+    const tiempoPromedioHoras =
+      deltas.length > 0 ? Math.round((deltas.reduce((a, b) => a + b, 0) / deltas.length) * 10) / 10 : null;
+    const calificacion = tiempoPromedioHoras !== null ? calificarTiempo(tiempoPromedioHoras) : null;
+
+    return {
+      userId: user.id,
+      userName: user.name,
+      codigo: user.codigo,
+      completadosEnMes: mySurveys.length,
+      tiempoPromedioHoras,
+      calificacion,
     };
   });
 }

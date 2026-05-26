@@ -6,8 +6,10 @@ import { Input } from "@/components/ui/input";
 export interface ColumnDef {
   key: string;
   label: string;
-  type?: "text" | "number" | "boolean";
+  type?: "text" | "number" | "boolean" | "select";
   width?: string;
+  /** Only used when type === "select". Dropdown options. A "Otro / escribir manual" option is appended automatically. */
+  options?: string[];
 }
 
 interface EditableTableProps {
@@ -18,6 +20,82 @@ interface EditableTableProps {
   onDelete: (itemId: number) => void;
   disabled?: boolean;
   emptyText?: string;
+}
+
+const MANUAL_VALUE = "__manual__";
+
+function CellEditor({
+  col,
+  value,
+  onChange,
+}: {
+  col: ColumnDef;
+  value: any;
+  onChange: (v: any) => void;
+}) {
+  // For select cells: detect if current value is in options or is manual entry
+  if (col.type === "select" && col.options) {
+    const isManual = value && !col.options.includes(value);
+    const [manualMode, setManualMode] = useState<boolean>(isManual);
+
+    if (manualMode) {
+      return (
+        <div className="flex gap-1">
+          <Input
+            value={value ?? ""}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder="Escribir manual..."
+            className="h-8 text-sm"
+            autoFocus
+          />
+          <button
+            type="button"
+            onClick={() => {
+              setManualMode(false);
+              onChange("");
+            }}
+            className="text-[11px] text-muted-foreground px-1.5 hover:text-foreground"
+            title="Volver a lista"
+          >
+            ←
+          </button>
+        </div>
+      );
+    }
+
+    return (
+      <select
+        value={value && col.options.includes(value) ? value : ""}
+        onChange={(e) => {
+          if (e.target.value === MANUAL_VALUE) {
+            setManualMode(true);
+            onChange("");
+          } else {
+            onChange(e.target.value);
+          }
+        }}
+        className="h-8 w-full rounded-md border border-input bg-background px-2 text-sm"
+      >
+        <option value="">— Selecciona —</option>
+        {col.options.map((opt) => (
+          <option key={opt} value={opt}>
+            {opt}
+          </option>
+        ))}
+        <option value={MANUAL_VALUE}>Otro / escribir manual...</option>
+      </select>
+    );
+  }
+
+  return (
+    <Input
+      type={col.type === "number" ? "number" : "text"}
+      value={value ?? ""}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={col.label}
+      className="h-8 text-sm"
+    />
+  );
 }
 
 export default function EditableTable({
@@ -99,11 +177,10 @@ export default function EditableTable({
                 {columns.map((col) => (
                   <td key={col.key} className="p-2">
                     {editingId === item.id ? (
-                      <Input
-                        type={col.type === "number" ? "number" : "text"}
-                        value={editData[col.key] ?? ""}
-                        onChange={(e) => setEditData({ ...editData, [col.key]: e.target.value })}
-                        className="h-8 text-sm"
+                      <CellEditor
+                        col={col}
+                        value={editData[col.key]}
+                        onChange={(v) => setEditData({ ...editData, [col.key]: v })}
                       />
                     ) : (
                       <span
@@ -154,12 +231,10 @@ export default function EditableTable({
               <tr className="border-b bg-accent/30">
                 {columns.map((col) => (
                   <td key={col.key} className="p-2">
-                    <Input
-                      type={col.type === "number" ? "number" : "text"}
-                      value={newRow[col.key] ?? ""}
-                      onChange={(e) => setNewRow({ ...newRow, [col.key]: e.target.value })}
-                      placeholder={col.label}
-                      className="h-8 text-sm"
+                    <CellEditor
+                      col={col}
+                      value={newRow[col.key]}
+                      onChange={(v) => setNewRow({ ...newRow, [col.key]: v })}
                     />
                   </td>
                 ))}

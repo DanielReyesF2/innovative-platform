@@ -1,20 +1,22 @@
 import {
   ArrowLeft,
+  Briefcase,
   Building2,
   Camera,
   Check,
   CheckCircle2,
   ClipboardList,
-  FileText,
+  HardHat,
   Lock,
   Maximize2,
   MessageSquare,
   Package,
   Play,
+  Receipt,
   Scale,
-  Shield,
   Truck,
   UserCheck,
+  Users,
   Wrench,
   X,
   Zap,
@@ -22,6 +24,12 @@ import {
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import {
+  expensesApi,
+  maintenanceApi,
+  proposalPersonnelApi,
+  proposalRentalsApi,
+  proposalSuppliesApi,
+  toolsApi,
   useAdvanceSurveyStatus,
   useGateStatus,
   useSurvey,
@@ -31,13 +39,16 @@ import {
 import AreaOperacionSection from "./sections/AreaOperacionSection";
 import EquipoPermitidoSection from "./sections/EquipoPermitidoSection";
 import FotosSection from "./sections/FotosSection";
+import GastosRepSection from "./sections/GastosRepSection";
 import GeneralesSection from "./sections/GeneralesSection";
 import InstalacionesSection from "./sections/InstalacionesSection";
+import InsumosSection from "./sections/InsumosSection";
 import LegalSection from "./sections/LegalSection";
+import MantenimientoSection from "./sections/MantenimientoSection";
 import ObservacionesSection from "./sections/ObservacionesSection";
 import PersonalSection from "./sections/PersonalSection";
-import PropuestaSection from "./sections/PropuestaSection";
 import RecoleccionesSection from "./sections/RecoleccionesSection";
+import RentasSection from "./sections/RentasSection";
 import ServiciosSection from "./sections/ServiciosSection";
 import SubproductosSection from "./sections/SubproductosSection";
 import ValidacionSection from "./sections/ValidacionSection";
@@ -45,17 +56,22 @@ import ValidacionSection from "./sections/ValidacionSection";
 // ─── Section definitions ───
 
 const SECTIONS = [
+  // ── Phase 1: captura en sitio ──
   { key: "generales", label: "Generales", icon: Building2, color: "#0067B0", phase: 1 },
   { key: "instalaciones", label: "Instalaciones", icon: Zap, color: "#F57C00", phase: 1 },
-  { key: "personal", label: "Personal", icon: Shield, color: "#7C3AED", phase: 1 },
   { key: "recolecciones", label: "Recolecciones", icon: Truck, color: "#0D47A1", phase: 1 },
   { key: "equipo", label: "Equipo Permitido", icon: Wrench, color: "#2E7D32", phase: 1 },
   { key: "legal", label: "Legal Ambiental", icon: Scale, color: "#C62828", phase: 1 },
   { key: "area", label: "Área Operación", icon: Maximize2, color: "#00838F", phase: 1 },
   { key: "subproductos", label: "Subproductos", icon: Package, color: "#4CAF50", phase: 1 },
   { key: "servicios", label: "Servicios", icon: ClipboardList, color: "#1565C0", phase: 1 },
+  // ── Phase 2: propuesta (catálogos del Excel) ──
+  { key: "personal", label: "Personal", icon: Users, color: "#7C3AED", phase: 2 },
+  { key: "insumos", label: "Insumos", icon: Package, color: "#0EA5A4", phase: 2 },
+  { key: "mantenimiento", label: "Mantenimiento", icon: HardHat, color: "#92400E", phase: 2 },
+  { key: "rentas", label: "Rentas", icon: Briefcase, color: "#7C3AED", phase: 2 },
+  { key: "gastos", label: "Gastos Rep.", icon: Receipt, color: "#BE185D", phase: 2 },
   { key: "fotos", label: "Fotografías", icon: Camera, color: "#E64A19", phase: 2 },
-  { key: "propuesta", label: "Propuesta", icon: FileText, color: "#00a8a8", phase: 2 },
   { key: "observaciones", label: "Observaciones", icon: MessageSquare, color: "#5D4037", phase: 2 },
   { key: "validacion", label: "Validación", icon: UserCheck, color: "#1B5E20", phase: 2 },
 ] as const;
@@ -89,19 +105,19 @@ function getJsonbCount(data: any, expected: number): string {
 function getSectionCompletion(survey: any, key: string): { status: "complete" | "partial" | "empty"; label: string } {
   switch (key) {
     case "generales": {
-      const n = [survey.address, survey.siteType].filter(Boolean).length;
-      return { status: n >= 2 ? "complete" : n > 0 ? "partial" : "empty", label: `${n}/2` };
+      const n = [survey.address, survey.siteType, survey.shifts?.length].filter(Boolean).length;
+      return { status: n >= 2 ? "complete" : n > 0 ? "partial" : "empty", label: `${n}/3` };
     }
     case "instalaciones":
-      return { status: getJsonbStatus(survey.installations, 8), label: getJsonbCount(survey.installations, 8) };
-    case "personal":
-      return { status: getJsonbStatus(survey.personnelPolicies, 8), label: getJsonbCount(survey.personnelPolicies, 8) };
+      return { status: getJsonbStatus(survey.installations, 12), label: getJsonbCount(survey.installations, 12) };
     case "recolecciones":
       return { status: getJsonbStatus(survey.transportPolicies, 4), label: getJsonbCount(survey.transportPolicies, 4) };
-    case "equipo":
-      return { status: getJsonbStatus(survey.allowedEquipment, 4), label: getJsonbCount(survey.allowedEquipment, 4) };
+    case "equipo": {
+      const c = survey.allowedEquipment?.items?.length ?? 0;
+      return { status: c > 0 ? "complete" : "empty", label: `${c} equipos` };
+    }
     case "legal":
-      return { status: getJsonbStatus(survey.legalRequirements, 2), label: getJsonbCount(survey.legalRequirements, 2) };
+      return { status: getJsonbStatus(survey.legalRequirements, 5), label: getJsonbCount(survey.legalRequirements, 5) };
     case "area":
       return { status: getJsonbStatus(survey.operationArea, 3), label: getJsonbCount(survey.operationArea, 3) };
     case "subproductos": {
@@ -112,12 +128,32 @@ function getSectionCompletion(survey: any, key: string): { status: "complete" | 
       const c = survey.services?.length || 0;
       return { status: c > 0 ? "complete" : "empty", label: `${c} items` };
     }
+    case "personal": {
+      const c = survey.proposalPersonnel?.length || 0;
+      return { status: c > 0 ? "complete" : "empty", label: `${c} puestos` };
+    }
+    case "insumos": {
+      const supplies = survey.proposalSupplies?.length || 0;
+      const tools = survey.tools?.length || 0;
+      const total = supplies + tools;
+      return { status: total > 0 ? "complete" : "empty", label: `${total} items` };
+    }
+    case "mantenimiento": {
+      const c = survey.maintenance?.length || 0;
+      return { status: c > 0 ? "complete" : "empty", label: `${c} items` };
+    }
+    case "rentas": {
+      const c = survey.proposalRentals?.length || 0;
+      return { status: c > 0 ? "complete" : "empty", label: `${c} items` };
+    }
+    case "gastos": {
+      const c = survey.expenses?.length || 0;
+      return { status: c > 0 ? "complete" : "empty", label: `${c} items` };
+    }
     case "fotos": {
       const c = survey.photos?.length || 0;
       return { status: c > 0 ? "complete" : "empty", label: `${c} fotos` };
     }
-    case "propuesta":
-      return { status: "partial", label: "Personal / Equipo / Insumos" };
     case "observaciones":
       return { status: survey.observations ? "complete" : "empty", label: survey.observations ? "Listo" : "Pendiente" };
     case "validacion": {
@@ -269,8 +305,6 @@ export default function LevantamientoHub({ surveyId, onClose }: LevantamientoHub
         return <GeneralesSection data={survey} onSave={debouncedFieldSave} disabled={disabled} />;
       case "instalaciones":
         return <InstalacionesSection data={survey.installations} onSave={(d) => debouncedSectionSave("installations", d)} disabled={disabled} />;
-      case "personal":
-        return <PersonalSection data={survey.personnelPolicies} onSave={(d) => debouncedSectionSave("personnelPolicies", d)} disabled={disabled} />;
       case "recolecciones":
         return <RecoleccionesSection data={survey.transportPolicies} onSave={(d) => debouncedSectionSave("transportPolicies", d)} disabled={disabled} />;
       case "equipo":
@@ -283,10 +317,18 @@ export default function LevantamientoHub({ surveyId, onClose }: LevantamientoHub
         return <SubproductosSection surveyId={surveyId} disabled={disabled} />;
       case "servicios":
         return <ServiciosSection surveyId={surveyId} disabled={disabled} />;
+      case "personal":
+        return <PersonalSection surveyId={surveyId} disabled={disabled} />;
+      case "insumos":
+        return <InsumosSection surveyId={surveyId} disabled={disabled} />;
+      case "mantenimiento":
+        return <MantenimientoSection surveyId={surveyId} disabled={disabled} />;
+      case "rentas":
+        return <RentasSection surveyId={surveyId} disabled={disabled} />;
+      case "gastos":
+        return <GastosRepSection surveyId={surveyId} disabled={disabled} />;
       case "fotos":
         return <FotosSection surveyId={surveyId} disabled={disabled} />;
-      case "propuesta":
-        return <PropuestaSection surveyId={surveyId} disabled={disabled} />;
       case "observaciones":
         return <ObservacionesSection data={survey.observations} onSave={(obs) => debouncedFieldSave({ observations: obs })} disabled={disabled} />;
       case "validacion":
@@ -468,7 +510,7 @@ export default function LevantamientoHub({ surveyId, onClose }: LevantamientoHub
                               ? "bg-white border-[#2E7D32]/40"
                               : status === "partial"
                                 ? "bg-white border-[#F57C00]/40"
-                                : "bg-white border-[#e5e7eb] hover:border-[#0067B0]/40 hover:shadow-md"
+                                : "bg-white border-[#C62828]/40 hover:border-[#C62828]/60 hover:shadow-md"
                           }`}
                         >
                           {/* Status indicator */}
@@ -480,7 +522,11 @@ export default function LevantamientoHub({ surveyId, onClose }: LevantamientoHub
                             <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-[#F57C00]/20 flex items-center justify-center">
                               <div className="w-2 h-2 rounded-full bg-[#F57C00]" />
                             </div>
-                          ) : null}
+                          ) : (
+                            <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-[#C62828]/20 flex items-center justify-center">
+                              <div className="w-2 h-2 rounded-full bg-[#C62828]" />
+                            </div>
+                          )}
 
                           <div
                             className="w-10 h-10 rounded-lg flex items-center justify-center mb-1.5"
@@ -527,7 +573,7 @@ export default function LevantamientoHub({ surveyId, onClose }: LevantamientoHub
                                 ? "bg-white border-[#2E7D32]/40 active:scale-[0.97]"
                                 : status === "partial"
                                   ? "bg-white border-[#F57C00]/40 active:scale-[0.97]"
-                                  : "bg-white border-[#e5e7eb] hover:border-[#0067B0]/40 hover:shadow-md active:scale-[0.97]"
+                                  : "bg-white border-[#C62828]/40 hover:border-[#C62828]/60 hover:shadow-md active:scale-[0.97]"
                           }`}
                         >
                           {isLocked ? (
@@ -542,7 +588,11 @@ export default function LevantamientoHub({ surveyId, onClose }: LevantamientoHub
                             <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-[#F57C00]/20 flex items-center justify-center">
                               <div className="w-2 h-2 rounded-full bg-[#F57C00]" />
                             </div>
-                          ) : null}
+                          ) : (
+                            <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-[#C62828]/20 flex items-center justify-center">
+                              <div className="w-2 h-2 rounded-full bg-[#C62828]" />
+                            </div>
+                          )}
 
                           <div
                             className="w-10 h-10 rounded-lg flex items-center justify-center mb-1.5"

@@ -11,7 +11,10 @@ import {
   insertSurveyProposalEquipmentSchema,
   insertSurveyProposalPersonnelSchema,
   insertSurveyProposalRentalsSchema,
+  insertSurveyExpenseSchema,
+  insertSurveyMaintenanceSchema,
   insertSurveyProposalSuppliesSchema,
+  insertSurveyToolSchema,
   insertSurveySchema,
   insertSurveyServiceSchema,
   insertSurveySubproductSchema,
@@ -52,7 +55,22 @@ import {
   getExpiringDocuments,
   // Gate config
   getGateConfigs,
+  createSurveyExpense,
+  createSurveyMaintenance,
+  createSurveyTool,
+  deleteSurveyExpense,
+  deleteSurveyMaintenance,
+  deleteSurveyTool,
+  getCatalogByCategory,
   getOpsTeamStats,
+  getSurveyExpenses,
+  getSurveyMaintenance,
+  getSurveyTools,
+  getTiempoRespuestaPorGerente,
+  seedMasterCatalog,
+  updateSurveyExpense,
+  updateSurveyMaintenance,
+  updateSurveyTool,
   getPendingApprovalSurveys,
   getPendingReviewSurveys,
   getSurveyById,
@@ -130,6 +148,32 @@ const photoUpload = multer({
 
 router.use(requireAuth);
 
+// Seed master catalog on first request (idempotent)
+let catalogSeedRan = false;
+router.use(async (_req, _res, next) => {
+  if (!catalogSeedRan) {
+    try {
+      await seedMasterCatalog();
+      catalogSeedRan = true;
+    } catch (error) {
+      console.error("[operaciones] Catalog seed error:", error);
+    }
+  }
+  next();
+});
+
+// ─── Master Catalog (Excel-seeded items for dropdowns) ──
+
+router.get("/catalog/:category", async (req, res) => {
+  try {
+    const items = await getCatalogByCategory(req.params.category);
+    res.json(items);
+  } catch (error) {
+    console.error("[operaciones] Get catalog error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
 // ─── Team Dashboard ─────────────────────────────────────
 
 router.get("/team", async (_req, res) => {
@@ -138,6 +182,27 @@ router.get("/team", async (_req, res) => {
     res.json(stats);
   } catch (error) {
     console.error("[operaciones] Get team stats error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+// ─── KPI: Tiempo de Respuesta por Gerente (mensual) ─────
+
+router.get("/kpi/tiempo-respuesta", async (req, res) => {
+  try {
+    const monthParam = typeof req.query.month === "string" ? req.query.month : "";
+    const now = new Date();
+    const defaultMonth = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}`;
+    const month = /^\d{4}-\d{2}$/.test(monthParam) ? monthParam : defaultMonth;
+
+    const rows = await getTiempoRespuestaPorGerente(month);
+    res.json({ month, rows });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Internal server error";
+    if (message.startsWith("INVALID_MONTH:")) {
+      return res.status(400).json({ message: message.replace("INVALID_MONTH:", "") });
+    }
+    console.error("[operaciones] KPI tiempo-respuesta error:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 });
@@ -961,6 +1026,90 @@ router.delete("/documents/:id", async (req, res) => {
     console.error("[operaciones] Delete document error:", error);
     res.status(500).json({ message: "Internal server error" });
   }
+});
+
+// ─── Survey Tools / Maintenance / Expenses (new sections) ─
+
+function registerSubItemRoutes<T extends { safeParse: (data: unknown) => { success: boolean; data?: unknown; error?: { errors: unknown } } }>(
+  resource: string,
+  schema: T,
+  ops: {
+    get: (surveyId: number) => Promise<unknown>;
+    create: (data: unknown) => Promise<unknown>;
+    update: (id: number, data: unknown) => Promise<unknown>;
+    delete: (id: number) => Promise<unknown>;
+  },
+) {
+  router.get(`/surveys/:id/${resource}`, async (req, res) => {
+    try {
+      const items = await ops.get(Number(req.params.id));
+      res.json(items);
+    } catch (error) {
+      console.error(`[operaciones] Get ${resource} error:`, error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  router.post(`/surveys/:id/${resource}`, async (req, res) => {
+    try {
+      const data = { ...req.body, surveyId: Number(req.params.id) };
+      const parsed = schema.safeParse(data);
+      if (!parsed.success) {
+        return res.status(400).json({ message: "Datos inválidos", errors: parsed.error?.errors });
+      }
+      const item = await ops.create(parsed.data);
+      res.status(201).json(item);
+    } catch (error) {
+      console.error(`[operaciones] Create ${resource} error:`, error);
+      res.status(400).json({ message: "Datos inválidos" });
+    }
+  });
+
+  router.patch(`/surveys/:id/${resource}/:itemId`, async (req, res) => {
+    try {
+      const partial = (schema as unknown as { partial: () => T }).partial();
+      const parsed = partial.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ message: "Datos inválidos", errors: parsed.error?.errors });
+      }
+      const updated = await ops.update(Number(req.params.itemId), parsed.data);
+      res.json(updated);
+    } catch (error) {
+      console.error(`[operaciones] Update ${resource} error:`, error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  router.delete(`/surveys/:id/${resource}/:itemId`, async (req, res) => {
+    try {
+      await ops.delete(Number(req.params.itemId));
+      res.json({ message: "Eliminado" });
+    } catch (error) {
+      console.error(`[operaciones] Delete ${resource} error:`, error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+}
+
+registerSubItemRoutes("tools", insertSurveyToolSchema as any, {
+  get: getSurveyTools,
+  create: createSurveyTool,
+  update: updateSurveyTool,
+  delete: deleteSurveyTool,
+});
+
+registerSubItemRoutes("maintenance", insertSurveyMaintenanceSchema as any, {
+  get: getSurveyMaintenance,
+  create: createSurveyMaintenance,
+  update: updateSurveyMaintenance,
+  delete: deleteSurveyMaintenance,
+});
+
+registerSubItemRoutes("expenses", insertSurveyExpenseSchema as any, {
+  get: getSurveyExpenses,
+  create: createSurveyExpense,
+  update: updateSurveyExpense,
+  delete: deleteSurveyExpense,
 });
 
 export default router;

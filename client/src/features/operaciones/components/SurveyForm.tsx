@@ -243,11 +243,7 @@ export default function SurveyForm({ surveyId }: SurveyFormProps) {
           isOpen={openSection === 3}
           onToggle={() => setOpenSection(openSection === 3 ? 0 : 3)}
         >
-          <PersonalSection
-            data={survey.personnelPolicies}
-            onSave={(data) => debouncedSectionSave("personnelPolicies", data)}
-            disabled={isCompleted}
-          />
+          <PersonalSection surveyId={survey.id} disabled={isCompleted} />
         </SurveySection>
 
         {/* Section 4: Recolecciones */}

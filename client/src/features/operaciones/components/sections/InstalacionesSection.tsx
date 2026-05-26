@@ -17,6 +17,11 @@ const ITEMS = [
   { key: "loadingDock", label: "Andén de carga" },
   { key: "wifi", label: "WiFi disponible" },
   { key: "officeSpace", label: "Espacio de oficina" },
+  // Servicios al personal en sitio (movidos desde Personal)
+  { key: "diningArea", label: "Comedor disponible" },
+  { key: "restroomsAvailable", label: "Sanitarios disponibles" },
+  { key: "hydrationProvided", label: "Hidratación proporcionada" },
+  { key: "transportProvided", label: "Transporte proporcionado" },
 ];
 
 const VOLTAGES = ["110V", "220V", "440V"];

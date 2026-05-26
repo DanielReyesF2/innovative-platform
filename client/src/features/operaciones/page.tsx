@@ -34,6 +34,7 @@ import {
   useSurveySummary,
   useSurveys,
 } from "./api";
+import { KpiTiempoRespuesta } from "./components/KpiTiempoRespuesta";
 import LevantamientoHub from "./components/LevantamientoHub";
 import { OperacionesCalendar } from "./components/OperacionesCalendar";
 import { ReviewSurveyModal } from "./components/ReviewSurveyModal";
@@ -233,7 +234,7 @@ export default function OperacionesPage() {
       />
 
       {/* KPI Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <MetricCard
           title="Solicitudes"
           value={String(pendingReview.length)}
@@ -251,12 +252,6 @@ export default function OperacionesPage() {
           value={String(completedSurveys)}
           description="Levantamientos finalizados"
           icon={<CheckCircle className="h-4 w-4 text-muted-foreground" />}
-        />
-        <MetricCard
-          title="Docs Vencidos"
-          value={String(expiredDocs.length)}
-          description="Requieren renovacion"
-          icon={<AlertCircle className="h-4 w-4 text-muted-foreground" />}
         />
       </div>
 
@@ -360,7 +355,10 @@ export default function OperacionesPage() {
 
       {/* Content */}
       {activeTab === "kpis" ? (
-        <KpiSection moduleSlug="operaciones" compact />
+        <div className="space-y-6">
+          <KpiTiempoRespuesta />
+          <KpiSection moduleSlug="operaciones" compact />
+        </div>
       ) : activeTab === "aprobacion" ? (
         <div className="space-y-6">
           {/* Pendientes de Aprobación */}

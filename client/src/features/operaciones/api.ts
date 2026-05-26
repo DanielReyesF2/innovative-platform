@@ -21,6 +21,29 @@ export function useOpsTeam() {
   });
 }
 
+// ─── KPI Tiempo de Respuesta ────────────────────────────
+
+export interface TiempoRespuestaRow {
+  userId: number;
+  userName: string;
+  codigo: string | null;
+  completadosEnMes: number;
+  tiempoPromedioHoras: number | null;
+  calificacion: number | null;
+}
+
+export interface TiempoRespuestaResponse {
+  month: string;
+  rows: TiempoRespuestaRow[];
+}
+
+export function useKpiTiempoRespuesta(month: string) {
+  return useQuery<TiempoRespuestaResponse>({
+    queryKey: [`/api/operaciones/kpi/tiempo-respuesta?month=${month}`],
+    staleTime: 60 * 1000,
+  });
+}
+
 // ─── Surveys ────────────────────────────────────────────
 
 export function useSurveys() {
@@ -276,6 +299,26 @@ export const proposalPersonnelApi = createSubItemHooks("proposal-personnel");
 export const proposalEquipmentApi = createSubItemHooks("proposal-equipment");
 export const proposalSuppliesApi = createSubItemHooks("proposal-supplies");
 export const proposalRentalsApi = createSubItemHooks("proposal-rentals");
+export const toolsApi = createSubItemHooks("tools");
+export const maintenanceApi = createSubItemHooks("maintenance");
+export const expensesApi = createSubItemHooks("expenses");
+
+// ─── Master Catalog ─────────────────────────────────────
+
+export interface CatalogItem {
+  id: number;
+  category: string;
+  name: string;
+  sortOrder: number | null;
+  active: boolean | null;
+}
+
+export function useCatalog(category: string) {
+  return useQuery<CatalogItem[]>({
+    queryKey: [`/api/operaciones/catalog/${category}`],
+    staleTime: 5 * 60 * 1000, // 5min - catálogo cambia poco
+  });
+}
 
 // ─── Documents ──────────────────────────────────────────
 
