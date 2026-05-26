@@ -1,5 +1,5 @@
 import { expensesApi } from "../../api";
-import CatalogTableSection from "./CatalogTableSection";
+import CatalogChecklistSection from "./CatalogChecklistSection";
 
 interface Props {
   surveyId: number;
@@ -8,13 +8,12 @@ interface Props {
 
 export default function GastosRepSection({ surveyId, disabled }: Props) {
   return (
-    <CatalogTableSection
+    <CatalogChecklistSection
       surveyId={surveyId}
       catalogCategory="gastos_rep"
       api={expensesApi}
       itemLabel="Gasto"
       disabled={disabled}
-      emptyText="No hay gastos registrados"
     />
   );
 }

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { useCatalog } from "../../api";
 
@@ -14,101 +14,128 @@ interface Props {
   disabled?: boolean;
 }
 
+interface RowProps {
+  name: string;
+  initialQuantity: number;
+  initialObservations: string;
+  disabled: boolean;
+  onChange: (name: string, quantity: number, observations: string) => void;
+}
+
+function EquipmentRow({ name, initialQuantity, initialObservations, disabled, onChange }: RowProps) {
+  const [quantity, setQuantity] = useState<number>(initialQuantity);
+  const [observations, setObservations] = useState<string>(initialObservations);
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+  const isFirstRender = useRef(true);
+
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      onChange(name, quantity, observations);
+    }, 600);
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [quantity, observations]);
+
+  const isSelected = quantity > 0;
+
+  return (
+    <div
+      className={`grid grid-cols-[1fr_90px_1fr] sm:grid-cols-[minmax(220px,2fr)_100px_minmax(180px,3fr)] gap-3 items-center px-3 py-2.5 border-b last:border-0 transition-colors ${
+        isSelected ? "bg-[#2E7D32]/5" : "bg-white"
+      }`}
+    >
+      <span className={`text-sm ${isSelected ? "font-semibold text-[#1c2c4a]" : "text-[#1c2c4a]"}`}>
+        {name}
+      </span>
+      <Input
+        type="number"
+        min={0}
+        value={quantity || ""}
+        onChange={(e) => setQuantity(Math.max(0, Number(e.target.value) || 0))}
+        disabled={disabled}
+        placeholder="0"
+        className="h-9 text-sm text-center"
+      />
+      <Input
+        value={observations}
+        onChange={(e) => setObservations(e.target.value)}
+        disabled={disabled || !isSelected}
+        placeholder={isSelected ? "Observaciones..." : "—"}
+        className="h-9 text-sm"
+      />
+    </div>
+  );
+}
+
 export default function EquipoPermitidoSection({ data, onSave, disabled }: Props) {
   const { data: catalog = [], isLoading } = useCatalog("equipos");
-  const [items, setItems] = useState<AllowedEquipmentItem[]>([]);
 
-  // Hydrate from server data (new shape if present, else empty)
-  useEffect(() => {
-    const incoming = (data?.items as AllowedEquipmentItem[] | undefined) ?? [];
-    setItems(incoming);
-  }, [data]);
+  const items: AllowedEquipmentItem[] = useMemo(() => (data?.items as AllowedEquipmentItem[]) ?? [], [data?.items]);
+  const byName = useMemo(() => new Map(items.map((it) => [it.item, it])), [items]);
 
-  const itemMap = useMemo(() => new Map(items.map((it) => [it.item, it])), [items]);
+  const selectedCount = items.filter((it) => (it.quantity ?? 0) > 0).length;
 
-  const persist = (next: AllowedEquipmentItem[]) => {
-    setItems(next);
-    // Preserve any legacy fields by spreading existing data
+  const handleChange = (name: string, quantity: number, observations: string) => {
+    let next: AllowedEquipmentItem[];
+    const existing = byName.get(name);
+
+    if (quantity <= 0) {
+      next = items.filter((it) => it.item !== name);
+    } else if (existing) {
+      next = items.map((it) => (it.item === name ? { ...it, quantity, observations } : it));
+    } else {
+      next = [...items, { item: name, quantity, observations }];
+    }
+
     onSave({ ...(data || {}), items: next });
   };
 
-  const toggle = (name: string, checked: boolean) => {
-    if (checked) {
-      if (!itemMap.has(name)) persist([...items, { item: name, quantity: 1, observations: "" }]);
-    } else {
-      persist(items.filter((it) => it.item !== name));
-    }
-  };
-
-  const updateQty = (name: string, qty: number) => {
-    persist(items.map((it) => (it.item === name ? { ...it, quantity: qty } : it)));
-  };
-
-  const updateObs = (name: string, obs: string) => {
-    persist(items.map((it) => (it.item === name ? { ...it, observations: obs } : it)));
-  };
-
   if (isLoading) {
-    return <p className="text-center text-sm text-muted-foreground py-4">Cargando catálogo...</p>;
+    return <p className="text-center text-sm text-muted-foreground py-6">Cargando catálogo...</p>;
   }
 
   if (catalog.length === 0) {
-    return <p className="text-center text-sm text-muted-foreground py-4">Catálogo vacío</p>;
+    return <p className="text-center text-sm text-muted-foreground py-6">Catálogo de equipos vacío</p>;
   }
 
   return (
-    <div className="space-y-2">
-      <p className="text-xs text-muted-foreground mb-2">
-        Selecciona los equipos permitidos en el sitio. Al marcar uno aparece la cantidad.
-      </p>
-      {catalog.map((cat: any) => {
-        const name = cat.name as string;
-        const selected = itemMap.get(name);
-        const checked = !!selected;
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <p className="text-xs text-muted-foreground">
+          Cantidad de cada equipo permitido en el sitio. Items con cantidad 0 quedan fuera.
+        </p>
+        <span className="text-xs font-semibold text-[#2E7D32]">
+          {selectedCount} de {catalog.length} con cantidad
+        </span>
+      </div>
 
-        return (
-          <div
-            key={cat.id}
-            className={`flex flex-wrap items-center gap-3 p-3 rounded-lg border transition-colors ${
-              checked ? "border-[#0067B0]/30 bg-[#0067B0]/5" : "border-[#e5e7eb] bg-white"
-            }`}
-          >
-            <label className="flex items-center gap-2 min-w-[260px] flex-1 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={checked}
-                onChange={(e) => toggle(name, e.target.checked)}
-                disabled={disabled}
-                className="h-4 w-4 rounded border-gray-300"
-              />
-              <span className="text-sm font-medium text-[#1c2c4a]">{name}</span>
-            </label>
-
-            {checked && (
-              <>
-                <div className="flex items-center gap-2">
-                  <label className="text-xs text-muted-foreground">Cantidad</label>
-                  <Input
-                    type="number"
-                    min={1}
-                    value={selected?.quantity ?? 1}
-                    onChange={(e) => updateQty(name, Math.max(1, Number(e.target.value) || 1))}
-                    disabled={disabled}
-                    className="h-8 w-20 text-sm"
-                  />
-                </div>
-                <Input
-                  value={selected?.observations ?? ""}
-                  onChange={(e) => updateObs(name, e.target.value)}
-                  disabled={disabled}
-                  placeholder="Observaciones..."
-                  className="flex-1 min-w-[180px] h-8 text-sm"
-                />
-              </>
-            )}
-          </div>
-        );
-      })}
+      <div className="rounded-lg border bg-white overflow-hidden">
+        <div className="grid grid-cols-[1fr_90px_1fr] sm:grid-cols-[minmax(220px,2fr)_100px_minmax(180px,3fr)] gap-3 px-3 py-2 border-b bg-[#fafafa] text-xs uppercase tracking-wide text-muted-foreground font-medium">
+          <span>Equipo</span>
+          <span className="text-center">Cantidad</span>
+          <span>Observaciones</span>
+        </div>
+        {catalog.map((c: any) => {
+          const existing = byName.get(c.name);
+          return (
+            <EquipmentRow
+              key={c.id}
+              name={c.name}
+              initialQuantity={existing?.quantity ?? 0}
+              initialObservations={existing?.observations ?? ""}
+              disabled={!!disabled}
+              onChange={handleChange}
+            />
+          );
+        })}
+      </div>
     </div>
   );
 }

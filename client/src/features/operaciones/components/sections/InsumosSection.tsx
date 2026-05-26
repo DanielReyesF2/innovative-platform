@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { proposalSuppliesApi, toolsApi } from "../../api";
-import CatalogTableSection from "./CatalogTableSection";
+import CatalogChecklistSection from "./CatalogChecklistSection";
 
 interface Props {
   surveyId: number;
@@ -38,22 +38,20 @@ export default function InsumosSection({ surveyId, disabled }: Props) {
       </div>
 
       {activeTab === "insumos" ? (
-        <CatalogTableSection
+        <CatalogChecklistSection
           surveyId={surveyId}
           catalogCategory="insumos"
           api={proposalSuppliesApi}
           itemLabel="Insumo"
           disabled={disabled}
-          emptyText="No hay insumos registrados"
         />
       ) : (
-        <CatalogTableSection
+        <CatalogChecklistSection
           surveyId={surveyId}
           catalogCategory="herramientas"
           api={toolsApi}
           itemLabel="Herramienta"
           disabled={disabled}
-          emptyText="No hay herramientas registradas"
         />
       )}
     </div>

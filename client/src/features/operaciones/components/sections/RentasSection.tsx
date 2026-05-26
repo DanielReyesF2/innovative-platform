@@ -1,5 +1,5 @@
 import { proposalRentalsApi } from "../../api";
-import CatalogTableSection from "./CatalogTableSection";
+import CatalogChecklistSection from "./CatalogChecklistSection";
 
 interface Props {
   surveyId: number;
@@ -8,13 +8,12 @@ interface Props {
 
 export default function RentasSection({ surveyId, disabled }: Props) {
   return (
-    <CatalogTableSection
+    <CatalogChecklistSection
       surveyId={surveyId}
       catalogCategory="rentas"
       api={proposalRentalsApi}
       itemLabel="Renta"
       disabled={disabled}
-      emptyText="No hay rentas registradas"
     />
   );
 }

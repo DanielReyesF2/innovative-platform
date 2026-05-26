@@ -1,5 +1,5 @@
 import { maintenanceApi } from "../../api";
-import CatalogTableSection from "./CatalogTableSection";
+import CatalogChecklistSection from "./CatalogChecklistSection";
 
 interface Props {
   surveyId: number;
@@ -8,13 +8,12 @@ interface Props {
 
 export default function MantenimientoSection({ surveyId, disabled }: Props) {
   return (
-    <CatalogTableSection
+    <CatalogChecklistSection
       surveyId={surveyId}
       catalogCategory="mantenimiento"
       api={maintenanceApi}
       itemLabel="Equipo a mantener"
       disabled={disabled}
-      emptyText="No hay mantenimientos registrados"
     />
   );
 }

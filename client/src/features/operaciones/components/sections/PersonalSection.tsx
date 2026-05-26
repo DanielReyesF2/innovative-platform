@@ -1,5 +1,5 @@
 import { proposalPersonnelApi } from "../../api";
-import CatalogTableSection from "./CatalogTableSection";
+import CatalogChecklistSection from "./CatalogChecklistSection";
 
 interface Props {
   surveyId: number;
@@ -8,13 +8,12 @@ interface Props {
 
 export default function PersonalSection({ surveyId, disabled }: Props) {
   return (
-    <CatalogTableSection
+    <CatalogChecklistSection
       surveyId={surveyId}
       catalogCategory="personal"
       api={proposalPersonnelApi}
       itemLabel="Puesto"
       disabled={disabled}
-      emptyText="No hay personal registrado"
     />
   );
 }
