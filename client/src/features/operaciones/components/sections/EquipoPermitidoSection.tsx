@@ -97,15 +97,8 @@ export default function EquipoPermitidoSection({ data, onSave, disabled }: Props
     onSave({ ...(data || {}), items: next });
   };
 
-  if (isLoading) {
-    return <p className="text-center text-sm text-muted-foreground py-6">Cargando catálogo...</p>;
-  }
-
-  if (catalog.length === 0) {
-    return <p className="text-center text-sm text-muted-foreground py-6">Catálogo de equipos vacío</p>;
-  }
-
-  // Group by groupName (if present in catalog)
+  // Group by groupName (if present in catalog).
+  // MUST be declared before any early return to keep hook call order stable.
   const grouped = useMemo(() => {
     const hasGroups = catalog.some((c: any) => c.groupName);
     if (!hasGroups) return [{ groupName: null as string | null, items: catalog }];
@@ -120,6 +113,14 @@ export default function EquipoPermitidoSection({ data, onSave, disabled }: Props
       items: groupItems,
     }));
   }, [catalog]);
+
+  if (isLoading) {
+    return <p className="text-center text-sm text-muted-foreground py-6">Cargando catálogo...</p>;
+  }
+
+  if (catalog.length === 0) {
+    return <p className="text-center text-sm text-muted-foreground py-6">Catálogo de equipos vacío</p>;
+  }
 
   return (
     <div className="space-y-3">
