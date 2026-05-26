@@ -75,9 +75,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
       queryClient.clear();
 
-      const redirectPath = sessionStorage.getItem("redirectAfterLogin") || "/";
+      // Si el usuario intentaba acceder a una página específica, respeta esa intención.
+      // Si no, lo manda a su home según su rol.
+      const intendedPath = sessionStorage.getItem("redirectAfterLogin");
       sessionStorage.removeItem("redirectAfterLogin");
-      setLocation(redirectPath);
+      const role = (data.user as User).role;
+      const homeByRole =
+        role === "director" || role === "operaciones" ? "/operaciones" : "/";
+      setLocation(intendedPath || homeByRole);
     },
     [setLocation],
   );
