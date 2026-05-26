@@ -13,7 +13,6 @@ import InstalacionesSection from "./sections/InstalacionesSection";
 import LegalSection from "./sections/LegalSection";
 import ObservacionesSection from "./sections/ObservacionesSection";
 import PersonalSection from "./sections/PersonalSection";
-import PropuestaSection from "./sections/PropuestaSection";
 import RecoleccionesSection from "./sections/RecoleccionesSection";
 import ServiciosSection from "./sections/ServiciosSection";
 import SubproductosSection from "./sections/SubproductosSection";
@@ -352,19 +351,6 @@ export default function SurveyForm({ surveyId }: SurveyFormProps) {
           onToggle={() => setOpenSection(openSection === 10 ? 0 : 10)}
         >
           <FotosSection surveyId={surveyId} disabled={isCompleted} />
-        </SurveySection>
-
-        {/* Sections 11-14: Propuesta */}
-        <SurveySection
-          title="Propuesta"
-          sectionNumber={11}
-          locked={!isPhase2Unlocked}
-          completionStatus={isPhase2Unlocked ? "partial" : "locked"}
-          completionText={isPhase2Unlocked ? "Personal / Equipo / Insumos / Rentas" : undefined}
-          isOpen={openSection === 11}
-          onToggle={() => setOpenSection(openSection === 11 ? 0 : 11)}
-        >
-          <PropuestaSection surveyId={surveyId} disabled={isCompleted} />
         </SurveySection>
 
         {/* Section 15: Observaciones */}

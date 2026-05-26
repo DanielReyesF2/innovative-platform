@@ -1,3 +1,4 @@
+import { Search } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { useCatalog } from "../../api";
@@ -76,11 +77,22 @@ function EquipmentRow({ name, initialQuantity, initialObservations, disabled, on
 
 export default function EquipoPermitidoSection({ data, onSave, disabled }: Props) {
   const { data: catalog = [], isLoading } = useCatalog("equipos");
+  const [search, setSearch] = useState("");
+  const showSearch = catalog.length >= 10;
 
   const items: AllowedEquipmentItem[] = useMemo(() => (data?.items as AllowedEquipmentItem[]) ?? [], [data?.items]);
   const byName = useMemo(() => new Map(items.map((it) => [it.item, it])), [items]);
 
   const selectedCount = items.filter((it) => (it.quantity ?? 0) > 0).length;
+
+  const filteredCatalog = useMemo(() => {
+    if (!search.trim()) return catalog;
+    const q = search.trim().toLowerCase();
+    return catalog.filter(
+      (c: any) =>
+        (c.name as string).toLowerCase().includes(q) || ((c.groupName as string) || "").toLowerCase().includes(q),
+    );
+  }, [catalog, search]);
 
   const handleChange = (name: string, quantity: number, observations: string) => {
     let next: AllowedEquipmentItem[];
@@ -100,10 +112,10 @@ export default function EquipoPermitidoSection({ data, onSave, disabled }: Props
   // Group by groupName (if present in catalog).
   // MUST be declared before any early return to keep hook call order stable.
   const grouped = useMemo(() => {
-    const hasGroups = catalog.some((c: any) => c.groupName);
-    if (!hasGroups) return [{ groupName: null as string | null, items: catalog }];
+    const hasGroups = filteredCatalog.some((c: any) => c.groupName);
+    if (!hasGroups) return [{ groupName: null as string | null, items: filteredCatalog }];
     const map = new Map<string, any[]>();
-    for (const c of catalog) {
+    for (const c of filteredCatalog) {
       const key = c.groupName || "Otros";
       if (!map.has(key)) map.set(key, []);
       map.get(key)!.push(c);
@@ -112,7 +124,7 @@ export default function EquipoPermitidoSection({ data, onSave, disabled }: Props
       groupName: groupName as string | null,
       items: groupItems,
     }));
-  }, [catalog]);
+  }, [filteredCatalog]);
 
   if (isLoading) {
     return <p className="text-center text-sm text-muted-foreground py-6">Cargando catálogo...</p>;
@@ -132,6 +144,18 @@ export default function EquipoPermitidoSection({ data, onSave, disabled }: Props
           {selectedCount} de {catalog.length} con cantidad
         </span>
       </div>
+
+      {showSearch && (
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder={`Buscar en ${catalog.length} equipos...`}
+            className="pl-9 h-9 text-sm"
+          />
+        </div>
+      )}
 
       <div className="rounded-lg border bg-white overflow-hidden">
         <div className="grid grid-cols-[1fr_90px_1fr] sm:grid-cols-[minmax(220px,2fr)_100px_minmax(180px,3fr)] gap-3 px-3 py-2 border-b bg-[#fafafa] text-xs uppercase tracking-wide text-muted-foreground font-medium">

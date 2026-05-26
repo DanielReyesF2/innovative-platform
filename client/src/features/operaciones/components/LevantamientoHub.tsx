@@ -13,7 +13,6 @@ import {
   Package,
   Play,
   Receipt,
-  Scale,
   Truck,
   UserCheck,
   Users,
@@ -43,7 +42,6 @@ import GastosRepSection from "./sections/GastosRepSection";
 import GeneralesSection from "./sections/GeneralesSection";
 import InstalacionesSection from "./sections/InstalacionesSection";
 import InsumosSection from "./sections/InsumosSection";
-import LegalSection from "./sections/LegalSection";
 import MantenimientoSection from "./sections/MantenimientoSection";
 import ObservacionesSection from "./sections/ObservacionesSection";
 import PersonalSection from "./sections/PersonalSection";
@@ -57,23 +55,22 @@ import ValidacionSection from "./sections/ValidacionSection";
 
 const SECTIONS = [
   // ── Phase 1: captura en sitio ──
-  { key: "generales", label: "Generales", icon: Building2, color: "#0067B0", phase: 1 },
-  { key: "instalaciones", label: "Instalaciones", icon: Zap, color: "#F57C00", phase: 1 },
-  { key: "recolecciones", label: "Recolecciones", icon: Truck, color: "#0D47A1", phase: 1 },
-  { key: "equipo", label: "Equipo Permitido", icon: Wrench, color: "#2E7D32", phase: 1 },
-  { key: "legal", label: "Legal Ambiental", icon: Scale, color: "#C62828", phase: 1 },
-  { key: "area", label: "Área Operación", icon: Maximize2, color: "#00838F", phase: 1 },
-  { key: "subproductos", label: "Subproductos", icon: Package, color: "#4CAF50", phase: 1 },
-  { key: "servicios", label: "Servicios", icon: ClipboardList, color: "#1565C0", phase: 1 },
+  { key: "generales", label: "Generales", icon: Building2, color: "#0067B0", phase: 1, critical: true },
+  { key: "instalaciones", label: "Instalaciones", icon: Zap, color: "#F57C00", phase: 1, critical: true },
+  { key: "recolecciones", label: "Recolecciones", icon: Truck, color: "#0D47A1", phase: 1, critical: true },
+  { key: "equipo", label: "Equipo Permitido", icon: Wrench, color: "#2E7D32", phase: 1, critical: true },
+  { key: "area", label: "Área Operación", icon: Maximize2, color: "#00838F", phase: 1, critical: true },
+  { key: "subproductos", label: "Subproductos", icon: Package, color: "#4CAF50", phase: 1, critical: true },
+  { key: "servicios", label: "Servicios", icon: ClipboardList, color: "#1565C0", phase: 1, critical: true },
   // ── Phase 2: propuesta (catálogos del Excel) ──
-  { key: "personal", label: "Personal", icon: Users, color: "#7C3AED", phase: 2 },
-  { key: "insumos", label: "Insumos", icon: Package, color: "#0EA5A4", phase: 2 },
-  { key: "mantenimiento", label: "Mantenimiento", icon: HardHat, color: "#92400E", phase: 2 },
-  { key: "rentas", label: "Rentas", icon: Briefcase, color: "#7C3AED", phase: 2 },
-  { key: "gastos", label: "Gastos Rep.", icon: Receipt, color: "#BE185D", phase: 2 },
-  { key: "fotos", label: "Fotografías", icon: Camera, color: "#E64A19", phase: 2 },
-  { key: "observaciones", label: "Observaciones", icon: MessageSquare, color: "#5D4037", phase: 2 },
-  { key: "validacion", label: "Validación", icon: UserCheck, color: "#1B5E20", phase: 2 },
+  { key: "personal", label: "Personal", icon: Users, color: "#7C3AED", phase: 2, critical: true },
+  { key: "insumos", label: "Insumos", icon: Package, color: "#0EA5A4", phase: 2, critical: false },
+  { key: "mantenimiento", label: "Mantenimiento", icon: HardHat, color: "#92400E", phase: 2, critical: false },
+  { key: "rentas", label: "Rentas", icon: Briefcase, color: "#7C3AED", phase: 2, critical: false },
+  { key: "gastos", label: "Gastos Rep.", icon: Receipt, color: "#BE185D", phase: 2, critical: false },
+  { key: "fotos", label: "Fotografías", icon: Camera, color: "#E64A19", phase: 2, critical: true },
+  { key: "observaciones", label: "Observaciones", icon: MessageSquare, color: "#5D4037", phase: 2, critical: false },
+  { key: "validacion", label: "Validación", icon: UserCheck, color: "#1B5E20", phase: 2, critical: true },
 ] as const;
 
 // ─── Completion helpers ───
@@ -116,8 +113,6 @@ function getSectionCompletion(survey: any, key: string): { status: "complete" | 
       const c = survey.allowedEquipment?.items?.length ?? 0;
       return { status: c > 0 ? "complete" : "empty", label: `${c} equipos` };
     }
-    case "legal":
-      return { status: getJsonbStatus(survey.legalRequirements, 5), label: getJsonbCount(survey.legalRequirements, 5) };
     case "area":
       return { status: getJsonbStatus(survey.operationArea, 3), label: getJsonbCount(survey.operationArea, 3) };
     case "subproductos": {
@@ -309,8 +304,6 @@ export default function LevantamientoHub({ surveyId, onClose }: LevantamientoHub
         return <RecoleccionesSection data={survey.transportPolicies} onSave={(d) => debouncedSectionSave("transportPolicies", d)} disabled={disabled} />;
       case "equipo":
         return <EquipoPermitidoSection data={survey.allowedEquipment} onSave={(d) => debouncedSectionSave("allowedEquipment", d)} disabled={disabled} />;
-      case "legal":
-        return <LegalSection data={survey.legalRequirements} onSave={(d) => debouncedSectionSave("legalRequirements", d)} disabled={disabled} />;
       case "area":
         return <AreaOperacionSection data={survey.operationArea} onSave={(d) => debouncedSectionSave("operationArea", d)} disabled={disabled} />;
       case "subproductos":

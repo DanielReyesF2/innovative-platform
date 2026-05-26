@@ -61,6 +61,7 @@ import {
   deleteSurveyExpense,
   deleteSurveyMaintenance,
   deleteSurveyTool,
+  getAllUsersForValidation,
   getCatalogByCategory,
   getOpsTeamStats,
   getSurveyExpenses,
@@ -170,6 +171,18 @@ router.get("/catalog/:category", async (req, res) => {
     res.json(items);
   } catch (error) {
     console.error("[operaciones] Get catalog error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+// ─── All users (for Validación dropdown) ────────────────
+
+router.get("/users-all", async (_req, res) => {
+  try {
+    const users = await getAllUsersForValidation();
+    res.json(users);
+  } catch (error) {
+    console.error("[operaciones] Get users-all error:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 });

@@ -811,10 +811,28 @@ export async function deleteSurveyExpense(id: number) {
   await db.delete(surveyExpenses).where(eq(surveyExpenses.id, id));
 }
 
+// ─── Users (for Validación dropdown) ────────────────────
+
+export async function getAllUsersForValidation() {
+  return db.query.users.findMany({
+    columns: { id: true, name: true, email: true, role: true, codigo: true },
+    orderBy: [users.name],
+  });
+}
+
 // ─── Master Catalog (seed from Excel) ───────────────────
 
 const CATALOG_SEED: Array<{
-  category: "personal" | "equipos" | "insumos" | "herramientas" | "mantenimiento" | "rentas" | "gastos_rep" | "subproductos";
+  category:
+    | "personal"
+    | "equipos"
+    | "insumos"
+    | "herramientas"
+    | "mantenimiento"
+    | "rentas"
+    | "gastos_rep"
+    | "subproductos"
+    | "servicios";
   items: string[];
 }> = [
   {
@@ -885,6 +903,26 @@ const CATALOG_SEED: Array<{
     ],
   },
   { category: "gastos_rep", items: ["Viajes corporativos", "Viajes operativos", "Diplomas anuales"] },
+  {
+    category: "servicios",
+    items: [
+      "Recolección puerta a puerta",
+      "Recolección programada",
+      "Recolección de emergencia",
+      "Compactación in situ",
+      "Transporte a destino final",
+      "Valorización (reciclaje)",
+      "Destrucción confidencial",
+      "Destrucción fiscal",
+      "Tratamiento físico-químico",
+      "Disposición final",
+      "Capacitación al personal",
+      "Auditoría de residuos",
+      "Reportería mensual",
+      "Limpieza industrial",
+      "Eventos especiales",
+    ],
+  },
   {
     category: "subproductos",
     items: [

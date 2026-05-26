@@ -321,6 +321,23 @@ export function useCatalog(category: string) {
   });
 }
 
+// ─── Users (for Validación dropdown) ────────────────────
+
+export interface UserOption {
+  id: number;
+  name: string;
+  email: string;
+  role: string;
+  codigo: string | null;
+}
+
+export function useAllUsers() {
+  return useQuery<UserOption[]>({
+    queryKey: ["/api/operaciones/users-all"],
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
 // ─── Documents ──────────────────────────────────────────
 
 export function useDocuments() {

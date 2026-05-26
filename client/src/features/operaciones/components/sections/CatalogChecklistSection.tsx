@@ -1,4 +1,4 @@
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Search, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -206,6 +206,8 @@ export default function CatalogChecklistSection({
   const deleteMut = api.useDelete();
 
   const [manualFormOpen, setManualFormOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const showSearch = catalog.length >= 10;
 
   const byName = useMemo(() => {
     const m = new Map<string, any>();
@@ -221,12 +223,22 @@ export default function CatalogChecklistSection({
     [items.data, catalogNames, fieldMap.item],
   );
 
+  // Filter catalog by search query (case-insensitive substring on name + groupName)
+  const filteredCatalog = useMemo(() => {
+    if (!search.trim()) return catalog;
+    const q = search.trim().toLowerCase();
+    return catalog.filter(
+      (c: CatalogItem) =>
+        c.name.toLowerCase().includes(q) || (c.groupName || "").toLowerCase().includes(q),
+    );
+  }, [catalog, search]);
+
   // Group catalog by groupName (if any item has it)
   const grouped = useMemo(() => {
-    const hasGroups = catalog.some((c: CatalogItem) => c.groupName);
-    if (!hasGroups) return [{ groupName: null as string | null, items: catalog }];
+    const hasGroups = filteredCatalog.some((c: CatalogItem) => c.groupName);
+    if (!hasGroups) return [{ groupName: null as string | null, items: filteredCatalog }];
     const map = new Map<string, CatalogItem[]>();
-    for (const c of catalog) {
+    for (const c of filteredCatalog) {
       const key = c.groupName || "Otros";
       if (!map.has(key)) map.set(key, []);
       map.get(key)!.push(c);
@@ -235,7 +247,7 @@ export default function CatalogChecklistSection({
       groupName: groupName as string | null,
       items: groupItems,
     }));
-  }, [catalog]);
+  }, [filteredCatalog]);
 
   const selectedCount = useMemo(
     () => (items.data || []).filter((it: any) => Number(it[fieldMap.quantity] ?? 0) > 0).length,
@@ -330,6 +342,18 @@ export default function CatalogChecklistSection({
           {selectedCount} de {totalAvailable} con cantidad
         </span>
       </div>
+
+      {showSearch && (
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder={`Buscar en ${catalog.length} items...`}
+            className="pl-9 h-9 text-sm"
+          />
+        </div>
+      )}
 
       <div className="rounded-lg border bg-white overflow-hidden">
         <div className="grid grid-cols-[1fr_90px_1fr_auto] sm:grid-cols-[minmax(220px,2fr)_100px_minmax(180px,3fr)_auto] gap-3 px-3 py-2 border-b bg-[#fafafa] text-xs uppercase tracking-wide text-muted-foreground font-medium">
