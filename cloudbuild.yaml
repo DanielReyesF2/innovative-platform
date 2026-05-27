@@ -78,10 +78,10 @@ steps:
     args:
       - -c
       - |
-        URL=$(gcloud run services describe ${_SERVICE} --region=${_REGION} --format='value(status.url)')
-        echo "Smoke testing $URL"
+        URL=$$(gcloud run services describe ${_SERVICE} --region=${_REGION} --format='value(status.url)')
+        echo "Smoke testing $$URL"
         # Liveness
-        curl -sS -f "$URL/api/health" | grep -q '"status":"ok"' || { echo "FAIL: /api/health"; exit 1; }
+        curl -sS -f "$$URL/api/health" | grep -q '"status":"ok"' || { echo "FAIL: /api/health"; exit 1; }
         # Readiness with DB
-        curl -sS -f "$URL/api/healthz" | grep -q '"db":"ok"' || { echo "FAIL: /api/healthz"; exit 1; }
+        curl -sS -f "$$URL/api/healthz" | grep -q '"db":"ok"' || { echo "FAIL: /api/healthz"; exit 1; }
         echo "OK: smoke tests passed"
