@@ -1,0 +1,87 @@
+# Cloud Build pipeline for Innovative platform → Cloud Run.
+#
+# Triggered on push to main (configured via Cloud Build trigger).
+# Steps: build container → push to Artifact Registry → deploy to Cloud Run.
+#
+# Required substitutions (set defaults below; can be overridden by trigger):
+#   _REGION             us-central1
+#   _AR_REPO            innovative
+#   _SERVICE            innovative
+#   _RUNTIME_SA         innovative-runtime
+#   _BUCKET             innovative-uploads-prod
+#   _NOVA_API_URL       https://econova-ai-platform-production.up.railway.app
+#   _NOVA_TENANT_ID     innovative-group
+
+substitutions:
+  _REGION: us-central1
+  _AR_REPO: innovative
+  _SERVICE: innovative
+  _RUNTIME_SA: innovative-runtime
+  _BUCKET: innovative-uploads-prod
+  _NOVA_API_URL: https://econova-ai-platform-production.up.railway.app
+  _NOVA_TENANT_ID: innovative-group
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+  machineType: E2_HIGHCPU_8
+
+images:
+  - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/${_SERVICE}:${SHORT_SHA}'
+  - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/${_SERVICE}:latest'
+
+steps:
+  # 1. Build container (multistage Dockerfile)
+  - name: 'gcr.io/cloud-builders/docker'
+    id: build
+    args:
+      - build
+      - -t
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/${_SERVICE}:${SHORT_SHA}'
+      - -t
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/${_SERVICE}:latest'
+      - .
+
+  # 2. Push both tags
+  - name: 'gcr.io/cloud-builders/docker'
+    id: push
+    args:
+      - push
+      - --all-tags
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/${_SERVICE}'
+
+  # 3. Deploy to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
+    id: deploy
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - ${_SERVICE}
+      - --image=${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/${_SERVICE}:${SHORT_SHA}
+      - --region=${_REGION}
+      - --platform=managed
+      - --allow-unauthenticated
+      - --service-account=${_RUNTIME_SA}@${PROJECT_ID}.iam.gserviceaccount.com
+      - --timeout=3600
+      - --min-instances=1
+      - --max-instances=10
+      - --memory=1Gi
+      - --cpu=1
+      - --port=8080
+      - --set-env-vars=NODE_ENV=production,GCS_BUCKET=${_BUCKET},NOVA_API_URL=${_NOVA_API_URL},NOVA_TENANT_ID=${_NOVA_TENANT_ID}
+      - --set-secrets=DATABASE_URL=DATABASE_URL:latest,JWT_SECRET=JWT_SECRET:latest,NOVA_API_KEY=NOVA_API_KEY:latest
+
+  # 4. Smoke test the new revision
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
+    id: smoke-test
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        URL=$(gcloud run services describe ${_SERVICE} --region=${_REGION} --format='value(status.url)')
+        echo "Smoke testing $URL"
+        # Liveness
+        curl -sS -f "$URL/api/health" | grep -q '"status":"ok"' || { echo "FAIL: /api/health"; exit 1; }
+        # Readiness with DB
+        curl -sS -f "$URL/api/healthz" | grep -q '"db":"ok"' || { echo "FAIL: /api/healthz"; exit 1; }
+        echo "OK: smoke tests passed"
