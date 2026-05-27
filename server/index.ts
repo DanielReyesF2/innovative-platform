@@ -4,9 +4,15 @@ import express from "express";
 import rateLimit from "express-rate-limit";
 import helmet from "helmet";
 import { createServer } from "http";
+import { pool } from "./db";
 import { loadModules } from "./module-loader";
 
 const app = express();
+
+// Behind reverse proxy (Railway, Cloud Run, etc.) — required for
+// express-rate-limit to see real client IP. Without this, rate limits
+// are global per process, not per-IP (brute force becomes trivial).
+app.set("trust proxy", 1);
 
 // Security
 app.use(
@@ -33,7 +39,7 @@ app.use(
     message: { message: "Demasiadas solicitudes. Intenta de nuevo en un minuto." },
     standardHeaders: true,
     legacyHeaders: false,
-    skip: (req) => req.path === "/health",
+    skip: (req) => req.path === "/health" || req.path === "/healthz",
   }),
 );
 
@@ -51,9 +57,28 @@ app.use(
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 
-// Health check
+// Liveness probe — process is up (Cloud Run startupProbe target)
 app.get("/api/health", (_req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
+});
+
+// Readiness probe — process AND database are reachable (Cloud Run livenessProbe target)
+app.get("/api/healthz", async (_req, res) => {
+  try {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 2000);
+    const client = await pool.connect();
+    try {
+      await client.query("SELECT 1");
+    } finally {
+      client.release();
+      clearTimeout(timer);
+    }
+    res.json({ status: "ok", db: "ok", timestamp: new Date().toISOString() });
+  } catch (error) {
+    console.error("[health] DB ping failed:", error);
+    res.status(503).json({ status: "degraded", db: "unreachable" });
+  }
 });
 
 // Load all modules dynamically

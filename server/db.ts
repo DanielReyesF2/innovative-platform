@@ -10,5 +10,13 @@ if (!process.env.DATABASE_URL) {
   throw new Error("DATABASE_URL must be set. Did you forget to provision a database?");
 }
 
-export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+// Pool config for serverless/multi-instance (Cloud Run):
+// max=5 keeps total DB connections under control with --max-instances=10.
+// idleTimeout closes idle connections so Neon doesn't keep them pinned.
+export const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  max: 5,
+  idleTimeoutMillis: 30_000,
+  connectionTimeoutMillis: 5_000,
+});
 export const db = drizzle({ client: pool, schema });

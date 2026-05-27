@@ -20,6 +20,7 @@ import {
   insertSurveySubproductSchema,
   insertSurveyWasteTypeSchema,
 } from "../../../shared/schema/operaciones";
+import { gcsEnabled, getSignedReadUrl, uploadBuffer } from "../../lib/gcs";
 import { requireAuth, requireRole } from "../../middleware/auth";
 import { getErrorMessage } from "../../utils/errors";
 import {
@@ -110,32 +111,17 @@ import {
 export const router = Router();
 
 // ─── Multer config for photo uploads ───
+// Uses memory storage so we can stream the buffer to GCS (Cloud Run has
+// ephemeral filesystem — disk writes are lost on container recycle).
+// Legacy local-disk URLs (starting with "/uploads/operaciones/...") are still
+// served from disk as a fallback during the migration window.
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const uploadsDir = path.resolve(__dirname, "../../../dist/uploads/operaciones");
-
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-}
-
-const photoStorage = multer.diskStorage({
-  destination: (req, _file, cb) => {
-    const surveyDir = path.join(uploadsDir, req.params.id);
-    if (!fs.existsSync(surveyDir)) {
-      fs.mkdirSync(surveyDir, { recursive: true });
-    }
-    cb(null, surveyDir);
-  },
-  filename: (_req, file, cb) => {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    const ext = path.extname(file.originalname);
-    cb(null, `${uniqueSuffix}${ext}`);
-  },
-});
+const legacyUploadsDir = path.resolve(__dirname, "../../../dist/uploads/operaciones");
 
 const photoUpload = multer({
-  storage: photoStorage,
+  storage: multer.memoryStorage(),
   limits: { fileSize: 10 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
     const allowed = ["image/jpeg", "image/png", "image/gif", "image/webp", "image/heic", "image/heif"];
@@ -552,11 +538,27 @@ router.post("/surveys/:id/photos/upload", photoUpload.single("photo"), async (re
     }
 
     const surveyId = Number(req.params.id);
-    const relativePath = `/uploads/operaciones/${surveyId}/${file.filename}`;
+    const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+    const ext = path.extname(file.originalname);
+    const filename = `${uniqueSuffix}${ext}`;
+
+    let storedUrl: string;
+    if (gcsEnabled) {
+      const objectKey = `operaciones/${surveyId}/${filename}`;
+      await uploadBuffer(objectKey, file.buffer, file.mimetype);
+      storedUrl = objectKey;
+    } else {
+      // Fallback to local disk (legacy) when GCS not configured.
+      // Cloud Run will lose these on container recycle — only use locally or before GCS setup.
+      const dest = path.join(legacyUploadsDir, String(surveyId), filename);
+      await fs.promises.mkdir(path.dirname(dest), { recursive: true });
+      await fs.promises.writeFile(dest, file.buffer);
+      storedUrl = `/uploads/operaciones/${surveyId}/${filename}`;
+    }
 
     const photo = await createSurveyPhoto({
       surveyId,
-      url: relativePath,
+      url: storedUrl,
       caption: req.body.caption || null,
       section: req.body.section || "general",
       uploadedById: req.user!.id,
@@ -569,23 +571,34 @@ router.post("/surveys/:id/photos/upload", photoUpload.single("photo"), async (re
   }
 });
 
+// Serve photo by key (modern) or legacy disk path. Modern path redirects to
+// a short-lived signed URL so the browser downloads directly from GCS.
 router.get("/uploads/:surveyId/:filename", async (req, res) => {
   try {
     const { surveyId, filename } = req.params;
-    const filePath = path.resolve(uploadsDir, surveyId, filename);
 
-    if (!filePath.startsWith(uploadsDir)) {
-      return res.status(403).json({ message: "Acceso denegado" });
+    // Reject names with traversal characters
+    if (filename.includes("..") || filename.includes("/") || filename.includes("\\")) {
+      return res.status(400).json({ message: "Nombre de archivo inválido" });
     }
 
-    if (!fs.existsSync(filePath)) {
+    // Legacy: served from local disk during migration window
+    const legacyPath = path.resolve(legacyUploadsDir, surveyId, filename);
+    const legacyBase = legacyUploadsDir.endsWith(path.sep) ? legacyUploadsDir : legacyUploadsDir + path.sep;
+    if (legacyPath.startsWith(legacyBase) && fs.existsSync(legacyPath)) {
+      return res.sendFile(legacyPath);
+    }
+
+    // Modern: signed URL redirect from GCS (only if configured)
+    if (!gcsEnabled) {
       return res.status(404).json({ message: "Archivo no encontrado" });
     }
-
-    res.sendFile(filePath);
+    const key = `operaciones/${surveyId}/${filename}`;
+    const signedUrl = await getSignedReadUrl(key, 15 * 60);
+    res.redirect(302, signedUrl);
   } catch (error) {
     console.error("[operaciones] Serve photo error:", error);
-    res.status(500).json({ message: "Internal server error" });
+    res.status(404).json({ message: "Archivo no encontrado" });
   }
 });
 

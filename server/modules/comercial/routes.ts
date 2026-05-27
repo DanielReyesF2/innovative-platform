@@ -23,6 +23,7 @@ import { STAGE } from "../../../shared/schema/comercial-stages";
 import { users } from "../../../shared/schema/common";
 import { db } from "../../db";
 import { triggerWebhook } from "../../lib/webhook";
+import { gcsEnabled, getSignedReadUrl, uploadBuffer } from "../../lib/gcs";
 import { requireAuth, requireRole } from "../../middleware/auth";
 import {
   acknowledgeAlert,
@@ -156,34 +157,16 @@ const weeklyReportSendSchema = z.object({
 
 export const router = Router();
 
-// Configure multer for document uploads
+// Configure multer for document uploads.
+// Memory storage so we can stream the buffer to GCS (Cloud Run filesystem is ephemeral).
+// Legacy disk uploads (older rows with `/uploads/comercial/...` URLs) are still served
+// from local disk as a fallback during the migration window.
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const uploadsDir = path.resolve(__dirname, "../../../dist/uploads/comercial");
-
-// Ensure uploads directory exists
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-}
-
-const storage = multer.diskStorage({
-  destination: (req, _file, cb) => {
-    const prospectId = req.params.id;
-    const prospectDir = path.join(uploadsDir, prospectId);
-    if (!fs.existsSync(prospectDir)) {
-      fs.mkdirSync(prospectDir, { recursive: true });
-    }
-    cb(null, prospectDir);
-  },
-  filename: (_req, file, cb) => {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    const ext = path.extname(file.originalname);
-    cb(null, `${uniqueSuffix}${ext}`);
-  },
-});
+const legacyUploadsDir = path.resolve(__dirname, "../../../dist/uploads/comercial");
 
 const upload = multer({
-  storage,
+  storage: multer.memoryStorage(),
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB max
   fileFilter: (_req, file, cb) => {
     const allowedTypes = [
@@ -818,7 +801,7 @@ router.patch("/prospects/:prospectId/proposals/:proposalId", async (req, res) =>
 // --- Proposal File Upload (20MB limit) ---
 
 const proposalUpload = multer({
-  storage,
+  storage: multer.memoryStorage(),
   limits: { fileSize: 20 * 1024 * 1024 }, // 20MB max for proposals
   fileFilter: (_req, file, cb) => {
     const allowedTypes = [
@@ -848,7 +831,21 @@ router.post("/prospects/:id/proposals/upload", proposalUpload.single("file"), as
     }
 
     const prospectId = Number(req.params.id);
-    const relativePath = `/uploads/comercial/${prospectId}/${file.filename}`;
+    const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+    const ext = path.extname(file.originalname);
+    const filename = `${uniqueSuffix}${ext}`;
+
+    let storedUrl: string;
+    if (gcsEnabled) {
+      const objectKey = `comercial/${prospectId}/${filename}`;
+      await uploadBuffer(objectKey, file.buffer, file.mimetype);
+      storedUrl = objectKey;
+    } else {
+      const dest = path.join(legacyUploadsDir, String(prospectId), filename);
+      await fs.promises.mkdir(path.dirname(dest), { recursive: true });
+      await fs.promises.writeFile(dest, file.buffer);
+      storedUrl = `/uploads/comercial/${prospectId}/${filename}`;
+    }
 
     // Get next version number
     const existing = await getProposalVersions(prospectId);
@@ -858,7 +855,7 @@ router.post("/prospects/:id/proposals/upload", proposalUpload.single("file"), as
     const proposal = await createProposal({
       prospectId,
       name: file.originalname,
-      url: relativePath,
+      url: storedUrl,
       version: nextVersion,
       createdById: req.user!.id,
     });
@@ -1124,13 +1121,27 @@ router.post("/prospects/:id/documents/upload", upload.single("file"), async (req
     const { tipo, markAsClosed: markAsClosedStr } = bodyParsed.data;
     const markAsClosed = markAsClosedStr === "true";
 
-    // Create document record
-    const relativePath = `/uploads/comercial/${prospectId}/${file.filename}`;
+    const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+    const ext = path.extname(file.originalname);
+    const filename = `${uniqueSuffix}${ext}`;
+
+    let storedUrl: string;
+    if (gcsEnabled) {
+      const objectKey = `comercial/${prospectId}/${filename}`;
+      await uploadBuffer(objectKey, file.buffer, file.mimetype);
+      storedUrl = objectKey;
+    } else {
+      const dest = path.join(legacyUploadsDir, String(prospectId), filename);
+      await fs.promises.mkdir(path.dirname(dest), { recursive: true });
+      await fs.promises.writeFile(dest, file.buffer);
+      storedUrl = `/uploads/comercial/${prospectId}/${filename}`;
+    }
+
     const document = await createDocument({
       prospectId,
       name: file.originalname,
       type: tipo,
-      url: relativePath,
+      url: storedUrl,
       fileSize: file.size,
       mimeType: file.mimetype,
       uploadedById: req.user!.id,
@@ -1148,25 +1159,31 @@ router.post("/prospects/:id/documents/upload", upload.single("file"), async (req
   }
 });
 
-// Serve uploaded files
+// Serve uploaded files. Modern path → 302 redirect to short-lived signed URL.
+// Legacy disk path kept as fallback during migration.
 router.get("/uploads/:prospectId/:filename", async (req, res) => {
   try {
     const { prospectId, filename } = req.params;
-    const filePath = path.resolve(uploadsDir, prospectId, filename);
 
-    // Prevent path traversal — resolved path must stay inside uploadsDir
-    if (!filePath.startsWith(uploadsDir)) {
-      return res.status(403).json({ message: "Acceso denegado" });
+    if (filename.includes("..") || filename.includes("/") || filename.includes("\\")) {
+      return res.status(400).json({ message: "Nombre de archivo inválido" });
     }
 
-    if (!fs.existsSync(filePath)) {
+    const legacyPath = path.resolve(legacyUploadsDir, prospectId, filename);
+    const legacyBase = legacyUploadsDir.endsWith(path.sep) ? legacyUploadsDir : legacyUploadsDir + path.sep;
+    if (legacyPath.startsWith(legacyBase) && fs.existsSync(legacyPath)) {
+      return res.sendFile(legacyPath);
+    }
+
+    if (!gcsEnabled) {
       return res.status(404).json({ message: "Archivo no encontrado" });
     }
-
-    res.sendFile(filePath);
+    const key = `comercial/${prospectId}/${filename}`;
+    const signedUrl = await getSignedReadUrl(key, 15 * 60);
+    res.redirect(302, signedUrl);
   } catch (error) {
     console.error("[comercial] Serve file error:", error);
-    res.status(500).json({ message: "Internal server error" });
+    res.status(404).json({ message: "Archivo no encontrado" });
   }
 });
 
