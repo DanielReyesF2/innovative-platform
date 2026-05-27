@@ -1,0 +1,35 @@
+name: Deploy to Cloud Run
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+env:
+  PROJECT_ID: innovative-platform-prod
+  REGION: us-central1
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: projects/633713100904/locations/global/workloadIdentityPools/github/providers/github-provider
+          service_account: gha-deployer@innovative-platform-prod.iam.gserviceaccount.com
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Submit Cloud Build
+        run: |
+          gcloud builds submit \
+            --config=cloudbuild.yaml \
+            --project=$PROJECT_ID \
+            --substitutions=SHORT_SHA=${GITHUB_SHA:0:7}
