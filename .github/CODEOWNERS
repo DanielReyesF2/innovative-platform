@@ -1,3 +1,45 @@
-# CODEOWNERS — Daniel revisa todo PR antes de merge a main.
-# Emilio (front) abre PR; Daniel aprueba. Ver CONTRIBUTING.md.
-* @DanielReyesF2
+# CODEOWNERS — Daniel revisa SOLO lo sensible.
+# El FRONTEND es libre: sin dueño = sin review obligatorio. Emilio mergea look & feel sin esperar a nadie.
+# Daniel (CODEOWNER) es obligatorio únicamente en: backend, auth, datos, migraciones, infra, deploy y dependencias.
+
+# --- Infra / CI / Deploy ---
+/.github/                @DanielReyesF2
+**/Dockerfile            @DanielReyesF2
+**/docker-compose*       @DanielReyesF2
+**/cloudbuild*.yaml      @DanielReyesF2
+/vercel.json             @DanielReyesF2
+/netlify.toml            @DanielReyesF2
+/fly.toml                @DanielReyesF2
+**/railway*              @DanielReyesF2
+
+# --- Secrets / entorno ---
+**/.env*                 @DanielReyesF2
+
+# --- Dependencias (cambios al stack pasan por Daniel) ---
+/package.json            @DanielReyesF2
+/package-lock.json       @DanielReyesF2
+/pnpm-lock.yaml          @DanielReyesF2
+/yarn.lock               @DanielReyesF2
+
+# --- Backend / servidor / API ---
+/server/                 @DanielReyesF2
+/api/                    @DanielReyesF2
+/brain/                  @DanielReyesF2
+/agents/                 @DanielReyesF2
+/functions/              @DanielReyesF2
+/packages/api/           @DanielReyesF2
+/packages/database/      @DanielReyesF2
+/shared/                 @DanielReyesF2
+/scripts/                @DanielReyesF2
+**/app/api/              @DanielReyesF2
+**/src/app/api/          @DanielReyesF2
+
+# --- Auth / middleware server-side (la LÓGICA, no el look del login) ---
+**/middleware.ts         @DanielReyesF2
+**/middleware.js         @DanielReyesF2
+
+# --- Base de datos / migraciones ---
+**/migrations/           @DanielReyesF2
+**/*.sql                 @DanielReyesF2
+/prisma/                 @DanielReyesF2
+/drizzle/                @DanielReyesF2
