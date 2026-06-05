@@ -1,0 +1,33 @@
+name: Path Guard
+on:
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  path-guard:
+    name: path-guard
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Verificar zona prohibida
+        env:
+          AUTHOR: ${{ github.event.pull_request.user.login }}
+          LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          if [ "$AUTHOR" = "DanielReyesF2" ]; then echo "Autor = Daniel -> libre."; exit 0; fi
+          case ",$LABELS," in *",daniel-ok,"*) echo "Etiqueta daniel-ok -> libre."; exit 0;; esac
+          FILES=$(git diff --name-only "$BASE" "$HEAD")
+          echo "Archivos cambiados:"; echo "$FILES"; echo "---"
+          PATTERN='(^\.github/)|(^server/)|(^api/)|(^scripts/)|(^shared/)|(^brain/)|(^agents/)|(^functions/)|(^packages/(api|database)/)|(/migrations/)|(\.sql$)|(prisma/)|(drizzle/)|(Dockerfile)|(docker-compose)|(cloudbuild)|(^vercel\.json$)|(^netlify\.toml$)|(^fly\.toml$)|(railway)|(\.tf$)|(\.env)|(^package\.json$)|(^package-lock\.json$)|(^pnpm-lock\.yaml$)|(^yarn\.lock$)|(/app/api/)|(^src/app/api/)|(^middleware\.(ts|js)$)|(^src/middleware\.(ts|js)$)'
+          BAD=$(echo "$FILES" | grep -E "$PATTERN" || true)
+          if [ -n "$BAD" ]; then
+            echo "::error::ZONA PROHIBIDA tocada (backend/auth/migraciones/infra/deps). Requiere a Daniel: que apruebe y ponga la etiqueta 'daniel-ok', o que lo haga el."
+            echo "$BAD" | sed 's/^/  PROHIBIDO: /'
+            exit 1
+          fi
+          echo "Solo frontend. Libre para merge."
