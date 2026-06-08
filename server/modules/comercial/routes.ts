@@ -24,7 +24,8 @@ import { users } from "../../../shared/schema/common";
 import { db } from "../../db";
 import { triggerWebhook } from "../../lib/webhook";
 import { gcsEnabled, getSignedReadUrl, uploadBuffer } from "../../lib/gcs";
-import { requireAuth, requireRole } from "../../middleware/auth";
+import { PERMISSIONS } from "../../../shared/auth/permissions";
+import { requireAuth, requirePermission } from "../../middleware/auth";
 import {
   acknowledgeAlert,
   assignLead,
@@ -255,7 +256,7 @@ router.patch("/prospects/:id", async (req, res) => {
   }
 });
 
-router.delete("/prospects/:id", requireRole("admin", "comercial", "director"), async (req, res) => {
+router.delete("/prospects/:id", requirePermission(PERMISSIONS.PROSPECTS_DELETE), async (req, res) => {
   try {
     const deleted = await deleteProspect(Number(req.params.id));
     if (!deleted) return res.status(404).json({ message: "Prospecto no encontrado" });
@@ -313,7 +314,7 @@ router.post("/prospects/:id/qualify", async (req, res) => {
 
 // --- Handoff to Operaciones ---
 
-router.post("/prospects/:id/send-to-operaciones", requireRole("admin", "comercial", "director"), async (req, res) => {
+router.post("/prospects/:id/send-to-operaciones", requirePermission(PERMISSIONS.PROSPECTS_SEND_OPS), async (req, res) => {
   try {
     const result = await sendProspectToOperaciones(Number(req.params.id), req.user!.id);
     res.json(result);
@@ -438,7 +439,7 @@ const upsertSalesMetricSchema = z.object({
   monthlyBudget: z.number().min(0, "El presupuesto no puede ser negativo"),
 });
 
-router.patch("/sales-metrics", requireRole("admin", "director"), async (req, res) => {
+router.patch("/sales-metrics", requirePermission(PERMISSIONS.SALES_METRICS_EDIT), async (req, res) => {
   try {
     const parsed = upsertSalesMetricSchema.safeParse(req.body);
     if (!parsed.success) {
@@ -910,7 +911,7 @@ router.post("/alerts/:id/dismiss", async (req, res) => {
   }
 });
 
-router.post("/alerts/generate", requireRole("admin"), async (_req, res) => {
+router.post("/alerts/generate", requirePermission(PERMISSIONS.ALERTS_GENERATE), async (_req, res) => {
   try {
     const result = await generateAlerts();
     res.json(result);
@@ -1062,7 +1063,7 @@ router.get("/kpis-mensuales/user/:userId", async (req, res) => {
   }
 });
 
-router.post("/kpis-mensuales", requireRole("admin"), async (req, res) => {
+router.post("/kpis-mensuales", requirePermission(PERMISSIONS.KPIS_MANAGE), async (req, res) => {
   try {
     const parsed = insertKpiMensualSchema.safeParse(req.body);
     if (!parsed.success) {

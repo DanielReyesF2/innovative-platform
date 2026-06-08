@@ -1,6 +1,7 @@
 import bcrypt from "bcrypt";
 import { and, desc, eq, ilike, or, sql } from "drizzle-orm";
 import { ROLE_META, ROLE_PERMISSIONS } from "../../../shared/auth/permissions";
+import { clearRolePermsCache } from "../../middleware/auth";
 import { areas, companies, users } from "../../../shared/schema/common";
 import { auditLog, companySettings, moduleConfig, roles } from "../../../shared/schema/settings";
 import { db } from "../../db";
@@ -205,6 +206,9 @@ export async function updateRole(
   data: { displayName?: string; description?: string; permissions?: string[] },
 ) {
   const [updated] = await db.update(roles).set(data).where(eq(roles.id, id)).returning();
+  // Permissions may have changed — drop the requirePermission cache so the next
+  // authorized request reloads fresh role→permission mappings.
+  clearRolePermsCache();
   return updated;
 }
 

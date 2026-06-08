@@ -1,5 +1,8 @@
 import type { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
+import { hasPermission } from "../../shared/auth/permissions";
+import { roles } from "../../shared/schema/settings";
+import { db } from "../db";
 
 if (!process.env.JWT_SECRET) {
   throw new Error("FATAL: JWT_SECRET environment variable must be set.");
@@ -67,13 +70,52 @@ export function requireAdmin(req: Request, res: Response, next: NextFunction) {
   next();
 }
 
-// Middleware: Require specific role
-export function requireRole(...roles: string[]) {
+// Middleware: Require specific role (legacy — prefer requirePermission)
+export function requireRole(...allowed: string[]) {
   return (req: Request, res: Response, next: NextFunction) => {
     const user = req.user;
-    if (!(user && roles.includes(user.role))) {
-      return res.status(403).json({ message: `Requires one of: ${roles.join(", ")}` });
+    if (!(user && allowed.includes(user.role))) {
+      return res.status(403).json({ message: `Requires one of: ${allowed.join(", ")}` });
     }
     next();
+  };
+}
+
+// Role → permissions cache (Opción B). Loaded once and refreshed when a role is
+// edited (settings updateRole calls clearRolePermsCache). Avoids a DB hit per
+// request and matches how seedSystemRoles/getRoles already resolve `roles`.
+let rolePermsCache: Map<string, string[]> | null = null;
+
+async function loadRolePerms(): Promise<Map<string, string[]>> {
+  if (rolePermsCache) return rolePermsCache;
+  const rows = await db.query.roles.findMany();
+  const map = new Map<string, string[]>();
+  for (const r of rows) map.set(r.name, (r.permissions as string[] | null) ?? []);
+  rolePermsCache = map;
+  return map;
+}
+
+export function clearRolePermsCache(): void {
+  rolePermsCache = null;
+}
+
+// Middleware: Require a specific permission. Resolves the user's role to its
+// permission list and passes if it includes the permission (or the "*" wildcard).
+export function requirePermission(permission: string) {
+  return async (req: Request, res: Response, next: NextFunction) => {
+    const user = req.user;
+    if (!user) {
+      return res.status(401).json({ message: "No authentication token provided" });
+    }
+    try {
+      const perms = await loadRolePerms();
+      if (hasPermission(perms.get(user.role), permission)) {
+        return next();
+      }
+      return res.status(403).json({ message: `Requires permission: ${permission}` });
+    } catch (error) {
+      console.error("[auth] requirePermission load error:", error);
+      return res.status(500).json({ message: "Authorization error" });
+    }
   };
 }
