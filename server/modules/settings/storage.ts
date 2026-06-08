@@ -1,5 +1,6 @@
 import bcrypt from "bcrypt";
 import { and, desc, eq, ilike, or, sql } from "drizzle-orm";
+import { ROLE_META, ROLE_PERMISSIONS } from "../../../shared/auth/permissions";
 import { areas, companies, users } from "../../../shared/schema/common";
 import { auditLog, companySettings, moduleConfig, roles } from "../../../shared/schema/settings";
 import { db } from "../../db";
@@ -363,31 +364,20 @@ export async function seedSystemRoles() {
   if (systemRolesSeeded) return;
   systemRolesSeeded = true;
 
-  const systemRoles = [
-    {
-      name: "admin",
-      displayName: "Administrador",
-      description: "Acceso completo al sistema",
-      permissions: ["*"],
-      isSystem: true,
-    },
-    {
-      name: "manager",
-      displayName: "Gerente",
-      description: "Gestion de equipo y reportes",
-      permissions: ["read", "write", "manage_team", "view_reports"],
-      isSystem: true,
-    },
-    {
-      name: "viewer",
-      displayName: "Visualizador",
-      description: "Solo lectura",
-      permissions: ["read"],
-      isSystem: true,
-    },
-  ];
-
-  for (const role of systemRoles) {
-    await db.insert(roles).values(role).onConflictDoNothing({ target: roles.name });
+  // Canonical roles + baseline permissions from the shared catalog (Opción B).
+  // onConflictDoNothing keeps this additive: it inserts missing roles without
+  // overwriting any permissions an admin has already tuned from Settings.
+  // (One-time correction of existing roles is handled by scripts/reconcile-roles.ts.)
+  for (const name of Object.keys(ROLE_PERMISSIONS)) {
+    await db
+      .insert(roles)
+      .values({
+        name,
+        displayName: ROLE_META[name].displayName,
+        description: ROLE_META[name].description,
+        permissions: ROLE_PERMISSIONS[name],
+        isSystem: true,
+      })
+      .onConflictDoNothing({ target: roles.name });
   }
 }
