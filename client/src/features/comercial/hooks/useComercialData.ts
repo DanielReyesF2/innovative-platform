@@ -130,8 +130,9 @@ export function useComercialData() {
   }, [dbTeamRaw]);
 
   const presupuestoEvolution = useMemo(() => {
-    // Venta Real por mes = suma de actualRevenue de cada prospecto, agrupado
-    // por su estimatedCloseTime (YYYY-MM). Es lo que realmente se facturó.
+    // Venta Real por mes = suma de actualRevenue SOLO de cierres ganados,
+    // agrupado por su estimatedCloseTime (YYYY-MM). Es lo que realmente se
+    // facturó (un prospecto en negociación con ventaReal capturado NO cuenta).
     const realPorMes: Record<string, number> = {};
     // Cotización por mes = suma del estimatedValue de prospectos activos cuyo
     // estimatedCloseTime cae en ese mes (excluye cierre_perdido).
@@ -149,7 +150,7 @@ export function useComercialData() {
         cotizacionPorMes[key] = (cotizacionPorMes[key] || 0) + cotAmount;
       }
 
-      if (p.ventaReal && p.ventaReal > 0) {
+      if (p.status === "cierre_ganado" && p.ventaReal && p.ventaReal > 0) {
         realPorMes[key] = (realPorMes[key] || 0) + p.ventaReal;
       }
     });
