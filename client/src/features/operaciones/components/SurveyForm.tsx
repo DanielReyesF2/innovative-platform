@@ -50,7 +50,10 @@ export default function SurveyForm({ surveyId }: SurveyFormProps) {
   const advanceStatus = useAdvanceSurveyStatus();
 
   const [openSection, setOpenSection] = useState<number>(1);
-  const saveTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  // Separate debounce timers so a section save and a field save within 800ms
+  // don't cancel each other (H12 — shared timer dropped the first save silently).
+  const sectionTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  const fieldTimerRef = useRef<ReturnType<typeof setTimeout>>();
 
   const isPhase2Unlocked = survey && ["agendado", "en_sitio", "completado"].includes(survey.status);
   const isCompleted = survey?.status === "completado";
@@ -59,8 +62,8 @@ export default function SurveyForm({ surveyId }: SurveyFormProps) {
   // Debounced section save
   const debouncedSectionSave = useCallback(
     (sectionName: string, data: any) => {
-      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
-      saveTimerRef.current = setTimeout(() => {
+      if (sectionTimerRef.current) clearTimeout(sectionTimerRef.current);
+      sectionTimerRef.current = setTimeout(() => {
         updateSection.mutate(
           { surveyId, sectionName, data },
           {
@@ -80,8 +83,8 @@ export default function SurveyForm({ surveyId }: SurveyFormProps) {
   // Debounced survey field save (for top-level fields like observations, siteType, etc.)
   const debouncedFieldSave = useCallback(
     (data: any) => {
-      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
-      saveTimerRef.current = setTimeout(() => {
+      if (fieldTimerRef.current) clearTimeout(fieldTimerRef.current);
+      fieldTimerRef.current = setTimeout(() => {
         updateSurvey.mutate(
           { id: surveyId, ...data },
           {

@@ -339,8 +339,19 @@ export function PresupuestoTab() {
                                         e.preventDefault();
                                         const monto = Number(ventaRealEditValue) || 0;
                                         setEditingVentaReal(null);
-                                        updateProspectMutation.mutate({ id: p.id, actualRevenue: monto });
-                                        toast({ title: `Venta real: $${monto.toLocaleString()}` });
+                                        updateProspectMutation.mutate(
+                                          { id: p.id, actualRevenue: monto },
+                                          {
+                                            onSuccess: () =>
+                                              toast({ title: `Venta real: $${monto.toLocaleString()}` }),
+                                            onError: () =>
+                                              toast({
+                                                variant: "destructive",
+                                                title: "No se pudo guardar la venta real",
+                                                description: "Intenta de nuevo",
+                                              }),
+                                          },
+                                        );
                                       } else if (e.key === "Escape") {
                                         setEditingVentaReal(null);
                                       }
@@ -349,8 +360,19 @@ export function PresupuestoTab() {
                                       const monto = Number(ventaRealEditValue) || 0;
                                       setEditingVentaReal(null);
                                       if (monto !== (p.ventaReal || 0)) {
-                                        updateProspectMutation.mutate({ id: p.id, actualRevenue: monto });
-                                        toast({ title: `Venta real: $${monto.toLocaleString()}` });
+                                        updateProspectMutation.mutate(
+                                          { id: p.id, actualRevenue: monto },
+                                          {
+                                            onSuccess: () =>
+                                              toast({ title: `Venta real: $${monto.toLocaleString()}` }),
+                                            onError: () =>
+                                              toast({
+                                                variant: "destructive",
+                                                title: "No se pudo guardar la venta real",
+                                                description: "Intenta de nuevo",
+                                              }),
+                                          },
+                                        );
                                       }
                                     }}
                                     className="w-24 px-2 py-1 text-sm text-right border border-[#00a8a8] rounded focus:outline-none focus:ring-1 focus:ring-[#00a8a8]"
