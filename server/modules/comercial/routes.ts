@@ -24,7 +24,7 @@ import { users } from "../../../shared/schema/common";
 import { db } from "../../db";
 import { triggerWebhook } from "../../lib/webhook";
 import { gcsEnabled, getSignedReadUrl, uploadBuffer } from "../../lib/gcs";
-import { requireAuth, requireRole } from "../../middleware/auth";
+import { requireAdmin, requireAuth, requireRole } from "../../middleware/auth";
 import {
   acknowledgeAlert,
   assignLead,
@@ -42,6 +42,10 @@ import {
   createOrUpdateVentaReal,
   createProposal,
   createProspect,
+  getOrphanedFiles,
+  type OrphanFile,
+  relinkProposalVersion,
+  relinkProspectDocument,
   deleteCommitment,
   deleteDocument,
   deleteMeeting,
@@ -839,12 +843,15 @@ router.post("/prospects/:id/proposals/upload", proposalUpload.single("file"), as
     if (gcsEnabled) {
       const objectKey = `comercial/${prospectId}/${filename}`;
       await uploadBuffer(objectKey, file.buffer, file.mimetype);
-      storedUrl = objectKey;
+      // Guardar la url del ENDPOINT de servido (no la key cruda de GCS): el frontend
+      // abre `href={doc.url}` directo, así que debe ser una ruta que el navegador
+      // resuelva al endpoint /uploads, que hace 302 a la signed URL de GCS.
+      storedUrl = `/api/comercial/uploads/${prospectId}/${filename}`;
     } else {
       const dest = path.join(legacyUploadsDir, String(prospectId), filename);
       await fs.promises.mkdir(path.dirname(dest), { recursive: true });
       await fs.promises.writeFile(dest, file.buffer);
-      storedUrl = `/uploads/comercial/${prospectId}/${filename}`;
+      storedUrl = `/api/comercial/uploads/${prospectId}/${filename}`;
     }
 
     // Get next version number
@@ -1129,12 +1136,15 @@ router.post("/prospects/:id/documents/upload", upload.single("file"), async (req
     if (gcsEnabled) {
       const objectKey = `comercial/${prospectId}/${filename}`;
       await uploadBuffer(objectKey, file.buffer, file.mimetype);
-      storedUrl = objectKey;
+      // Guardar la url del ENDPOINT de servido (no la key cruda de GCS): el frontend
+      // abre `href={doc.url}` directo, así que debe ser una ruta que el navegador
+      // resuelva al endpoint /uploads, que hace 302 a la signed URL de GCS.
+      storedUrl = `/api/comercial/uploads/${prospectId}/${filename}`;
     } else {
       const dest = path.join(legacyUploadsDir, String(prospectId), filename);
       await fs.promises.mkdir(path.dirname(dest), { recursive: true });
       await fs.promises.writeFile(dest, file.buffer);
-      storedUrl = `/uploads/comercial/${prospectId}/${filename}`;
+      storedUrl = `/api/comercial/uploads/${prospectId}/${filename}`;
     }
 
     const document = await createDocument({
@@ -1180,10 +1190,144 @@ router.get("/uploads/:prospectId/:filename", async (req, res) => {
     }
     const key = `comercial/${prospectId}/${filename}`;
     const signedUrl = await getSignedReadUrl(key, 15 * 60);
-    res.redirect(302, signedUrl);
+    // Devolvemos la signed URL como JSON (no 302). El frontend pide este endpoint
+    // CON token (apiRequest) y luego abre la url firmada — un <a href> plano no
+    // llevaría el Authorization header y daría 401.
+    res.json({ url: signedUrl });
   } catch (error) {
     console.error("[comercial] Serve file error:", error);
     res.status(404).json({ message: "Archivo no encontrado" });
+  }
+});
+
+// === RECUPERACIÓN MASIVA DE ARCHIVOS (admin) ===
+//
+// Reconecta archivos huérfanos: registros cuyo archivo físico se perdió (url
+// rota `/uploads/...` o `local://...`). El admin arrastra los archivos; el
+// sistema los casa POR NOMBRE con el registro huérfano, los sube a GCS y
+// actualiza la url al endpoint de servido. Ver storage.getOrphanedFiles.
+
+// multer aparte: acepta cualquier tipo (es admin-only y son archivos de negocio
+// ya conocidos), límite generoso para que ningún archivo legítimo se caiga.
+const restoreUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 30 * 1024 * 1024 }, // 30MB
+});
+
+// Codificación de nombres: multer suele entregar `originalname` en latin1 (los
+// bytes UTF-8 reinterpretados → "económica" llega como "econÃ³mica"), pero según
+// el navegador puede venir ya en UTF-8 limpio. Para casar con acentos sin
+// importar el navegador, probamos AMBAS variantes contra los nombres de la DB.
+function decodeLatin1(raw: string): string {
+  try {
+    return Buffer.from(raw, "latin1").toString("utf8");
+  } catch {
+    return raw;
+  }
+}
+function normalizeName(name: string): string {
+  return name.normalize("NFC").trim().toLowerCase();
+}
+// Variantes a probar al casar (decodificada + cruda, sin duplicar).
+function nameCandidates(raw: string): string[] {
+  const decoded = decodeLatin1(raw);
+  return decoded === raw ? [raw] : [decoded, raw];
+}
+// Nombre legible para mostrar: la versión decodificada, salvo que contenga el
+// carácter de reemplazo (�) — señal de que el original ya era UTF-8 válido.
+function displayName(raw: string): string {
+  const decoded = decodeLatin1(raw);
+  return decoded.includes("�") ? raw : decoded;
+}
+
+router.get("/restore/orphans", requireAdmin, async (_req, res) => {
+  try {
+    const orphans = await getOrphanedFiles();
+    res.json(orphans);
+  } catch (error) {
+    console.error("[comercial] restore orphans error:", error);
+    res.status(500).json({ message: "Error al listar archivos faltantes" });
+  }
+});
+
+router.post("/restore/bulk", requireAdmin, restoreUpload.array("files", 500), async (req, res) => {
+  try {
+    const files = (req.files as Express.Multer.File[] | undefined) ?? [];
+    if (files.length === 0) {
+      return res.status(400).json({ message: "No se recibieron archivos" });
+    }
+
+    const orphans = await getOrphanedFiles();
+    // Mapa: nombre normalizado → registros huérfanos (puede ser 1, o 2 si el
+    // mismo archivo es documento Y propuesta del mismo prospecto).
+    const byName = new Map<string, OrphanFile[]>();
+    for (const o of orphans) {
+      const key = normalizeName(o.name);
+      const list = byName.get(key) ?? [];
+      list.push(o);
+      byName.set(key, list);
+    }
+
+    const restored: { name: string; prospectName: string; kind: OrphanFile["kind"] }[] = [];
+    const unmatched: string[] = [];
+    const duplicates: string[] = [];
+    const processed = new Set<string>(); // `${kind}:${id}` ya reconectados en este batch
+
+    for (const file of files) {
+      const realName = displayName(file.originalname);
+      let targets: OrphanFile[] | undefined;
+      for (const candidate of nameCandidates(file.originalname)) {
+        targets = byName.get(normalizeName(candidate));
+        if (targets && targets.length > 0) break;
+      }
+
+      if (!targets || targets.length === 0) {
+        unmatched.push(realName);
+        continue;
+      }
+
+      let didSomething = false;
+      for (const target of targets) {
+        const tag = `${target.kind}:${target.id}`;
+        if (processed.has(tag)) continue;
+
+        const ext = path.extname(realName);
+        const filename = `${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`;
+        const objectKey = `comercial/${target.prospectId}/${filename}`;
+        await uploadBuffer(objectKey, file.buffer, file.mimetype || "application/octet-stream");
+        const url = `/api/comercial/uploads/${target.prospectId}/${filename}`;
+
+        const relinkData = {
+          url,
+          fileSize: file.size,
+          mimeType: file.mimetype || "application/octet-stream",
+        };
+        if (target.kind === "document") {
+          await relinkProspectDocument(target.id, relinkData);
+        } else {
+          await relinkProposalVersion(target.id, relinkData);
+        }
+
+        processed.add(tag);
+        restored.push({ name: target.name, prospectName: target.prospectName, kind: target.kind });
+        console.log(`[comercial] restore: reconectado ${tag} "${target.name}" → ${url}`);
+        didSomething = true;
+      }
+      // Todos sus destinos ya estaban reconectados (el admin arrastró el mismo archivo 2 veces).
+      if (!didSomething) duplicates.push(realName);
+    }
+
+    res.json({
+      restored,
+      unmatched,
+      duplicates,
+      restoredCount: restored.length,
+      remaining: orphans.length - processed.size,
+      totalBefore: orphans.length,
+    });
+  } catch (error) {
+    console.error("[comercial] restore bulk error:", error);
+    res.status(500).json({ message: "Error al recuperar archivos" });
   }
 });
 

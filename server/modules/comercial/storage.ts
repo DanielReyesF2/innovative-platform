@@ -1,4 +1,4 @@
-import { and, desc, eq, gte, isNull, lte, or, sql } from "drizzle-orm";
+import { and, desc, eq, gte, isNull, like, lte, or, sql } from "drizzle-orm";
 import {
   comercialWeeklyReports,
   followUpAlerts,
@@ -737,6 +737,81 @@ export async function createDocument(data: InsertProspectDocument) {
 
 export async function deleteDocument(id: number) {
   await db.delete(prospectDocuments).where(eq(prospectDocuments.id, id));
+}
+
+// --- Recuperación de archivos huérfanos ---
+//
+// Contexto: los archivos subidos antes de la migración a Cloud Run/GCS se
+// guardaban en disco efímero y se perdieron. Sus registros siguen en la DB con
+// la url rota (`/uploads/...` o `local://...`). La herramienta de recuperación
+// (admin) los reconecta subiendo el archivo a GCS y casándolo por NOMBRE con el
+// registro huérfano. Una url ya reconectada vive en `/api/comercial/uploads/...`.
+
+export type OrphanFile = {
+  kind: "document" | "proposal";
+  id: number;
+  prospectId: number;
+  prospectName: string;
+  name: string;
+};
+
+// Una url está "rota" (sin archivo físico) si no apunta al endpoint de servido
+// actual ni a una url http externa.
+const isBroken = (col: typeof prospectDocuments.url | typeof proposalVersions.url) =>
+  or(like(col, "/uploads/%"), like(col, "local://%"));
+
+export async function getOrphanedFiles(): Promise<OrphanFile[]> {
+  const docs = await db
+    .select({
+      id: prospectDocuments.id,
+      prospectId: prospectDocuments.prospectId,
+      prospectName: prospects.name,
+      name: prospectDocuments.name,
+    })
+    .from(prospectDocuments)
+    .leftJoin(prospects, eq(prospectDocuments.prospectId, prospects.id))
+    .where(isBroken(prospectDocuments.url));
+
+  const proposals = await db
+    .select({
+      id: proposalVersions.id,
+      prospectId: proposalVersions.prospectId,
+      prospectName: prospects.name,
+      name: proposalVersions.name,
+    })
+    .from(proposalVersions)
+    .leftJoin(prospects, eq(proposalVersions.prospectId, prospects.id))
+    .where(isBroken(proposalVersions.url));
+
+  return [
+    ...docs.map((d) => ({
+      kind: "document" as const,
+      id: d.id,
+      prospectId: d.prospectId,
+      prospectName: d.prospectName ?? "(sin prospecto)",
+      name: d.name,
+    })),
+    ...proposals.map((p) => ({
+      kind: "proposal" as const,
+      id: p.id,
+      prospectId: p.prospectId,
+      prospectName: p.prospectName ?? "(sin prospecto)",
+      name: p.name,
+    })),
+  ];
+}
+
+type RelinkData = { url: string; fileSize: number; mimeType: string };
+
+export async function relinkProspectDocument(id: number, data: RelinkData) {
+  await db.update(prospectDocuments).set(data).where(eq(prospectDocuments.id, id));
+}
+
+export async function relinkProposalVersion(id: number, data: RelinkData) {
+  await db
+    .update(proposalVersions)
+    .set({ ...data, updatedAt: new Date() })
+    .where(eq(proposalVersions.id, id));
 }
 
 // --- Proposals ---
