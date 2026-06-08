@@ -3,10 +3,13 @@ import { apiRequest } from "@/lib/queryClient";
 // Abre un archivo de prospecto (documento o propuesta) de forma AUTENTICADA.
 //
 // El endpoint de servido (`/api/comercial/uploads/:prospectId/:filename`) está
-// detrás de requireAuth, así que no se puede usar un `<a href>` plano (no lleva
-// el token). Pedimos el endpoint con apiRequest (que agrega el Bearer) y:
-//   - si responde JSON {url} → abrimos la signed URL de GCS (caso producción).
-//   - si responde el archivo directo → lo abrimos vía blob (disco legacy / dev).
+// detrás de requireAuth y manda el archivo en streaming, así que no se puede usar
+// un `<a href>` plano (no lleva el token). Lo pedimos con apiRequest (que agrega
+// el Bearer), recibimos los bytes y los abrimos en una pestaña nueva vía blob.
+//
+// Usamos un <a>.click() en vez de window.open() porque éste último suele ser
+// bloqueado por el navegador cuando se llama después de un await (se "gasta" el
+// gesto del usuario).
 export async function openProspectFile(url: string | null | undefined): Promise<void> {
   if (!url?.startsWith("/api/comercial/uploads/")) {
     // urls legacy rotas (`/uploads/...`, `local://...`) o vacías: no hay archivo.
@@ -14,17 +17,16 @@ export async function openProspectFile(url: string | null | undefined): Promise<
   }
 
   const res = await apiRequest("GET", url);
-  const contentType = res.headers.get("content-type") || "";
-
-  if (contentType.includes("application/json")) {
-    const data = (await res.json()) as { url?: string };
-    if (!data?.url) throw new Error("Archivo no disponible");
-    window.open(data.url, "_blank", "noopener,noreferrer");
-    return;
-  }
-
   const blob = await res.blob();
   const objectUrl = URL.createObjectURL(blob);
-  window.open(objectUrl, "_blank", "noopener,noreferrer");
+
+  const a = document.createElement("a");
+  a.href = objectUrl;
+  a.target = "_blank";
+  a.rel = "noopener noreferrer";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+
   setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
 }

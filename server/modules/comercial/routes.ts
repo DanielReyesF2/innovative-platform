@@ -23,7 +23,7 @@ import { STAGE } from "../../../shared/schema/comercial-stages";
 import { users } from "../../../shared/schema/common";
 import { db } from "../../db";
 import { triggerWebhook } from "../../lib/webhook";
-import { gcsEnabled, getSignedReadUrl, uploadBuffer } from "../../lib/gcs";
+import { gcsEnabled, streamObject, uploadBuffer } from "../../lib/gcs";
 import { requireAdmin, requireAuth, requireRole } from "../../middleware/auth";
 import {
   acknowledgeAlert,
@@ -1169,8 +1169,14 @@ router.post("/prospects/:id/documents/upload", upload.single("file"), async (req
   }
 });
 
-// Serve uploaded files. Modern path → 302 redirect to short-lived signed URL.
-// Legacy disk path kept as fallback during migration.
+// Sirve archivos subidos. El endpoint está tras requireAuth, así que el frontend
+// lo pide con token (apiRequest) y abre/descarga el blob — un <a href> plano no
+// llevaría el Authorization header.
+//
+// Servimos en STREAMING a través del servidor (no signed URL): el runtime SA
+// tiene lectura del bucket pero NO permiso de firmar URLs v4
+// (iam.serviceAccounts.signBlob), así que getSignedUrl falla en Cloud Run.
+// Streaming evita ese permiso y además el archivo nunca se vuelve público.
 router.get("/uploads/:prospectId/:filename", async (req, res) => {
   try {
     const { prospectId, filename } = req.params;
@@ -1189,14 +1195,15 @@ router.get("/uploads/:prospectId/:filename", async (req, res) => {
       return res.status(404).json({ message: "Archivo no encontrado" });
     }
     const key = `comercial/${prospectId}/${filename}`;
-    const signedUrl = await getSignedReadUrl(key, 15 * 60);
-    // Devolvemos la signed URL como JSON (no 302). El frontend pide este endpoint
-    // CON token (apiRequest) y luego abre la url firmada — un <a href> plano no
-    // llevaría el Authorization header y daría 401.
-    res.json({ url: signedUrl });
+    await streamObject(key, res);
   } catch (error) {
     console.error("[comercial] Serve file error:", error);
-    res.status(404).json({ message: "Archivo no encontrado" });
+    // El stream pudo haber empezado a enviar headers; sólo respondemos si no.
+    if (!res.headersSent) {
+      res.status(404).json({ message: "Archivo no encontrado" });
+    } else {
+      res.end();
+    }
   }
 });
 
