@@ -21,7 +21,8 @@ import {
   insertSurveyWasteTypeSchema,
 } from "../../../shared/schema/operaciones";
 import { gcsEnabled, getSignedReadUrl, uploadBuffer } from "../../lib/gcs";
-import { requireAuth, requireRole } from "../../middleware/auth";
+import { PERMISSIONS } from "../../../shared/auth/permissions";
+import { requireAuth, requirePermission } from "../../middleware/auth";
 import { getErrorMessage } from "../../utils/errors";
 import {
   acceptSurvey,
@@ -230,7 +231,7 @@ const rejectSurveySchema = z.object({
   rejectionReason: z.string().min(10, "Motivo debe tener al menos 10 caracteres").max(1000),
 });
 
-router.get("/surveys/pending-review", requireRole("admin", "director", "operaciones"), async (_req, res) => {
+router.get("/surveys/pending-review", requirePermission(PERMISSIONS.SURVEYS_REVIEW), async (_req, res) => {
   try {
     const surveys = await getPendingReviewSurveys();
     res.json(surveys);
@@ -240,7 +241,7 @@ router.get("/surveys/pending-review", requireRole("admin", "director", "operacio
   }
 });
 
-router.post("/surveys/:id/accept", requireRole("admin", "director", "operaciones"), async (req, res) => {
+router.post("/surveys/:id/accept", requirePermission(PERMISSIONS.SURVEYS_ACCEPT), async (req, res) => {
   try {
     const parsed = acceptSurveySchema.parse(req.body);
     const updated = await acceptSurvey(
@@ -265,7 +266,7 @@ router.post("/surveys/:id/accept", requireRole("admin", "director", "operaciones
   }
 });
 
-router.post("/surveys/:id/reject", requireRole("admin", "director", "operaciones"), async (req, res) => {
+router.post("/surveys/:id/reject", requirePermission(PERMISSIONS.SURVEYS_REJECT_HANDOFF), async (req, res) => {
   try {
     const parsed = rejectSurveySchema.parse(req.body);
     const result = await rejectSurvey(Number(req.params.id), parsed.rejectionReason, req.user!.id);
@@ -308,7 +309,7 @@ const approveSurveySchema = z.object({
   notes: z.string().optional(),
 });
 
-router.post("/surveys/:id/approve", requireRole("admin", "director"), async (req, res) => {
+router.post("/surveys/:id/approve", requirePermission(PERMISSIONS.SURVEYS_APPROVE), async (req, res) => {
   try {
     const parsed = approveSurveySchema.parse(req.body);
     const result = await approveSurvey(Number(req.params.id), req.user!.id, parsed.notes);
@@ -329,7 +330,7 @@ const returnSurveySchema = z.object({
   reason: z.string().min(10, "La razón debe tener al menos 10 caracteres"),
 });
 
-router.post("/surveys/:id/return", requireRole("admin", "director"), async (req, res) => {
+router.post("/surveys/:id/return", requirePermission(PERMISSIONS.SURVEYS_RETURN), async (req, res) => {
   try {
     const parsed = returnSurveySchema.parse(req.body);
     const result = await returnSurvey(Number(req.params.id), parsed.reason, req.user!.id);
