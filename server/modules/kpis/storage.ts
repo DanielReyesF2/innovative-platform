@@ -1,4 +1,4 @@
-import { and, desc, eq, inArray, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, lt, ne, sql } from "drizzle-orm";
 import { areas } from "../../../shared/schema/common";
 import { type Kpi, kpiActionPlans, kpiCategories, kpiEntries, kpis } from "../../../shared/schema/kpis";
 import { db } from "../../db";
@@ -40,6 +40,10 @@ export async function getKpis(filters?: {
   }
   if (filters?.status) {
     conditions.push(eq(kpis.status, filters.status as Kpi["status"]));
+  } else {
+    // Default list hides archived (soft-deleted) KPIs so it matches the summary
+    // cards instead of showing more rows than they count (H19).
+    conditions.push(ne(kpis.status, "archivado"));
   }
   if (filters?.frequency) {
     conditions.push(eq(kpis.frequency, filters.frequency as Kpi["frequency"]));
@@ -67,7 +71,7 @@ export async function getKpis(filters?: {
     categoryIds.length > 0
       ? db.select().from(kpiCategories).where(inArray(kpiCategories.id, categoryIds))
       : Promise.resolve([]),
-    db.select().from(kpiEntries).where(inArray(kpiEntries.kpiId, kpiIds)).orderBy(desc(kpiEntries.createdAt)),
+    db.select().from(kpiEntries).where(inArray(kpiEntries.kpiId, kpiIds)).orderBy(desc(kpiEntries.period)),
   ]);
 
   const categoryMap = new Map(allCategories.map((c) => [c.id, c]));
@@ -94,7 +98,7 @@ export async function getKpiById(id: number) {
 
   const lastEntry = await db.query.kpiEntries.findFirst({
     where: eq(kpiEntries.kpiId, id),
-    orderBy: [desc(kpiEntries.createdAt)],
+    orderBy: [desc(kpiEntries.period)],
   });
 
   const category = kpi.categoryId
@@ -135,7 +139,8 @@ export async function archiveKpi(id: number) {
 // --- KPI Summary ---
 
 export async function getKpiSummary(areaId?: number) {
-  const conditions = [eq(kpis.status, "activo")];
+  // Count the same set the list shows (non-archived) so the cards match (H19).
+  const conditions = [ne(kpis.status, "archivado")];
   if (areaId) {
     conditions.push(eq(kpis.areaId, areaId));
   }
@@ -154,7 +159,7 @@ export async function getKpiSummary(areaId?: number) {
     .select()
     .from(kpiEntries)
     .where(inArray(kpiEntries.kpiId, kpiIds))
-    .orderBy(desc(kpiEntries.createdAt));
+    .orderBy(desc(kpiEntries.period));
 
   const lastEntryMap = new Map<number, (typeof allEntries)[number]>();
   for (const entry of allEntries) {
@@ -213,23 +218,28 @@ export async function createKpiEntry(data: {
   });
   if (!kpi) throw new Error("KPI_NOT_FOUND");
 
-  // Get previous entry for trend calculation
+  // Previous entry for the trend = the latest period STRICTLY BEFORE this one,
+  // not the last row captured (createdAt). Otherwise backfilling/correcting an
+  // older period compared against the wrong baseline (H26). period is "YYYY-MM"
+  // so lexicographic order is chronological.
   const previousEntry = await db.query.kpiEntries.findFirst({
-    where: eq(kpiEntries.kpiId, data.kpiId),
-    orderBy: [desc(kpiEntries.createdAt)],
+    where: and(eq(kpiEntries.kpiId, data.kpiId), lt(kpiEntries.period, data.period)),
+    orderBy: [desc(kpiEntries.period)],
   });
 
   const actualValue = Number(data.actualValue);
   const targetValue = Number(kpi.targetValue || 0);
   const previousValue = previousEntry ? Number(previousEntry.actualValue) : null;
 
-  // Auto-calculate compliance
+  // Auto-calculate compliance, clamped to the column range numeric(7,2) so a
+  // huge actual-vs-tiny-target ratio can't overflow and 500 the insert (H9).
   let compliance: number;
   if (targetValue === 0) {
     compliance = actualValue >= 0 ? 100 : 0;
   } else {
     compliance = (actualValue / targetValue) * 100;
   }
+  compliance = Math.max(-99999.99, Math.min(compliance, 99999.99));
 
   // Auto-calculate trend
   let trend: "up" | "down" | "stable" = "stable";
@@ -271,7 +281,15 @@ export async function updateKpiEntry(entryId: number, data: { actualValue?: stri
 // --- KPI Trend ---
 
 export async function getKpiTrend(kpiId: number, limit: number = 12) {
-  return db.select().from(kpiEntries).where(eq(kpiEntries.kpiId, kpiId)).orderBy(kpiEntries.period).limit(limit);
+  // Take the most RECENT `limit` periods (desc), then flip to chronological for
+  // the chart. The old ASC+limit returned the OLDEST periods (H11).
+  const rows = await db
+    .select()
+    .from(kpiEntries)
+    .where(eq(kpiEntries.kpiId, kpiId))
+    .orderBy(desc(kpiEntries.period))
+    .limit(limit);
+  return rows.reverse();
 }
 
 // --- Action Plans ---
