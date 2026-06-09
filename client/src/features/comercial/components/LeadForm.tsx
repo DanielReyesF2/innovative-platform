@@ -238,7 +238,7 @@ export function LeadForm({ onClose, salesTeam, defaultAssignee }: LeadFormProps)
                   onClick={() => toggleService(svc.id)}
                   className={`rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
                     form.services.includes(svc.id)
-                      ? "bg-[#00a8a8] text-white"
+                      ? "bg-[#0067B0] text-white"
                       : "bg-[#f3f4f6] text-[#6b7280] hover:bg-[#e5e7eb]"
                   }`}
                 >

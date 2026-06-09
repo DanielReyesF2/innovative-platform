@@ -55,7 +55,7 @@ export function PresupuestoTab() {
       <div className="mt-6 bg-white rounded-xl border border-[#e5e7eb] p-5">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-sm font-semibold text-[#1c2c4a] flex items-center gap-2">
-            <DollarSign size={16} className="text-[#00a8a8]" />
+            <DollarSign size={16} className="text-[#0067B0]" />
             Presupuesto Mensual 2026 · Valor Cotización · Venta Real
           </h3>
           <div className="flex items-center gap-3">
@@ -67,7 +67,7 @@ export function PresupuestoTab() {
                 <span className="w-2.5 h-2.5 rounded bg-[#0D47A1] inline-block" /> Valor Cotización
               </span>
               <span className="flex items-center gap-1">
-                <span className="w-2.5 h-2.5 rounded bg-[#00a8a8] inline-block" /> Venta Real
+                <span className="w-2.5 h-2.5 rounded bg-[#0067B0] inline-block" /> Venta Real
               </span>
             </div>
             {canEditBudget && (
@@ -101,8 +101,8 @@ export function PresupuestoTab() {
             <Bar dataKey="cotizacion" name="Valor Cotización" fill="#0D47A1" radius={[3, 3, 0, 0]}>
               <LabelList dataKey="cotizacion" content={(p) => <BarValueLabel {...p} fill="#0D47A1" />} />
             </Bar>
-            <Bar dataKey="real" name="Venta Real" fill="#00a8a8" radius={[3, 3, 0, 0]}>
-              <LabelList dataKey="real" content={(p) => <BarValueLabel {...p} fill="#00a8a8" />} />
+            <Bar dataKey="real" name="Venta Real" fill="#0067B0" radius={[3, 3, 0, 0]}>
+              <LabelList dataKey="real" content={(p) => <BarValueLabel {...p} fill="#0067B0" />} />
             </Bar>
           </BarChart>
         </ResponsiveContainer>
@@ -112,7 +112,7 @@ export function PresupuestoTab() {
       <div className="mt-4 bg-white rounded-xl border border-[#e5e7eb] p-4">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <DollarSign size={14} className="text-[#00a8a8]" />
+            <DollarSign size={14} className="text-[#0067B0]" />
             <h4 className="text-xs font-semibold text-[#1c2c4a] uppercase tracking-wide">Presupuesto y Cuentas</h4>
           </div>
           <div className="flex items-center gap-1 bg-[#f3f4f6] rounded-lg p-0.5">
@@ -375,13 +375,13 @@ export function PresupuestoTab() {
                                         );
                                       }
                                     }}
-                                    className="w-24 px-2 py-1 text-sm text-right border border-[#00a8a8] rounded focus:outline-none focus:ring-1 focus:ring-[#00a8a8]"
+                                    className="w-24 px-2 py-1 text-sm text-right border border-[#0067B0] rounded focus:outline-none focus:ring-1 focus:ring-[#0067B0]"
                                     placeholder="0"
                                     autoFocus
                                   />
                                 ) : (
                                   <span
-                                    className="text-sm font-semibold text-[#00a8a8] cursor-pointer hover:underline"
+                                    className="text-sm font-semibold text-[#0067B0] cursor-pointer hover:underline"
                                     onClick={() => {
                                       setEditingVentaReal(p.id);
                                       setVentaRealEditValue(String(p.ventaReal || ""));
@@ -407,7 +407,7 @@ export function PresupuestoTab() {
                               <td className="py-2 px-2 text-right font-bold text-[#0D47A1]">
                                 {fmtCurrency(totalCuentasValor)}
                               </td>
-                              <td className="py-2 px-2 text-right font-bold text-[#00a8a8]">
+                              <td className="py-2 px-2 text-right font-bold text-[#0067B0]">
                                 {fmtCurrency(totalVentaReal)}
                               </td>
                             </tr>

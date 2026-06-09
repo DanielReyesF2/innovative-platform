@@ -156,7 +156,7 @@ export default function OperacionesPage() {
         </p>
         <button
           onClick={() => window.location.reload()}
-          className="mt-2 px-4 py-2 text-sm font-medium text-white bg-[#00a8a8] rounded-lg hover:bg-[#008f8f]"
+          className="mt-2 px-4 py-2 text-sm font-medium text-white bg-[#0067B0] rounded-lg hover:bg-[#00558f]"
         >
           Recargar
         </button>
@@ -178,8 +178,8 @@ export default function OperacionesPage() {
       {opsTeam.length > 0 && (
         <>
           <div className="flex items-center gap-2">
-            <div className="w-1 h-5 rounded-full bg-gradient-to-b from-[#00a8a8] to-[#0D47A1]" />
-            <Users size={16} className="text-[#00a8a8]" />
+            <div className="w-1 h-5 rounded-full bg-gradient-to-b from-[#0067B0] to-[#0D47A1]" />
+            <Users size={16} className="text-[#0067B0]" />
             <h2 className="text-sm font-semibold text-[#1c2c4a]">Equipo de Campo</h2>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
@@ -190,9 +190,9 @@ export default function OperacionesPage() {
               return (
                 <div
                   key={member.id}
-                  className="bg-white rounded-xl border border-[#e5e7eb] p-4 hover:shadow-lg hover:border-[#00a8a8]/40 transition-all group relative overflow-hidden"
+                  className="bg-white rounded-xl border border-[#e5e7eb] p-4 hover:shadow-lg hover:border-[#0067B0]/40 transition-all group relative overflow-hidden"
                 >
-                  <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#00a8a8] to-[#0D47A1] opacity-60 group-hover:opacity-100 transition-opacity" />
+                  <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#0067B0] to-[#0D47A1] opacity-60 group-hover:opacity-100 transition-opacity" />
 
                   {/* Avatar + Name */}
                   <div className="flex items-center gap-3 mb-3">
@@ -759,7 +759,7 @@ export default function OperacionesPage() {
           {/* Live panel */}
           {showLivePanel && (
             <div className="fixed bottom-20 right-6 z-40 w-80 rounded-xl bg-white border border-[#e5e7eb] shadow-2xl overflow-hidden">
-              <div className="px-4 py-3 bg-gradient-to-r from-[#0D47A1] to-[#00a8a8] flex items-center justify-between">
+              <div className="px-4 py-3 bg-gradient-to-r from-[#0D47A1] to-[#0067B0] flex items-center justify-between">
                 <div className="flex items-center gap-2 text-white">
                   <span className="relative flex h-2.5 w-2.5">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
@@ -796,7 +796,7 @@ export default function OperacionesPage() {
                           <span className="truncate">{s.address}</span>
                         </div>
                       )}
-                      {operator && <div className="mt-0.5 text-[11px] text-[#00a8a8] font-medium">{operator.name}</div>}
+                      {operator && <div className="mt-0.5 text-[11px] text-[#0067B0] font-medium">{operator.name}</div>}
                     </button>
                   );
                 })}

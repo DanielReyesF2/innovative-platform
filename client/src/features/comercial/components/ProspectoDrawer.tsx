@@ -268,7 +268,7 @@ export function ProspectoDrawer({ prospecto, onClose }: Props) {
                       ? "bg-green-100 text-green-700"
                       : stageInfo?.color === "#7C3AED"
                         ? "bg-purple-100 text-purple-700"
-                        : stageInfo?.color === "#00a8a8"
+                        : stageInfo?.color === "#0067B0"
                           ? "bg-teal-100 text-teal-700"
                           : stageInfo?.color === "#F57C00"
                             ? "bg-orange-100 text-orange-700"
@@ -350,7 +350,7 @@ export function ProspectoDrawer({ prospecto, onClose }: Props) {
                     }
                     changeProspectoStage(p.id, nextStage.id);
                   }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-[#00a8a8] hover:bg-[#008b8b] text-white rounded-lg text-xs font-semibold transition-all shadow-sm"
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-[#0067B0] hover:bg-[#008b8b] text-white rounded-lg text-xs font-semibold transition-all shadow-sm"
                 >
                   <ChevronRight size={14} />
                   {p.status === "contacto_inicial" ? "Calificar prospecto" : `Avanzar a ${nextStage.label}`}
@@ -467,11 +467,11 @@ export function ProspectoDrawer({ prospecto, onClose }: Props) {
             <>
               {/* Qualify Lead Banner */}
               {p.status === "contacto_inicial" && (
-                <div className="mx-5 mt-4 rounded-xl border-2 border-[#00a8a8]/30 bg-gradient-to-r from-[#00a8a8]/5 to-[#0D47A1]/5 overflow-hidden">
+                <div className="mx-5 mt-4 rounded-xl border-2 border-[#0067B0]/30 bg-gradient-to-r from-[#0067B0]/5 to-[#0D47A1]/5 overflow-hidden">
                   <div className="px-4 py-3 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-full bg-[#00a8a8]/10 flex items-center justify-center">
-                        <Sparkles size={18} className="text-[#00a8a8]" />
+                      <div className="w-9 h-9 rounded-full bg-[#0067B0]/10 flex items-center justify-center">
+                        <Sparkles size={18} className="text-[#0067B0]" />
                       </div>
                       <div>
                         <div className="text-sm font-semibold text-[#1c2c4a]">Calificar Lead</div>
@@ -480,7 +480,7 @@ export function ProspectoDrawer({ prospecto, onClose }: Props) {
                     </div>
                     <button
                       onClick={() => setShowQualifyDialog(true)}
-                      className="px-4 py-2 bg-[#00a8a8] hover:bg-[#008b8b] text-white rounded-lg text-sm font-semibold transition-all shadow-sm"
+                      className="px-4 py-2 bg-[#0067B0] hover:bg-[#008b8b] text-white rounded-lg text-sm font-semibold transition-all shadow-sm"
                     >
                       Calificar
                     </button>
@@ -537,7 +537,7 @@ export function ProspectoDrawer({ prospecto, onClose }: Props) {
                             type="date"
                             value={seg?.fechaSeguimiento || ""}
                             onChange={(e) => guardarSeguimiento(p.id, { fechaSeguimiento: e.target.value })}
-                            className="w-full px-3 py-2 border border-[#e5e7eb] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#00a8a8]/30 focus:border-[#00a8a8]"
+                            className="w-full px-3 py-2 border border-[#e5e7eb] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0067B0]/30 focus:border-[#0067B0]"
                             min={new Date().toISOString().split("T")[0]}
                           />
                           {urgency && (
@@ -555,18 +555,18 @@ export function ProspectoDrawer({ prospecto, onClose }: Props) {
                             value={seg?.accion || ""}
                             onChange={(e) => guardarSeguimiento(p.id, { accion: e.target.value })}
                             placeholder="Ej: Revisar precios al vencer contrato"
-                            className="w-full px-3 py-2 border border-[#e5e7eb] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#00a8a8]/30 focus:border-[#00a8a8]"
+                            className="w-full px-3 py-2 border border-[#e5e7eb] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0067B0]/30 focus:border-[#0067B0]"
                           />
                         </div>
                         <div>
                           <label className="block text-[11px] font-semibold text-[#1c2c4a] mb-1 flex items-center gap-1">
-                            <CalendarClock size={12} className="text-[#00a8a8]" /> Vencimiento de contrato actual
+                            <CalendarClock size={12} className="text-[#0067B0]" /> Vencimiento de contrato actual
                           </label>
                           <input
                             type="date"
                             value={seg?.fechaVencimientoContrato || ""}
                             onChange={(e) => guardarSeguimiento(p.id, { fechaVencimientoContrato: e.target.value })}
-                            className="w-full px-3 py-2 border border-[#e5e7eb] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#00a8a8]/30 focus:border-[#00a8a8]"
+                            className="w-full px-3 py-2 border border-[#e5e7eb] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0067B0]/30 focus:border-[#0067B0]"
                           />
                         </div>
                         {cat?.suggestedActions && (
@@ -577,9 +577,9 @@ export function ProspectoDrawer({ prospecto, onClose }: Props) {
                                 <button
                                   key={idx}
                                   onClick={() => guardarSeguimiento(p.id, { accion })}
-                                  className="w-full text-left px-2.5 py-1.5 rounded-lg text-[11px] border border-[#e5e7eb] hover:border-[#00a8a8] hover:bg-[#00a8a8]/5 transition-all flex items-center gap-2"
+                                  className="w-full text-left px-2.5 py-1.5 rounded-lg text-[11px] border border-[#e5e7eb] hover:border-[#0067B0] hover:bg-[#0067B0]/5 transition-all flex items-center gap-2"
                                 >
-                                  <ChevronRight size={10} className="text-[#00a8a8] flex-shrink-0" />
+                                  <ChevronRight size={10} className="text-[#0067B0] flex-shrink-0" />
                                   <span className="text-[#1c2c4a]">{accion}</span>
                                 </button>
                               ))}
@@ -614,7 +614,7 @@ export function ProspectoDrawer({ prospecto, onClose }: Props) {
                                     changeProspectoStage(p.id, "contacto_inicial");
                                     guardarSeguimiento(p.id, { recoveryStatus: null, fechaSeguimiento: null });
                                   }}
-                                  className="px-3 py-2 rounded-lg bg-[#00a8a8] text-white text-xs font-semibold hover:bg-[#008080] transition-colors flex items-center justify-center gap-1.5"
+                                  className="px-3 py-2 rounded-lg bg-[#0067B0] text-white text-xs font-semibold hover:bg-[#008080] transition-colors flex items-center justify-center gap-1.5"
                                 >
                                   <RotateCcw size={12} /> Reactivar en Presupuesto
                                 </button>
@@ -1037,13 +1037,13 @@ export function ProspectoDrawer({ prospecto, onClose }: Props) {
                           }
                         }}
                         placeholder="Escribe una nota... (Enter guarda)"
-                        className="flex-1 border border-[#e5e7eb] rounded-lg px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#00a8a8]/30 focus:border-[#00a8a8]"
+                        className="flex-1 border border-[#e5e7eb] rounded-lg px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#0067B0]/30 focus:border-[#0067B0]"
                         rows={1}
                       />
                       <button
                         onClick={agregarNota}
                         disabled={!prospectoNuevaNota.trim()}
-                        className="self-end px-3 py-2 bg-[#00a8a8] hover:bg-[#008080] disabled:opacity-40 text-white rounded-lg text-sm font-medium transition-colors"
+                        className="self-end px-3 py-2 bg-[#0067B0] hover:bg-[#008080] disabled:opacity-40 text-white rounded-lg text-sm font-medium transition-colors"
                       >
                         <Send size={14} />
                       </button>
@@ -1056,6 +1056,7 @@ export function ProspectoDrawer({ prospecto, onClose }: Props) {
                               <p className="text-sm text-[#1c2c4a] flex-1 whitespace-pre-wrap">{nota.content}</p>
                               <button
                                 onClick={async () => {
+                                  if (!window.confirm("¿Eliminar esta nota?")) return;
                                   try {
                                     await deleteNoteMutation.mutateAsync({
                                       prospectId: realProspectId,
@@ -1088,7 +1089,7 @@ export function ProspectoDrawer({ prospecto, onClose }: Props) {
                   </SectionTitle>
                   <div className="space-y-2">
                     <div
-                      className="border border-dashed border-[#e5e7eb] hover:border-[#00a8a8] rounded-lg p-3 text-center transition-colors cursor-pointer"
+                      className="border border-dashed border-[#e5e7eb] hover:border-[#0067B0] rounded-lg p-3 text-center transition-colors cursor-pointer"
                       onClick={() => drawerFileRef.current?.click()}
                     >
                       <input
@@ -1121,6 +1122,7 @@ export function ProspectoDrawer({ prospecto, onClose }: Props) {
                             </div>
                             <button
                               onClick={async () => {
+                                if (!window.confirm(`¿Eliminar el documento "${archivo.fileName || ""}"?`)) return;
                                 try {
                                   await deleteDocumentMutation.mutateAsync({
                                     prospectId: realProspectId,

@@ -38,7 +38,7 @@ export function ComercialReports({ kanbanProspectos, salesTeamData }: ComercialR
       {/* Section 1: KPIs Semanales por Ejecutivo */}
       <div>
         <h3 className="text-xs font-bold text-[#1c2c4a] uppercase tracking-wider mb-3 flex items-center gap-2">
-          <Users size={14} className="text-[#00a8a8]" /> KPIs Mensuales por Ejecutivo
+          <Users size={14} className="text-[#0067B0]" /> KPIs Mensuales por Ejecutivo
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {ejecutivosKPIs.map((ej) => {

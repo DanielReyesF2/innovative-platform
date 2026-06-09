@@ -197,7 +197,7 @@ function InlineNoteItem({
               }
             }}
             rows={Math.min(10, Math.max(3, draft.split("\n").length))}
-            className="flex-1 resize-none border-[#00a8a8] focus-visible:ring-[#00a8a8]/30"
+            className="flex-1 resize-none border-[#0067B0] focus-visible:ring-[#0067B0]/30"
           />
         ) : (
           <button
@@ -219,7 +219,7 @@ function InlineNoteItem({
                 e.preventDefault();
                 save();
               }}
-              className="text-[#00a8a8] hover:bg-[#00a8a8]/10 p-1.5 rounded-md transition-colors"
+              className="text-[#0067B0] hover:bg-[#0067B0]/10 p-1.5 rounded-md transition-colors"
               title="Guardar (⌘/Ctrl + Enter)"
             >
               <Check className="h-4 w-4" />

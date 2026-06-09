@@ -135,7 +135,7 @@ export function InlineText({
             if (e.key === "Escape") cancel();
           }}
           rows={3}
-          className={`w-full rounded-md border border-[#00a8a8] bg-white px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-[#00a8a8]/30 ${className}`}
+          className={`w-full rounded-md border border-[#0067B0] bg-white px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-[#0067B0]/30 ${className}`}
           placeholder={placeholder}
         />
       );
@@ -154,7 +154,7 @@ export function InlineText({
           if (e.key === "Escape") cancel();
         }}
         placeholder={placeholder}
-        className={`rounded-md border border-[#00a8a8] bg-white px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-[#00a8a8]/30 ${className}`}
+        className={`rounded-md border border-[#0067B0] bg-white px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-[#0067B0]/30 ${className}`}
       />
     );
   }
@@ -236,7 +236,7 @@ export function InlineNumber({
         min={min}
         max={max}
         placeholder={placeholder}
-        className={`w-24 rounded-md border border-[#00a8a8] bg-white px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-[#00a8a8]/30 ${className}`}
+        className={`w-24 rounded-md border border-[#0067B0] bg-white px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-[#0067B0]/30 ${className}`}
       />
     );
   }
@@ -294,7 +294,7 @@ export function InlineSelect<T extends string>({
         onKeyDown={(e) => {
           if (e.key === "Escape") cancel();
         }}
-        className="rounded-md border border-[#00a8a8] bg-white px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-[#00a8a8]/30"
+        className="rounded-md border border-[#0067B0] bg-white px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-[#0067B0]/30"
       >
         <option value="">—</option>
         {options.map((opt) => (
@@ -360,7 +360,7 @@ export function InlineDate({ value, onSave, emptyLabel, displayClassName = "" }:
           }
           if (e.key === "Escape") cancel();
         }}
-        className="rounded-md border border-[#00a8a8] bg-white px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-[#00a8a8]/30"
+        className="rounded-md border border-[#0067B0] bg-white px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-[#0067B0]/30"
       />
     );
   }
@@ -427,7 +427,7 @@ export function InlineMonth({ value, onSave, emptyLabel, displayClassName = "" }
           }
           if (e.key === "Escape") cancel();
         }}
-        className="rounded-md border border-[#00a8a8] bg-white px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-[#00a8a8]/30"
+        className="rounded-md border border-[#0067B0] bg-white px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-[#0067B0]/30"
       />
     );
   }
@@ -461,7 +461,7 @@ export function InlineChips<T extends string>({
   options,
   onSave,
   emptyLabel,
-  activeClassName = "bg-[#00a8a8] text-white",
+  activeClassName = "bg-[#0067B0] text-white",
   inactiveClassName = "bg-[#f3f4f6] text-[#6b7280] hover:bg-[#e5e7eb]",
 }: InlineChipsProps<T>) {
   const { toast } = useToast();

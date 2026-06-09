@@ -193,7 +193,7 @@ export function ReviewSurveyModal({ survey, onClose, users = [] }: ReviewSurveyM
                   <div className="grid gap-3 sm:grid-cols-3">
                     <ParticipantArea
                       label="Comercial"
-                      color="#00a8a8"
+                      color="#0067B0"
                       names={scheduling.responsibleNames}
                       ids={scheduling.participantsByArea.comercial}
                       allIds={scheduling.responsibleIds}

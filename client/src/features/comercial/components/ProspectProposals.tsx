@@ -116,7 +116,7 @@ function ProposalAmountInput({ prospectId: pid, proposal }: { prospectId: number
             if (e.key === "Enter" && value.trim()) saveMutation.mutate(value);
             if (e.key === "Escape") setEditing(false);
           }}
-          className="w-28 px-1.5 py-0.5 text-sm border border-[#00a8a8] rounded focus:outline-none focus:ring-1 focus:ring-[#00a8a8]"
+          className="w-28 px-1.5 py-0.5 text-sm border border-[#0067B0] rounded focus:outline-none focus:ring-1 focus:ring-[#0067B0]"
           placeholder="0.00"
         />
       </span>
@@ -126,7 +126,7 @@ function ProposalAmountInput({ prospectId: pid, proposal }: { prospectId: number
   return (
     <button
       onClick={() => setEditing(true)}
-      className="flex items-center gap-1 hover:text-[#00a8a8] transition-colors"
+      className="flex items-center gap-1 hover:text-[#0067B0] transition-colors"
       title="Click para editar monto"
     >
       <DollarSign className="h-3.5 w-3.5" />
@@ -255,8 +255,8 @@ export function ProspectProposals({ prospectId }: ProspectProposalsProps) {
       <div
         className={`border-2 border-dashed rounded-xl p-6 text-center transition-all cursor-pointer mb-4 ${
           isDragging
-            ? "border-[#00a8a8] bg-[#00a8a8]/5"
-            : "border-[#e5e7eb] hover:border-[#00a8a8]/50 hover:bg-[#f9fafb]"
+            ? "border-[#0067B0] bg-[#0067B0]/5"
+            : "border-[#e5e7eb] hover:border-[#0067B0]/50 hover:bg-[#f9fafb]"
         }`}
         onDragEnter={handleDragEnter}
         onDragLeave={handleDragLeave}
@@ -274,12 +274,12 @@ export function ProspectProposals({ prospectId }: ProspectProposalsProps) {
         />
         {uploading ? (
           <div className="flex flex-col items-center gap-2">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#00a8a8]" />
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0067B0]" />
             <span className="text-sm text-[#6b7280]">Subiendo propuesta...</span>
           </div>
         ) : (
           <div className="flex flex-col items-center gap-2">
-            <Upload className={`h-8 w-8 ${isDragging ? "text-[#00a8a8]" : "text-[#9ca3af]"}`} />
+            <Upload className={`h-8 w-8 ${isDragging ? "text-[#0067B0]" : "text-[#9ca3af]"}`} />
             <span className="text-sm font-medium text-[#6b7280]">
               {isDragging ? "Suelta tu propuesta aquí" : "Arrastra tu propuesta o haz click para seleccionar"}
             </span>
@@ -362,7 +362,7 @@ export function ProspectProposals({ prospectId }: ProspectProposalsProps) {
                     <button
                       onClick={() => handleSendProposal(proposal.id)}
                       disabled={sendProposal.isPending}
-                      className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-lg bg-[#00a8a8] text-white hover:bg-[#008b8b] disabled:opacity-50"
+                      className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-lg bg-[#0067B0] text-white hover:bg-[#008b8b] disabled:opacity-50"
                     >
                       <Send className="h-3.5 w-3.5" /> Marcar como Enviada
                     </button>

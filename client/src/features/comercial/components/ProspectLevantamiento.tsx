@@ -190,7 +190,7 @@ function WasteTypesSection({
                       onClick={() => setQuantity(quantityValue, "kg")}
                       className={`px-2.5 text-xs font-medium transition-colors ${
                         quantityUnit === "kg"
-                          ? "bg-[#00a8a8] text-white"
+                          ? "bg-[#0067B0] text-white"
                           : "bg-background text-[#6b7280] hover:bg-[#f3f4f6]"
                       }`}
                       aria-pressed={quantityUnit === "kg"}
@@ -202,7 +202,7 @@ function WasteTypesSection({
                       onClick={() => setQuantity(quantityValue, "ton")}
                       className={`px-2.5 text-xs font-medium transition-colors ${
                         quantityUnit === "ton"
-                          ? "bg-[#00a8a8] text-white"
+                          ? "bg-[#0067B0] text-white"
                           : "bg-background text-[#6b7280] hover:bg-[#f3f4f6]"
                       }`}
                       aria-pressed={quantityUnit === "ton"}
@@ -375,7 +375,7 @@ export function ProspectLevantamiento({ prospectId }: ProspectLevantamientoProps
   if (isLoading || !initialized) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#00a8a8]" />
+        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#0067B0]" />
       </div>
     );
   }
@@ -581,7 +581,7 @@ export function ProspectLevantamiento({ prospectId }: ProspectLevantamientoProps
             <div className="space-y-3">
               <AreaParticipants
                 label="Comercial"
-                color="#00a8a8"
+                color="#0067B0"
                 selectedIds={partComercial}
                 // Users con area 'comercial' + los que aún no tienen área asignada
                 // (legacy) caen aquí por default para no perderlos de la lista.
@@ -710,7 +710,7 @@ export function ProspectLevantamiento({ prospectId }: ProspectLevantamientoProps
           <Button
             onClick={handleSendToOps}
             disabled={sendToOps.isPending || updateProspect.isPending}
-            className="bg-[#00a8a8] hover:bg-[#008b8b]"
+            className="bg-[#0067B0] hover:bg-[#008b8b]"
           >
             <Send className="mr-1 h-4 w-4" />
             {sendToOps.isPending || updateProspect.isPending ? "Enviando..." : "Agendar Levantamiento"}

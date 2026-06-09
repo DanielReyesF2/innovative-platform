@@ -227,7 +227,7 @@ export function AgendarReunionModal({ prospecto, onClose, onAdvanced }: Props) {
                   onClick={() => setMeetingType(opt)}
                   className={`flex-1 rounded-md px-4 py-2 text-sm font-medium border transition-colors ${
                     meetingType === opt
-                      ? "bg-[#00a8a8] text-white border-[#00a8a8]"
+                      ? "bg-[#0067B0] text-white border-[#0067B0]"
                       : "bg-white text-[#6b7280] border-[#e5e7eb] hover:bg-[#f3f4f6]"
                   }`}
                 >
@@ -263,7 +263,7 @@ export function AgendarReunionModal({ prospecto, onClose, onAdvanced }: Props) {
             </p>
             <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-4">
               {renderAttendeeList("prospect", "Del prospecto", "#0D47A1")}
-              {renderAttendeeList("innovative", "De Innovative", "#00a8a8")}
+              {renderAttendeeList("innovative", "De Innovative", "#0067B0")}
             </div>
           </div>
         </div>
@@ -280,7 +280,7 @@ export function AgendarReunionModal({ prospecto, onClose, onAdvanced }: Props) {
             <Button
               onClick={handleSubmit}
               disabled={!canSubmit || createMeeting.isPending || updateProspect.isPending}
-              className="bg-[#00a8a8] hover:bg-[#008b8b]"
+              className="bg-[#0067B0] hover:bg-[#008b8b]"
             >
               {createMeeting.isPending || updateProspect.isPending ? "Agendando..." : "Agendar y avanzar"}
             </Button>

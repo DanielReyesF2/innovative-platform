@@ -77,7 +77,7 @@ function TrazabilidadView() {
         </p>
         <button
           onClick={() => window.location.reload()}
-          className="mt-2 px-4 py-2 text-sm font-medium text-white bg-[#00a8a8] rounded-lg hover:bg-[#008f8f]"
+          className="mt-2 px-4 py-2 text-sm font-medium text-white bg-[#0067B0] rounded-lg hover:bg-[#00558f]"
         >
           Recargar
         </button>

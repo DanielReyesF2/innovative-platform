@@ -166,7 +166,7 @@ export const KANBAN_STAGES = [
   { id: STAGE.CONTACTO_INICIAL, label: "Lead", color: "#6b7280", prob: "5%" },
   { id: STAGE.PRESENTACION, label: "Prospecto", color: "#0D47A1", prob: "20%" },
   { id: STAGE.LEVANTAMIENTO, label: "Reunión", color: "#F57C00", prob: "35%" },
-  { id: STAGE.PROPUESTA, label: "Agendar levantamiento", color: "#00a8a8", prob: "50%" },
+  { id: STAGE.PROPUESTA, label: "Agendar levantamiento", color: "#0067B0", prob: "50%" },
   { id: STAGE.NEGOCIACION, label: "Propuesta", color: "#7C3AED", prob: "70%" },
   { id: STAGE.CIERRE_GANADO, label: "Socio Ambiental", color: "#2E7D32", prob: "100%" },
 ] as const;
@@ -304,7 +304,7 @@ export const MONTH_LABELS = [
 ];
 
 export const COLORS_INNOVATIVE = {
-  primary: "#00a8a8",
+  primary: "#0067B0",
   secondary: "#008080",
   accent: "#00b3b3",
   blue: "#008080",
@@ -315,7 +315,7 @@ export const COLORS_INNOVATIVE = {
   textGray: "#6b7280",
 };
 
-export const COLORS_CHART = ["#00a8a8", "#0D47A1", "#008080", "#F57C00", "#2E7D32"];
+export const COLORS_CHART = ["#0067B0", "#0D47A1", "#008080", "#F57C00", "#2E7D32"];
 
 // ═══════ HELPER FUNCTIONS ═══════
 
@@ -514,7 +514,7 @@ export function proposalDeadlineChip(p: KanbanProspecto): {
   if (diffBusiness <= 1) {
     return { label: `Vence hoy`, color: "#F57C00", bg: "#FFF7ED", overdue: false };
   }
-  return { label: `Vence en ${diffBusiness}d hábiles`, color: "#00a8a8", bg: "#ECFEFE", overdue: false };
+  return { label: `Vence en ${diffBusiness}d hábiles`, color: "#0067B0", bg: "#ECFEFE", overdue: false };
 }
 
 export const calcularPipelineData = (prospectos: KanbanProspecto[]) => {
@@ -760,7 +760,7 @@ export function ExecutiveAvatar({
   if (imgError) {
     return (
       <div
-        className={`${s} rounded-full bg-gradient-to-br from-[#00a8a8] to-[#0D47A1] flex items-center justify-center text-white font-bold flex-shrink-0 shadow-sm ${className}`}
+        className={`${s} rounded-full bg-gradient-to-br from-[#0067B0] to-[#0D47A1] flex items-center justify-center text-white font-bold flex-shrink-0 shadow-sm ${className}`}
       >
         {fallback}
       </div>
