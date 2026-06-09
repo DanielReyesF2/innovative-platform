@@ -212,6 +212,43 @@ export function useReturnSurvey() {
   });
 }
 
+// ─── Survey Versions (Feature de Luis, Hueco 2/3) ───────
+
+export interface SurveyVersionRow {
+  id: number;
+  surveyId: number;
+  version: number;
+  status: "pendiente_aprobacion" | "aprobado" | "rechazado";
+  submittedById: number | null;
+  submittedAt: string | null;
+  reviewedById: number | null;
+  reviewedAt: string | null;
+  rejectionReason: string | null;
+  createdAt: string | null;
+}
+
+export function useSurveyVersions(surveyId: number | null) {
+  return useQuery<SurveyVersionRow[]>({
+    queryKey: [`/api/operaciones/surveys/${surveyId}/versions`],
+    enabled: !!surveyId,
+  });
+}
+
+export function useReopenSurvey() {
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const res = await apiRequest("POST", `/api/operaciones/surveys/${id}/reopen`, {});
+      return res.json();
+    },
+    onSuccess: (_data: any, id: number) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/operaciones/surveys"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/operaciones/surveys/approved"] });
+      queryClient.invalidateQueries({ queryKey: [`/api/operaciones/surveys/${id}`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/operaciones/surveys/${id}/versions`] });
+    },
+  });
+}
+
 // ─── Generic sub-item CRUD hook factory ─────────────────
 
 function createSubItemHooks(resource: string) {

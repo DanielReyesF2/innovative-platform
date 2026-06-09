@@ -33,6 +33,14 @@ export const surveyStatusEnum = pgEnum("survey_status", [
 
 export const documentStatusEnum = pgEnum("document_status", ["vigente", "por_vencer", "vencido"]);
 
+// Versionado de levantamientos (Feature de Luis, Hueco 2/3). Cada snapshot que se
+// manda a aprobación nace "pendiente_aprobacion"; Luis lo deja "aprobado" o "rechazado".
+export const surveyVersionStatusEnum = pgEnum("survey_version_status", [
+  "pendiente_aprobacion",
+  "aprobado",
+  "rechazado",
+]);
+
 // ─── Zod schemas for JSONB columns ──────────────────────
 
 export const installationsSchema = z.object({
@@ -511,6 +519,37 @@ export const operationalDocuments = pgTable("operational_documents", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// ─── Survey Versions (Feature de Luis, Hueco 2/3) ───────
+// Snapshot congelado del levantamiento completo (fila surveys + las 12 colecciones
+// hijas, tal como las arma getSurveyById) por cada envío a aprobación. El historial
+// vive aquí: v1 rechazado → v2 rechazado → v3 aprobado.
+//
+// UNIQUE (surveyId, version): garantiza numeración max(version)+1 sin huecos ni
+// dobles por carrera (corrige el patrón count+1 de proposalVersions).
+
+export const surveyVersions = pgTable(
+  "survey_versions",
+  {
+    id: serial("id").primaryKey(),
+    surveyId: integer("survey_id")
+      .references(() => surveys.id)
+      .notNull(),
+    version: integer("version").notNull(),
+    snapshot: jsonb("snapshot").notNull(),
+    status: surveyVersionStatusEnum("status").notNull().default("pendiente_aprobacion"),
+    submittedById: integer("submitted_by_id").references(() => users.id),
+    submittedAt: timestamp("submitted_at").defaultNow(),
+    reviewedById: integer("reviewed_by_id").references(() => users.id),
+    reviewedAt: timestamp("reviewed_at"),
+    rejectionReason: text("rejection_reason"),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (table) => ({
+    surveyIdIdx: index("survey_versions_survey_id_idx").on(table.surveyId),
+    surveyVersionUniq: uniqueIndex("survey_versions_survey_version_uniq").on(table.surveyId, table.version),
+  }),
+);
+
 // ─── Insert schemas ─────────────────────────────────────
 
 export const insertSurveySchema = createInsertSchema(surveys, {
@@ -610,6 +649,7 @@ export type SurveyMaintenance = typeof surveyMaintenance.$inferSelect;
 export type SurveyExpense = typeof surveyExpenses.$inferSelect;
 export type OperationalDocument = typeof operationalDocuments.$inferSelect;
 export type InsertDocument = z.infer<typeof insertDocumentSchema>;
+export type SurveyVersion = typeof surveyVersions.$inferSelect;
 
 export type Installations = z.infer<typeof installationsSchema>;
 export type PersonnelPolicies = z.infer<typeof personnelPoliciesSchema>;

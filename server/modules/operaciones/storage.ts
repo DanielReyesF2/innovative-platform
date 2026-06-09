@@ -26,6 +26,7 @@ import {
   surveySubproducts,
   surveyTools,
   surveys,
+  surveyVersions,
   surveyWasteTypes,
   transportPoliciesSchema,
 } from "../../../shared/schema/operaciones";
@@ -155,6 +156,16 @@ function isLockedStatus(status: string | null | undefined): boolean {
   return status === "completado" || status === "pendiente_revision";
 }
 
+// Backend lock para sub-ítems (fotos, subproductos, etc.). El guard de routes lo
+// usa para 409ear mutaciones cuando el levantamiento está congelado.
+export async function isSurveyLocked(id: number): Promise<boolean> {
+  const survey = await db.query.surveys.findFirst({
+    where: eq(surveys.id, id),
+    columns: { status: true },
+  });
+  return isLockedStatus(survey?.status);
+}
+
 export async function updateSurvey(id: number, data: Partial<InsertSurvey>) {
   const current = await db.query.surveys.findFirst({
     where: eq(surveys.id, id),
@@ -280,7 +291,7 @@ function isFieldFilled(value: any): boolean {
 
 // ─── Status advancement with gate validation ────────────
 
-export async function advanceSurveyStatus(id: number, targetStatus: string) {
+export async function advanceSurveyStatus(id: number, targetStatus: string, actorId?: number) {
   const survey = await db.query.surveys.findFirst({
     where: eq(surveys.id, id),
   });
@@ -332,6 +343,11 @@ export async function advanceSurveyStatus(id: number, targetStatus: string) {
   }
 
   const [updated] = await db.update(surveys).set(updateData).where(eq(surveys.id, id)).returning();
+
+  // Enviar a aprobación = congelar snapshot vN (Feature de Luis, Hueco 2/3).
+  if (targetStatus === "completado") {
+    await createSurveyVersion(id, actorId);
+  }
 
   return { success: true, survey: updated };
 }
@@ -696,6 +712,103 @@ export async function getApprovedSurveys() {
   });
 }
 
+// ─── Survey Versions (Feature de Luis, Hueco 2/3) ───────
+
+// Congela el levantamiento completo (vN) al mandarlo a aprobación. La numeración es
+// max(version)+1, NUNCA count+1: tras un rechazo+reenvío un count reusaría números.
+// El UNIQUE (surveyId, version) ataja además una doble-numeración por carrera.
+export async function createSurveyVersion(surveyId: number, submittedById?: number | null) {
+  const fullSurvey = await getSurveyById(surveyId);
+  if (!fullSurvey) throw new Error("Levantamiento no encontrado");
+
+  const [{ maxVersion }] = await db
+    .select({ maxVersion: sql<number>`COALESCE(MAX(${surveyVersions.version}), 0)::int` })
+    .from(surveyVersions)
+    .where(eq(surveyVersions.surveyId, surveyId));
+
+  const [created] = await db
+    .insert(surveyVersions)
+    .values({
+      surveyId,
+      version: maxVersion + 1,
+      snapshot: fullSurvey,
+      status: "pendiente_aprobacion",
+      submittedById: submittedById ?? null,
+    })
+    .returning();
+  return created;
+}
+
+// Cierra la versión viva (la última en pendiente_aprobacion) con el veredicto de
+// Luis. Tolera ausencia: levantamientos previos al feature no tienen versión y no
+// deben romper el flujo de aprobación.
+async function resolveLatestPendingVersion(
+  surveyId: number,
+  status: "aprobado" | "rechazado",
+  reviewedById: number,
+  rejectionReason?: string | null,
+) {
+  const latest = await db.query.surveyVersions.findFirst({
+    where: and(eq(surveyVersions.surveyId, surveyId), eq(surveyVersions.status, "pendiente_aprobacion")),
+    orderBy: [desc(surveyVersions.version)],
+  });
+  if (!latest) return null;
+
+  const [updated] = await db
+    .update(surveyVersions)
+    .set({
+      status,
+      reviewedById,
+      reviewedAt: new Date(),
+      rejectionReason: rejectionReason ?? null,
+    })
+    .where(eq(surveyVersions.id, latest.id))
+    .returning();
+  return updated;
+}
+
+// Historial para el detalle (sin el blob snapshot, que puede ser grande).
+export async function getSurveyVersions(surveyId: number) {
+  return db.query.surveyVersions.findMany({
+    where: eq(surveyVersions.surveyId, surveyId),
+    orderBy: [desc(surveyVersions.version)],
+    columns: { snapshot: false },
+  });
+}
+
+// Snapshot congelado de UNA versión (para ver cómo estaba el levantamiento).
+export async function getSurveyVersionById(surveyId: number, versionRowId: number) {
+  return db.query.surveyVersions.findFirst({
+    where: and(eq(surveyVersions.surveyId, surveyId), eq(surveyVersions.id, versionRowId)),
+  });
+}
+
+// Reabrir un levantamiento APROBADO (decisión de Daniel: reabrir CON versión).
+// Solo rol director (permiso surveys.reopen) — él aprobó, él reabre. Vuelve a
+// en_sitio (editable); el próximo envío a aprobación crea v(N+1) vía
+// advanceSurveyStatus. La versión aprobada previa queda intacta en el historial.
+export async function reopenApprovedSurvey(id: number, reopenedById: number) {
+  const survey = await db.query.surveys.findFirst({ where: eq(surveys.id, id) });
+  if (!survey) throw new Error("NOT_FOUND");
+  if (survey.status !== "pendiente_revision") {
+    throw new Error("CONFLICT:Solo se pueden reabrir levantamientos aprobados");
+  }
+
+  const [updated] = await db
+    .update(surveys)
+    .set({
+      status: "en_sitio" as Survey["status"],
+      approvedById: null,
+      approvedAt: null,
+      updatedAt: new Date(),
+    })
+    .where(eq(surveys.id, id))
+    .returning();
+
+  console.warn(`[operaciones] Levantamiento ${id} reabierto por usuario ${reopenedById} (estaba aprobado)`);
+  return updated;
+}
+
 export async function approveSurvey(id: number, approvedById: number, notes?: string) {
   const survey = await db.query.surveys.findFirst({ where: eq(surveys.id, id) });
   if (!survey) throw new Error("NOT_FOUND");
@@ -714,6 +827,9 @@ export async function approveSurvey(id: number, approvedById: number, notes?: st
     })
     .where(eq(surveys.id, id))
     .returning();
+
+  // Cierra la versión viva como "aprobado" (Hueco 2/3).
+  await resolveLatestPendingVersion(id, "aprobado", approvedById);
   return updated;
 }
 
@@ -735,6 +851,10 @@ export async function returnSurvey(id: number, reason: string, rejectedById: num
     })
     .where(eq(surveys.id, id))
     .returning();
+
+  // Cierra la versión viva como "rechazado" con el motivo (Hueco 2/3). Al reenviar
+  // a aprobación nacerá v(N+1).
+  await resolveLatestPendingVersion(id, "rechazado", rejectedById, reason);
   return updated;
 }
 

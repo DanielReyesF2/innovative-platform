@@ -94,6 +94,10 @@ import {
   getSurveySummary,
   getSurveys,
   getSurveysByStatus,
+  getSurveyVersions,
+  getSurveyVersionById,
+  isSurveyLocked,
+  reopenApprovedSurvey,
   rejectSurvey,
   returnSurvey,
   updateDocument,
@@ -347,6 +351,44 @@ router.post("/surveys/:id/return", requirePermission(PERMISSIONS.SURVEYS_RETURN)
   }
 });
 
+// Reabrir un levantamiento aprobado (Hueco 2/3). Solo director (surveys.reopen):
+// él aprobó, él reabre. Vuelve a editable; el próximo envío crea v(N+1).
+router.post("/surveys/:id/reopen", requirePermission(PERMISSIONS.SURVEYS_REOPEN), async (req, res) => {
+  try {
+    const result = await reopenApprovedSurvey(Number(req.params.id), req.user!.id);
+    res.json(result);
+  } catch (error: unknown) {
+    console.error("[operaciones] Reopen survey error:", error);
+    const msg = getErrorMessage(error);
+    if (msg.startsWith("NOT_FOUND")) return res.status(404).json({ message: "Levantamiento no encontrado" });
+    if (msg.startsWith("CONFLICT:")) return res.status(409).json({ message: msg.slice(9) });
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+// Historial de versiones del levantamiento (sin el blob snapshot).
+router.get("/surveys/:id/versions", async (req, res) => {
+  try {
+    const versions = await getSurveyVersions(Number(req.params.id));
+    res.json(versions);
+  } catch (error) {
+    console.error("[operaciones] Get survey versions error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+// Snapshot congelado de una versión específica (para ver cómo estaba).
+router.get("/surveys/:id/versions/:versionId", async (req, res) => {
+  try {
+    const version = await getSurveyVersionById(Number(req.params.id), Number(req.params.versionId));
+    if (!version) return res.status(404).json({ message: "Versión no encontrada" });
+    res.json(version);
+  } catch (error) {
+    console.error("[operaciones] Get survey version error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
 router.get("/surveys/summary", async (_req, res) => {
   try {
     const summary = await getSurveySummary();
@@ -473,7 +515,7 @@ router.post("/surveys/:id/advance", async (req, res) => {
       return res.status(400).json({ message: "targetStatus requerido", errors: parsed.error.errors });
     }
 
-    const result = await advanceSurveyStatus(Number(req.params.id), parsed.data.targetStatus);
+    const result = await advanceSurveyStatus(Number(req.params.id), parsed.data.targetStatus, req.user?.id);
     if (!result.success) {
       return res.status(422).json(result);
     }
@@ -481,6 +523,29 @@ router.post("/surveys/:id/advance", async (req, res) => {
   } catch (error: unknown) {
     console.error("[operaciones] Advance status error:", error);
     res.status(400).json({ message: getErrorMessage(error) });
+  }
+});
+
+// ─── Bulletproofing: lock server-side de sub-ítems (Feature de Luis) ───────
+// updateSurvey / updateSurveySection ya lanzan SURVEY_LOCKED, pero los sub-ítems
+// (waste-types, fotos, subproductos, servicios, proposal-*, herramientas,
+// mantenimiento, gastos) se mutaban sin gate — la UI los deshabilita, pero el
+// endpoint quedaba abierto. Este guard cierra el hueco: cualquier mutación de
+// sub-ítem se 409ea si el levantamiento está congelado (completado |
+// pendiente_revision). Va montado AQUÍ a propósito: solo afecta las rutas de
+// sub-ítems registradas debajo; las de acción (advance/approve/return/reopen) y
+// el CRUD del survey quedan arriba, intactas. Los GET siempre pasan (ver/leer un
+// levantamiento aprobado es válido).
+router.use("/surveys/:id", async (req, res, next) => {
+  if (req.method === "GET") return next();
+  try {
+    if (await isSurveyLocked(Number(req.params.id))) {
+      return res.status(409).json({ message: "SURVEY_LOCKED", code: "SURVEY_LOCKED" });
+    }
+    next();
+  } catch (error: unknown) {
+    console.error("[operaciones] Lock guard error:", error);
+    res.status(500).json({ message: "Internal server error" });
   }
 });
 

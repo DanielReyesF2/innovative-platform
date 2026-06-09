@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { useAdvanceSurveyStatus, useGateStatus, useSurvey, useUpdateSurvey, useUpdateSurveySection } from "../api";
 import SurveySection from "./SurveySection";
+import SurveyVersionHistory from "./SurveyVersionHistory";
 import AreaOperacionSection from "./sections/AreaOperacionSection";
 import EquipoPermitidoSection from "./sections/EquipoPermitidoSection";
 import FotosSection from "./sections/FotosSection";
@@ -24,6 +25,8 @@ const STATUS_LABELS: Record<string, string> = {
   agendado: "Agendado",
   en_sitio: "En Sitio",
   completado: "Completado",
+  pendiente_revision: "Aprobado",
+  rechazado: "Rechazado",
   cancelado: "Cancelado",
 };
 
@@ -33,6 +36,8 @@ const STATUS_COLORS: Record<string, string> = {
   agendado: "bg-yellow-100 text-yellow-800",
   en_sitio: "bg-orange-100 text-orange-800",
   completado: "bg-green-100 text-green-800",
+  pendiente_revision: "bg-emerald-100 text-emerald-800",
+  rechazado: "bg-red-100 text-red-800",
   cancelado: "bg-gray-100 text-gray-800",
 };
 
@@ -190,6 +195,9 @@ export default function SurveyForm({ surveyId }: SurveyFormProps) {
           </div>
         </div>
       </div>
+
+      {/* Historial de versiones + reabrir (Feature de Luis, Hueco 2/3) */}
+      <SurveyVersionHistory surveyId={surveyId} surveyStatus={survey.status} />
 
       {/* Progress bar */}
       <div className="rounded-lg border p-3">
