@@ -28,6 +28,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
+import { openProspectFile } from "../open-file";
 import { getAuthToken, invalidateByPrefix } from "@/lib/queryClient";
 import { useCreateDocument, useDeleteDocument, useProspectDocuments } from "../api";
 
@@ -424,10 +425,20 @@ export function ProspectDocuments({ prospectId }: ProspectDocumentsProps) {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Button size="icon" variant="ghost" asChild>
-                        <a href={doc.url} target="_blank" rel="noopener noreferrer">
-                          <Download className="h-4 w-4" />
-                        </a>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() =>
+                          openProspectFile(doc.url).catch(() =>
+                            toast({
+                              title: "No se pudo abrir el archivo",
+                              description: "El archivo no está disponible.",
+                              variant: "destructive",
+                            }),
+                          )
+                        }
+                      >
+                        <Download className="h-4 w-4" />
                       </Button>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>

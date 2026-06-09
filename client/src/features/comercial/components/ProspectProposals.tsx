@@ -9,6 +9,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { apiRequest, getAuthToken, invalidateByPrefix } from "@/lib/queryClient";
 import { fmtCurrency } from "@/lib/utils";
 import { useChangeProposalStatus, useProposalVersions, useSendProposal, useUpdateProposal } from "../api";
+import { openProspectFile } from "../open-file";
 import { InlineNumber, InlineText } from "./InlineEdit";
 
 interface ProspectProposalsProps {
@@ -338,14 +339,21 @@ export function ProspectProposals({ prospectId }: ProspectProposalsProps) {
                     <ProposalDetails prospectId={prospectId} proposal={proposal} />
                   </div>
 
-                  <a
-                    href={proposal.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <button
+                    type="button"
+                    onClick={() =>
+                      openProspectFile(proposal.url).catch(() =>
+                        toast({
+                          title: "No se pudo abrir la propuesta",
+                          description: "El archivo no está disponible.",
+                          variant: "destructive",
+                        }),
+                      )
+                    }
                     className="p-2 hover:bg-muted rounded-lg transition-colors"
                   >
                     <ExternalLink className="h-4 w-4 text-muted-foreground" />
-                  </a>
+                  </button>
                 </div>
 
                 {/* Actions */}

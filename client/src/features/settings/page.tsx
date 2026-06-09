@@ -11,6 +11,7 @@ import {
   ToggleLeft,
   ToggleRight,
   Trash2,
+  UploadCloud,
   Users,
 } from "lucide-react";
 import { useState } from "react";
@@ -42,8 +43,9 @@ import {
   EditUserModal,
   ResetPasswordModal,
 } from "./components/modals";
+import { RestoreFilesTab } from "./components/RestoreFiles";
 
-type TabKey = "usuarios" | "roles" | "areas" | "empresa" | "modulos";
+type TabKey = "usuarios" | "roles" | "areas" | "empresa" | "modulos" | "recuperacion";
 
 const TABS: { key: TabKey; label: string; icon: React.ReactNode }[] = [
   { key: "usuarios", label: "Usuarios", icon: <Users className="h-4 w-4" /> },
@@ -51,6 +53,7 @@ const TABS: { key: TabKey; label: string; icon: React.ReactNode }[] = [
   { key: "areas", label: "Areas", icon: <Layers className="h-4 w-4" /> },
   { key: "empresa", label: "Empresa", icon: <Building2 className="h-4 w-4" /> },
   { key: "modulos", label: "Modulos", icon: <Package className="h-4 w-4" /> },
+  { key: "recuperacion", label: "Recuperación", icon: <UploadCloud className="h-4 w-4" /> },
 ];
 
 const ROLE_COLORS: Record<string, string> = {
@@ -92,6 +95,7 @@ export default function SettingsPage() {
       {activeTab === "areas" && <AreasTab />}
       {activeTab === "empresa" && <EmpresaTab />}
       {activeTab === "modulos" && <ModulosTab />}
+      {activeTab === "recuperacion" && <RestoreFilesTab />}
     </div>
   );
 }
