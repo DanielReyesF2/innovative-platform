@@ -1,6 +1,7 @@
 import type { DragEndEvent, DragStartEvent } from "@dnd-kit/core";
 import { closestCenter, DndContext, DragOverlay, useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { isLostStage, isWonStage } from "@shared/schema/comercial-stages";
 import type { PendingMove, TeamMember } from "@shared/types/comercial";
 import {
   AlertCircle,
@@ -105,6 +106,19 @@ export function EjecutivoHub({ member, onBack, onShowNuevoLead }: Props) {
       if (!targetStage || targetStage === prospecto.status) return;
       const validStages: string[] = KANBAN_STAGES.map((s) => s.id);
       if (!validStages.includes(targetStage)) return;
+      // H10: reopening a closed deal (won/lost) back to an active stage needs an
+      // explicit confirm — it leaves the close metrics. Skips the forward gate
+      // (it's a reopen, not a fresh progression) and flags reopen for the backend.
+      const wasClosed = isWonStage(prospecto.status) || isLostStage(prospecto.status);
+      const goingActive = !(isWonStage(targetStage) || isLostStage(targetStage));
+      if (wasClosed && goingActive) {
+        if (!window.confirm("¿Reabrir este negocio cerrado? Saldrá de las métricas de cierre.")) return;
+        updateProspectMutation.mutate(
+          { id: prospecto.id, stage: targetStage, reopen: true },
+          { onError: () => toast({ title: "Error al reabrir el negocio", variant: "destructive" }) },
+        );
+        return;
+      }
       const gate = STAGE_GATES[targetStage];
       if (gate && !gate.validate(prospecto)) {
         setShowStageGateModal(true);

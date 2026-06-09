@@ -251,10 +251,16 @@ router.patch("/prospects/:id", async (req, res) => {
     if (!allowed.success) {
       return res.status(400).json({ message: "Datos invalidos", errors: allowed.error.errors });
     }
-    const updated = await updateProspect(Number(req.params.id), allowed.data, req.user?.id);
+    // `reopen` isn't part of the prospect schema (it's an action flag), so read
+    // it from the raw body to allow moving a closed deal back to an active stage.
+    const reopen = req.body?.reopen === true;
+    const updated = await updateProspect(Number(req.params.id), allowed.data, req.user?.id, reopen);
     if (!updated) return res.status(404).json({ message: "Prospecto no encontrado" });
     res.json(updated);
-  } catch (error) {
+  } catch (error: unknown) {
+    if (error instanceof Error && error.message === "CLOSED_PROSPECT_LOCKED") {
+      return res.status(409).json({ message: "Este negocio está cerrado. Reábrelo para moverlo." });
+    }
     console.error("[comercial] Update prospect error:", error);
     res.status(500).json({ message: "Internal server error" });
   }

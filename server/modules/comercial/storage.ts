@@ -170,7 +170,7 @@ function isSchedulingComplete(levData: any): boolean {
   return true;
 }
 
-export async function updateProspect(id: number, data: Partial<InsertProspect>, actorId?: number) {
+export async function updateProspect(id: number, data: Partial<InsertProspect>, actorId?: number, reopen = false) {
   // If stage is about to change (either from caller or from our auto-advance
   // below), snapshot the old one so we can log the transition.
   const current = await db.query.prospects.findFirst({
@@ -178,6 +178,16 @@ export async function updateProspect(id: number, data: Partial<InsertProspect>, 
     columns: { stage: true, surveyDate: true, proposalDeadline: true, assignedToId: true, name: true },
   });
   const oldStage = current?.stage ?? null;
+
+  // H10: a closed deal (won/lost) shouldn't silently revert to an active stage —
+  // it would leave the close metrics that Dirección sees without a trace. Require
+  // an explicit reopen (confirmed in the UI) to move out of a closed stage.
+  const movingTo = typeof data.stage === "string" ? data.stage : null;
+  const wasClosed = oldStage ? isWonStage(oldStage) || isLostStage(oldStage) : false;
+  const goingActive = movingTo ? !(isWonStage(movingTo) || isLostStage(movingTo)) : false;
+  if (wasClosed && movingTo && goingActive && !reopen) {
+    throw new Error("CLOSED_PROSPECT_LOCKED");
+  }
 
   // Auto-advance rule (Fase 2 bloque 3 — Vero spec):
   //   When the user is in stage 'propuesta' (business "Agendar levantamiento")
@@ -214,7 +224,11 @@ export async function updateProspect(id: number, data: Partial<InsertProspect>, 
       oldStage,
       patch.stage,
       actorId,
-      triggeredAutoAdvance ? "Auto-advance: agendamiento de levantamiento completo" : null,
+      triggeredAutoAdvance
+        ? "Auto-advance: agendamiento de levantamiento completo"
+        : reopen
+          ? "Reapertura de negocio cerrado"
+          : null,
     );
   }
 
