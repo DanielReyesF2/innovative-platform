@@ -1,7 +1,6 @@
 import type { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import { hasPermission } from "../../shared/auth/permissions";
-import { roles } from "../../shared/schema/settings";
 import { db } from "../db";
 
 if (!process.env.JWT_SECRET) {
@@ -97,6 +96,13 @@ async function loadRolePerms(): Promise<Map<string, string[]>> {
 
 export function clearRolePermsCache(): void {
   rolePermsCache = null;
+}
+
+// Permissions for a role (for exposing to the client so the UI can hide actions
+// the backend would reject). Returns [] for unknown roles.
+export async function getRolePermissions(roleName: string): Promise<string[]> {
+  const perms = await loadRolePerms();
+  return perms.get(roleName) ?? [];
 }
 
 // Middleware: Require a specific permission. Resolves the user's role to its

@@ -1,3 +1,4 @@
+import { PERMISSIONS } from "@shared/auth/permissions";
 import type { ProspectDocument, ProspectNote } from "@shared/schema/comercial";
 import type { KanbanProspecto, PendingMove, SeguimientoData } from "@shared/types/comercial";
 import { useQuery } from "@tanstack/react-query";
@@ -43,6 +44,7 @@ import {
   tabUnlockLabel,
   timeAgo,
 } from "@/lib/comercial-constants";
+import { useAuth } from "@/lib/auth";
 import { fmtCurrency } from "@/lib/utils";
 import { AgendarLevantamientoModal } from "./AgendarLevantamientoModal";
 import { AgendarReunionModal } from "./AgendarReunionModal";
@@ -92,8 +94,8 @@ interface Props {
 
 export function ProspectoDrawer({ prospecto, onClose }: Props) {
   const { toast } = useToast();
+  const { hasPermission } = useAuth();
   const {
-    authUser,
     updateProspectMutation,
     deleteProspectMutation,
     createNoteMutation,
@@ -366,7 +368,7 @@ export function ProspectoDrawer({ prospecto, onClose }: Props) {
                 <XCircle size={14} /> Rechazar
               </button>
             )}
-            {(authUser?.role === "admin" || authUser?.role === "comercial" || authUser?.role === "director") && (
+            {hasPermission(PERMISSIONS.PROSPECTS_DELETE) && (
               <button
                 onClick={async (e) => {
                   e.stopPropagation();

@@ -117,6 +117,9 @@ router.post("/users", async (req, res) => {
     if (isErrorWithMessage(error, "EMAIL_EXISTS")) {
       return res.status(409).json({ message: "El email ya esta registrado" });
     }
+    if (isErrorWithMessage(error, "INVALID_ROLE")) {
+      return res.status(400).json({ message: "El rol no existe en el catálogo" });
+    }
     console.error("[settings] Create user error:", error);
     res.status(400).json({ message: "Datos invalidos" });
   }
@@ -145,6 +148,9 @@ router.patch("/users/:id", async (req, res) => {
     }
     if (isErrorWithMessage(error, "EMAIL_EXISTS")) {
       return res.status(409).json({ message: "El email ya esta registrado" });
+    }
+    if (isErrorWithMessage(error, "INVALID_ROLE")) {
+      return res.status(400).json({ message: "El rol no existe en el catálogo" });
     }
     console.error("[settings] Update user error:", error);
     res.status(400).json({ message: "Datos invalidos" });

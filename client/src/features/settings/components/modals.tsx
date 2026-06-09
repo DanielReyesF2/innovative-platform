@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { PERMISSIONS, WILDCARD } from "@shared/auth/permissions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -63,12 +64,13 @@ export function CreateUserModal({ onClose, roles }: { onClose: () => void; roles
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("viewer");
+  const [codigo, setCodigo] = useState("");
   const createUser = useCreateUser();
   const { toast } = useToast();
 
   const handleSubmit = () => {
     createUser.mutate(
-      { name, email, password, role },
+      { name, email, password, role, codigo: codigo || null },
       {
         onSuccess: () => {
           toast({ title: "Usuario creado" });
@@ -99,6 +101,7 @@ export function CreateUserModal({ onClose, roles }: { onClose: () => void; roles
             ))}
           </select>
         </div>
+        <FormField label="Código (vendedor, opcional)" value={codigo} onChange={setCodigo} />
         <Button
           onClick={handleSubmit}
           disabled={!(name && email && password) || createUser.isPending}
@@ -125,12 +128,13 @@ export function EditUserModal({
   const [name, setName] = useState(user.name);
   const [email, setEmail] = useState(user.email);
   const [role, setRole] = useState(user.role);
+  const [codigo, setCodigo] = useState(user.codigo || "");
   const updateUser = useUpdateUser();
   const { toast } = useToast();
 
   const handleSubmit = () => {
     updateUser.mutate(
-      { id: user.id, name, email, role },
+      { id: user.id, name, email, role, codigo: codigo || null },
       {
         onSuccess: () => {
           toast({ title: "Usuario actualizado" });
@@ -161,6 +165,7 @@ export function EditUserModal({
             ))}
           </select>
         </div>
+        <FormField label="Código (vendedor, opcional)" value={codigo} onChange={setCodigo} />
         <Button onClick={handleSubmit} disabled={!(name && email) || updateUser.isPending} className="w-full">
           Guardar Cambios
         </Button>
@@ -240,12 +245,17 @@ export function CreateRoleModal({ onClose }: { onClose: () => void }) {
 export function EditRoleModal({ role, onClose }: { role: any; onClose: () => void }) {
   const [displayName, setDisplayName] = useState(role.displayName);
   const [description, setDescription] = useState(role.description || "");
+  const isWildcard = (role.permissions || []).includes(WILDCARD);
+  const [perms, setPerms] = useState<string[]>(role.permissions || []);
   const updateRole = useUpdateRole();
   const { toast } = useToast();
 
+  const togglePerm = (p: string) => setPerms((cur) => (cur.includes(p) ? cur.filter((x) => x !== p) : [...cur, p]));
+
   const handleSubmit = () => {
     updateRole.mutate(
-      { id: role.id, displayName, description },
+      // Don't strip the "*" wildcard from full-access roles via this grid.
+      { id: role.id, displayName, description, permissions: isWildcard ? role.permissions : perms },
       {
         onSuccess: () => {
           toast({ title: "Rol actualizado" });
@@ -261,6 +271,21 @@ export function EditRoleModal({ role, onClose }: { role: any; onClose: () => voi
       <div className="space-y-4">
         <FormField label="Nombre a Mostrar" value={displayName} onChange={setDisplayName} />
         <FormField label="Descripcion" value={description} onChange={setDescription} />
+        <div>
+          <Label className="mb-1 block text-sm font-medium">Permisos</Label>
+          {isWildcard ? (
+            <p className="text-sm text-muted-foreground">Acceso total (*) — no editable desde aquí.</p>
+          ) : (
+            <div className="max-h-60 space-y-1 overflow-y-auto rounded-md border border-input p-2">
+              {Object.values(PERMISSIONS).map((p) => (
+                <label key={p} className="flex items-center gap-2 text-sm">
+                  <input type="checkbox" checked={perms.includes(p)} onChange={() => togglePerm(p)} />
+                  {p}
+                </label>
+              ))}
+            </div>
+          )}
+        </div>
         <Button onClick={handleSubmit} disabled={!displayName || updateRole.isPending} className="w-full">
           Guardar Cambios
         </Button>
