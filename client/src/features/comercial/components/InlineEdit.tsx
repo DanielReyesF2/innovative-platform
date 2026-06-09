@@ -1,10 +1,12 @@
 import { Check, Loader2, Pencil } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useToast } from "@/components/ui/use-toast";
 
 type SaveFn<T> = (value: T) => Promise<void>;
 
 // ─── Shared state hook ────────────────────────────────────────────────
 function useInlineEdit<T>(initialValue: T, onSave: SaveFn<T>, equals: (a: T, b: T) => boolean = Object.is) {
+  const { toast } = useToast();
   const [editing, setEditing] = useState(false);
   const [value, setValue] = useState<T>(initialValue);
   const [saving, setSaving] = useState(false);
@@ -40,13 +42,19 @@ function useInlineEdit<T>(initialValue: T, onSave: SaveFn<T>, equals: (a: T, b: 
         committedRef.current = target;
         setValue(target);
       } catch {
+        // Revert AND tell the user — a silent revert looked like a successful save (H6).
         setValue(committedRef.current);
+        toast({
+          title: "No se pudo guardar el cambio",
+          description: "Revisa tu conexión e intenta de nuevo.",
+          variant: "destructive",
+        });
       } finally {
         setSaving(false);
         setEditing(false);
       }
     },
-    [value, onSave, equals],
+    [value, onSave, equals, toast],
   );
 
   return { editing, value, setValue, saving, start, cancel, save };
@@ -456,6 +464,7 @@ export function InlineChips<T extends string>({
   activeClassName = "bg-[#00a8a8] text-white",
   inactiveClassName = "bg-[#f3f4f6] text-[#6b7280] hover:bg-[#e5e7eb]",
 }: InlineChipsProps<T>) {
+  const { toast } = useToast();
   const [saving, setSaving] = useState(false);
   const [localValue, setLocalValue] = useState<T[]>(value);
 
@@ -470,7 +479,13 @@ export function InlineChips<T extends string>({
     try {
       await onSave(next);
     } catch {
+      // Revert AND notify — silent revert hid failed saves (H6).
       setLocalValue(value);
+      toast({
+        title: "No se pudo guardar el cambio",
+        description: "Revisa tu conexión e intenta de nuevo.",
+        variant: "destructive",
+      });
     } finally {
       setSaving(false);
     }

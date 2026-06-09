@@ -1,4 +1,4 @@
-import { and, desc, eq, gte, isNull, like, lte, or, sql } from "drizzle-orm";
+import { and, desc, eq, gte, isNotNull, isNull, like, lte, or, sql } from "drizzle-orm";
 import {
   comercialWeeklyReports,
   followUpAlerts,
@@ -1089,17 +1089,26 @@ export async function getLeadSourcesReport() {
 }
 
 export async function getSalesForecast() {
+  // Forecast by EXPECTED CLOSE MONTH (estimatedCloseTime, "YYYY-MM"), not by
+  // proposalDate — proposalDate only gets set when a formal proposal is sent, so
+  // most prospects in propuesta/negociacion had it null and collapsed into one
+  // empty bucket (H20). Exclude rows without an expected close month.
   const results = await db
     .select({
-      month: sql<string>`to_char(${prospects.proposalDate}, 'YYYY-MM')`,
+      month: prospects.estimatedCloseTime,
       count: sql<number>`count(*)::int`,
       totalValue: sql<string>`coalesce(sum(${prospects.estimatedValue}), 0)`,
       weightedValue: sql<string>`coalesce(sum(${prospects.estimatedValue} * ${prospects.probability} / 100), 0)`,
     })
     .from(prospects)
-    .where(and(or(eq(prospects.stage, STAGE.PROPUESTA), eq(prospects.stage, STAGE.NEGOCIACION))))
-    .groupBy(sql`to_char(${prospects.proposalDate}, 'YYYY-MM')`)
-    .orderBy(sql`to_char(${prospects.proposalDate}, 'YYYY-MM')`);
+    .where(
+      and(
+        or(eq(prospects.stage, STAGE.PROPUESTA), eq(prospects.stage, STAGE.NEGOCIACION)),
+        isNotNull(prospects.estimatedCloseTime),
+      ),
+    )
+    .groupBy(prospects.estimatedCloseTime)
+    .orderBy(prospects.estimatedCloseTime);
 
   return results;
 }
