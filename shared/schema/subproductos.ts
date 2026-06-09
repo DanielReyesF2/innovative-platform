@@ -1,4 +1,16 @@
-import { boolean, index, integer, jsonb, numeric, pgEnum, pgTable, serial, text, timestamp } from "drizzle-orm/pg-core";
+import {
+  boolean,
+  index,
+  integer,
+  jsonb,
+  numeric,
+  pgEnum,
+  pgTable,
+  serial,
+  text,
+  timestamp,
+  uniqueIndex,
+} from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -63,6 +75,9 @@ export const traceabilityRecords = pgTable(
   },
   (table) => ({
     clientIdIdx: index("traceability_records_client_id_idx").on(table.clientId),
+    // One record per (client, period) — prevents double-submit from duplicating
+    // tonnage/revenue (H14). createTraceabilityRecord upserts on this.
+    clientPeriodUnique: uniqueIndex("traceability_records_client_period_unique").on(table.clientId, table.period),
   }),
 );
 
