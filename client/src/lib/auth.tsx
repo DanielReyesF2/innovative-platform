@@ -1,6 +1,7 @@
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useState } from "react";
 import { flushSync } from "react-dom";
 import { useLocation } from "wouter";
+import { hasPermission as checkPermission } from "@shared/auth/permissions";
 import { apiRequest, getAuthToken, queryClient, removeAuthToken, setAuthToken } from "./queryClient";
 
 interface User {
@@ -10,6 +11,7 @@ interface User {
   role: string;
   companyId: number | null;
   areaId: number | null;
+  permissions?: string[];
 }
 
 interface AuthContextType {
@@ -17,6 +19,7 @@ interface AuthContextType {
   isLoading: boolean;
   authReady: boolean;
   isAdmin: boolean;
+  hasPermission: (permission: string) => boolean;
   login: (username: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
@@ -96,8 +99,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const isAdmin = user?.role === "admin";
 
+  const hasPermission = useCallback(
+    (permission: string) => checkPermission(user?.permissions, permission),
+    [user],
+  );
+
   return (
-    <AuthContext.Provider value={{ user, isLoading, authReady, isAdmin, login, logout, refreshUser }}>
+    <AuthContext.Provider
+      value={{ user, isLoading, authReady, isAdmin, hasPermission, login, logout, refreshUser }}
+    >
       {children}
     </AuthContext.Provider>
   );

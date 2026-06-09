@@ -13,6 +13,7 @@ const safeUserColumns = {
   name: users.name,
   email: users.email,
   role: users.role,
+  codigo: users.codigo,
   companyId: users.companyId,
   areaId: users.areaId,
   isActive: users.isActive,
@@ -65,11 +66,19 @@ export async function getUserById(id: number) {
   return user;
 }
 
+// Reject roles that don't exist in the catalog so `users.role` can't drift to a
+// typo/unknown value (H8 — role was free text with no FK to roles.name).
+async function assertRoleExists(role: string): Promise<void> {
+  const found = await db.query.roles.findFirst({ where: eq(roles.name, role) });
+  if (!found) throw new Error("INVALID_ROLE");
+}
+
 export async function createUser(data: {
   name: string;
   email: string;
   password: string;
   role?: string;
+  codigo?: string | null;
   areaId?: number | null;
   companyId?: number | null;
 }) {
@@ -82,6 +91,7 @@ export async function createUser(data: {
   if (existing) {
     throw new Error("EMAIL_EXISTS");
   }
+  if (data.role) await assertRoleExists(data.role);
 
   const hashedPassword = await bcrypt.hash(data.password, 10);
 
@@ -92,6 +102,7 @@ export async function createUser(data: {
       email,
       password: hashedPassword,
       role: data.role || "viewer",
+      codigo: data.codigo ?? null,
       areaId: data.areaId || null,
       companyId: data.companyId || null,
       isActive: true,
@@ -108,6 +119,7 @@ export async function updateUser(
     name?: string;
     email?: string;
     role?: string;
+    codigo?: string | null;
     areaId?: number | null;
     companyId?: number | null;
     isActive?: boolean;
@@ -119,6 +131,8 @@ export async function updateUser(
     if (data.role !== undefined) throw new Error("CANNOT_CHANGE_OWN_ROLE");
     if (data.isActive === false) throw new Error("CANNOT_DEACTIVATE_SELF");
   }
+
+  if (data.role !== undefined) await assertRoleExists(data.role);
 
   // Check email uniqueness if changing email
   if (data.email) {

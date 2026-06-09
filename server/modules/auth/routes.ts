@@ -3,9 +3,10 @@ import { eq } from "drizzle-orm";
 import { Router } from "express";
 import rateLimit from "express-rate-limit";
 import { z } from "zod";
+import { PERMISSIONS } from "../../../shared/auth/permissions";
 import { areas, users } from "../../../shared/schema/common";
 import { db } from "../../db";
-import { requireAdmin, requireAuth } from "../../middleware/auth";
+import { getRolePermissions, requireAdmin, requireAuth, requirePermission } from "../../middleware/auth";
 import { loginUser } from "./service";
 
 // Zod schemas for auth routes
@@ -52,7 +53,9 @@ router.post("/login", loginLimiter, async (req, res) => {
       return res.status(401).json({ message: "Credenciales inválidas" });
     }
 
-    res.json(result);
+    // Include the role's permissions so the client can gate UI on first load.
+    const permissions = await getRolePermissions(String(result.user.role));
+    res.json({ ...result, user: { ...result.user, permissions } });
   } catch (error) {
     console.error("[auth] Login error:", error);
     res.status(500).json({ message: "Internal server error" });
@@ -116,15 +119,17 @@ router.get("/user", requireAuth, async (req, res) => {
     }
 
     const { password: _, ...safeUser } = user;
-    res.json(safeUser);
+    res.json({ ...safeUser, permissions: await getRolePermissions(user.role) });
   } catch (error) {
     console.error("[auth] Get user error:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 });
 
-// GET /api/auth/team — List team members (any authenticated user, minimal fields)
-router.get("/team", requireAuth, async (_req, res) => {
+// GET /api/auth/team — List team members. Gated by team.view so viewers can't
+// enumerate the directory (email/role/codigo). Roles that assign work
+// (admin/director/comercial/operaciones) hold team.view.
+router.get("/team", requireAuth, requirePermission(PERMISSIONS.TEAM_VIEW), async (_req, res) => {
   try {
     // Join users → areas so the UI can filter by module (comercial,
     // operaciones, subproductos, etc.) without an extra round-trip.
