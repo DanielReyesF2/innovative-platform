@@ -524,16 +524,40 @@ export async function updateGateConfig(id: number, data: any) {
 
 // ─── Documents ──────────────────────────────────────────
 
+// Derive the document status from its expiration date instead of trusting the
+// stored `status` column, which was a static value nobody recalculated
+// (H4 — expired docs kept showing "vigente"). Normalized to UTC date to avoid
+// off-by-one from the time component. daysUntilExpiry feeds the 30/60/90 alerts.
+export function deriveDocStatus(expirationDate: Date | null): {
+  status: "vigente" | "por_vencer" | "vencido";
+  daysUntilExpiry: number | null;
+} {
+  if (!expirationDate) return { status: "vigente", daysUntilExpiry: null };
+  const MS_DAY = 86_400_000;
+  const exp = Date.UTC(
+    expirationDate.getUTCFullYear(),
+    expirationDate.getUTCMonth(),
+    expirationDate.getUTCDate(),
+  );
+  const now = new Date();
+  const today = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+  const daysUntilExpiry = Math.round((exp - today) / MS_DAY);
+  const status = daysUntilExpiry < 0 ? "vencido" : daysUntilExpiry <= 30 ? "por_vencer" : "vigente";
+  return { status, daysUntilExpiry };
+}
+
 export async function getDocuments() {
-  return db.query.operationalDocuments.findMany({
+  const docs = await db.query.operationalDocuments.findMany({
     orderBy: [desc(operationalDocuments.expirationDate)],
   });
+  return docs.map((d) => ({ ...d, ...deriveDocStatus(d.expirationDate) }));
 }
 
 export async function getDocumentById(id: number) {
-  return db.query.operationalDocuments.findFirst({
+  const doc = await db.query.operationalDocuments.findFirst({
     where: eq(operationalDocuments.id, id),
   });
+  return doc ? { ...doc, ...deriveDocStatus(doc.expirationDate) } : doc;
 }
 
 export async function getExpiringDocuments(daysAhead: number = 30) {

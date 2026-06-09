@@ -115,6 +115,16 @@ export default function OperacionesPage() {
     );
   });
 
+  // Expiration alert buckets (H5 — 30/60/90 days, derived from daysUntilExpiry).
+  const dnum = (d: any) => (typeof d.daysUntilExpiry === "number" ? d.daysUntilExpiry : null);
+  const docAlerts = {
+    vencidos: documents.filter((d: any) => dnum(d) !== null && (dnum(d) as number) < 0).length,
+    d30: documents.filter((d: any) => dnum(d) !== null && (dnum(d) as number) >= 0 && (dnum(d) as number) <= 30).length,
+    d60: documents.filter((d: any) => dnum(d) !== null && (dnum(d) as number) > 30 && (dnum(d) as number) <= 60).length,
+    d90: documents.filter((d: any) => dnum(d) !== null && (dnum(d) as number) > 60 && (dnum(d) as number) <= 90).length,
+  };
+  const hasDocAlerts = docAlerts.vencidos + docAlerts.d30 + docAlerts.d60 + docAlerts.d90 > 0;
+
   // Stats
   const completedSurveys = surveys.filter((s: any) => s.status === "completado").length;
   const pendingSurveys = surveys.filter(
@@ -560,6 +570,31 @@ export default function OperacionesPage() {
             <CardTitle className="text-lg">Documentos Operativos ({filteredDocs.length})</CardTitle>
           </CardHeader>
           <CardContent>
+            {hasDocAlerts && (
+              <div className="mb-4 flex flex-wrap items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm">
+                <span className="font-medium text-amber-800">Vencimientos:</span>
+                {docAlerts.vencidos > 0 && (
+                  <span className="rounded-full bg-red-100 px-2.5 py-0.5 font-medium text-red-700">
+                    {docAlerts.vencidos} vencido{docAlerts.vencidos !== 1 ? "s" : ""}
+                  </span>
+                )}
+                {docAlerts.d30 > 0 && (
+                  <span className="rounded-full bg-orange-100 px-2.5 py-0.5 font-medium text-orange-700">
+                    {docAlerts.d30} en ≤30 días
+                  </span>
+                )}
+                {docAlerts.d60 > 0 && (
+                  <span className="rounded-full bg-yellow-100 px-2.5 py-0.5 font-medium text-yellow-700">
+                    {docAlerts.d60} en 31-60 días
+                  </span>
+                )}
+                {docAlerts.d90 > 0 && (
+                  <span className="rounded-full bg-blue-100 px-2.5 py-0.5 font-medium text-blue-700">
+                    {docAlerts.d90} en 61-90 días
+                  </span>
+                )}
+              </div>
+            )}
             {filteredDocs.length === 0 ? (
               <EmptyState message="No hay documentos que mostrar" />
             ) : (
