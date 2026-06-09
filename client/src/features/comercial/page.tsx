@@ -70,7 +70,7 @@ export default function ComercialPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#00a8a8]" />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0067B0]" />
       </div>
     );
   }
@@ -85,7 +85,7 @@ export default function ComercialPage() {
         </p>
         <button
           onClick={() => window.location.reload()}
-          className="mt-2 px-4 py-2 text-sm font-medium text-white bg-[#00a8a8] rounded-lg hover:bg-[#008f8f]"
+          className="mt-2 px-4 py-2 text-sm font-medium text-white bg-[#0067B0] rounded-lg hover:bg-[#00558f]"
         >
           Recargar
         </button>
@@ -170,7 +170,7 @@ export default function ComercialPage() {
               pctColor={pctTone(pct(cotizacionAnual, presupuestoAnualTotal))}
             />
             <BudgetStatRow
-              colorDot="#00a8a8"
+              colorDot="#0067B0"
               label="Ventas reales al día"
               value={fmtM(ventasCerradasAnual, 1)}
               pct={pct(ventasCerradasAnual, presupuestoAnualTotal)}
@@ -180,13 +180,13 @@ export default function ComercialPage() {
 
           {/* Card 2: Presupuesto Mes — same three rows, scoped to current month */}
           <div
-            className="rounded-xl border border-[#00a8a8]/20 card-modern p-5 flex flex-col"
+            className="rounded-xl border border-[#0067B0]/20 card-modern p-5 flex flex-col"
             style={{ backgroundColor: "rgba(0,168,168,0.04)" }}
           >
             <div className="flex items-center justify-between mb-3">
               <div className="text-[13px] font-semibold text-[#1c2c4a]">Presupuesto {currentMonthLabel}</div>
-              <div className="w-9 h-9 rounded-xl bg-[#00a8a8]/15 flex items-center justify-center">
-                <DollarSign className="text-[#00a8a8]" size={18} />
+              <div className="w-9 h-9 rounded-xl bg-[#0067B0]/15 flex items-center justify-center">
+                <DollarSign className="text-[#0067B0]" size={18} />
               </div>
             </div>
             <BudgetStatRow colorDot="#1B5E20" label="Presupuesto" value={fmtM(presupuestoMesEquipo, 1)} />
@@ -198,7 +198,7 @@ export default function ComercialPage() {
               pctColor={pctTone(pct(cotizacionMesActual, presupuestoMesEquipo))}
             />
             <BudgetStatRow
-              colorDot="#00a8a8"
+              colorDot="#0067B0"
               label="Ventas reales al día"
               value={fmtM(ventaMesActual, 1)}
               pct={pct(ventaMesActual, presupuestoMesEquipo)}
@@ -240,7 +240,7 @@ export default function ComercialPage() {
 
         {/* EQUIPO */}
         <SectionHeader
-          color="#00a8a8"
+          color="#0067B0"
           icon={Users}
           label="Equipo"
           linkLabel="Ver Dashboard"
@@ -264,9 +264,9 @@ export default function ComercialPage() {
                 <div
                   key={member.codigo}
                   onClick={() => setHubEjecutivo(member)}
-                  className="bg-white rounded-xl border border-[#e5e7eb] p-4 cursor-pointer hover:shadow-lg hover:border-[#00a8a8]/40 transition-all group relative overflow-hidden"
+                  className="bg-white rounded-xl border border-[#e5e7eb] p-4 cursor-pointer hover:shadow-lg hover:border-[#0067B0]/40 transition-all group relative overflow-hidden"
                 >
-                  <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#00a8a8] to-[#0D47A1] opacity-60 group-hover:opacity-100 transition-opacity" />
+                  <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#0067B0] to-[#0D47A1] opacity-60 group-hover:opacity-100 transition-opacity" />
                   <div className="flex items-center gap-3 mb-3">
                     <ExecutiveAvatar codigo={member.codigo} name={member.name} size="lg" />
                     <div className="min-w-0">

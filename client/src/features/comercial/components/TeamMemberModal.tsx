@@ -16,7 +16,7 @@ export function TeamMemberModal({ member, onClose, onViewHub }: Props) {
         className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-lg border border-[#e5e7eb]"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="bg-[#00a8a8] p-6 text-white rounded-t-lg">
+        <div className="bg-[#0067B0] p-6 text-white rounded-t-lg">
           <div className="flex justify-between items-start">
             <div className="flex items-center gap-4">
               <ExecutiveAvatar
@@ -78,7 +78,7 @@ export function TeamMemberModal({ member, onClose, onViewHub }: Props) {
                 <div className="text-xs text-[#6b7280] font-medium mt-1">Propuestas</div>
               </div>
               <div className="bg-white rounded-lg p-4 text-center border border-[#e5e7eb]">
-                <div className="text-2xl font-semibold text-[#00a8a8]">{member.cierres}</div>
+                <div className="text-2xl font-semibold text-[#0067B0]">{member.cierres}</div>
                 <div className="text-xs text-[#6b7280] font-medium mt-1">Cierres</div>
               </div>
             </div>
@@ -102,7 +102,7 @@ export function TeamMemberModal({ member, onClose, onViewHub }: Props) {
               <div className="flex justify-between items-center">
                 <span className="font-medium text-[#1c2c4a]">Cumplimiento:</span>
                 <span
-                  className={`text-xl font-semibold ${member.cumplimientoPresupuesto >= 100 ? "text-[#00a8a8]" : "text-orange-600"}`}
+                  className={`text-xl font-semibold ${member.cumplimientoPresupuesto >= 100 ? "text-[#0067B0]" : "text-orange-600"}`}
                 >
                   {member.cumplimientoPresupuesto}%
                 </span>

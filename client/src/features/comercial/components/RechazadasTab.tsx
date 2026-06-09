@@ -188,7 +188,7 @@ export function RechazadasTab({ onSelectProspecto }: Props) {
                                   .split("T")[0],
                               });
                             }}
-                            className="text-[9px] font-semibold text-[#00a8a8] hover:underline flex items-center gap-0.5"
+                            className="text-[9px] font-semibold text-[#0067B0] hover:underline flex items-center gap-0.5"
                           >
                             <Calendar size={8} /> Agendar
                           </button>

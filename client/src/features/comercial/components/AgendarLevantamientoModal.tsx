@@ -274,7 +274,7 @@ export function AgendarLevantamientoModal({ prospecto, onClose, onAdvanced }: Pr
         {/* Header */}
         <div className="flex items-center justify-between border-b px-6 py-4">
           <div className="flex items-center gap-2">
-            <CalendarIcon className="h-5 w-5 text-[#00a8a8]" />
+            <CalendarIcon className="h-5 w-5 text-[#0067B0]" />
             <h2 className="text-lg font-bold">Agendar Levantamiento</h2>
           </div>
           <button onClick={onClose} className="text-[#6b7280] hover:text-[#1c2c4a]">
@@ -414,7 +414,7 @@ export function AgendarLevantamientoModal({ prospecto, onClose, onAdvanced }: Pr
             <div className="space-y-3">
               {renderArea(
                 "Comercial",
-                "#00a8a8",
+                "#0067B0",
                 teamMembers.filter((m) => !m.areaSlug || m.areaSlug === "comercial"),
                 partComercial,
                 setPartComercial,
@@ -557,7 +557,7 @@ export function AgendarLevantamientoModal({ prospecto, onClose, onAdvanced }: Pr
                           type="button"
                           onClick={() => updateWaste(i, { quantityUnit: "kg" })}
                           className={`px-2 text-[11px] font-medium ${
-                            row.quantityUnit === "kg" ? "bg-[#00a8a8] text-white" : "bg-background text-[#6b7280]"
+                            row.quantityUnit === "kg" ? "bg-[#0067B0] text-white" : "bg-background text-[#6b7280]"
                           }`}
                         >
                           kg
@@ -566,7 +566,7 @@ export function AgendarLevantamientoModal({ prospecto, onClose, onAdvanced }: Pr
                           type="button"
                           onClick={() => updateWaste(i, { quantityUnit: "ton" })}
                           className={`px-2 text-[11px] font-medium ${
-                            row.quantityUnit === "ton" ? "bg-[#00a8a8] text-white" : "bg-background text-[#6b7280]"
+                            row.quantityUnit === "ton" ? "bg-[#0067B0] text-white" : "bg-background text-[#6b7280]"
                           }`}
                         >
                           ton
@@ -654,7 +654,7 @@ export function AgendarLevantamientoModal({ prospecto, onClose, onAdvanced }: Pr
                 <Button
                   onClick={handleAdvance}
                   disabled={!canAdvance || updateProspect.isPending}
-                  className="bg-[#00a8a8] hover:bg-[#008b8b]"
+                  className="bg-[#0067B0] hover:bg-[#008b8b]"
                 >
                   {updateProspect.isPending ? "Agendando..." : "Agendar y avanzar"}
                 </Button>

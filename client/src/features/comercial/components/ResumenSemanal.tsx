@@ -142,7 +142,7 @@ export function ResumenSemanal() {
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
-            <CalendarDays className="text-[#00a8a8]" size={20} />
+            <CalendarDays className="text-[#0067B0]" size={20} />
             <h3 className="text-sm font-semibold text-[#1c2c4a]">Resumen Semanal — Vista Calendario</h3>
           </div>
           <div className="flex items-center gap-2">
@@ -183,11 +183,11 @@ export function ResumenSemanal() {
                 className={`
                   min-h-[70px] p-1.5 bg-white relative transition-all
                   ${!isCurrentMonth ? "opacity-30" : ""}
-                  ${isToday ? "ring-2 ring-inset ring-[#00a8a8]" : ""}
+                  ${isToday ? "ring-2 ring-inset ring-[#0067B0]" : ""}
                   ${isMonday && isCurrentMonth ? "cursor-pointer hover:bg-[#f0fdf4] group" : ""}
                 `}
               >
-                <div className={`text-xs font-medium ${isToday ? "text-[#00a8a8] font-bold" : "text-[#6b7280]"}`}>
+                <div className={`text-xs font-medium ${isToday ? "text-[#0067B0] font-bold" : "text-[#6b7280]"}`}>
                   {date.getDate()}
                 </div>
                 {isMonday && isCurrentMonth && (
@@ -201,7 +201,7 @@ export function ResumenSemanal() {
                         <Clock size={10} /> Borrador
                       </div>
                     ) : (
-                      <div className="text-[9px] text-[#9ca3af] group-hover:text-[#00a8a8] transition-colors">
+                      <div className="text-[9px] text-[#9ca3af] group-hover:text-[#0067B0] transition-colors">
                         + Crear reporte
                       </div>
                     )}
@@ -419,7 +419,7 @@ function WeekReportModal({ weekStart, onClose }: { weekStart: string; onClose: (
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
         <div className="bg-white rounded-xl p-12">
-          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#00a8a8]" />
+          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#0067B0]" />
         </div>
       </div>
     );
@@ -438,7 +438,7 @@ function WeekReportModal({ weekStart, onClose }: { weekStart: string; onClose: (
         {/* ═══ HEADER ═══ */}
         <div className="flex items-center justify-between px-5 py-3 border-b border-[#e5e7eb]/60 flex-shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#00a8a8] to-[#0D47A1] flex items-center justify-center shadow-sm">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#0067B0] to-[#0D47A1] flex items-center justify-center shadow-sm">
               <FileText className="text-white" size={16} />
             </div>
             <div>
@@ -479,7 +479,7 @@ function WeekReportModal({ weekStart, onClose }: { weekStart: string; onClose: (
           {/* ── LEFT: Textarea fills all available space ── */}
           <div className="flex-1 flex flex-col p-4 min-w-0">
             <label className="text-[11px] font-bold text-[#6b7280] uppercase tracking-wider mb-2 flex-shrink-0 flex items-center gap-1.5">
-              <FileText size={12} className="text-[#00a8a8]" /> Resumen de la Semana
+              <FileText size={12} className="text-[#0067B0]" /> Resumen de la Semana
             </label>
             <textarea
               value={content}
@@ -488,7 +488,7 @@ function WeekReportModal({ weekStart, onClose }: { weekStart: string; onClose: (
                 setHasEdited(true);
               }}
               placeholder={"¿Qué se logró esta semana?\n¿Cómo va el pipeline?\n¿Qué sigue la próxima semana?"}
-              className="flex-1 w-full p-5 rounded-xl border border-[#e5e7eb] bg-[#faf7f2] text-[14px] leading-relaxed text-[#1c2c4a] placeholder:text-[#c4b9a8] focus:outline-none focus:ring-2 focus:ring-[#00a8a8]/20 focus:border-[#00a8a8] resize-none"
+              className="flex-1 w-full p-5 rounded-xl border border-[#e5e7eb] bg-[#faf7f2] text-[14px] leading-relaxed text-[#1c2c4a] placeholder:text-[#c4b9a8] focus:outline-none focus:ring-2 focus:ring-[#0067B0]/20 focus:border-[#0067B0] resize-none"
             />
           </div>
 
@@ -545,7 +545,7 @@ function WeekReportModal({ weekStart, onClose }: { weekStart: string; onClose: (
                 {weekCommitments.map((c) =>
                   editingId === c.id ? (
                     /* ── Edit mode ── */
-                    <div key={c.id} className="px-3 py-2 border-b border-[#00a8a8]/20 bg-[#00a8a8]/5">
+                    <div key={c.id} className="px-3 py-2 border-b border-[#0067B0]/20 bg-[#0067B0]/5">
                       <div className="flex items-center gap-1.5 mb-1.5">
                         <select
                           value={editResponsibleUserId || ""}
@@ -557,7 +557,7 @@ function WeekReportModal({ weekStart, onClose }: { weekStart: string; onClose: (
                               setEditResponsibleUserId(m.id);
                             }
                           }}
-                          className="flex-1 px-1.5 py-1 rounded border border-[#e5e7eb] bg-white text-[11px] focus:outline-none focus:ring-1 focus:ring-[#00a8a8]"
+                          className="flex-1 px-1.5 py-1 rounded border border-[#e5e7eb] bg-white text-[11px] focus:outline-none focus:ring-1 focus:ring-[#0067B0]"
                         >
                           <option value="">{editResponsible.split(" ")[0]}</option>
                           {teamMembers.map((m) => (
@@ -570,7 +570,7 @@ function WeekReportModal({ weekStart, onClose }: { weekStart: string; onClose: (
                           type="date"
                           value={editDueDate}
                           onChange={(e) => setEditDueDate(e.target.value)}
-                          className="w-[110px] px-1 py-1 rounded border border-[#e5e7eb] bg-white text-[10px] focus:outline-none focus:ring-1 focus:ring-[#00a8a8]"
+                          className="w-[110px] px-1 py-1 rounded border border-[#e5e7eb] bg-white text-[10px] focus:outline-none focus:ring-1 focus:ring-[#0067B0]"
                         />
                         <button
                           onClick={() => {
@@ -585,7 +585,7 @@ function WeekReportModal({ weekStart, onClose }: { weekStart: string; onClose: (
                             }
                             setEditingId(null);
                           }}
-                          className="w-7 h-7 rounded-lg bg-[#00a8a8] text-white flex items-center justify-center hover:bg-[#008b8b] flex-shrink-0"
+                          className="w-7 h-7 rounded-lg bg-[#0067B0] text-white flex items-center justify-center hover:bg-[#008b8b] flex-shrink-0"
                         >
                           <Check size={12} />
                         </button>
@@ -593,7 +593,7 @@ function WeekReportModal({ weekStart, onClose }: { weekStart: string; onClose: (
                       <input
                         value={editDesc}
                         onChange={(e) => setEditDesc(e.target.value)}
-                        className="w-full px-2 py-1 rounded border border-[#e5e7eb] bg-white text-[12px] focus:outline-none focus:ring-1 focus:ring-[#00a8a8]"
+                        className="w-full px-2 py-1 rounded border border-[#e5e7eb] bg-white text-[12px] focus:outline-none focus:ring-1 focus:ring-[#0067B0]"
                         onKeyDown={(e) => {
                           if (e.key === "Enter" && editDesc.trim()) {
                             updateCommitmentMutation.mutateAsync({
@@ -633,7 +633,7 @@ function WeekReportModal({ weekStart, onClose }: { weekStart: string; onClose: (
                         className={`w-4 h-4 rounded border-[1.5px] flex items-center justify-center flex-shrink-0 mt-0.5 transition-all ${
                           c.status === "cumplido"
                             ? "bg-[#2E7D32] border-[#2E7D32] text-white"
-                            : "border-[#d1d5db] hover:border-[#00a8a8]"
+                            : "border-[#d1d5db] hover:border-[#0067B0]"
                         }`}
                       >
                         {c.status === "cumplido" && <Check size={9} />}
@@ -689,7 +689,7 @@ function WeekReportModal({ weekStart, onClose }: { weekStart: string; onClose: (
                         setNewResponsibleUserId(m.id);
                       }
                     }}
-                    className="flex-1 px-1.5 py-1.5 rounded-lg border border-[#e5e7eb] bg-white text-[11px] text-[#1c2c4a] focus:outline-none focus:ring-1 focus:ring-[#00a8a8] appearance-none"
+                    className="flex-1 px-1.5 py-1.5 rounded-lg border border-[#e5e7eb] bg-white text-[11px] text-[#1c2c4a] focus:outline-none focus:ring-1 focus:ring-[#0067B0] appearance-none"
                   >
                     <option value="">Persona...</option>
                     {teamMembers.map((m) => (
@@ -702,7 +702,7 @@ function WeekReportModal({ weekStart, onClose }: { weekStart: string; onClose: (
                     type="date"
                     value={newDueDate}
                     onChange={(e) => setNewDueDate(e.target.value)}
-                    className="w-[110px] px-1.5 py-1.5 rounded-lg border border-[#e5e7eb] bg-white text-[10px] focus:outline-none focus:ring-1 focus:ring-[#00a8a8]"
+                    className="w-[110px] px-1.5 py-1.5 rounded-lg border border-[#e5e7eb] bg-white text-[10px] focus:outline-none focus:ring-1 focus:ring-[#0067B0]"
                   />
                 </div>
                 <div className="flex items-center gap-1.5">
@@ -710,7 +710,7 @@ function WeekReportModal({ weekStart, onClose }: { weekStart: string; onClose: (
                     value={newDesc}
                     onChange={(e) => setNewDesc(e.target.value)}
                     placeholder="Compromiso..."
-                    className="flex-1 px-2 py-1.5 rounded-lg border border-[#e5e7eb] bg-white text-[11px] focus:outline-none focus:ring-1 focus:ring-[#00a8a8]"
+                    className="flex-1 px-2 py-1.5 rounded-lg border border-[#e5e7eb] bg-white text-[11px] focus:outline-none focus:ring-1 focus:ring-[#0067B0]"
                     onKeyDown={(e) =>
                       e.key === "Enter" && newDesc.trim() && newResponsible.trim() && handleAddCommitment()
                     }
@@ -718,7 +718,7 @@ function WeekReportModal({ weekStart, onClose }: { weekStart: string; onClose: (
                   <button
                     onClick={handleAddCommitment}
                     disabled={createCommitment.isPending || !newDesc.trim() || !newResponsible.trim()}
-                    className="w-8 h-8 rounded-lg text-white bg-[#00a8a8] hover:bg-[#008b8b] disabled:opacity-30 transition-colors shadow-sm flex items-center justify-center flex-shrink-0"
+                    className="w-8 h-8 rounded-lg text-white bg-[#0067B0] hover:bg-[#008b8b] disabled:opacity-30 transition-colors shadow-sm flex items-center justify-center flex-shrink-0"
                   >
                     <Plus size={14} />
                   </button>
@@ -741,7 +741,7 @@ function WeekReportModal({ weekStart, onClose }: { weekStart: string; onClose: (
                     setHasEdited(true);
                   }}
                   placeholder="Decisiones, acuerdos, feedback..."
-                  className="w-full h-full p-2.5 rounded-lg border border-[#e5e7eb] bg-white text-[12px] text-[#1c2c4a] placeholder:text-[#bbb] focus:outline-none focus:ring-1 focus:ring-[#00a8a8]/20 resize-none"
+                  className="w-full h-full p-2.5 rounded-lg border border-[#e5e7eb] bg-white text-[12px] text-[#1c2c4a] placeholder:text-[#bbb] focus:outline-none focus:ring-1 focus:ring-[#0067B0]/20 resize-none"
                 />
               </div>
             </div>
@@ -771,7 +771,7 @@ function WeekReportModal({ weekStart, onClose }: { weekStart: string; onClose: (
             <button
               onClick={() => setShowSendConfirm(true)}
               disabled={sendMutation.isPending || !content.trim()}
-              className="flex items-center gap-1.5 px-5 py-2 rounded-xl text-[13px] font-semibold bg-[#00a8a8] text-white hover:bg-[#008f8f] transition-colors disabled:opacity-50 shadow-sm"
+              className="flex items-center gap-1.5 px-5 py-2 rounded-xl text-[13px] font-semibold bg-[#0067B0] text-white hover:bg-[#00558f] transition-colors disabled:opacity-50 shadow-sm"
             >
               <Send size={14} />
               Enviar Resumen
@@ -797,7 +797,7 @@ function WeekReportModal({ weekStart, onClose }: { weekStart: string; onClose: (
                   value={recipients}
                   onChange={(e) => setRecipients(e.target.value)}
                   placeholder="luz@empresa.com, roger@empresa.com"
-                  className="w-full px-3 py-2 rounded-lg border border-[#e5e7eb] text-sm focus:outline-none focus:ring-2 focus:ring-[#00a8a8]/20 focus:border-[#00a8a8]"
+                  className="w-full px-3 py-2 rounded-lg border border-[#e5e7eb] text-sm focus:outline-none focus:ring-2 focus:ring-[#0067B0]/20 focus:border-[#0067B0]"
                 />
               </div>
 
@@ -841,7 +841,7 @@ function WeekReportModal({ weekStart, onClose }: { weekStart: string; onClose: (
                 <button
                   onClick={handleSend}
                   disabled={sendMutation.isPending || !recipients.trim()}
-                  className="px-5 py-2 text-sm font-semibold bg-[#00a8a8] text-white rounded-lg hover:bg-[#008f8f] disabled:opacity-50 transition-colors shadow-sm"
+                  className="px-5 py-2 text-sm font-semibold bg-[#0067B0] text-white rounded-lg hover:bg-[#00558f] disabled:opacity-50 transition-colors shadow-sm"
                 >
                   {sendMutation.isPending ? "Enviando..." : "Confirmar envío"}
                 </button>

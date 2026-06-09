@@ -116,7 +116,7 @@ export function OperacionesCalendar({ surveys, opsTeam, onSurveyClick }: Props) 
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
-          <CalendarDays className="text-[#00a8a8]" size={20} />
+          <CalendarDays className="text-[#0067B0]" size={20} />
           <h3 className="text-sm font-semibold text-[#1c2c4a]">Calendario de Levantamientos</h3>
         </div>
         <div className="flex items-center gap-2">
@@ -154,10 +154,10 @@ export function OperacionesCalendar({ surveys, opsTeam, onSurveyClick }: Props) 
               className={`
                 min-h-[80px] p-1.5 bg-white relative transition-all
                 ${!isCurrentMonth ? "opacity-30" : ""}
-                ${isToday ? "ring-2 ring-inset ring-[#00a8a8]" : ""}
+                ${isToday ? "ring-2 ring-inset ring-[#0067B0]" : ""}
               `}
             >
-              <div className={`text-xs font-medium ${isToday ? "text-[#00a8a8] font-bold" : "text-[#6b7280]"}`}>
+              <div className={`text-xs font-medium ${isToday ? "text-[#0067B0] font-bold" : "text-[#6b7280]"}`}>
                 {date.getDate()}
               </div>
 

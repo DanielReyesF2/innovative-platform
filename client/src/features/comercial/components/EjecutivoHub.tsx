@@ -41,7 +41,7 @@ function HubDroppableColumn({ stageId, children }: { stageId: string; children: 
   return (
     <div
       ref={setNodeRef}
-      className={`min-h-[120px] transition-colors rounded-lg flex-1 ${isOver ? "bg-[#00a8a8]/5 ring-2 ring-[#00a8a8]/30" : ""}`}
+      className={`min-h-[120px] transition-colors rounded-lg flex-1 ${isOver ? "bg-[#0067B0]/5 ring-2 ring-[#0067B0]/30" : ""}`}
     >
       {children}
     </div>
@@ -319,7 +319,7 @@ export function EjecutivoHub({ member, onBack, onShowNuevoLead }: Props) {
             </div>
             <DragOverlay>
               {hubActiveCard && (
-                <div className="bg-white rounded-lg border-2 border-[#00a8a8] p-2 shadow-xl w-[160px] rotate-2">
+                <div className="bg-white rounded-lg border-2 border-[#0067B0] p-2 shadow-xl w-[160px] rotate-2">
                   <h4 className="text-xs font-semibold text-[#1c2c4a] truncate">{hubActiveCard.empresa}</h4>
                   <div className="text-[10px] text-[#6b7280] mt-0.5">{hubActiveCard.ciudad?.split(",")[0]}</div>
                 </div>
@@ -445,8 +445,8 @@ export function EjecutivoHub({ member, onBack, onShowNuevoLead }: Props) {
             >
               <div className="flex items-center justify-between p-4 border-b border-[#e5e7eb]">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-[#00a8a8]/10 flex items-center justify-center">
-                    <DollarSign size={20} className="text-[#00a8a8]" />
+                  <div className="w-10 h-10 rounded-xl bg-[#0067B0]/10 flex items-center justify-center">
+                    <DollarSign size={20} className="text-[#0067B0]" />
                   </div>
                   <div>
                     <h2 className="text-lg font-bold text-[#1c2c4a]">Registrar Venta Cerrada</h2>
@@ -471,7 +471,7 @@ export function EjecutivoHub({ member, onBack, onShowNuevoLead }: Props) {
                   </div>
                   <div className="text-right">
                     <div className="text-xs text-[#6b7280]">Venta registrada</div>
-                    <div className="text-lg font-bold text-[#00a8a8]">{fmtM(member.ventasReales, 2)}</div>
+                    <div className="text-lg font-bold text-[#0067B0]">{fmtM(member.ventasReales, 2)}</div>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
@@ -480,7 +480,7 @@ export function EjecutivoHub({ member, onBack, onShowNuevoLead }: Props) {
                     <select
                       value={ventaRealMes}
                       onChange={(e) => setVentaRealMes(Number(e.target.value))}
-                      className="w-full px-3 py-2 border border-[#e5e7eb] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#00a8a8]/30 focus:border-[#00a8a8]"
+                      className="w-full px-3 py-2 border border-[#e5e7eb] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0067B0]/30 focus:border-[#0067B0]"
                     >
                       {[
                         "Enero",
@@ -507,7 +507,7 @@ export function EjecutivoHub({ member, onBack, onShowNuevoLead }: Props) {
                     <select
                       value={ventaRealAño}
                       onChange={(e) => setVentaRealAño(Number(e.target.value))}
-                      className="w-full px-3 py-2 border border-[#e5e7eb] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#00a8a8]/30 focus:border-[#00a8a8]"
+                      className="w-full px-3 py-2 border border-[#e5e7eb] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0067B0]/30 focus:border-[#0067B0]"
                     >
                       {[2025, 2026, 2027].map((y) => (
                         <option key={y} value={y}>
@@ -545,7 +545,7 @@ export function EjecutivoHub({ member, onBack, onShowNuevoLead }: Props) {
                       value={ventaRealMonto}
                       onChange={(e) => setVentaRealMonto(e.target.value)}
                       placeholder="0.00"
-                      className="w-full pl-7 pr-3 py-3 border border-[#e5e7eb] rounded-lg text-lg font-semibold focus:outline-none focus:ring-2 focus:ring-[#00a8a8]/30 focus:border-[#00a8a8]"
+                      className="w-full pl-7 pr-3 py-3 border border-[#e5e7eb] rounded-lg text-lg font-semibold focus:outline-none focus:ring-2 focus:ring-[#0067B0]/30 focus:border-[#0067B0]"
                     />
                   </div>
                   <p className="text-[10px] text-[#9ca3af] mt-1">
@@ -587,7 +587,7 @@ export function EjecutivoHub({ member, onBack, onShowNuevoLead }: Props) {
                   disabled={!ventaRealMonto}
                   className={`flex-1 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
                     ventaRealMonto
-                      ? "bg-[#00a8a8] hover:bg-[#008080] text-white"
+                      ? "bg-[#0067B0] hover:bg-[#00558f] text-white"
                       : "bg-[#e5e7eb] text-[#9ca3af] cursor-not-allowed"
                   }`}
                 >

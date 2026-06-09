@@ -168,7 +168,7 @@ function AttendeesEditor({
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
       {renderSide("prospect", "Del prospecto", "#0D47A1")}
-      {renderSide("innovative", "De Innovative", "#00a8a8")}
+      {renderSide("innovative", "De Innovative", "#0067B0")}
     </div>
   );
 }
@@ -402,7 +402,7 @@ export function ProspectMeetings({ prospectId }: ProspectMeetingsProps) {
                                 href={m.meetingUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-[11px] text-[#00a8a8] hover:underline ml-1"
+                                className="text-[11px] text-[#0067B0] hover:underline ml-1"
                               >
                                 Unirse
                               </a>
@@ -612,7 +612,7 @@ function InlineDatetime({
               setEditing(false);
             }
           }}
-          className="h-8 w-auto text-sm border-[#00a8a8]"
+          className="h-8 w-auto text-sm border-[#0067B0]"
         />
       </div>
     );

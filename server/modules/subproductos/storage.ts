@@ -184,11 +184,15 @@ export async function getSubproductosSummary() {
     .from(clientReports)
     .where(eq(clientReports.status, "pendiente"));
 
+  // Only count revenue from active clients so it matches activeClients (H25 —
+  // before it summed every record, including clients that were deactivated).
   const [totalRevenue] = await db
     .select({
       total: sql<string>`coalesce(sum(${traceabilityRecords.monthlyRevenue}), 0)`,
     })
-    .from(traceabilityRecords);
+    .from(traceabilityRecords)
+    .innerJoin(serviceClients, eq(traceabilityRecords.clientId, serviceClients.id))
+    .where(eq(serviceClients.isActive, true));
 
   return {
     activeClients: clientCount.count,

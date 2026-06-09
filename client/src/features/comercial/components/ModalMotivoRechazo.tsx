@@ -49,7 +49,7 @@ export function ModalMotivoRechazo({ prospecto, onClose, onSave }: Props) {
             <select
               value={motivoSeleccionado}
               onChange={(e) => setMotivoSeleccionado(e.target.value)}
-              className="w-full px-4 py-3 border border-[#e5e7eb] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#00a8a8]"
+              className="w-full px-4 py-3 border border-[#e5e7eb] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0067B0]"
               required
             >
               <option value="">Seleccione un motivo...</option>
@@ -66,7 +66,7 @@ export function ModalMotivoRechazo({ prospecto, onClose, onSave }: Props) {
             <textarea
               value={detalle}
               onChange={(e) => setDetalle(e.target.value)}
-              className="w-full px-4 py-3 border border-[#e5e7eb] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#00a8a8]"
+              className="w-full px-4 py-3 border border-[#e5e7eb] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0067B0]"
               rows={4}
               placeholder="Proporcione información adicional sobre el rechazo..."
             />
@@ -96,7 +96,7 @@ export function ModalMotivoRechazo({ prospecto, onClose, onSave }: Props) {
             </button>
             <button
               type="submit"
-              className="px-6 py-2.5 bg-[#00a8a8] text-white rounded-lg hover:bg-[#008080] font-medium text-sm"
+              className="px-6 py-2.5 bg-[#0067B0] text-white rounded-lg hover:bg-[#008080] font-medium text-sm"
             >
               Guardar Motivo
             </button>

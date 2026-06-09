@@ -70,7 +70,7 @@ export function PipelineTab({ onViewHub }: Props) {
             <select
               value={filterServicio}
               onChange={(e) => setFilterServicio(e.target.value)}
-              className="text-xs border border-[#e5e7eb] rounded-lg px-3 py-1.5 bg-white text-[#1c2c4a] focus:outline-none focus:ring-2 focus:ring-[#00a8a8]/30 focus:border-[#00a8a8]"
+              className="text-xs border border-[#e5e7eb] rounded-lg px-3 py-1.5 bg-white text-[#1c2c4a] focus:outline-none focus:ring-2 focus:ring-[#0067B0]/30 focus:border-[#0067B0]"
             >
               <option value="todos">Todos los servicios</option>
               {SERVICIOS_INNOVATIVE.map((s) => {
@@ -86,7 +86,7 @@ export function PipelineTab({ onViewHub }: Props) {
             <select
               value={filterEjecutivo}
               onChange={(e) => setFilterEjecutivo(e.target.value)}
-              className="text-xs border border-[#e5e7eb] rounded-lg px-3 py-1.5 bg-white text-[#1c2c4a] focus:outline-none focus:ring-2 focus:ring-[#00a8a8]/30 focus:border-[#00a8a8]"
+              className="text-xs border border-[#e5e7eb] rounded-lg px-3 py-1.5 bg-white text-[#1c2c4a] focus:outline-none focus:ring-2 focus:ring-[#0067B0]/30 focus:border-[#0067B0]"
             >
               <option value="todos">Todos los ejecutivos</option>
               {salesTeamData.map((m) => {
@@ -102,7 +102,7 @@ export function PipelineTab({ onViewHub }: Props) {
             <select
               value={filterEtapa}
               onChange={(e) => setFilterEtapa(e.target.value)}
-              className="text-xs border border-[#e5e7eb] rounded-lg px-3 py-1.5 bg-white text-[#1c2c4a] focus:outline-none focus:ring-2 focus:ring-[#00a8a8]/30 focus:border-[#00a8a8]"
+              className="text-xs border border-[#e5e7eb] rounded-lg px-3 py-1.5 bg-white text-[#1c2c4a] focus:outline-none focus:ring-2 focus:ring-[#0067B0]/30 focus:border-[#0067B0]"
             >
               <option value="todos">Todas las etapas</option>
               {KANBAN_STAGES.map((s) => {
@@ -122,7 +122,7 @@ export function PipelineTab({ onViewHub }: Props) {
                   setFilterEjecutivo("todos");
                   setFilterEtapa("todos");
                 }}
-                className="text-xs text-[#00a8a8] hover:text-[#008080] font-medium flex items-center gap-1"
+                className="text-xs text-[#0067B0] hover:text-[#008080] font-medium flex items-center gap-1"
               >
                 <X size={12} /> Limpiar ({activeFilters})
               </button>
@@ -219,7 +219,7 @@ export function PipelineTab({ onViewHub }: Props) {
                             )}
                             <div className="flex items-center gap-3 mt-0.5">
                               {p.contacto?.correo && (
-                                <span className="text-[11px] text-[#00a8a8] truncate">{p.contacto.correo}</span>
+                                <span className="text-[11px] text-[#0067B0] truncate">{p.contacto.correo}</span>
                               )}
                               {p.contacto?.telefono && (
                                 <span className="text-[11px] text-[#6b7280]">{p.contacto.telefono}</span>
