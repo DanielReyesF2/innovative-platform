@@ -56,7 +56,10 @@ export default function SurveyForm({ surveyId }: SurveyFormProps) {
   const fieldTimerRef = useRef<ReturnType<typeof setTimeout>>();
 
   const isPhase2Unlocked = survey && ["agendado", "en_sitio", "completado"].includes(survey.status);
-  const isCompleted = survey?.status === "completado";
+  // Locked = frozen for editing: pending approval ("completado") AND approved
+  // ("pendiente_revision"). An approved levantamiento no longer changes — eso
+  // protege el documento del que dependen las cotizaciones (requerimiento Luis).
+  const isLocked = survey?.status === "completado" || survey?.status === "pendiente_revision";
   const isCommercialPhase = survey?.status === "borrador_comercial";
 
   // Debounced section save
@@ -217,7 +220,7 @@ export default function SurveyForm({ surveyId }: SurveyFormProps) {
           isOpen={openSection === 1}
           onToggle={() => setOpenSection(openSection === 1 ? 0 : 1)}
         >
-          <GeneralesSection data={survey} onSave={(data) => debouncedFieldSave(data)} disabled={isCompleted} />
+          <GeneralesSection data={survey} onSave={(data) => debouncedFieldSave(data)} disabled={isLocked} />
         </SurveySection>
 
         {/* Section 2: Instalaciones */}
@@ -232,7 +235,7 @@ export default function SurveyForm({ surveyId }: SurveyFormProps) {
           <InstalacionesSection
             data={survey.installations}
             onSave={(data) => debouncedSectionSave("installations", data)}
-            disabled={isCompleted}
+            disabled={isLocked}
           />
         </SurveySection>
 
@@ -245,7 +248,7 @@ export default function SurveyForm({ surveyId }: SurveyFormProps) {
           isOpen={openSection === 3}
           onToggle={() => setOpenSection(openSection === 3 ? 0 : 3)}
         >
-          <PersonalSection surveyId={survey.id} disabled={isCompleted} />
+          <PersonalSection surveyId={survey.id} disabled={isLocked} />
         </SurveySection>
 
         {/* Section 4: Recolecciones */}
@@ -260,7 +263,7 @@ export default function SurveyForm({ surveyId }: SurveyFormProps) {
           <RecoleccionesSection
             data={survey.transportPolicies}
             onSave={(data) => debouncedSectionSave("transportPolicies", data)}
-            disabled={isCompleted}
+            disabled={isLocked}
           />
         </SurveySection>
 
@@ -276,7 +279,7 @@ export default function SurveyForm({ surveyId }: SurveyFormProps) {
           <EquipoPermitidoSection
             data={survey.allowedEquipment}
             onSave={(data) => debouncedSectionSave("allowedEquipment", data)}
-            disabled={isCompleted}
+            disabled={isLocked}
           />
         </SurveySection>
 
@@ -292,7 +295,7 @@ export default function SurveyForm({ surveyId }: SurveyFormProps) {
           <LegalSection
             data={survey.legalRequirements}
             onSave={(data) => debouncedSectionSave("legalRequirements", data)}
-            disabled={isCompleted}
+            disabled={isLocked}
           />
         </SurveySection>
 
@@ -308,7 +311,7 @@ export default function SurveyForm({ surveyId }: SurveyFormProps) {
           <AreaOperacionSection
             data={survey.operationArea}
             onSave={(data) => debouncedSectionSave("operationArea", data)}
-            disabled={isCompleted}
+            disabled={isLocked}
           />
         </SurveySection>
 
@@ -321,7 +324,7 @@ export default function SurveyForm({ surveyId }: SurveyFormProps) {
           isOpen={openSection === 8}
           onToggle={() => setOpenSection(openSection === 8 ? 0 : 8)}
         >
-          <SubproductosSection surveyId={surveyId} disabled={isCompleted} />
+          <SubproductosSection surveyId={surveyId} disabled={isLocked} />
         </SurveySection>
 
         {/* Section 9: Servicios */}
@@ -333,7 +336,7 @@ export default function SurveyForm({ surveyId }: SurveyFormProps) {
           isOpen={openSection === 9}
           onToggle={() => setOpenSection(openSection === 9 ? 0 : 9)}
         >
-          <ServiciosSection surveyId={surveyId} disabled={isCompleted} />
+          <ServiciosSection surveyId={surveyId} disabled={isLocked} />
         </SurveySection>
 
         {/* Phase 2 divider */}
@@ -353,7 +356,7 @@ export default function SurveyForm({ surveyId }: SurveyFormProps) {
           isOpen={openSection === 10}
           onToggle={() => setOpenSection(openSection === 10 ? 0 : 10)}
         >
-          <FotosSection surveyId={surveyId} disabled={isCompleted} />
+          <FotosSection surveyId={surveyId} disabled={isLocked} />
         </SurveySection>
 
         {/* Section 15: Observaciones */}
@@ -369,7 +372,7 @@ export default function SurveyForm({ surveyId }: SurveyFormProps) {
           <ObservacionesSection
             data={survey.observations}
             onSave={(observations) => debouncedFieldSave({ observations })}
-            disabled={isCompleted}
+            disabled={isLocked}
           />
         </SurveySection>
 
@@ -388,13 +391,13 @@ export default function SurveyForm({ surveyId }: SurveyFormProps) {
             elaboratedById={survey.elaboratedById}
             approvedById={survey.approvedById}
             onSave={(data) => debouncedFieldSave(data)}
-            disabled={isCompleted}
+            disabled={isLocked}
           />
         </SurveySection>
       </div>
 
       {/* Action bar */}
-      {!isCompleted && nextStatusLabel() && (
+      {!isLocked && nextStatusLabel() && (
         <div className="sticky bottom-4 flex justify-end pt-4">
           <Button
             onClick={handleAdvance}

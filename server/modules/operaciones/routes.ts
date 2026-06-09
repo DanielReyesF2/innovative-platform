@@ -410,7 +410,10 @@ router.patch("/surveys/:id", async (req, res) => {
     const updated = await updateSurvey(Number(req.params.id), parsed.data);
     if (!updated) return res.status(404).json({ message: "Levantamiento no encontrado" });
     res.json(updated);
-  } catch (error) {
+  } catch (error: unknown) {
+    if (error instanceof Error && error.message === "SURVEY_LOCKED") {
+      return res.status(409).json({ message: "El levantamiento está aprobado/en aprobación y no se puede editar." });
+    }
     console.error("[operaciones] Update survey error:", error);
     res.status(500).json({ message: "Internal server error" });
   }
@@ -438,6 +441,9 @@ router.patch("/surveys/:id/section/:name", async (req, res) => {
     const updated = await updateSurveySection(Number(req.params.id), sectionName, req.body);
     res.json(updated);
   } catch (error: unknown) {
+    if (error instanceof Error && error.message === "SURVEY_LOCKED") {
+      return res.status(409).json({ message: "El levantamiento está aprobado/en aprobación y no se puede editar." });
+    }
     console.error("[operaciones] Update section error:", error);
     res.status(400).json({ message: getErrorMessage(error) });
   }
