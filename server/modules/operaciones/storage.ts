@@ -148,7 +148,20 @@ export async function createSurveyFromProspect(prospectId: number, assignedComme
   return survey;
 }
 
+// Field edits are blocked once a levantamiento is locked (pending approval or
+// approved). Status transitions go through dedicated functions (advance/approve/
+// return), so this only stops content edits. Makes the UI lock real server-side.
+function isLockedStatus(status: string | null | undefined): boolean {
+  return status === "completado" || status === "pendiente_revision";
+}
+
 export async function updateSurvey(id: number, data: Partial<InsertSurvey>) {
+  const current = await db.query.surveys.findFirst({
+    where: eq(surveys.id, id),
+    columns: { status: true },
+  });
+  if (isLockedStatus(current?.status)) throw new Error("SURVEY_LOCKED");
+
   const [updated] = await db
     .update(surveys)
     .set({ ...data, updatedAt: new Date() })
@@ -171,6 +184,7 @@ export async function updateSurveySection(id: number, sectionName: string, data:
     where: eq(surveys.id, id),
   });
   if (!current) throw new Error("Levantamiento no encontrado");
+  if (isLockedStatus(current.status)) throw new Error("SURVEY_LOCKED");
 
   const currentValue = (current as Record<string, unknown>)[sectionConfig.column as string] || {};
   const merged = { ...(currentValue as Record<string, unknown>), ...parsed };
