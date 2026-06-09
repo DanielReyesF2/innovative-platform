@@ -11,12 +11,16 @@ import {
   FileText,
   Inbox,
   MapPin,
+  Pencil,
+  Plus,
   RotateCcw,
   Search,
   ShieldCheck,
+  Trash2,
   Users,
 } from "lucide-react";
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
@@ -25,6 +29,7 @@ import { ExecutiveAvatar } from "@/lib/comercial-constants";
 import {
   useApproveSurvey,
   useApprovedSurveys,
+  useDeleteDocument,
   useDocuments,
   useOpsTeam,
   usePendingApprovalSurveys,
@@ -33,6 +38,7 @@ import {
   useSurveySummary,
   useSurveys,
 } from "./api";
+import { DocumentModal } from "./components/DocumentModal";
 import { KpiTiempoRespuesta } from "./components/KpiTiempoRespuesta";
 import LevantamientoHub from "./components/LevantamientoHub";
 import { OperacionesCalendar } from "./components/OperacionesCalendar";
@@ -81,7 +87,11 @@ export default function OperacionesPage() {
   const { data: opsTeam = [] } = useOpsTeam();
   const approveMutation = useApproveSurvey();
   const returnMutation = useReturnSurvey();
+  const deleteDocument = useDeleteDocument();
   const { toast } = useToast();
+
+  // Document create/edit modal: null = closed, { doc: null } = new, { doc } = edit.
+  const [docModal, setDocModal] = useState<{ doc: any | null } | null>(null);
 
   const isError = surveysError || docsError;
 
@@ -567,7 +577,12 @@ export default function OperacionesPage() {
       ) : (
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Documentos Operativos ({filteredDocs.length})</CardTitle>
+            <div className="flex items-center justify-between gap-2">
+              <CardTitle className="text-lg">Documentos Operativos ({filteredDocs.length})</CardTitle>
+              <Button size="sm" onClick={() => setDocModal({ doc: null })}>
+                <Plus className="mr-1 h-4 w-4" /> Agregar documento
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
             {hasDocAlerts && (
@@ -622,6 +637,38 @@ export default function OperacionesPage() {
                       </div>
                       {doc.notes && <div className="mt-1 text-xs text-muted-foreground">{doc.notes}</div>}
                     </div>
+                    <div className="flex items-center gap-1">
+                      {typeof doc.daysUntilExpiry === "number" && (
+                        <span className="mr-2 text-xs text-muted-foreground">
+                          {doc.daysUntilExpiry < 0
+                            ? `${Math.abs(doc.daysUntilExpiry)}d vencido`
+                            : `${doc.daysUntilExpiry}d`}
+                        </span>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => setDocModal({ doc })}
+                        className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+                        title="Editar / renovar"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (window.confirm(`¿Eliminar el documento "${doc.name}"?`)) {
+                            deleteDocument.mutate(doc.id, {
+                              onSuccess: () => toast({ title: "Documento eliminado" }),
+                              onError: () => toast({ title: "Error al eliminar", variant: "destructive" }),
+                            });
+                          }
+                        }}
+                        className="rounded-lg p-1.5 text-muted-foreground hover:bg-red-50 hover:text-red-600"
+                        title="Eliminar"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -638,6 +685,8 @@ export default function OperacionesPage() {
           users={opsTeam.map((m) => ({ id: m.id, name: m.name }))}
         />
       )}
+
+      {docModal && <DocumentModal doc={docModal.doc} onClose={() => setDocModal(null)} />}
 
       {/* Levantamiento Hub modal */}
       {hubSurveyId && (

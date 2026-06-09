@@ -1032,7 +1032,12 @@ router.post("/documents", async (req, res) => {
 
 router.patch("/documents/:id", async (req, res) => {
   try {
-    const parsed = insertDocumentSchema.partial().safeParse(req.body);
+    // Coerce date strings to Date (same as POST) so renewing an expiration works.
+    const body = { ...req.body };
+    if (body.issueDate && typeof body.issueDate === "string") body.issueDate = new Date(body.issueDate);
+    if (body.expirationDate && typeof body.expirationDate === "string")
+      body.expirationDate = new Date(body.expirationDate);
+    const parsed = insertDocumentSchema.partial().safeParse(body);
     if (!parsed.success) {
       return res.status(400).json({ message: "Datos inválidos", errors: parsed.error.errors });
     }
