@@ -1122,7 +1122,7 @@ export function ProspectoDrawer({ prospecto, onClose }: Props) {
                             </div>
                             <button
                               onClick={async () => {
-                                if (!window.confirm(`¿Eliminar el documento "${archivo.fileName || ""}"?`)) return;
+                                if (!window.confirm(`¿Eliminar el documento "${archivo.name || ""}"?`)) return;
                                 try {
                                   await deleteDocumentMutation.mutateAsync({
                                     prospectId: realProspectId,

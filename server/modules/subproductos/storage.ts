@@ -54,7 +54,16 @@ export async function getTraceabilityByPeriod(period: string) {
 }
 
 export async function createTraceabilityRecord(data: any) {
-  const [record] = await db.insert(traceabilityRecords).values(data).returning();
+  // Upsert on (clientId, period): re-submitting the same period updates that
+  // record instead of inserting a duplicate that would double the totals (H14).
+  const [record] = await db
+    .insert(traceabilityRecords)
+    .values(data)
+    .onConflictDoUpdate({
+      target: [traceabilityRecords.clientId, traceabilityRecords.period],
+      set: data,
+    })
+    .returning();
   return record;
 }
 
