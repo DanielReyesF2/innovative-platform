@@ -31,6 +31,8 @@ import {
   transportPoliciesSchema,
 } from "../../../shared/schema/operaciones";
 import { db } from "../../db";
+import { getErrorMessage } from "../../utils/errors";
+import { createCotizacionFromApprovedSurvey } from "../subproductos/storage";
 
 // ─── JSONB section name → column + zod schema mapping ───
 
@@ -830,6 +832,28 @@ export async function approveSurvey(id: number, approvedById: number, notes?: st
 
   // Cierra la versión viva como "aprobado" (Hueco 2/3).
   await resolveLatestPendingVersion(id, "aprobado", approvedById);
+
+  // Handoff automático a subproductos: el levantamiento aprobado aterriza en la
+  // bandeja de cotización. Envuelto para que un fallo aquí NO rompa la aprobación.
+  try {
+    const approvedVersion = await db.query.surveyVersions.findFirst({
+      where: and(eq(surveyVersions.surveyId, id), eq(surveyVersions.status, "aprobado")),
+      orderBy: [desc(surveyVersions.version)],
+      columns: { id: true },
+    });
+    if (approvedVersion) {
+      await createCotizacionFromApprovedSurvey({
+        surveyId: id,
+        surveyVersionId: approvedVersion.id,
+        clientName: survey.clientName,
+      });
+    } else {
+      console.warn(`[operaciones→subproductos] No se encontró versión aprobada para survey ${id}; no se creó cotización.`);
+    }
+  } catch (error: unknown) {
+    console.error(`[operaciones→subproductos] Falló handoff de cotización para survey ${id}:`, getErrorMessage(error));
+  }
+
   return updated;
 }
 

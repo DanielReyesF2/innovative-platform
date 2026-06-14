@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { z } from "zod";
+import { PERMISSIONS } from "../../../shared/auth/permissions";
 import {
   insertClientReportSchema,
   insertEconomicModelSchema,
@@ -7,7 +8,8 @@ import {
   insertTraceabilitySchema,
   reportStatusEnum,
 } from "../../../shared/schema/subproductos";
-import { requireAuth } from "../../middleware/auth";
+import { requireAuth, requirePermission } from "../../middleware/auth";
+import { getErrorMessage } from "../../utils/errors";
 import {
   createClientReport,
   createConciliation,
@@ -16,6 +18,9 @@ import {
   createTraceabilityRecord,
   getClientReports,
   getConciliations,
+  getCotizacionById,
+  getCotizaciones,
+  getCotizacionKpis,
   getEconomicModelById,
   getEconomicModels,
   getPendingReports,
@@ -25,6 +30,10 @@ import {
   getTraceabilityByClient,
   getTraceabilityByPeriod,
   getTraceabilitySummary,
+  resolveCotizacionVobo,
+  submitCotizacionToVobo,
+  takeCotizacion,
+  updateCotizacion,
   updateEconomicModel,
   updateReportStatus,
   updateServiceClient,
@@ -47,6 +56,22 @@ const insertConciliationSchema = z.object({
   servicesDelivered: z.any().optional(),
   discrepancies: z.string().max(2000).optional(),
   isReconciled: z.boolean().optional(),
+});
+
+const cotizacionUpdateSchema = z.object({
+  title: z.string().min(1).max(300).optional(),
+  monthlyVolume: z.string().max(200).optional(),
+  proposedPrice: z.union([z.string(), z.number()]).optional(),
+  estimatedCost: z.union([z.string(), z.number()]).optional(),
+  estimatedMargin: z.union([z.string(), z.number()]).optional(),
+  servicesIncluded: z.any().optional(),
+  wasteComposition: z.any().optional(),
+  notes: z.string().max(2000).optional(),
+});
+
+const voboDecisionSchema = z.object({
+  decision: z.enum(["aprobar", "rechazar"]),
+  rejectionReason: z.string().max(2000).optional(),
 });
 
 export const router = Router();
@@ -280,6 +305,91 @@ router.post("/conciliations", async (req, res) => {
   } catch (error) {
     console.error("[subproductos] Create conciliation error:", error);
     res.status(400).json({ message: "Datos invalidos" });
+  }
+});
+
+// --- Cotizaciones (bandeja) ---
+
+router.get("/cotizaciones", requirePermission(PERMISSIONS.COTIZACIONES_VIEW), async (req, res) => {
+  try {
+    const status = typeof req.query.status === "string" ? req.query.status : undefined;
+    res.json(await getCotizaciones(status));
+  } catch (error: unknown) {
+    console.error("[subproductos] Get cotizaciones error:", getErrorMessage(error));
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+router.get("/cotizaciones/kpis", requirePermission(PERMISSIONS.COTIZACIONES_VIEW), async (_req, res) => {
+  try {
+    res.json(await getCotizacionKpis());
+  } catch (error: unknown) {
+    console.error("[subproductos] Cotización KPIs error:", getErrorMessage(error));
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+router.get("/cotizaciones/:id", requirePermission(PERMISSIONS.COTIZACIONES_VIEW), async (req, res) => {
+  try {
+    const cot = await getCotizacionById(Number(req.params.id));
+    if (!cot) return res.status(404).json({ message: "Cotización no encontrada" });
+    res.json(cot);
+  } catch (error: unknown) {
+    console.error("[subproductos] Get cotización error:", getErrorMessage(error));
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+router.post("/cotizaciones/:id/take", requirePermission(PERMISSIONS.COTIZACIONES_EDIT), async (req, res) => {
+  try {
+    const updated = await takeCotizacion(Number(req.params.id), req.user!.id);
+    if (!updated) return res.status(404).json({ message: "Cotización no encontrada" });
+    res.json(updated);
+  } catch (error: unknown) {
+    console.error("[subproductos] Take cotización error:", getErrorMessage(error));
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+router.patch("/cotizaciones/:id", requirePermission(PERMISSIONS.COTIZACIONES_EDIT), async (req, res) => {
+  try {
+    const parsed = cotizacionUpdateSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ message: "Datos inválidos", errors: parsed.error.errors });
+    const updated = await updateCotizacion(Number(req.params.id), parsed.data);
+    if (!updated) return res.status(404).json({ message: "Cotización no encontrada" });
+    res.json(updated);
+  } catch (error: unknown) {
+    console.error("[subproductos] Update cotización error:", getErrorMessage(error));
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+router.post("/cotizaciones/:id/submit-vobo", requirePermission(PERMISSIONS.COTIZACIONES_EDIT), async (req, res) => {
+  try {
+    const updated = await submitCotizacionToVobo(Number(req.params.id));
+    if (!updated) return res.status(404).json({ message: "Cotización no encontrada" });
+    res.json(updated);
+  } catch (error: unknown) {
+    console.error("[subproductos] Submit VoBo error:", getErrorMessage(error));
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+router.post("/cotizaciones/:id/vobo", requirePermission(PERMISSIONS.COTIZACIONES_VOBO), async (req, res) => {
+  try {
+    const parsed = voboDecisionSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ message: "Datos inválidos", errors: parsed.error.errors });
+    const updated = await resolveCotizacionVobo(
+      Number(req.params.id),
+      req.user!.id,
+      parsed.data.decision,
+      parsed.data.rejectionReason,
+    );
+    if (!updated) return res.status(404).json({ message: "Cotización no encontrada" });
+    res.json(updated);
+  } catch (error: unknown) {
+    console.error("[subproductos] VoBo decision error:", getErrorMessage(error));
+    res.status(500).json({ message: "Internal server error" });
   }
 });
 

@@ -133,3 +133,56 @@ export function useSubproductosSummary() {
     queryKey: ["/api/subproductos/summary"],
   });
 }
+
+// --- Cotizaciones (bandeja) ---
+
+export function useCotizaciones(status?: string) {
+  const url = status ? `/api/subproductos/cotizaciones?status=${status}` : "/api/subproductos/cotizaciones";
+  return useQuery<any[]>({ queryKey: [url] });
+}
+
+export function useCotizacion(id: number) {
+  return useQuery<any>({
+    queryKey: [`/api/subproductos/cotizaciones/${id}`],
+    enabled: !!id,
+  });
+}
+
+export function useCotizacionKpis() {
+  return useQuery<any>({ queryKey: ["/api/subproductos/cotizaciones/kpis"] });
+}
+
+function invalidateCotizaciones() {
+  queryClient.invalidateQueries({ queryKey: ["/api/subproductos/cotizaciones"] });
+}
+
+export function useTakeCotizacion() {
+  return useMutation({
+    mutationFn: async (id: number) => (await apiRequest("POST", `/api/subproductos/cotizaciones/${id}/take`, {})).json(),
+    onSuccess: invalidateCotizaciones,
+  });
+}
+
+export function useUpdateCotizacion() {
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: any }) =>
+      (await apiRequest("PATCH", `/api/subproductos/cotizaciones/${id}`, data)).json(),
+    onSuccess: invalidateCotizaciones,
+  });
+}
+
+export function useSubmitVobo() {
+  return useMutation({
+    mutationFn: async (id: number) =>
+      (await apiRequest("POST", `/api/subproductos/cotizaciones/${id}/submit-vobo`, {})).json(),
+    onSuccess: invalidateCotizaciones,
+  });
+}
+
+export function useResolveVobo() {
+  return useMutation({
+    mutationFn: async ({ id, decision, rejectionReason }: { id: number; decision: "aprobar" | "rechazar"; rejectionReason?: string }) =>
+      (await apiRequest("POST", `/api/subproductos/cotizaciones/${id}/vobo`, { decision, rejectionReason })).json(),
+    onSuccess: invalidateCotizaciones,
+  });
+}
