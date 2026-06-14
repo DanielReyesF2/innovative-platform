@@ -1,9 +1,27 @@
-import { AlertCircle, BarChart3, ChevronRight, Clock, DollarSign, FileText, Leaf, Recycle, Users } from "lucide-react";
+import {
+  AlertCircle,
+  BarChart3,
+  ChevronRight,
+  Clock,
+  DollarSign,
+  FileText,
+  Inbox,
+  Leaf,
+  Recycle,
+  Users,
+} from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { KpiSection } from "@/features/kpis/components/KpiSection";
-import { useCotizacionKpis, useCotizaciones, useClientTraceabilitySummary, usePendingReports, useServiceClients, useSubproductosSummary } from "./api";
+import {
+  useClientTraceabilitySummary,
+  useCotizaciones,
+  useCotizacionKpis,
+  usePendingReports,
+  useServiceClients,
+  useSubproductosSummary,
+} from "./api";
 import { CotizacionDetail } from "./components/CotizacionDetail";
 
 const _REPORT_STATUS_LABELS: Record<string, string> = {
@@ -21,55 +39,42 @@ const _REPORT_STATUS_COLORS: Record<string, string> = {
 };
 
 export default function SubproductosPage() {
-  const [mainTab, setMainTab] = useState<"trazabilidad" | "cotizaciones" | "kpis">("cotizaciones");
+  const [mainTab, setMainTab] = useState<"bandeja" | "trazabilidad" | "kpis">("bandeja");
+
+  const tabs = [
+    { key: "bandeja" as const, label: "Bandeja", icon: Inbox },
+    { key: "trazabilidad" as const, label: "Trazabilidad", icon: Recycle },
+    { key: "kpis" as const, label: "KPIs", icon: BarChart3 },
+  ];
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Subproductos</h1>
-        <p className="text-muted-foreground">Trazabilidad, reportes a clientes, modelos económicos y conciliación</p>
+        <h1 className="text-2xl font-bold tracking-tight">Subproductos · Soporte Comercial</h1>
+        <p className="text-muted-foreground">
+          Levantamientos por cotizar, trazabilidad ambiental y reportes a clientes
+        </p>
       </div>
 
       {/* Main tab selector */}
       <div className="flex gap-2 border-b pb-2">
-        <button
-          onClick={() => setMainTab("trazabilidad")}
-          className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-t-md transition-colors ${
-            mainTab === "trazabilidad"
-              ? "border-b-2 border-primary text-primary"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          <Recycle className="h-4 w-4" />
-          Trazabilidad
-        </button>
-        <button
-          onClick={() => setMainTab("cotizaciones")}
-          className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-t-md transition-colors ${
-            mainTab === "cotizaciones"
-              ? "border-b-2 border-primary text-primary"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          <FileText className="h-4 w-4" />
-          Cotizaciones
-        </button>
-        <button
-          onClick={() => setMainTab("kpis")}
-          className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-t-md transition-colors ${
-            mainTab === "kpis"
-              ? "border-b-2 border-primary text-primary"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          <BarChart3 className="h-4 w-4" />
-          KPIs
-        </button>
+        {tabs.map(({ key, label, icon: Icon }) => (
+          <button
+            key={key}
+            onClick={() => setMainTab(key)}
+            className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-t-md transition-colors ${
+              mainTab === key ? "border-b-2 border-primary text-primary" : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Icon className="h-4 w-4" />
+            {label}
+          </button>
+        ))}
       </div>
 
+      {mainTab === "bandeja" && <BandejaView />}
       {mainTab === "trazabilidad" && <TrazabilidadView />}
-      {mainTab === "cotizaciones" && <CotizacionesView />}
       {mainTab === "kpis" && <KpiSection moduleSlug="subproductos" compact />}
     </div>
   );
@@ -327,20 +332,56 @@ function DestRow({ label, value, registry }: { label: string; value?: string | n
   );
 }
 
-const COTIZACION_STATUS: Record<string, { label: string; color: string }> = {
-  recibido: { label: "Recibido", color: "bg-blue-100 text-blue-800" },
-  en_cotizacion: { label: "En cotización", color: "bg-yellow-100 text-yellow-800" },
-  en_vobo: { label: "En VoBo", color: "bg-purple-100 text-purple-800" },
-  aprobado: { label: "Aprobado", color: "bg-green-100 text-green-800" },
-  rechazado: { label: "Rechazado", color: "bg-red-100 text-red-800" },
-};
-
 function daysSince(date?: string | null): number | null {
   if (!date) return null;
   return Math.floor((Date.now() - new Date(date).getTime()) / 86_400_000);
 }
 
-function CotizacionesView() {
+// Columnas del pipeline de cotización (kanban). El orden = el flujo real.
+// "rechazado" no es columna: rechazar el VoBo regresa el ítem a en_cotizacion.
+const PIPELINE_COLUMNS = [
+  { key: "recibido", label: "Recibido", accent: "border-t-blue-400", badge: "bg-blue-100 text-blue-800" },
+  {
+    key: "en_cotizacion",
+    label: "En cotización",
+    accent: "border-t-yellow-400",
+    badge: "bg-yellow-100 text-yellow-800",
+  },
+  { key: "en_vobo", label: "En VoBo", accent: "border-t-purple-400", badge: "bg-purple-100 text-purple-800" },
+  { key: "aprobado", label: "Aprobado", accent: "border-t-green-500", badge: "bg-green-100 text-green-800" },
+] as const;
+
+function BandejaCard({ cot, onClick }: { cot: any; onClick: () => void }) {
+  const dias = daysSince(cot.receivedAt);
+  // Aviso visual cuando algo lleva mucho esperando (sobre todo recibidos sin tomar).
+  const stale = dias != null && dias >= 3 && (cot.status === "recibido" || cot.status === "en_cotizacion");
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="w-full rounded-lg border bg-card p-3 text-left shadow-sm transition-colors hover:bg-accent"
+    >
+      <div className="text-sm font-medium leading-tight">{cot.prospectName || cot.title}</div>
+      <div className="mt-2 flex flex-wrap items-center gap-1.5">
+        <span
+          className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] ${
+            stale ? "bg-red-100 text-red-700" : "bg-muted text-muted-foreground"
+          }`}
+        >
+          <Clock className="h-3 w-3" />
+          {dias != null ? `${dias} d` : "—"}
+        </span>
+        {cot.needsReview && (
+          <span className="inline-flex rounded-full bg-orange-100 px-2 py-0.5 text-[11px] text-orange-800">
+            Actualizado
+          </span>
+        )}
+      </div>
+    </button>
+  );
+}
+
+function BandejaView() {
   const { data: cotizaciones = [], isError } = useCotizaciones();
   const { data: kpis } = useCotizacionKpis();
   const [selectedId, setSelectedId] = useState<number | null>(null);
@@ -349,7 +390,7 @@ function CotizacionesView() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[40vh] gap-3">
         <div className="text-red-500 text-4xl">⚠</div>
-        <h2 className="text-lg font-semibold text-[#1c2c4a]">Error al cargar cotizaciones</h2>
+        <h2 className="text-lg font-semibold text-[#1c2c4a]">Error al cargar la bandeja</h2>
         <button
           onClick={() => window.location.reload()}
           className="mt-2 px-4 py-2 text-sm font-medium text-white bg-[#0067B0] rounded-lg hover:bg-[#00558f]"
@@ -360,80 +401,78 @@ function CotizacionesView() {
     );
   }
 
-  const recibidos = cotizaciones.filter((c: any) => c.status === "recibido").length;
+  const byStatus = (status: string) => cotizaciones.filter((c: any) => c.status === status);
+  const porCotizar = byStatus("recibido").length;
+  const enProceso = byStatus("en_cotizacion").length + byStatus("en_vobo").length;
+  const aprobadas = byStatus("aprobado").length;
 
   return (
     <>
+      {/* KPIs del pipeline (tiempos de respuesta — lo que pidió Verónica) */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <MetricCard
-          title="Recibidos sin tomar"
-          value={String(kpis?.pendingReception ?? recibidos)}
-          description="Levantamientos por cotizar"
-          icon={<FileText className="h-4 w-4 text-muted-foreground" />}
+          title="Por cotizar"
+          value={String(porCotizar)}
+          description="Levantamientos recibidos sin tomar"
+          icon={<Inbox className="h-4 w-4 text-muted-foreground" />}
         />
         <MetricCard
-          title="Tiempo prom. a aprobación"
+          title="Tiempo prom. de respuesta"
           value={kpis?.avgDaysToApprove != null ? `${kpis.avgDaysToApprove.toFixed(1)} d` : "—"}
           description="Recibido → aprobado"
           icon={<Clock className="h-4 w-4 text-muted-foreground" />}
         />
         <MetricCard
-          title="En VoBo"
-          value={String(kpis?.byStatus?.en_vobo ?? 0)}
-          description="Esperando visto bueno"
-          icon={<AlertCircle className="h-4 w-4 text-muted-foreground" />}
+          title="En proceso"
+          value={String(enProceso)}
+          description="En cotización + en VoBo"
+          icon={<FileText className="h-4 w-4 text-muted-foreground" />}
         />
         <MetricCard
           title="Aprobadas"
-          value={String(kpis?.byStatus?.aprobado ?? 0)}
+          value={String(aprobadas)}
           description="Listas para enviar"
           icon={<BarChart3 className="h-4 w-4 text-muted-foreground" />}
         />
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Bandeja de cotización ({cotizaciones.length})</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {cotizaciones.length === 0 ? (
-            <div className="py-8 text-center text-muted-foreground">
-              <AlertCircle className="mx-auto mb-2 h-8 w-8 opacity-50" />
-              <p>No hay levantamientos en la bandeja todavía</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {cotizaciones.map((c: any) => {
-                const st = COTIZACION_STATUS[c.status] ?? { label: c.status, color: "bg-gray-100 text-gray-800" };
-                const dias = daysSince(c.receivedAt);
-                return (
-                  <button
-                    key={c.id}
-                    onClick={() => setSelectedId(c.id)}
-                    className="flex w-full items-center justify-between rounded-lg border p-4 text-left transition-colors hover:bg-accent"
+      {/* Pipeline kanban */}
+      {cotizaciones.length === 0 ? (
+        <Card>
+          <CardContent className="py-12 text-center text-muted-foreground">
+            <Inbox className="mx-auto mb-3 h-10 w-10 opacity-40" />
+            <p className="font-medium">La bandeja está vacía</p>
+            <p className="text-sm">
+              Cuando Operaciones apruebe un levantamiento, aparecerá aquí automáticamente para cotizar.
+            </p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {PIPELINE_COLUMNS.map((col) => {
+            const items = byStatus(col.key);
+            return (
+              <div key={col.key} className={`rounded-lg border border-t-4 bg-muted/30 ${col.accent}`}>
+                <div className="flex items-center justify-between px-3 py-2">
+                  <span className="text-sm font-semibold">{col.label}</span>
+                  <span
+                    className={`inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full px-1.5 text-xs font-medium ${col.badge}`}
                   >
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold">{c.prospectName || c.title}</span>
-                        <span className={`inline-flex rounded-full px-2 py-0.5 text-xs ${st.color}`}>{st.label}</span>
-                        {c.needsReview && (
-                          <span className="inline-flex rounded-full bg-orange-100 px-2 py-0.5 text-xs text-orange-800">
-                            Levantamiento actualizado
-                          </span>
-                        )}
-                      </div>
-                      <div className="mt-1 text-sm text-muted-foreground">
-                        {dias != null ? `Recibido hace ${dias} día${dias === 1 ? "" : "s"}` : "Sin fecha"}
-                      </div>
-                    </div>
-                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                  </button>
-                );
-              })}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                    {items.length}
+                  </span>
+                </div>
+                <div className="min-h-[120px] space-y-2 p-2">
+                  {items.length === 0 ? (
+                    <p className="px-1 py-6 text-center text-xs text-muted-foreground">—</p>
+                  ) : (
+                    items.map((c: any) => <BandejaCard key={c.id} cot={c} onClick={() => setSelectedId(c.id)} />)
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {selectedId != null && <CotizacionDetail id={selectedId} onClose={() => setSelectedId(null)} />}
     </>
