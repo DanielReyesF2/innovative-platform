@@ -1,6 +1,8 @@
-import { desc, eq, sql } from "drizzle-orm";
+import { desc, eq, isNotNull, sql } from "drizzle-orm";
+import { surveyVersions } from "../../../shared/schema/operaciones";
 import {
   clientReports,
+  type EconomicModel,
   economicModels,
   type InsertServiceClient,
   serviceClients,
@@ -159,6 +161,140 @@ export async function updateEconomicModel(id: number, data: any) {
     .where(eq(economicModels.id, id))
     .returning();
   return updated;
+}
+
+// --- Bandeja de Cotización ---
+
+// Llamado por operaciones/approveSurvey cuando Luis aprueba un levantamiento.
+// Idempotente: un economicModel por surveyId. Si ya existe (reapertura), no pisa
+// el trabajo del equipo: actualiza el puntero de versión y prende needsReview.
+export async function createCotizacionFromApprovedSurvey(params: {
+  surveyId: number;
+  surveyVersionId: number;
+  clientName: string;
+}) {
+  const existing = await db.query.economicModels.findFirst({
+    where: eq(economicModels.surveyId, params.surveyId),
+  });
+
+  if (existing) {
+    const [updated] = await db
+      .update(economicModels)
+      .set({
+        surveyVersionId: params.surveyVersionId,
+        needsReview: true,
+        updatedAt: new Date(),
+      })
+      .where(eq(economicModels.id, existing.id))
+      .returning();
+    console.warn(
+      `[subproductos] Cotización ${existing.id} marcada needsReview (levantamiento ${params.surveyId} re-aprobado)`,
+    );
+    return updated;
+  }
+
+  const [created] = await db
+    .insert(economicModels)
+    .values({
+      surveyId: params.surveyId,
+      surveyVersionId: params.surveyVersionId,
+      prospectName: params.clientName,
+      title: `Cotización — ${params.clientName}`,
+      status: "recibido",
+      receivedAt: new Date(),
+    })
+    .returning();
+  console.log(`[subproductos] Cotización ${created.id} creada desde levantamiento ${params.surveyId}`);
+  return created;
+}
+
+// Bandeja: todas las cotizaciones (opcional filtro por estado), más recientes primero.
+export async function getCotizaciones(status?: string) {
+  return db.query.economicModels.findMany({
+    where: status ? eq(economicModels.status, status as EconomicModel["status"]) : isNotNull(economicModels.surveyId),
+    orderBy: [desc(economicModels.receivedAt)],
+  });
+}
+
+export async function getCotizacionById(id: number) {
+  const cot = await db.query.economicModels.findFirst({ where: eq(economicModels.id, id) });
+  if (!cot) return null;
+  if (!cot.surveyVersionId) return cot;
+  const version = await db.query.surveyVersions.findFirst({
+    where: eq(surveyVersions.id, cot.surveyVersionId),
+    columns: { snapshot: true },
+  });
+  return { ...cot, snapshot: version?.snapshot ?? null };
+}
+
+// Tomar: recibido → en_cotizacion. Asigna responsable y arranca el sub-cronómetro.
+export async function takeCotizacion(id: number, userId: number) {
+  const [updated] = await db
+    .update(economicModels)
+    .set({ status: "en_cotizacion", assignedToId: userId, startedAt: new Date(), updatedAt: new Date() })
+    .where(eq(economicModels.id, id))
+    .returning();
+  return updated;
+}
+
+// Guardar campos del modelo económico (precio, costo, margen, composición…).
+export async function updateCotizacion(id: number, data: Record<string, unknown>) {
+  const [updated] = await db
+    .update(economicModels)
+    .set({ ...data, updatedAt: new Date() })
+    .where(eq(economicModels.id, id))
+    .returning();
+  return updated;
+}
+
+// Enviar a VoBo: en_cotizacion → en_vobo.
+export async function submitCotizacionToVobo(id: number) {
+  const [updated] = await db
+    .update(economicModels)
+    .set({ status: "en_vobo", submittedToVoboAt: new Date(), updatedAt: new Date() })
+    .where(eq(economicModels.id, id))
+    .returning();
+  return updated;
+}
+
+// Resolver VoBo: aprobar (→aprobado, sella resolvedAt) o rechazar (→en_cotizacion con motivo).
+export async function resolveCotizacionVobo(
+  id: number,
+  userId: number,
+  decision: "aprobar" | "rechazar",
+  rejectionReason?: string,
+) {
+  const set =
+    decision === "aprobar"
+      ? { status: "aprobado" as const, voboById: userId, resolvedAt: new Date(), updatedAt: new Date() }
+      : {
+          status: "en_cotizacion" as const,
+          voboById: userId,
+          rejectionReason: rejectionReason ?? null,
+          updatedAt: new Date(),
+        };
+  const [updated] = await db.update(economicModels).set(set).where(eq(economicModels.id, id)).returning();
+  return updated;
+}
+
+// KPI: conteo por estado + tiempo promedio recibido→aprobado (días).
+export async function getCotizacionKpis() {
+  const rows = await db.query.economicModels.findMany({ where: isNotNull(economicModels.surveyId) });
+  const byStatus: Record<string, number> = {};
+  let totalDays = 0;
+  let resolvedCount = 0;
+  for (const r of rows) {
+    byStatus[r.status] = (byStatus[r.status] || 0) + 1;
+    if (r.status === "aprobado" && r.receivedAt && r.resolvedAt) {
+      totalDays += (r.resolvedAt.getTime() - r.receivedAt.getTime()) / 86_400_000;
+      resolvedCount += 1;
+    }
+  }
+  return {
+    byStatus,
+    avgDaysToApprove: resolvedCount > 0 ? totalDays / resolvedCount : null,
+    pendingReception: byStatus["recibido"] || 0,
+  };
 }
 
 // --- Conciliation ---
