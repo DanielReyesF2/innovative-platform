@@ -20,6 +20,9 @@ export const PERMISSIONS = {
   TEAM_VIEW: "team.view",
   USERS_MANAGE: "users.manage",
   ROLES_MANAGE: "roles.manage",
+  COTIZACIONES_VIEW: "cotizaciones.view",
+  COTIZACIONES_EDIT: "cotizaciones.edit",
+  COTIZACIONES_VOBO: "cotizaciones.vobo",
 } as const;
 
 export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
@@ -43,9 +46,12 @@ export const ROLE_PERMISSIONS: Record<string, string[]> = {
     P.SURVEYS_APPROVE,
     P.SURVEYS_RETURN,
     P.SURVEYS_REOPEN,
+    P.COTIZACIONES_VIEW,
+    P.COTIZACIONES_EDIT,
+    P.COTIZACIONES_VOBO,
     P.TEAM_VIEW,
   ],
-  comercial: [P.PROSPECTS_DELETE, P.PROSPECTS_SEND_OPS, P.TEAM_VIEW],
+  comercial: [P.PROSPECTS_DELETE, P.PROSPECTS_SEND_OPS, P.TEAM_VIEW, P.COTIZACIONES_VIEW, P.COTIZACIONES_EDIT],
   operaciones: [
     P.SURVEYS_REVIEW,
     P.SURVEYS_ACCEPT,

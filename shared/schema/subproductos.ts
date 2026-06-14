@@ -13,9 +13,18 @@ import {
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+import { users } from "./common";
 
 // Enums
 export const reportStatusEnum = pgEnum("report_status", ["pendiente", "en_proceso", "enviado", "confirmado"]);
+
+export const cotizacionStatusEnum = pgEnum("cotizacion_status", [
+  "recibido",
+  "en_cotizacion",
+  "en_vobo",
+  "aprobado",
+  "rechazado",
+]);
 
 // Service clients (clientes con servicio activo de Innovative)
 export const serviceClients = pgTable("service_clients", {
@@ -109,15 +118,27 @@ export const economicModels = pgTable(
   {
     id: serial("id").primaryKey(),
     clientId: integer("client_id").references(() => serviceClients.id),
-    prospectName: text("prospect_name"), // for new prospects without client record
+    prospectName: text("prospect_name"),
     title: text("title").notNull(),
     monthlyVolume: text("monthly_volume"),
     proposedPrice: numeric("proposed_price", { precision: 12, scale: 2 }),
     estimatedCost: numeric("estimated_cost", { precision: 12, scale: 2 }),
     estimatedMargin: numeric("estimated_margin", { precision: 5, scale: 2 }),
-    servicesIncluded: jsonb("services_included"), // string[]
-    wasteComposition: jsonb("waste_composition"), // [{type, percentage, valorization}]
-    status: text("status").default("borrador"), // borrador, enviada, aprobada, rechazada
+    servicesIncluded: jsonb("services_included"),
+    wasteComposition: jsonb("waste_composition"),
+    // --- Bandeja de cotización (v1) ---
+    status: cotizacionStatusEnum("status").notNull().default("recibido"),
+    surveyId: integer("survey_id"), // sin FK dura (evita ciclo operaciones↔subproductos)
+    surveyVersionId: integer("survey_version_id"), // snapshot aprobado a cotizar
+    assignedToId: integer("assigned_to_id").references(() => users.id),
+    voboById: integer("vobo_by_id").references(() => users.id),
+    rejectionReason: text("rejection_reason"),
+    needsReview: boolean("needs_review").default(false),
+    receivedAt: timestamp("received_at"),
+    startedAt: timestamp("started_at"),
+    submittedToVoboAt: timestamp("submitted_to_vobo_at"),
+    resolvedAt: timestamp("resolved_at"),
+    // --- legacy ---
     approvedBy: text("approved_by"),
     approvedDate: timestamp("approved_date"),
     notes: text("notes"),
@@ -126,6 +147,8 @@ export const economicModels = pgTable(
   },
   (table) => ({
     clientIdIdx: index("economic_models_client_id_idx").on(table.clientId),
+    surveyIdIdx: index("economic_models_survey_id_idx").on(table.surveyId),
+    statusIdx: index("economic_models_status_idx").on(table.status),
   }),
 );
 
@@ -166,7 +189,15 @@ export const insertClientReportSchema = createInsertSchema(clientReports, {
 
 export const insertEconomicModelSchema = createInsertSchema(economicModels, {
   title: z.string().min(1).max(300),
-}).omit({ id: true, createdAt: true, updatedAt: true });
+}).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  receivedAt: true,
+  startedAt: true,
+  submittedToVoboAt: true,
+  resolvedAt: true,
+});
 
 // Types
 export type ServiceClient = typeof serviceClients.$inferSelect;
